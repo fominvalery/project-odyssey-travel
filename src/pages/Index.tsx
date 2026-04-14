@@ -4,6 +4,7 @@ import { CategoriesSection } from "@/components/CategoriesSection"
 import { SellerToolsSection } from "@/components/SellerToolsSection"
 import { BuyerToolsSection } from "@/components/BuyerToolsSection"
 import { PricingPlansSection } from "@/components/PricingPlansSection"
+import { CtaSection } from "@/components/CtaSection"
 
 export default function Index() {
   return (
@@ -14,6 +15,7 @@ export default function Index() {
       <SellerToolsSection />
       <BuyerToolsSection />
       <PricingPlansSection />
+      <CtaSection />
       <footer className="py-8 text-center text-sm text-gray-400">
         От поиска объекта до закрытия сделки —{" "}
         <span className="font-medium text-white">всё работает в одном месте.</span>
