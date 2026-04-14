@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -34,21 +33,15 @@ export function Header() {
         </button>
 
         <nav className="hidden md:flex items-center gap-8">
-          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-            Объекты
-          </a>
-          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-1">
-            Направления <ChevronDown className="h-4 w-4" />
-          </a>
-          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
+          <button onClick={() => navigate("/")} className="text-sm text-gray-300 hover:text-white transition-colors">
+            Главная
+          </button>
+          <button onClick={() => navigate("/marketplace")} className="text-sm text-gray-300 hover:text-white transition-colors">
             Маркетплейс
-          </a>
-          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-            Тарифы
-          </a>
-          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-            Контакты
-          </a>
+          </button>
+          <button onClick={() => navigate("/referral")} className="text-sm text-gray-300 hover:text-white transition-colors">
+            Реферальная программа
+          </button>
         </nav>
 
         {user ? (
