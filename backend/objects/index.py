@@ -35,7 +35,7 @@ def handler(event: dict, context) -> dict:
         if user_id:
             cur.execute(f"""
                 SELECT id, user_id, category, type, title, city, address, price,
-                       area, description, yield_percent, extra_fields, status, published, created_at
+                       area, description, yield_percent, extra_fields, status, published, created_at, photos
                 FROM {schema}.objects
                 WHERE user_id = '{user_id}'
                 ORDER BY created_at DESC
@@ -43,7 +43,7 @@ def handler(event: dict, context) -> dict:
         elif marketplace:
             cur.execute(f"""
                 SELECT id, user_id, category, type, title, city, address, price,
-                       area, description, yield_percent, extra_fields, status, published, created_at
+                       area, description, yield_percent, extra_fields, status, published, created_at, photos
                 FROM {schema}.objects
                 WHERE published = true AND status = 'Активен'
                 ORDER BY created_at DESC
@@ -51,7 +51,7 @@ def handler(event: dict, context) -> dict:
         else:
             cur.execute(f"""
                 SELECT id, user_id, category, type, title, city, address, price,
-                       area, description, yield_percent, extra_fields, status, published, created_at
+                       area, description, yield_percent, extra_fields, status, published, created_at, photos
                 FROM {schema}.objects
                 WHERE published = true AND status = 'Активен'
                 ORDER BY created_at DESC
@@ -79,6 +79,7 @@ def handler(event: dict, context) -> dict:
                 "status": r[12] or "Активен",
                 "published": r[13] or False,
                 "created_at": r[14].isoformat() if r[14] else "",
+                "photos": list(r[15]) if r[15] else [],
             })
         return {"statusCode": 200, "headers": CORS, "body": json.dumps({"objects": objects})}
 
@@ -98,17 +99,19 @@ def handler(event: dict, context) -> dict:
         extra_fields = json.dumps(body.get("extra_fields", {})).replace("'", "''")
         status = body.get("status", "Активен")
         published = body.get("published", False)
+        photos = body.get("photos", [])
 
         user_id_sql = f"'{user_id}'" if user_id else "NULL"
+        photos_sql = "ARRAY[" + ",".join(f"'{p}'" for p in photos) + "]::text[]" if photos else "ARRAY[]::text[]"
 
         cur.execute(f"""
             INSERT INTO {schema}.objects
               (user_id, category, type, title, city, address, price, area,
-               description, yield_percent, extra_fields, status, published)
+               description, yield_percent, extra_fields, status, published, photos)
             VALUES
               ({user_id_sql}, '{category}', '{obj_type}', '{title}', '{city}', '{address}',
                '{price}', '{area}', '{description}', '{yield_percent}',
-               '{extra_fields}'::jsonb, '{status}', {str(published).lower()})
+               '{extra_fields}'::jsonb, '{status}', {str(published).lower()}, {photos_sql})
             RETURNING id
         """)
         new_id = str(cur.fetchone()[0])

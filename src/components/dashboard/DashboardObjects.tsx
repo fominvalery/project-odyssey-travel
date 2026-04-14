@@ -127,8 +127,11 @@ export default function DashboardObjects({
               {filtered.map(obj => (
                 <div key={obj.id} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5 flex items-center justify-between gap-4 hover:border-blue-500/30 transition-colors">
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-blue-900/30 flex items-center justify-center shrink-0">
-                      <Icon name="Building2" className="h-5 w-5 text-blue-400" />
+                    <div className="w-11 h-11 rounded-xl bg-blue-900/30 flex items-center justify-center shrink-0 overflow-hidden">
+                      {obj.photos && obj.photos.length > 0
+                        ? <img src={obj.photos[0]} alt="" className="w-full h-full object-cover rounded-xl" />
+                        : <Icon name="Building2" className="h-5 w-5 text-blue-400" />
+                      }
                     </div>
                     <div>
                       <p className="font-semibold">{obj.title}</p>
