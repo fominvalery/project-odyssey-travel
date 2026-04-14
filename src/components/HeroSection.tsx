@@ -25,12 +25,12 @@ export function HeroSection() {
       <div className="flex flex-col sm:flex-row items-center gap-4">
         <Button
           onClick={() => setRegisterOpen(true)}
-          className="rounded-full bg-violet-600 px-6 hover:bg-violet-700 text-white"
+          className="rounded-full bg-blue-600 px-6 hover:bg-blue-700 text-white"
         >
           Зарегистрироваться бесплатно <ArrowUpRight className="ml-2 h-4 w-4" />
         </Button>
         <Button variant="outline" className="rounded-full border-gray-700 bg-transparent text-white hover:bg-gray-800">
-          <Play className="mr-2 h-4 w-4 fill-violet-500 text-violet-500" /> Смотреть обзор
+          <Play className="mr-2 h-4 w-4 fill-blue-500 text-blue-500" /> Смотреть обзор
         </Button>
       </div>
 

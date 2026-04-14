@@ -86,7 +86,7 @@ export function Header() {
             </Button>
             <Button
               variant="outline"
-              className="rounded-full border-violet-500 text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 bg-transparent"
+              className="rounded-full border-blue-500 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 bg-transparent"
               onClick={() => setRegisterOpen(true)}
             >
               Зарегистрироваться
