@@ -79,6 +79,31 @@ export default function Referral() {
         </div>
       </section>
 
+      {/* Преимущества */}
+      <section className="px-6 py-16 bg-[#0d0d0d]">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12">Преимущества программы</h2>
+          <div className="grid md:grid-cols-3 gap-5">
+            {[
+              { icon: "Zap", title: "Пассивный доход", desc: "Зарабатывайте на каждом платеже приглашённых — без дополнительных усилий" },
+              { icon: "Shield", title: "Прозрачная аналитика", desc: "Отслеживайте рефералов, начисления и выплаты в реальном времени" },
+              { icon: "Crown", title: "Пятиуровневая система", desc: "Растите от «Друга» до «Адвоката бренда» — на высших уровнях доход и со второй линии" },
+              { icon: "Star", title: "Бонусы за активность", desc: "10 токенов за регистрацию реферала и 20 бонусов за его первый объект" },
+              { icon: "BadgeCheck", title: "Статус и признание", desc: "Значок амбассадора, VIP-поддержка и ранний доступ к новым функциям" },
+              { icon: "Wallet", title: "Удобный вывод", desc: "Выводите заработанные средства удобным способом от уровня Бизнес-партнёр" },
+            ].map((item, i) => (
+              <div key={i} className="bg-[#111827] border border-[#1e2a3a] rounded-2xl p-6 flex flex-col gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20">
+                  <Icon name={item.icon} className="h-5 w-5 text-blue-400" />
+                </div>
+                <h3 className="text-base font-semibold text-white">{item.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 5 уровней */}
       <section className="px-6 py-16 bg-[#0d0d0d]">
         <div className="max-w-5xl mx-auto">
