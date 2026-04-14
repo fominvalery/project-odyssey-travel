@@ -11,7 +11,7 @@ export default function Index() {
       <PartnersSection />
       <FeaturesSection />
       <footer className="py-8 text-center text-sm text-gray-400">
-        От безопасных платежей до синхронизации счетов —{" "}
+        От поиска объекта до закрытия сделки —{" "}
         <span className="font-medium text-white">всё работает в одном месте.</span>
       </footer>
     </main>
