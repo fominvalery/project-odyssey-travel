@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Header } from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
+import { RegisterModal } from "@/components/RegisterModal"
 
 const levels = [
   {
@@ -51,8 +52,14 @@ const steps = [
 export default function Referral() {
   const [refs, setRefs] = useState(5)
   const [plan, setPlan] = useState(9900)
+  const [registerOpen, setRegisterOpen] = useState(false)
+  const calcRef = useRef<HTMLElement>(null)
 
   const income = Math.round(refs * plan * 0.15)
+
+  function scrollToCalc() {
+    calcRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -76,11 +83,18 @@ export default function Referral() {
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <Button className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-base font-medium">
+          <Button
+            onClick={() => setRegisterOpen(true)}
+            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-base font-medium"
+          >
             Стать партнёром
             <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
           </Button>
-          <Button variant="outline" className="rounded-full border-[#262626] bg-[#141414] text-white hover:bg-[#1f1f1f] px-8 py-3 text-base font-medium">
+          <Button
+            onClick={scrollToCalc}
+            variant="outline"
+            className="rounded-full border-[#262626] bg-[#141414] text-white hover:bg-[#1f1f1f] px-8 py-3 text-base font-medium"
+          >
             Рассчитать доход
             <Icon name="Calculator" className="h-4 w-4 ml-2" />
           </Button>
@@ -94,11 +108,9 @@ export default function Referral() {
         <div className="grid md:grid-cols-4 gap-5">
           {steps.map((s, i) => (
             <div key={i} className="relative bg-[#111827] border border-[#1e2a3a] rounded-2xl p-6 flex flex-col gap-4">
-              {/* Номер шага */}
               <div className="absolute -top-3.5 left-5 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold shadow-lg">
                 {i + 1}
               </div>
-              {/* Иконка */}
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600/20 mt-2">
                 <Icon name={s.icon} className="h-6 w-6 text-blue-400" />
               </div>
@@ -142,7 +154,6 @@ export default function Referral() {
           <div className="flex flex-col gap-4">
             {levels.map((l, i) => (
               <div key={i} className={`${l.bg} border border-[#1e2a3a] rounded-2xl flex flex-col md:flex-row overflow-hidden`}>
-                {/* Левая часть */}
                 <div className="flex flex-col items-center justify-center gap-2 px-8 py-6 min-w-[180px]">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-full ${l.iconBg}`}>
                     <Icon name={l.icon} className={`h-6 w-6 ${l.iconColor}`} />
@@ -150,8 +161,6 @@ export default function Referral() {
                   <div className="text-lg font-bold text-white mt-1">{l.name}</div>
                   <div className="text-xs text-gray-400">{l.refs}</div>
                 </div>
-
-                {/* Правая часть */}
                 <div className="flex flex-1 items-center justify-between px-8 py-6 border-t md:border-t-0 md:border-l border-[#1e2a3a] gap-6">
                   <div className="flex flex-col gap-3">
                     <div className="text-sm font-medium text-gray-300">
@@ -179,49 +188,74 @@ export default function Referral() {
       </section>
 
       {/* Калькулятор */}
-      <section className="px-6 py-16 max-w-3xl mx-auto">
-        <div className="bg-[#141414] border border-[#262626] rounded-2xl p-8">
-          <h2 className="text-2xl font-bold mb-2 text-center">Рассчитайте ваш доход</h2>
-          <p className="text-gray-400 text-sm text-center mb-8">Примерный расчёт на уровне «Партнёр» (15%)</p>
+      <section ref={calcRef} className="px-6 py-16 bg-[#0d0d0d]">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-[#141414] border border-[#262626] rounded-2xl p-8">
+            <h2 className="text-2xl font-bold mb-2 text-center">Рассчитайте ваш доход</h2>
+            <p className="text-gray-400 text-sm text-center mb-8">Примерный расчёт на уровне «Партнёр» (15%)</p>
 
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-400">Количество рефералов</span>
-                <span className="text-white font-semibold">{refs} чел.</span>
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-400">Количество рефералов</span>
+                  <span className="text-white font-semibold">{refs} чел.</span>
+                </div>
+                <input
+                  type="range" min={1} max={50} value={refs}
+                  onChange={(e) => setRefs(Number(e.target.value))}
+                  className="w-full accent-violet-500"
+                />
               </div>
-              <input
-                type="range" min={1} max={50} value={refs}
-                onChange={(e) => setRefs(Number(e.target.value))}
-                className="w-full accent-violet-500"
-              />
-            </div>
 
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-400">Средний тариф реферала</span>
-                <span className="text-white font-semibold">{plan.toLocaleString()} ₽/мес</span>
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-400">Средний тариф реферала</span>
+                  <span className="text-white font-semibold">{plan.toLocaleString()} ₽/мес</span>
+                </div>
+                <input
+                  type="range" min={4900} max={24900} step={5000} value={plan}
+                  onChange={(e) => setPlan(Number(e.target.value))}
+                  className="w-full accent-violet-500"
+                />
               </div>
-              <input
-                type="range" min={4900} max={24900} step={5000} value={plan}
-                onChange={(e) => setPlan(Number(e.target.value))}
-                className="w-full accent-violet-500"
-              />
+
+              <div className="bg-[#0f0f0f] border border-violet-500/20 rounded-xl p-6 text-center">
+                <div className="text-sm text-gray-400 mb-1">Ваш ежемесячный доход</div>
+                <div className="text-4xl font-bold text-violet-400">{income.toLocaleString()} ₽</div>
+                <div className="text-xs text-gray-600 mt-2">в месяц при 15% комиссии</div>
+              </div>
             </div>
 
-            <div className="bg-[#0f0f0f] border border-violet-500/20 rounded-xl p-6 text-center">
-              <div className="text-sm text-gray-400 mb-1">Ваш ежемесячный доход</div>
-              <div className="text-4xl font-bold text-violet-400">{income.toLocaleString()} ₽</div>
-              <div className="text-xs text-gray-600 mt-2">в месяц при 15% комиссии</div>
-            </div>
+            <Button
+              onClick={() => setRegisterOpen(true)}
+              className="w-full mt-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+            >
+              Стать партнёром
+              <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
+            </Button>
           </div>
-
-          <Button className="w-full mt-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white py-3">
-            Стать партнёром
-            <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
-          </Button>
         </div>
       </section>
+
+      {/* CTA-блок внизу */}
+      <section className="px-6 py-20 flex flex-col items-center text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600/10 border border-blue-500/20 mb-6">
+          <Icon name="Rocket" className="h-8 w-8 text-blue-400" />
+        </div>
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Начните зарабатывать сегодня</h2>
+        <p className="text-gray-400 text-lg max-w-md mb-8 leading-relaxed">
+          Зарегистрируйтесь, получите реферальную ссылку и делитесь ею с коллегами.
+        </p>
+        <Button
+          onClick={() => setRegisterOpen(true)}
+          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 text-base font-medium"
+        >
+          Стать партнёром
+          <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
+        </Button>
+      </section>
+
+      <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="green" />
     </div>
   )
 }
