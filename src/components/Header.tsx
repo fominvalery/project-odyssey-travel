@@ -24,7 +24,7 @@ export function Header() {
 
   return (
     <>
-      <header className="flex items-center justify-between px-8 py-4">
+      <header className="flex items-center justify-between px-8 py-1">
         <button onClick={() => navigate("/")} className="flex items-center gap-2">
           <img
             src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/fbfe03a6-b3a5-4923-96cf-fd151000e5ba.jpg"
