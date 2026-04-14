@@ -12,7 +12,7 @@ const tools = [
   {
     title: "CRM и аналитика команды",
     desc: "Иерархия сотрудников, воронка лидов и метрики эффективности каждого агента.",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/c1bf69d1-b826-4f96-b482-5c98c39526dd.png",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/8c86b764-594d-4470-a7a9-1429a2d77326.jpg",
   },
   {
     title: "Мгновенные лендинги",
