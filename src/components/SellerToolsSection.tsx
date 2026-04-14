@@ -7,7 +7,7 @@ const tools = [
   {
     title: "Комната сделки",
     desc: "Пошаговое ведение сделки от бронирования до закрытия с контролем документов.",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/30c0e023-517d-4ecb-b000-2830046b3c82.png",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/a8c94cee-c110-4186-b8bb-da1f6a92e543.jpg",
   },
   {
     title: "CRM и аналитика команды",
