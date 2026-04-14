@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
 
-type Section = "dashboard" | "objects" | "crm" | "profile"
+type Section = "dashboard" | "objects" | "crm" | "referral" | "profile"
 
 const PLAN_LABELS: Record<string, string> = {
   green: "FREE",
@@ -61,6 +61,7 @@ export default function Dashboard() {
     { id: "dashboard", label: "Дашборд", icon: "LayoutDashboard" },
     { id: "objects", label: "Объекты", icon: "Building2" },
     { id: "crm", label: "CRM", icon: "Users" },
+    { id: "referral", label: "Рефералы", icon: "Gift" },
     { id: "profile", label: "Профиль", icon: "User" },
   ] as const
 
@@ -275,6 +276,119 @@ export default function Dashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Рефералы */}
+        {section === "referral" && (
+          <div className="p-6 md:p-8 max-w-4xl">
+            <h1 className="text-2xl font-bold mb-1">Партнёрская программа</h1>
+            <p className="text-gray-400 text-sm mb-6">Приглашайте друзей и получайте бонусы за каждую регистрацию и активацию.</p>
+
+            {/* Текущий уровень */}
+            <div className="rounded-2xl border border-red-500/30 bg-gradient-to-r from-red-950/60 to-[#1a0a0a] p-5 mb-6 flex items-start gap-4">
+              <div className="w-11 h-11 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
+                <Icon name="Award" className="h-6 w-6 text-red-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 flex-wrap mb-1">
+                  <span className="font-bold text-white text-lg">Друг</span>
+                  <span className="text-xs bg-blue-600 text-white px-2.5 py-0.5 rounded-full font-medium">Уровень 1</span>
+                </div>
+                <p className="text-sm text-gray-300">Комиссия: 5% от платежей рефералов</p>
+                <p className="text-xs text-gray-500 mt-0.5">Вывод: <span className="text-red-400">Недоступен</span></p>
+              </div>
+            </div>
+
+            {/* Уровни */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+              {[
+                { name: "Друг", refs: "1–2 реф.", percent: "5%", withdrawal: false, active: true },
+                { name: "Партнёр", refs: "3–9 реф.", percent: "7%", withdrawal: false, active: false },
+                { name: "Бизнес", refs: "10–29 реф.", percent: "7%", withdrawal: true, active: false },
+                { name: "Амбассадор", refs: "30–99 реф.", percent: "10%", withdrawal: true, active: false },
+                { name: "Адвокат", refs: "100+ реф.", percent: "10%", extra: "+2% L2", withdrawal: true, active: false },
+              ].map((lvl) => (
+                <div key={lvl.name} className={`rounded-xl p-4 text-center border ${lvl.active ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"}`}>
+                  <p className={`text-xs font-semibold mb-1 ${lvl.active ? "text-blue-400" : "text-gray-400"}`}>{lvl.name}</p>
+                  <p className="text-xs text-gray-500 mb-2">{lvl.refs}</p>
+                  <p className={`text-xl font-bold ${lvl.active ? "text-white" : "text-gray-300"}`}>{lvl.percent}</p>
+                  {lvl.extra && <p className="text-xs text-violet-400">{lvl.extra}</p>}
+                  {lvl.withdrawal && <p className="text-xs text-emerald-400 mt-1">Вывод ✓</p>}
+                </div>
+              ))}
+            </div>
+
+            {/* Реферальная ссылка */}
+            <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 mb-6">
+              <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">Ваша реферальная ссылка</p>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 bg-[#0a0a0a] border border-[#1f1f1f] rounded-xl px-4 py-2.5 text-sm text-gray-300 font-mono truncate">
+                  {`${window.location.origin}/?ref=${user.id?.slice(0, 8) ?? "xxxxxxxx"}`}
+                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(`${window.location.origin}/?ref=${user.id?.slice(0, 8) ?? "xxxxxxxx"}`)}
+                  className="w-10 h-10 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center hover:bg-blue-600 transition-colors shrink-0"
+                >
+                  <Icon name="Copy" className="h-4 w-4 text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            {/* Статистика */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {[
+                { icon: "MousePointerClick", label: "Переходов", value: "0" },
+                { icon: "Eye", label: "За 7 дней", value: "0" },
+                { icon: "UserPlus", label: "Регистраций", value: "0" },
+                { icon: "TrendingUp", label: "Конверсия", value: "0%" },
+              ].map((s) => (
+                <div key={s.label} className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-4 text-center">
+                  <Icon name={s.icon as "Eye"} className="h-5 w-5 text-blue-400 mx-auto mb-2" />
+                  <p className="text-xl font-bold">{s.value}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Баланс */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {[
+                { icon: "DollarSign", label: "Доступно к выводу", sub: "Всего заработано: 0 ₽", value: "0 ₽", highlight: true },
+                { icon: "Gift", label: "Бонусный баланс", sub: "Только для трат внутри платформы", value: "0" },
+                { icon: "Layers", label: "Линия 1 (5%)", sub: "0 начислений", value: "0 ₽" },
+                { icon: "Layers", label: "Линия 2 (2%)", sub: "0 начислений", value: "0 ₽" },
+              ].map((s) => (
+                <div key={s.label} className={`rounded-2xl p-4 border ${s.highlight ? "bg-blue-950/40 border-blue-500/20" : "bg-[#111111] border-[#1f1f1f]"}`}>
+                  <Icon name={s.icon as "Gift"} className={`h-5 w-5 mb-2 ${s.highlight ? "text-blue-400" : "text-gray-500"}`} />
+                  <p className="text-2xl font-bold">{s.value}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{s.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Как это работает */}
+            <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Icon name="Lightbulb" className="h-4 w-4 text-blue-400" /> Как это работает
+              </h2>
+              <div className="flex flex-col gap-3">
+                {[
+                  "Поделитесь своей реферальной ссылкой с друзьями.",
+                  "Друг регистрируется — получает 10 приветственных бонусов.",
+                  "Друг создаёт свой первый объект — вам начисляется 20 бонусов.",
+                  "Получайте от 5% до 10% от платежей рефералов (в зависимости от уровня)",
+                  "На уровне 5 «Адвокат бренда» — дополнительно 2% от платежей рефералов ваших рефералов (2-я линия)",
+                  "Выводите деньги (с уровня 3) или конвертируйте в AI-кредиты",
+                ].map((step, i) => (
+                  <div key={i} className="flex items-start gap-3 text-sm text-gray-300">
+                    <span className="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
+                    {step}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
