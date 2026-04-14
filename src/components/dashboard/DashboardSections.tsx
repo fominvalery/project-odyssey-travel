@@ -137,24 +137,37 @@ export function DashboardReferral({ userId }: ReferralProps) {
 
 // --- Profile ---
 
+type UserStatus = "resident" | "broker" | "investor" | "buyer" | "owner" | "agency"
+
+const STATUS_OPTIONS: { value: UserStatus; label: string; icon: string; desc: string }[] = [
+  { value: "resident",  label: "Резидент",       icon: "Home",       desc: "По умолчанию" },
+  { value: "broker",    label: "Брокер (Агент)",  icon: "Briefcase",  desc: "Профессиональный агент" },
+  { value: "agency",    label: "Агентство",       icon: "Building2",  desc: "Агентство недвижимости" },
+  { value: "investor",  label: "Инвестор",        icon: "TrendingUp", desc: "Инвестиции в недвижимость" },
+  { value: "buyer",     label: "Покупатель",      icon: "ShoppingBag",desc: "Ищу объект для покупки" },
+  { value: "owner",     label: "Собственник",     icon: "Key",        desc: "Владею объектами" },
+]
+
 interface ProfileProps {
-  user: { name: string; email: string; plan: string; avatar: string | null }
+  user: { name: string; email: string; plan: string; avatar: string | null; status: string }
   initials: string
   form: { name: string; phone: string; company: string }
   setForm: React.Dispatch<React.SetStateAction<{ name: string; phone: string; company: string }>>
   saved: boolean
   onSave: (e: React.FormEvent) => void
   onAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onStatusChange: (status: UserStatus) => void
 }
 
-export function DashboardProfile({ user, initials, form, setForm, saved, onSave, onAvatarChange }: ProfileProps) {
+export function DashboardProfile({ user, initials, form, setForm, saved, onSave, onAvatarChange, onStatusChange }: ProfileProps) {
   const fileRef = useRef<HTMLInputElement>(null)
 
   return (
-    <div className="p-6 md:p-8 max-w-xl">
+    <div className="p-6 md:p-8 max-w-5xl">
       <h1 className="text-2xl font-bold mb-6">Профиль</h1>
 
-      <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-6 flex items-center gap-5 mb-5">
+      {/* Аватар + имя */}
+      <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 flex items-center gap-5 mb-5">
         <div className="relative">
           <Avatar className="h-16 w-16 cursor-pointer" onClick={() => fileRef.current?.click()}>
             {user.avatar ? <AvatarImage src={user.avatar} /> : null}
@@ -178,32 +191,67 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-6">
-        <h2 className="font-semibold mb-5">Личные данные</h2>
-        <form onSubmit={onSave} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-gray-400">ФИО</Label>
-            <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
+      {/* Двухколоночный блок */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Личные данные */}
+        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-6">
+          <h2 className="font-semibold mb-5">Личные данные</h2>
+          <form onSubmit={onSave} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-400">ФИО</Label>
+              <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-400">Телефон</Label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-400">Компания</Label>
+              <Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
+                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-400">Email</Label>
+              <Input value={user.email} disabled className="bg-[#0a0a0a] border-[#1f1f1f] text-gray-600 cursor-not-allowed" />
+            </div>
+            <Button type="submit" className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
+              {saved ? <span className="flex items-center gap-2"><Icon name="CheckCircle" className="h-4 w-4" />Сохранено</span> : "Сохранить"}
+            </Button>
+          </form>
+        </div>
+
+        {/* Статус на платформе */}
+        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-6">
+          <h2 className="font-semibold mb-1">Статус на платформе</h2>
+          <p className="text-xs text-gray-500 mb-4">Определяет ваши возможности и отображение в системе</p>
+          <div className="flex flex-col gap-2">
+            {STATUS_OPTIONS.map((opt) => {
+              const active = user.status === opt.value
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => onStatusChange(opt.value)}
+                  className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                    active
+                      ? "border-blue-500/50 bg-blue-500/10"
+                      : "border-[#1f1f1f] bg-[#0f0f0f] hover:border-[#2a2a2a]"
+                  }`}
+                >
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg shrink-0 ${active ? "bg-blue-500/20" : "bg-[#1a1a1a]"}`}>
+                    <Icon name={opt.icon as "Home"} className={`h-4 w-4 ${active ? "text-blue-400" : "text-gray-500"}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium ${active ? "text-white" : "text-gray-400"}`}>{opt.label}</p>
+                    <p className="text-xs text-gray-600">{opt.desc}</p>
+                  </div>
+                  {active && <Icon name="CheckCircle" className="h-4 w-4 text-blue-400 shrink-0" />}
+                </button>
+              )
+            })}
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-gray-400">Телефон</Label>
-            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-gray-400">Компания</Label>
-            <Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
-              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-gray-400">Email</Label>
-            <Input value={user.email} disabled className="bg-[#0a0a0a] border-[#1f1f1f] text-gray-600 cursor-not-allowed" />
-          </div>
-          <Button type="submit" className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
-            {saved ? <span className="flex items-center gap-2"><Icon name="CheckCircle" className="h-4 w-4" />Сохранено</span> : "Сохранить"}
-          </Button>
-        </form>
+        </div>
       </div>
     </div>
   )

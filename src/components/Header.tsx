@@ -65,13 +65,6 @@ export function Header() {
                 <Icon name="LayoutDashboard" className="h-4 w-4 text-blue-400" />
                 Личный кабинет
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigate("/profile")}
-                className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] focus:bg-[#1f1f1f]"
-              >
-                <Icon name="User" className="h-4 w-4 text-gray-400" />
-                Мой профиль
-              </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[#262626]" />
               <DropdownMenuItem
                 onClick={logout}

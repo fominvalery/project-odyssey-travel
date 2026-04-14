@@ -89,6 +89,7 @@ export default function Dashboard() {
             saved={saved}
             onSave={handleSave}
             onAvatarChange={handleAvatarChange}
+            onStatusChange={(status) => updateProfile({ status })}
           />
         )}
       </main>
