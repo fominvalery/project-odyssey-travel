@@ -4,11 +4,41 @@ import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 
 const levels = [
-  { level: 1, name: "Старт", percent: 10, desc: "Бонус за каждый платёж вашего реферала" },
-  { level: 2, name: "Партнёр", percent: 15, desc: "Повышенный процент при 5+ активных рефералах" },
-  { level: 3, name: "Эксперт", percent: 20, desc: "Доступ ко второй линии рефералов" },
-  { level: 4, name: "Профи", percent: 25, desc: "Пассивный доход со второй линии" },
-  { level: 5, name: "Элита", percent: 30, desc: "Максимальный процент + персональный менеджер" },
+  {
+    name: "Друг", refs: "1–2 рефералов",
+    cashback1: "5%", cashback2: null,
+    icon: "UserPlus", bg: "bg-[#0f1a2e]", iconColor: "text-blue-400", iconBg: "bg-blue-500/20",
+    perks: ["Реферальная ссылка", "Бонус 10 токенов за регистрацию", "20 бонусов за первый объект реферала"],
+    badge: { label: "Копилка бонусов", color: "bg-[#1a2a3a] text-blue-300 border border-blue-500/30" },
+  },
+  {
+    name: "Партнёр", refs: "3–9 рефералов",
+    cashback1: "7%", cashback2: null,
+    icon: "Users", bg: "bg-[#0f1f18]", iconColor: "text-emerald-400", iconBg: "bg-emerald-500/20",
+    perks: ["Повышенный кэшбэк 7%", "Приоритетная поддержка", "Доступ к закрытому Telegram-чату"],
+    badge: { label: "Копилка бонусов", color: "bg-[#1a2a3a] text-blue-300 border border-blue-500/30" },
+  },
+  {
+    name: "Бизнес-партнёр", refs: "10–29 рефералов",
+    cashback1: "7%", cashback2: null,
+    icon: "Target", bg: "bg-[#1a0f2e]", iconColor: "text-violet-400", iconBg: "bg-violet-500/20",
+    perks: ["Вывод средств открыт", "Персональный менеджер", "Со-брендинг материалы"],
+    badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
+  },
+  {
+    name: "Амбассадор", refs: "30–99 рефералов",
+    cashback1: "10%", cashback2: null,
+    icon: "Award", bg: "bg-[#1f1800]", iconColor: "text-amber-400", iconBg: "bg-amber-500/20",
+    perks: ["Кэшбэк 10%", "Значок амбассадора в профиле", "Ранний доступ к новым функциям"],
+    badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
+  },
+  {
+    name: "Адвокат бренда", refs: "100+ рефералов",
+    cashback1: "10%", cashback2: "2%",
+    icon: "Gem", bg: "bg-[#1f0a0a]", iconColor: "text-rose-400", iconBg: "bg-rose-500/20",
+    perks: ["10% с 1-й линии + 2% со 2-й", "VIP-статус и эксклюзивные условия", "Участие в развитии продукта"],
+    badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
+  },
 ]
 
 const steps = [
@@ -105,17 +135,43 @@ export default function Referral() {
       </section>
 
       {/* 5 уровней */}
-      <section className="px-6 py-16 bg-[#0d0d0d]">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">5 уровней роста</h2>
-          <p className="text-gray-400 text-center mb-12">Чем больше партнёров — тем выше ваш процент</p>
-          <div className="grid md:grid-cols-5 gap-4">
-            {levels.map((l) => (
-              <div key={l.level} className="bg-[#141414] border border-[#262626] rounded-2xl p-5 flex flex-col gap-2 hover:border-violet-500/40 transition-colors">
-                <div className="text-xs text-gray-500 font-medium">Уровень {l.level}</div>
-                <div className="text-2xl font-bold text-violet-400">{l.percent}%</div>
-                <div className="text-sm font-semibold text-white">{l.name}</div>
-                <div className="text-xs text-gray-500 leading-relaxed">{l.desc}</div>
+      <section className="px-6 py-16">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-3">5 уровней роста</h2>
+          <p className="text-gray-400 text-center mb-12">Чем больше рефералов — тем выше ваш статус, процент и привилегии</p>
+          <div className="flex flex-col gap-4">
+            {levels.map((l, i) => (
+              <div key={i} className={`${l.bg} border border-[#1e2a3a] rounded-2xl flex flex-col md:flex-row overflow-hidden`}>
+                {/* Левая часть */}
+                <div className="flex flex-col items-center justify-center gap-2 px-8 py-6 min-w-[180px]">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${l.iconBg}`}>
+                    <Icon name={l.icon} className={`h-6 w-6 ${l.iconColor}`} />
+                  </div>
+                  <div className="text-lg font-bold text-white mt-1">{l.name}</div>
+                  <div className="text-xs text-gray-400">{l.refs}</div>
+                </div>
+
+                {/* Правая часть */}
+                <div className="flex flex-1 items-center justify-between px-8 py-6 border-t md:border-t-0 md:border-l border-[#1e2a3a] gap-6">
+                  <div className="flex flex-col gap-3">
+                    <div className="text-sm font-medium text-gray-300">
+                      Кэшбэк 1-я линия: <span className="text-blue-400 font-bold">{l.cashback1}</span>
+                      {l.cashback2 && <> &nbsp; 2-я линия: <span className="text-blue-400 font-bold">{l.cashback2}</span></>}
+                    </div>
+                    <ul className="flex flex-col gap-1.5">
+                      {l.perks.map((p, j) => (
+                        <li key={j} className="flex items-center gap-2 text-sm text-gray-300">
+                          <Icon name="Check" className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className={`hidden md:flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium whitespace-nowrap ${l.badge.color}`}>
+                    <Icon name="Wallet" className="h-3.5 w-3.5" />
+                    {l.badge.label}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
