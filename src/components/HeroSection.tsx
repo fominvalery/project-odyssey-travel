@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 
 export function HeroSection() {
   return (
-    <section className="flex flex-col items-center justify-center px-4 pt-0 pb-6 text-center">
+    <section className="flex flex-col items-center justify-center px-4 pt-8 pb-6 text-center">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] py-2 text-sm px-2">
         <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-400">НОВИНКА</span>
         <span className="text-gray-300">Недвижимость с торгов — эксклюзивные объекты</span>
