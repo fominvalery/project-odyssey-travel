@@ -26,10 +26,11 @@ export function Header() {
     <>
       <header className="flex items-center justify-between px-8 py-4">
         <button onClick={() => navigate("/")} className="flex items-center gap-2">
-          <EstateProLogo />
-          <span className="text-lg font-semibold text-white">
-            Кабинет-24
-          </span>
+          <img
+            src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/fbfe03a6-b3a5-4923-96cf-fd151000e5ba.jpg"
+            alt="Кабинет-24"
+            className="h-9 w-auto object-contain"
+          />
         </button>
 
         <nav className="hidden md:flex items-center gap-8">
@@ -100,12 +101,3 @@ export function Header() {
   )
 }
 
-function EstateProLogo() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M3 10.5L12 3L21 10.5V21H15V15H9V21H3V10.5Z" fill="#8B5CF6" />
-      <path d="M3 10.5L12 3L21 10.5V21H15V15H9V21H3V10.5Z" fill="#8B5CF6" opacity="0.3" />
-      <rect x="9" y="15" width="6" height="6" fill="#8B5CF6" opacity="0.6" />
-    </svg>
-  )
-}
