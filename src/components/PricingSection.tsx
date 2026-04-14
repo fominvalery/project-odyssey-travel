@@ -1,5 +1,7 @@
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
+import { RegisterModal } from "@/components/RegisterModal"
 
 const plans = [
   {
@@ -80,6 +82,14 @@ const constructorFeatures = [
 ]
 
 export function PricingSection() {
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState("green")
+
+  function openModal(planId: string) {
+    setSelectedPlan(planId)
+    setModalOpen(true)
+  }
+
   return (
     <section className="px-4 md:px-8 py-16 max-w-6xl mx-auto">
       <div className="text-center mb-12">
@@ -94,7 +104,6 @@ export function PricingSection() {
         </p>
       </div>
 
-      {/* Основные тарифы */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {plans.map((plan) => (
           <div
@@ -130,7 +139,10 @@ export function PricingSection() {
               ))}
             </ul>
 
-            <Button className={`w-full rounded-full ${plan.buttonClass}`}>
+            <Button
+              className={`w-full rounded-full ${plan.buttonClass}`}
+              onClick={() => openModal(plan.id)}
+            >
               {plan.id === "green" ? "Начать бесплатно" : "Подключить"}
             </Button>
           </div>
@@ -167,11 +179,16 @@ export function PricingSection() {
 
         <div className="mt-6 pt-6 border-t border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">Стоимость рассчитывается индивидуально — от 4 900 ₽/мес</p>
-          <Button className="rounded-full border border-violet-500 text-violet-400 bg-transparent hover:bg-violet-500/10 px-6">
+          <Button
+            className="rounded-full border border-violet-500 text-violet-400 bg-transparent hover:bg-violet-500/10 px-6"
+            onClick={() => openModal("constructor")}
+          >
             Собрать тариф
           </Button>
         </div>
       </div>
+
+      <RegisterModal open={modalOpen} onOpenChange={setModalOpen} planId={selectedPlan} />
     </section>
   )
 }

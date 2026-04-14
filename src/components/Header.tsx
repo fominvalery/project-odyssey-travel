@@ -1,41 +1,50 @@
+import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { RegisterModal } from "@/components/RegisterModal"
 
 export function Header() {
+  const [modalOpen, setModalOpen] = useState(false)
+
   return (
-    <header className="flex items-center justify-between px-8 py-4">
-      <div className="flex items-center gap-2">
-        <EstateProLogo />
-        <span className="text-lg font-semibold text-white">
-          EstatePro<sup className="text-xs">™</sup>
-        </span>
-      </div>
+    <>
+      <header className="flex items-center justify-between px-8 py-4">
+        <div className="flex items-center gap-2">
+          <EstateProLogo />
+          <span className="text-lg font-semibold text-white">
+            EstatePro<sup className="text-xs">™</sup>
+          </span>
+        </div>
 
-      <nav className="hidden md:flex items-center gap-8">
-        <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-          Объекты
-        </a>
-        <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-1">
-          Направления <ChevronDown className="h-4 w-4" />
-        </a>
-        <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-          Маркетплейс
-        </a>
-        <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-          Тарифы
-        </a>
-        <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-          Контакты
-        </a>
-      </nav>
+        <nav className="hidden md:flex items-center gap-8">
+          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
+            Объекты
+          </a>
+          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-1">
+            Направления <ChevronDown className="h-4 w-4" />
+          </a>
+          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
+            Маркетплейс
+          </a>
+          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
+            Тарифы
+          </a>
+          <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
+            Контакты
+          </a>
+        </nav>
 
-      <Button
-        variant="outline"
-        className="rounded-full border-violet-500 text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 bg-transparent"
-      >
-        Зарегистрироваться
-      </Button>
-    </header>
+        <Button
+          variant="outline"
+          className="rounded-full border-violet-500 text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 bg-transparent"
+          onClick={() => setModalOpen(true)}
+        >
+          Зарегистрироваться
+        </Button>
+      </header>
+
+      <RegisterModal open={modalOpen} onOpenChange={setModalOpen} planId="green" />
+    </>
   )
 }
 
