@@ -59,6 +59,13 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-[#141414] border-[#262626] text-white w-48">
               <DropdownMenuItem
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] focus:bg-[#1f1f1f]"
+              >
+                <Icon name="LayoutDashboard" className="h-4 w-4 text-blue-400" />
+                Личный кабинет
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onClick={() => navigate("/profile")}
                 className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] focus:bg-[#1f1f1f]"
               >
