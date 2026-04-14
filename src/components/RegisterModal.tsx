@@ -1,9 +1,11 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
+import { useAuthContext } from "@/context/AuthContext"
 
 const planLabels: Record<string, { label: string; color: string; price: string }> = {
   green: { label: "Грин", color: "text-green-400 bg-green-500/10 border-green-500/20", price: "Бесплатно" },
@@ -19,6 +21,8 @@ interface RegisterModalProps {
 }
 
 export function RegisterModal({ open, onOpenChange, planId = "green" }: RegisterModalProps) {
+  const { register } = useAuthContext()
+  const navigate = useNavigate()
   const [step, setStep] = useState<"form" | "success">("form")
   const [form, setForm] = useState({ name: "", company: "", phone: "", email: "" })
 
@@ -26,12 +30,18 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    register({ ...form, plan: planId })
     setStep("success")
   }
 
   function handleClose(v: boolean) {
     onOpenChange(v)
     if (!v) setTimeout(() => setStep("form"), 300)
+  }
+
+  function goToProfile() {
+    handleClose(false)
+    navigate("/profile")
   }
 
   return (
@@ -116,16 +126,22 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/10 border border-violet-500/20 mb-2">
               <Icon name="CheckCircle" className="h-8 w-8 text-violet-400" />
             </div>
-            <h3 className="text-xl font-bold text-white">Заявка принята!</h3>
+            <h3 className="text-xl font-bold text-white">Добро пожаловать!</h3>
             <p className="text-sm text-gray-400 max-w-xs">
-              Мы свяжемся с вами в ближайшее время и поможем начать работу на тарифе <span className={`font-semibold`}>{plan.label}</span>.
+              Аккаунт создан на тарифе <span className="font-semibold text-white">{plan.label}</span>. Перейдите в профиль, чтобы заполнить данные.
             </p>
             <Button
-              onClick={() => handleClose(false)}
-              className="rounded-full bg-[#252525] hover:bg-[#2f2f2f] text-white mt-2 px-8"
+              onClick={goToProfile}
+              className="rounded-full bg-violet-600 hover:bg-violet-700 text-white mt-2 px-8"
             >
-              Закрыть
+              Перейти в профиль
             </Button>
+            <button
+              onClick={() => handleClose(false)}
+              className="text-xs text-gray-500 hover:text-gray-400"
+            >
+              Позже
+            </button>
           </div>
         )}
       </DialogContent>
