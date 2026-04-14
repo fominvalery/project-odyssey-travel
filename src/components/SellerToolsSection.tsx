@@ -17,7 +17,7 @@ const tools = [
   {
     title: "Мгновенные лендинги",
     desc: "Каждый объект получает конверсионный лендинг, оптимизированный для мобильных.",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/c1bf69d1-b826-4f96-b482-5c98c39526dd.png",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/cd0282eb-d6ec-43e9-b52b-fa18849c4035.jpg",
   },
 ]
 
