@@ -2,7 +2,7 @@ const tools = [
   {
     title: "Генерация видео с ИИ",
     desc: "Превратите фото объектов в кинематографичные видеотуры одним кликом.",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/30c0e023-517d-4ecb-b000-2830046b3c82.png",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/aa009eb5-54e2-45f4-84d5-5217493ca447.jpg",
   },
   {
     title: "Комната сделки",
