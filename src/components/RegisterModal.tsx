@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
+import func2url from "../../backend/func2url.json"
 
 const planLabels: Record<string, { label: string; color: string; price: string }> = {
   green: { label: "Грин", color: "text-green-400 bg-green-500/10 border-green-500/20", price: "Бесплатно" },
@@ -23,20 +24,55 @@ interface RegisterModalProps {
 export function RegisterModal({ open, onOpenChange, planId = "green" }: RegisterModalProps) {
   const { register } = useAuthContext()
   const navigate = useNavigate()
-  const [step, setStep] = useState<"form" | "success">("form")
+  const [step, setStep] = useState<"form" | "loading" | "success" | "error">("form")
+  const [errorMsg, setErrorMsg] = useState("")
   const [form, setForm] = useState({ name: "", company: "", phone: "", email: "" })
 
   const plan = planLabels[planId] ?? planLabels.green
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    register({ ...form, plan: planId })
-    setStep("success")
+    setStep("loading")
+    setErrorMsg("")
+
+    try {
+      const res = await fetch(func2url.register, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, plan: planId }),
+      })
+
+      const raw = await res.text()
+      const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+
+      if (res.status === 409) {
+        setErrorMsg("Пользователь с таким email уже зарегистрирован")
+        setStep("form")
+        return
+      }
+      if (!res.ok) {
+        setErrorMsg(data?.error || "Ошибка регистрации, попробуйте снова")
+        setStep("form")
+        return
+      }
+
+      register({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        plan: data.plan,
+      })
+      setStep("success")
+    } catch {
+      setErrorMsg("Ошибка сети, попробуйте снова")
+      setStep("form")
+    }
   }
 
   function handleClose(v: boolean) {
     onOpenChange(v)
-    if (!v) setTimeout(() => setStep("form"), 300)
+    if (!v) setTimeout(() => { setStep("form"); setErrorMsg("") }, 300)
   }
 
   function goToProfile() {
@@ -47,7 +83,24 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="bg-[#141414] border border-[#262626] text-white max-w-md p-0 overflow-hidden">
-        {step === "form" ? (
+        {step === "success" ? (
+          <div className="flex flex-col items-center justify-center px-6 py-12 text-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/10 border border-violet-500/20 mb-2">
+              <Icon name="CheckCircle" className="h-8 w-8 text-violet-400" />
+            </div>
+            <h3 className="text-xl font-bold text-white">Добро пожаловать!</h3>
+            <p className="text-sm text-gray-400 max-w-xs">
+              Аккаунт создан на тарифе <span className="font-semibold text-white">{plan.label}</span>.
+              Письмо с подтверждением отправлено на вашу почту.
+            </p>
+            <Button onClick={goToProfile} className="rounded-full bg-violet-600 hover:bg-violet-700 text-white mt-2 px-8">
+              Перейти в профиль
+            </Button>
+            <button onClick={() => handleClose(false)} className="text-xs text-gray-500 hover:text-gray-400">
+              Позже
+            </button>
+          </div>
+        ) : (
           <>
             <DialogHeader className="px-6 pt-6 pb-0">
               <div className="flex items-center gap-3 mb-4">
@@ -59,7 +112,6 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
                   <p className="text-xs text-gray-500">Создайте аккаунт EstatePro</p>
                 </div>
               </div>
-
               <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium w-fit mb-2 ${plan.color}`}>
                 <Icon name="CheckCircle" className="h-3.5 w-3.5" />
                 Тариф: {plan.label} — {plan.price}
@@ -112,8 +164,23 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
                 />
               </div>
 
-              <Button type="submit" className="w-full rounded-full bg-violet-600 hover:bg-violet-700 text-white mt-2">
-                Зарегистрироваться
+              {errorMsg && (
+                <p className="text-xs text-red-400 flex items-center gap-1.5">
+                  <Icon name="AlertCircle" className="h-3.5 w-3.5 flex-shrink-0" />
+                  {errorMsg}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                disabled={step === "loading"}
+                className="w-full rounded-full bg-violet-600 hover:bg-violet-700 text-white mt-2 disabled:opacity-60"
+              >
+                {step === "loading" ? (
+                  <span className="flex items-center gap-2">
+                    <Icon name="Loader2" className="h-4 w-4 animate-spin" /> Регистрация...
+                  </span>
+                ) : "Зарегистрироваться"}
               </Button>
 
               <p className="text-center text-xs text-gray-600">
@@ -121,28 +188,6 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
               </p>
             </form>
           </>
-        ) : (
-          <div className="flex flex-col items-center justify-center px-6 py-12 text-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/10 border border-violet-500/20 mb-2">
-              <Icon name="CheckCircle" className="h-8 w-8 text-violet-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white">Добро пожаловать!</h3>
-            <p className="text-sm text-gray-400 max-w-xs">
-              Аккаунт создан на тарифе <span className="font-semibold text-white">{plan.label}</span>. Перейдите в профиль, чтобы заполнить данные.
-            </p>
-            <Button
-              onClick={goToProfile}
-              className="rounded-full bg-violet-600 hover:bg-violet-700 text-white mt-2 px-8"
-            >
-              Перейти в профиль
-            </Button>
-            <button
-              onClick={() => handleClose(false)}
-              className="text-xs text-gray-500 hover:text-gray-400"
-            >
-              Позже
-            </button>
-          </div>
         )}
       </DialogContent>
     </Dialog>
