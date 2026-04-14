@@ -29,7 +29,7 @@ export function Header() {
           <img
             src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/755cddaf-8b60-449f-82bf-27fe2c9dab48.jpg"
             alt="Кабинет-24"
-            className="h-40 w-auto object-contain"
+            className="h-28 w-auto object-contain"
           />
         </button>
 
