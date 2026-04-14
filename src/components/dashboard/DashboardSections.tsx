@@ -12,55 +12,8 @@ const PLAN_LABELS: Record<string, string> = {
   constructor: "Конструктор",
 }
 
-const MOCK_LEADS = [
-  { id: 1, name: "Алексей Петров", phone: "+7 900 123-45-67", object: "Торговое помещение", source: "AI-чат", status: "Новый", date: "10 апр" },
-  { id: 2, name: "Ирина Смирнова", phone: "+7 911 987-65-43", object: "Офисный блок", source: "Лендинг", status: "Активный", date: "12 апр" },
-  { id: 3, name: "Дмитрий Козлов", phone: "+7 925 555-00-11", object: "Торговое помещение", source: "Маркетплейс", status: "Закрыт", date: "14 апр" },
-]
-
 // --- CRM ---
-
-export function DashboardCRM() {
-  return (
-    <div className="p-6 md:p-8 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">CRM — Лиды</h1>
-        <div className="flex gap-2">
-          {["Все", "Новый", "Активный", "Закрыт"].map((s) => (
-            <button key={s} className="text-xs px-3 py-1.5 rounded-full bg-[#1a1a1a] text-gray-400 hover:text-white transition-colors">
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        {MOCK_LEADS.map((lead) => (
-          <div key={lead.id} className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center shrink-0 text-sm font-bold text-gray-400">
-                {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-              </div>
-              <div>
-                <p className="font-semibold">{lead.name}</p>
-                <p className="text-xs text-gray-400">{lead.phone}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{lead.object} · {lead.source}</p>
-              </div>
-            </div>
-            <div className="text-right shrink-0">
-              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                lead.status === "Новый" ? "bg-blue-500/10 text-blue-400" :
-                lead.status === "Активный" ? "bg-emerald-500/10 text-emerald-400" :
-                "bg-gray-500/10 text-gray-400"
-              }`}>{lead.status}</span>
-              <p className="text-xs text-gray-600 mt-1">{lead.date}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+export { DashboardCRM } from "./DashboardCRM"
 
 // --- Referral ---
 
