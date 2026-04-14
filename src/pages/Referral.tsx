@@ -12,9 +12,10 @@ const levels = [
 ]
 
 const steps = [
-  { icon: "UserPlus", title: "Зарегистрируйтесь", desc: "Создайте аккаунт и получите персональную реферальную ссылку" },
-  { icon: "Share2", title: "Приглашайте коллег", desc: "Делитесь ссылкой с профессионалами рынка недвижимости" },
-  { icon: "TrendingUp", title: "Получайте доход", desc: "Зарабатывайте процент с каждого платежа приглашённых вами партнёров" },
+  { icon: "UserPlus", title: "Зарегистрируйтесь", desc: "Создайте бесплатный аккаунт и получите уникальную реферальную ссылку" },
+  { icon: "Gift", title: "Приглашайте", desc: "Делитесь ссылкой с коллегами и партнёрами из сферы недвижимости" },
+  { icon: "TrendingUp", title: "Получайте доход", desc: "Зарабатывайте процент с каждого платежа привлечённых пользователей" },
+  { icon: "Rocket", title: "Растите в статусе", desc: "Больше рефералов — выше уровень, процент и привилегии" },
 ]
 
 export default function Referral() {
@@ -58,17 +59,20 @@ export default function Referral() {
 
       {/* Как это работает */}
       <section className="px-6 py-16 max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12">Как это работает</h2>
-        <div className="grid md:grid-cols-3 gap-6">
+        <h2 className="text-3xl font-bold text-center mb-2">Как это работает</h2>
+        <p className="text-gray-400 text-center mb-12">Четыре простых шага к партнёрскому доходу</p>
+        <div className="grid md:grid-cols-4 gap-5">
           {steps.map((s, i) => (
-            <div key={i} className="bg-[#141414] border border-[#262626] rounded-2xl p-6 flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/10 border border-blue-500/20">
-                  <Icon name={s.icon} className="h-5 w-5 text-blue-400" />
-                </div>
-                <span className="text-xs text-gray-500 font-medium">Шаг {i + 1}</span>
+            <div key={i} className="relative bg-[#111827] border border-[#1e2a3a] rounded-2xl p-6 flex flex-col gap-4">
+              {/* Номер шага */}
+              <div className="absolute -top-3.5 left-5 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold shadow-lg">
+                {i + 1}
               </div>
-              <h3 className="text-lg font-semibold">{s.title}</h3>
+              {/* Иконка */}
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600/20 mt-2">
+                <Icon name={s.icon} className="h-6 w-6 text-blue-400" />
+              </div>
+              <h3 className="text-base font-semibold text-white">{s.title}</h3>
               <p className="text-sm text-gray-400 leading-relaxed">{s.desc}</p>
             </div>
           ))}
