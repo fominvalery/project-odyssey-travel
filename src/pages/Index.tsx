@@ -6,7 +6,7 @@ import { PricingSection } from "@/components/PricingSection"
 
 export default function Index() {
   return (
-    <main className="min-h-screen bg-[#0a0a0a]">
+    <main className="min-h-screen bg-[#0a0a0a] pt-0 mt-0">
       <Header />
       <HeroSection />
       <PartnersSection />
