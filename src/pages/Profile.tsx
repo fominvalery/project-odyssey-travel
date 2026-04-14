@@ -11,6 +11,7 @@ import type { UserProfile } from "@/hooks/useAuth"
 const STATUS_OPTIONS: { value: UserProfile["status"]; label: string; icon: string; desc: string }[] = [
   { value: "resident", label: "Резидент", icon: "Home", desc: "По умолчанию" },
   { value: "broker", label: "Брокер (Агент)", icon: "Briefcase", desc: "Профессиональный агент" },
+  { value: "agency", label: "Агентство", icon: "Building2", desc: "Агентство недвижимости" },
   { value: "investor", label: "Инвестор", icon: "TrendingUp", desc: "Инвестиции в недвижимость" },
   { value: "buyer", label: "Покупатель", icon: "ShoppingBag", desc: "Ищу объект для покупки" },
   { value: "owner", label: "Собственник", icon: "Key", desc: "Владею объектами" },
