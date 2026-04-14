@@ -1,0 +1,10 @@
+{
+  "tests": [
+    {
+      "name": "GET marketplace objects",
+      "method": "GET",
+      "path": "/?marketplace=true",
+      "expectedStatus": 200
+    }
+  ]
+}

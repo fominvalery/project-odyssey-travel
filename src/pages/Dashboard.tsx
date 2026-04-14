@@ -206,7 +206,8 @@ export default function Dashboard() {
             {showWizard && (
               <AddObjectWizard
                 onClose={() => setShowWizard(false)}
-                onSave={(obj) => { setObjects(prev => [obj, ...prev]); setShowWizard(false) }}
+                onSave={(obj) => { setObjects(prev => [obj, ...prev]) }}
+                userId={user.id}
               />
             )}
             <div className="p-6 md:p-8 max-w-5xl">

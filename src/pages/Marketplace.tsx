@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Header } from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
+import func2url from "../../backend/func2url.json"
 
 const CATEGORIES = ["Все", "Коммерческая", "Инвестиционная", "С торгов", "Новостройки", "Редевелопмент"]
 
@@ -81,11 +82,45 @@ const OBJECTS = [
   },
 ]
 
+const CAT_MAP: Record<string, string> = {
+  investment: "Инвестиционная",
+  commercial: "Коммерческая",
+  auction: "С торгов",
+  newbuild: "Новостройки",
+}
+
 export default function Marketplace() {
   const [activeCategory, setActiveCategory] = useState("Все")
   const [search, setSearch] = useState("")
+  const [dbObjects, setDbObjects] = useState<typeof OBJECTS>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = OBJECTS.filter((o) => {
+  useEffect(() => {
+    fetch(`${func2url.objects}?marketplace=true`)
+      .then(r => r.json())
+      .then(data => {
+        const parsed = JSON.parse(typeof data === "string" ? data : JSON.stringify(data))
+        const arr = (parsed.objects || []).map((o: Record<string, string>) => ({
+          id: o.id,
+          title: o.title,
+          type: CAT_MAP[o.category] ?? o.type,
+          city: o.city,
+          price: o.price ? `${o.price} ₽` : "—",
+          area: o.area ? `${o.area} м²` : "—",
+          yield: o.yield_percent || "—",
+          img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
+          badge: null,
+          badgeColor: "",
+        }))
+        setDbObjects(arr)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const allObjects = [...dbObjects, ...OBJECTS]
+
+  const filtered = allObjects.filter((o) => {
     const matchCat = activeCategory === "Все" || o.type === activeCategory
     const matchSearch = o.title.toLowerCase().includes(search.toLowerCase()) || o.city.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
@@ -129,7 +164,11 @@ export default function Marketplace() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-20">
+            <Icon name="Loader2" className="h-8 w-8 text-blue-400 animate-spin mx-auto" />
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-gray-500">Объекты не найдены</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

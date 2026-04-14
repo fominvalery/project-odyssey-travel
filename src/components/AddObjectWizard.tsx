@@ -3,14 +3,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
+import func2url from "../../backend/func2url.json"
 
 interface AddObjectWizardProps {
   onClose: () => void
   onSave: (obj: ObjectData) => void
+  userId?: string
 }
 
 export interface ObjectData {
-  id: number
+  id: number | string
   type: string
   title: string
   city: string
@@ -21,6 +23,7 @@ export interface ObjectData {
   description: string
   status: string
   category: string
+  published?: boolean
 }
 
 const STEPS = ["Основное", "Характеристики", "Лендинг", "Презентация", "Публикация"]
@@ -72,9 +75,11 @@ function getCategoryFields(catId: string) {
   return []
 }
 
-export function AddObjectWizard({ onClose, onSave }: AddObjectWizardProps) {
+export function AddObjectWizard({ onClose, onSave, userId }: AddObjectWizardProps) {
   const [step, setStep] = useState(0)
   const [category, setCategory] = useState("")
+  const [publishToMarket, setPublishToMarket] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     title: "", city: "", address: "", price: "", area: "",
     description: "", landing_title: "", landing_cta: "",
@@ -96,22 +101,56 @@ export function AddObjectWizard({ onClose, onSave }: AddObjectWizardProps) {
     setStep(s => Math.max(s - 1, 0))
   }
 
-  function handlePublish() {
+  async function handlePublish() {
     const cat = CATEGORIES.find(c => c.id === category)
-    onSave({
-      id: Date.now(),
-      type: cat?.label ?? category,
+    const objData = {
+      user_id: userId ?? "",
       category,
+      type: cat?.label ?? category,
       title: form.title || "Новый объект",
       city: form.city,
       address: form.address,
       price: form.price,
       area: form.area,
-      yield: categoryFields["yield"] ?? "",
+      yield_percent: categoryFields["yield"] ?? "",
       description: form.description,
+      extra_fields: categoryFields,
       status: "Активен",
-    })
-    onClose()
+      published: publishToMarket,
+    }
+
+    setSaving(true)
+    try {
+      const res = await fetch(func2url.objects, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(objData),
+      })
+      const data = await res.json()
+      onSave({
+        id: data.id ?? Date.now(),
+        ...objData,
+        yield: objData.yield_percent,
+      })
+    } catch {
+      onSave({
+        id: Date.now(),
+        type: cat?.label ?? category,
+        category,
+        title: form.title || "Новый объект",
+        city: form.city,
+        address: form.address,
+        price: form.price,
+        area: form.area,
+        yield: categoryFields["yield"] ?? "",
+        description: form.description,
+        status: "Активен",
+        published: publishToMarket,
+      })
+    } finally {
+      setSaving(false)
+      onClose()
+    }
   }
 
   return (
@@ -316,18 +355,35 @@ export function AddObjectWizard({ onClose, onSave }: AddObjectWizardProps) {
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <div className="flex-1 rounded-2xl bg-[#111] border border-[#1f1f1f] p-4 text-center cursor-pointer hover:border-blue-500/40 transition-colors">
-                <Icon name="Eye" className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-                <p className="text-sm font-medium">Опубликовать</p>
-                <p className="text-xs text-gray-500 mt-0.5">Виден всем</p>
+            {/* Маркетплейс */}
+            <button
+              onClick={() => setPublishToMarket(v => !v)}
+              className={`w-full rounded-2xl border p-5 flex items-center gap-4 transition-all text-left ${
+                publishToMarket
+                  ? "border-blue-500 bg-blue-500/10"
+                  : "border-[#1f1f1f] bg-[#111]"
+              }`}
+            >
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${publishToMarket ? "bg-blue-500/20" : "bg-[#1a1a1a]"}`}>
+                <Icon name="Store" className={`h-6 w-6 ${publishToMarket ? "text-blue-400" : "text-gray-500"}`} />
               </div>
-              <div className="flex-1 rounded-2xl bg-[#111] border border-[#1f1f1f] p-4 text-center cursor-pointer hover:border-gray-500/40 transition-colors">
-                <Icon name="FileText" className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm font-medium">Черновик</p>
-                <p className="text-xs text-gray-500 mt-0.5">Сохранить без публикации</p>
+              <div className="flex-1">
+                <p className="font-semibold text-white">Разместить на маркетплейсе</p>
+                <p className="text-xs text-gray-400 mt-0.5">Объект появится в публичном каталоге и будет доступен покупателям</p>
               </div>
-            </div>
+              <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 shrink-0 ${publishToMarket ? "bg-blue-600" : "bg-[#2a2a2a]"}`}>
+                <div className={`w-5 h-5 rounded-full bg-white transition-transform ${publishToMarket ? "translate-x-4" : "translate-x-0"}`} />
+              </div>
+            </button>
+
+            {publishToMarket && (
+              <div className="rounded-2xl bg-emerald-900/20 border border-emerald-500/20 p-4 flex gap-3">
+                <Icon name="CheckCircle" className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-300">
+                  Объект будет виден в разделе <span className="text-white font-medium">«{CATEGORIES.find(c => c.id === category)?.label ?? category}»</span> на маркетплейсе сразу после сохранения.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -349,8 +405,11 @@ export function AddObjectWizard({ onClose, onSave }: AddObjectWizardProps) {
               Далее <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
             </Button>
           ) : (
-            <Button onClick={handlePublish} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
-              <Icon name="Rocket" className="h-4 w-4 mr-2" /> Опубликовать объект
+            <Button onClick={handlePublish} disabled={saving} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60">
+              {saving
+                ? <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Сохранение...</>
+                : <><Icon name="Rocket" className="h-4 w-4 mr-2" />Опубликовать объект</>
+              }
             </Button>
           )}
         </div>
