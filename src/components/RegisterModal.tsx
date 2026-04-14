@@ -109,7 +109,7 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
                 </div>
                 <div>
                   <DialogTitle className="text-lg font-bold text-white">Регистрация</DialogTitle>
-                  <p className="text-xs text-gray-500">Создайте аккаунт EstatePro</p>
+                  <p className="text-xs text-gray-500">Создайте аккаунт Кабинет-24</p>
                 </div>
               </div>
               <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium w-fit mb-2 ${plan.color}`}>

@@ -74,10 +74,10 @@ def handler(event, context) -> dict:
         html_body = f"""
         <div style="font-family: Arial, sans-serif; background: #0a0a0a; color: #ffffff; padding: 40px; max-width: 560px; margin: 0 auto; border-radius: 16px;">
           <div style="margin-bottom: 32px;">
-            <span style="font-size: 24px; font-weight: bold;">EstatePro™</span>
+            <span style="font-size: 24px; font-weight: bold;">Кабинет-24</span>
           </div>
           <h1 style="font-size: 22px; margin-bottom: 8px; color: #ffffff;">Добро пожаловать, {name}!</h1>
-          <p style="color: #9ca3af; margin-bottom: 24px;">Ваш аккаунт на платформе EstatePro успешно создан.</p>
+          <p style="color: #9ca3af; margin-bottom: 24px;">Ваш аккаунт на платформе Кабинет-24 успешно создан.</p>
 
           <div style="background: #141414; border: 1px solid #262626; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
             <p style="color: #9ca3af; font-size: 13px; margin: 0 0 4px;">Тариф</p>
@@ -91,15 +91,15 @@ def handler(event, context) -> dict:
           </div>
 
           <p style="color: #6b7280; font-size: 12px; text-align: center;">
-            Если вы не регистрировались на EstatePro, просто проигнорируйте это письмо.
+            Если вы не регистрировались на Кабинет-24, просто проигнорируйте это письмо.
           </p>
         </div>
         """
 
         payload = json.dumps({
-            'from': 'EstatePro <onboarding@resend.dev>',
+            'from': 'Кабинет-24 <onboarding@resend.dev>',
             'to': [email],
-            'subject': f'Добро пожаловать в EstatePro, {name}!',
+            'subject': f'Добро пожаловать в Кабинет-24, {name}!',
             'html': html_body,
         }).encode('utf-8')
 

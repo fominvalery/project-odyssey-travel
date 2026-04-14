@@ -39,7 +39,7 @@ export function LoginModal({ open, onOpenChange, onRegister }: LoginModalProps) 
             </div>
             <div>
               <DialogTitle className="text-lg font-bold text-white">Войти в платформу</DialogTitle>
-              <p className="text-xs text-gray-500">EstatePro — ваш личный кабинет</p>
+              <p className="text-xs text-gray-500">Кабинет-24 — ваш личный кабинет</p>
             </div>
           </div>
         </DialogHeader>

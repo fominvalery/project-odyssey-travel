@@ -77,7 +77,7 @@ export default function Profile() {
             <path d="M3 10.5L12 3L21 10.5V21H15V15H9V21H3V10.5Z" fill="#8B5CF6" />
             <rect x="9" y="15" width="6" height="6" fill="#8B5CF6" opacity="0.6" />
           </svg>
-          <span className="text-sm font-semibold">EstatePro™</span>
+          <span className="text-sm font-semibold">Кабинет-24</span>
         </div>
         <Button
           variant="ghost"

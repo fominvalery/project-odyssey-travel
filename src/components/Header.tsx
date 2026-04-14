@@ -29,7 +29,7 @@ export function Header() {
         <button onClick={() => navigate("/")} className="flex items-center gap-2">
           <EstateProLogo />
           <span className="text-lg font-semibold text-white">
-            EstatePro<sup className="text-xs">™</sup>
+            Кабинет-24
           </span>
         </button>
 
