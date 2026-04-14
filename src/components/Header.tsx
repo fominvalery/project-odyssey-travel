@@ -54,7 +54,7 @@ export function Header() {
                   <AvatarFallback className="bg-violet-600 text-white text-xs font-bold">{initials}</AvatarFallback>
                 </Avatar>
                 <span className="text-sm text-white max-w-[120px] truncate">{user.name.split(" ")[0]}</span>
-                <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+                <Icon name="ChevronDown" className="h-3.5 w-3.5 text-gray-500" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-[#141414] border-[#262626] text-white w-48">
