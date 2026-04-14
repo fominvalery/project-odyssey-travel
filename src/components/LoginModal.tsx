@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,7 @@ interface LoginModalProps {
 
 export function LoginModal({ open, onOpenChange, onRegister }: LoginModalProps) {
   const { login } = useAuthContext()
+  const navigate = useNavigate()
   const [email, setEmail] = useState("")
   const [error, setError] = useState("")
 
@@ -24,6 +26,7 @@ export function LoginModal({ open, onOpenChange, onRegister }: LoginModalProps) 
     if (ok) {
       onOpenChange(false)
       setEmail("")
+      navigate("/dashboard")
     } else {
       setError("Аккаунт не найден. Проверьте email или зарегистрируйтесь.")
     }
@@ -64,7 +67,7 @@ export function LoginModal({ open, onOpenChange, onRegister }: LoginModalProps) 
             </p>
           )}
 
-          <Button type="submit" className="w-full rounded-full bg-violet-600 hover:bg-violet-700 text-white">
+          <Button type="submit" className="w-full rounded-full bg-blue-600 hover:bg-blue-700 text-white">
             Войти
           </Button>
 

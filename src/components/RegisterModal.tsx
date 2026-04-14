@@ -77,7 +77,7 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
 
   function goToProfile() {
     handleClose(false)
-    navigate("/profile")
+    navigate("/dashboard")
   }
 
   return (
@@ -93,8 +93,8 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
               Аккаунт создан на тарифе <span className="font-semibold text-white">{plan.label}</span>.
               Письмо с подтверждением отправлено на вашу почту.
             </p>
-            <Button onClick={goToProfile} className="rounded-full bg-violet-600 hover:bg-violet-700 text-white mt-2 px-8">
-              Перейти в профиль
+            <Button onClick={goToProfile} className="rounded-full bg-blue-600 hover:bg-blue-700 text-white mt-2 px-8">
+              Перейти в кабинет
             </Button>
             <button onClick={() => handleClose(false)} className="text-xs text-gray-500 hover:text-gray-400">
               Позже
