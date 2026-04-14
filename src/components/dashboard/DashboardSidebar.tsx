@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 
-type Section = "dashboard" | "objects" | "crm" | "referral" | "profile"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile"
 
 const PLAN_LABELS: Record<string, string> = {
   green: "FREE",
@@ -12,11 +12,12 @@ const PLAN_LABELS: Record<string, string> = {
 }
 
 const navItems = [
-  { id: "dashboard", label: "Дашборд", icon: "LayoutDashboard" },
-  { id: "objects", label: "Объекты", icon: "Building2" },
-  { id: "crm", label: "CRM", icon: "Users" },
-  { id: "referral", label: "Рефералы", icon: "Gift" },
-  { id: "profile", label: "Профиль", icon: "User" },
+  { id: "dashboard",  label: "Дашборд",   icon: "LayoutDashboard" },
+  { id: "objects",    label: "Объекты",   icon: "Building2" },
+  { id: "crm",        label: "CRM",       icon: "Users" },
+  { id: "analytics",  label: "Аналитика", icon: "BarChart2" },
+  { id: "referral",   label: "Рефералы",  icon: "Gift" },
+  { id: "profile",    label: "Профиль",   icon: "User" },
 ] as const
 
 interface Props {

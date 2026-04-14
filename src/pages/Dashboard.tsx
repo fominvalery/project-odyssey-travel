@@ -6,8 +6,9 @@ import DashboardSidebar from "@/components/dashboard/DashboardSidebar"
 import DashboardHome from "@/components/dashboard/DashboardHome"
 import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import { DashboardCRM, DashboardReferral, DashboardProfile } from "@/components/dashboard/DashboardSections"
+import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
 
-type Section = "dashboard" | "objects" | "crm" | "referral" | "profile"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile"
 
 const INITIAL_OBJECTS: ObjectData[] = []
 
@@ -77,6 +78,10 @@ export default function Dashboard() {
         )}
 
         {section === "crm" && <DashboardCRM />}
+
+        {section === "analytics" && (
+          <DashboardAnalytics objects={objects} />
+        )}
 
         {section === "referral" && <DashboardReferral userId={user.id} />}
 
