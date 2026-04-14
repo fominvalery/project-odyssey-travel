@@ -95,10 +95,10 @@ export default function Marketplace() {
     <main className="min-h-screen bg-[#0a0a0a]">
       <Header />
 
-      <section className="px-4 md:px-8 pt-8 pb-16 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Маркетплейс объектов</h1>
-          <p className="text-gray-400">Коммерческая, инвестиционная недвижимость, торги и новостройки</p>
+      <section className="px-4 md:px-8 pt-16 pb-16 max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">Каталог недвижимости</h1>
+          <p className="text-gray-400 text-lg">Коммерческая, инвестиционная недвижимость, торги и новостройки</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -120,7 +120,7 @@ export default function Marketplace() {
               onClick={() => setActiveCategory(cat)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 activeCategory === cat
-                  ? "bg-violet-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#262626]"
               }`}
             >
@@ -136,7 +136,7 @@ export default function Marketplace() {
             {filtered.map((obj) => (
               <div
                 key={obj.id}
-                className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden hover:border-violet-500/40 transition-colors group"
+                className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden hover:border-blue-500/40 transition-colors group"
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
@@ -172,7 +172,7 @@ export default function Marketplace() {
                     )}
                   </div>
 
-                  <Button className="w-full rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm">
+                  <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm">
                     Подробнее
                   </Button>
                 </div>
