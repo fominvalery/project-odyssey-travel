@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
+import { AddObjectWizard, type ObjectData } from "@/components/AddObjectWizard"
 
 type Section = "dashboard" | "objects" | "crm" | "referral" | "profile"
 
@@ -16,10 +17,7 @@ const PLAN_LABELS: Record<string, string> = {
   constructor: "Конструктор",
 }
 
-const MOCK_OBJECTS = [
-  { id: 1, title: "Торговое помещение на первой линии", city: "Москва, ЦАО", price: "18 500 000 ₽", area: "142 м²", status: "Активен", type: "Коммерческая" },
-  { id: 2, title: "Офисный блок в бизнес-центре B+", city: "Москва, СЗАО", price: "42 000 000 ₽", area: "310 м²", status: "На модерации", type: "Коммерческая" },
-]
+const INITIAL_OBJECTS: ObjectData[] = []
 
 const MOCK_LEADS = [
   { id: 1, name: "Алексей Петров", phone: "+7 900 123-45-67", object: "Торговое помещение", source: "AI-чат", status: "Новый", date: "10 апр" },
@@ -34,6 +32,11 @@ export default function Dashboard() {
   const [form, setForm] = useState({ name: user?.name ?? "", phone: user?.phone ?? "", company: user?.company ?? "" })
   const [saved, setSaved] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [objects, setObjects] = useState<ObjectData[]>(INITIAL_OBJECTS)
+  const [showWizard, setShowWizard] = useState(false)
+  const [catFilter, setCatFilter] = useState("Все")
+  const [statusFilter, setStatusFilter] = useState("Все")
+  const [objSearch, setObjSearch] = useState("")
 
   if (!user) {
     navigate("/")
@@ -141,7 +144,7 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
-                { label: "Объектов", value: "2", icon: "Building2", color: "text-blue-400" },
+                { label: "Объектов", value: String(objects.length), icon: "Building2", color: "text-blue-400" },
                 { label: "Лидов", value: "3", icon: "Users", color: "text-emerald-400" },
                 { label: "Просмотров", value: "124", icon: "Eye", color: "text-violet-400" },
                 { label: "Сделок", value: "0", icon: "Handshake", color: "text-amber-400" },
@@ -199,44 +202,133 @@ export default function Dashboard() {
 
         {/* Объекты */}
         {section === "objects" && (
-          <div className="p-6 md:p-8 max-w-4xl">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold">Мои объекты</h1>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
-                <Icon name="Plus" className="h-4 w-4 mr-2" /> Добавить объект
-              </Button>
-            </div>
+          <>
+            {showWizard && (
+              <AddObjectWizard
+                onClose={() => setShowWizard(false)}
+                onSave={(obj) => { setObjects(prev => [obj, ...prev]); setShowWizard(false) }}
+              />
+            )}
+            <div className="p-6 md:p-8 max-w-5xl">
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold">Объекты</h1>
+                <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
+                  <Icon name="Plus" className="h-4 w-4 mr-2" /> Добавить объект
+                </Button>
+              </div>
 
-            <div className="flex flex-col gap-4">
-              {MOCK_OBJECTS.map((obj) => (
-                <div key={obj.id} className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-900/40 flex items-center justify-center shrink-0">
-                      <Icon name="Building2" className="h-6 w-6 text-blue-400" />
-                    </div>
+              {/* Статистика */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                {[
+                  { icon: "Briefcase", label: "Объектов в работе", sub: "Активные лоты", value: objects.filter(o => o.status === "Активен").length, color: "text-blue-400" },
+                  { icon: "TrendingUp", label: "Инвест-портфель", sub: "Суммарная стоимость", value: "0 ₽", color: "text-emerald-400" },
+                  { icon: "Gavel", label: "Активные торги", sub: "Предстоящие аукционы", value: objects.filter(o => o.category === "auction").length, color: "text-amber-400" },
+                  { icon: "ClipboardList", label: "Заявки / Лиды", sub: "Входящие запросы", value: "0", color: "text-violet-400" },
+                ].map(s => (
+                  <div key={s.label} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-4 flex items-start justify-between">
                     <div>
-                      <p className="font-semibold">{obj.title}</p>
-                      <p className="text-sm text-gray-400">{obj.city} · {obj.area}</p>
+                      <p className="text-2xl font-bold mb-1">{s.value}</p>
+                      <p className="text-xs font-medium text-white">{s.label}</p>
+                      <p className="text-xs text-gray-500">{s.sub}</p>
                     </div>
+                    <Icon name={s.icon as "Briefcase"} className={`h-6 w-6 ${s.color} mt-1`} />
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-bold text-white">{obj.price}</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${obj.status === "Активен" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
-                      {obj.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <div className="mt-6 rounded-2xl border border-dashed border-[#2a2a2a] p-10 text-center">
-              <Icon name="Plus" className="h-8 w-8 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">Добавьте первый объект</p>
-              <Button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
-                Добавить объект
-              </Button>
+              {/* Фильтры по категории */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {["Все", "Инвестиции", "Коммерция", "Торги", "Новостройки"].map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setCatFilter(cat)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      catFilter === cat ? "bg-blue-600 text-white" : "bg-[#1a1a1a] text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {cat !== "Все" && <Icon name={
+                      cat === "Инвестиции" ? "TrendingUp" :
+                      cat === "Коммерция" ? "Building2" :
+                      cat === "Торги" ? "Gavel" : "Construction"
+                    } className="h-3 w-3" />}
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Фильтры по статусу + поиск */}
+              <div className="flex flex-wrap items-center gap-2 mb-6">
+                <div className="flex flex-wrap gap-2 flex-1">
+                  {["Все", "Активен", "Черновик", "Продан", "Ожидает аукциона"].map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setStatusFilter(st)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        statusFilter === st ? "bg-[#1f1f1f] text-white border border-[#333]" : "text-gray-500 hover:text-white"
+                      }`}
+                    >
+                      {st === "Активен" ? "✓ " : ""}{st}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative">
+                  <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
+                  <Input
+                    placeholder="Поиск по названию / городу..."
+                    value={objSearch}
+                    onChange={e => setObjSearch(e.target.value)}
+                    className="pl-8 h-8 text-xs bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600 w-52"
+                  />
+                </div>
+              </div>
+
+              {/* Список объектов */}
+              {(() => {
+                const filtered = objects.filter(o => {
+                  const matchCat = catFilter === "Все" || o.type === catFilter
+                  const matchSt = statusFilter === "Все" || o.status === statusFilter
+                  const matchSearch = !objSearch || o.title.toLowerCase().includes(objSearch.toLowerCase()) || o.city.toLowerCase().includes(objSearch.toLowerCase())
+                  return matchCat && matchSt && matchSearch
+                })
+                if (filtered.length === 0) return (
+                  <div className="rounded-2xl border border-[#1f1f1f] bg-[#111] py-20 text-center">
+                    <Icon name="Building2" className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+                    <p className="text-gray-400 font-medium">Объектов пока нет</p>
+                    <p className="text-gray-600 text-sm mt-1">Добавьте первый объект, чтобы начать работу</p>
+                    <Button onClick={() => setShowWizard(true)} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
+                      <Icon name="Plus" className="h-4 w-4 mr-2" /> Добавить объект
+                    </Button>
+                  </div>
+                )
+                return (
+                  <div className="flex flex-col gap-3">
+                    {filtered.map(obj => (
+                      <div key={obj.id} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5 flex items-center justify-between gap-4 hover:border-blue-500/30 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-xl bg-blue-900/30 flex items-center justify-center shrink-0">
+                            <Icon name="Building2" className="h-5 w-5 text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{obj.title}</p>
+                            <p className="text-xs text-gray-400">{obj.city}{obj.area ? ` · ${obj.area} м²` : ""}</p>
+                            <span className="text-xs text-blue-400">{obj.type}</span>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold">{obj.price ? `${obj.price} ₽` : "—"}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            obj.status === "Активен" ? "bg-emerald-500/10 text-emerald-400" :
+                            obj.status === "Черновик" ? "bg-gray-500/10 text-gray-400" :
+                            "bg-amber-500/10 text-amber-400"
+                          }`}>{obj.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
             </div>
-          </div>
+          </>
         )}
 
         {/* CRM */}
