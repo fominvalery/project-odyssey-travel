@@ -8,7 +8,7 @@ import Icon from "@/components/ui/icon"
 
 type FunnelStage = "Лид" | "Подбор" | "Показ" | "Переговоры" | "Сделка" | "Отказ"
 type DealType = "Покупка" | "Аренда"
-type PropertyCategory = "Инвестиции" | "Коммерция" | "Торги" | "Новостройки" | "Жилая"
+type PropertyCategory = "Инвестиции" | "Коммерция" | "Торги" | "Новостройки"
 
 interface Lead {
   id: number
@@ -38,7 +38,7 @@ const FUNNEL_STAGES: { stage: FunnelStage; color: string; bg: string; icon: stri
 ]
 
 const DEAL_TYPES: DealType[] = ["Покупка", "Аренда"]
-const PROPERTY_CATEGORIES: PropertyCategory[] = ["Жилая", "Коммерция", "Инвестиции", "Новостройки", "Торги"]
+const PROPERTY_CATEGORIES: PropertyCategory[] = ["Коммерция", "Инвестиции", "Новостройки", "Торги"]
 const SOURCES = ["Входящий звонок", "Сайт", "Маркетплейс", "AI-чат", "Реклама", "Рекомендация", "Другое"]
 
 const INITIAL_LEADS: Lead[] = [
