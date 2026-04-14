@@ -26,7 +26,8 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
   const navigate = useNavigate()
   const [step, setStep] = useState<"form" | "loading" | "success" | "error">("form")
   const [errorMsg, setErrorMsg] = useState("")
-  const [form, setForm] = useState({ name: "", company: "", phone: "", email: "" })
+  const [form, setForm] = useState({ name: "", company: "", phone: "", email: "", password: "" })
+  const [showPassword, setShowPassword] = useState(false)
 
   const plan = planLabels[planId] ?? planLabels.green
 
@@ -39,7 +40,7 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
       const res = await fetch(func2url.register, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, plan: planId }),
+        body: JSON.stringify({ ...form, plan: planId, password: form.password }),
       })
 
       const raw = await res.text()
@@ -91,7 +92,7 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
             <h3 className="text-xl font-bold text-white">Добро пожаловать!</h3>
             <p className="text-sm text-gray-400 max-w-xs">
               Аккаунт создан на тарифе <span className="font-semibold text-white">{plan.label}</span>.
-              Письмо с подтверждением отправлено на вашу почту.
+              Теперь вы можете войти в личный кабинет.
             </p>
             <Button onClick={goToProfile} className="rounded-full bg-blue-600 hover:bg-blue-700 text-white mt-2 px-8">
               Перейти в кабинет
@@ -162,6 +163,27 @@ export function RegisterModal({ open, onOpenChange, planId = "green" }: Register
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   className="bg-[#0f0f0f] border-[#262626] text-white placeholder-gray-600 focus:border-violet-500"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-400">Пароль</Label>
+                <div className="relative">
+                  <Input
+                    required
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Минимум 6 символов"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    className="bg-[#0f0f0f] border-[#262626] text-white placeholder-gray-600 focus:border-violet-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                  >
+                    <Icon name={showPassword ? "EyeOff" : "Eye"} className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               {errorMsg && (

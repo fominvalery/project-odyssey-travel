@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import func2url from "../../backend/func2url.json"
 
 export interface UserProfile {
   id: string
@@ -45,16 +46,35 @@ export function useAuth() {
     return newUser
   }
 
-  function login(email: string) {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const u: UserProfile = JSON.parse(stored)
-      if (u.email.toLowerCase() === email.toLowerCase()) {
-        setUser(u)
-        return true
+  async function login(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const res = await fetch((func2url as Record<string, string>).login, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      const raw = await res.text()
+      const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+      if (!res.ok) {
+        return { ok: false, error: data?.error || "Неверный email или пароль" }
       }
+      const profile: UserProfile = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || "",
+        company: data.company || "",
+        plan: data.plan || "green",
+        status: data.status || "resident",
+        avatar: data.avatar || null,
+        createdAt: new Date().toISOString(),
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+      setUser(profile)
+      return { ok: true }
+    } catch {
+      return { ok: false, error: "Ошибка сети, попробуйте снова" }
     }
-    return false
   }
 
   function updateProfile(updates: Partial<UserProfile>) {
@@ -65,6 +85,7 @@ export function useAuth() {
   }
 
   function logout() {
+    localStorage.removeItem(STORAGE_KEY)
     setUser(null)
   }
 

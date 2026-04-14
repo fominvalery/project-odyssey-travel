@@ -4,7 +4,7 @@ import { useAuth, UserProfile } from "@/hooks/useAuth"
 interface AuthContextType {
   user: UserProfile | null
   register: (data: { name: string; email: string; phone: string; company: string; plan: string }) => UserProfile
-  login: (email: string) => boolean
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>
   logout: () => void
   updateProfile: (updates: Partial<UserProfile>) => void
 }

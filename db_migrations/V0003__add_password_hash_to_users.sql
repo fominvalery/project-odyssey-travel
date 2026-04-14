@@ -1,0 +1,1 @@
+ALTER TABLE t_p32045231_project_odyssey_trav.users ADD COLUMN IF NOT EXISTS password_hash text NULL;

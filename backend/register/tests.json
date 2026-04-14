@@ -1,1 +1,18 @@
-{"tests": []}
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Missing password returns 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"name": "Test User", "email": "test@example.com", "phone": "+70000000000"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

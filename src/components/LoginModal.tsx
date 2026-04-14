@@ -17,18 +17,24 @@ export function LoginModal({ open, onOpenChange, onRegister }: LoginModalProps) 
   const { login } = useAuthContext()
   const navigate = useNavigate()
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    const ok = login(email)
-    if (ok) {
+    setLoading(true)
+    const result = await login(email, password)
+    setLoading(false)
+    if (result.ok) {
       onOpenChange(false)
       setEmail("")
+      setPassword("")
       navigate("/dashboard")
     } else {
-      setError("Аккаунт не найден. Проверьте email или зарегистрируйтесь.")
+      setError(result.error || "Неверный email или пароль")
     }
   }
 
@@ -60,6 +66,27 @@ export function LoginModal({ open, onOpenChange, onRegister }: LoginModalProps) 
             />
           </div>
 
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-400">Пароль</Label>
+            <div className="relative">
+              <Input
+                required
+                type={showPassword ? "text" : "password"}
+                placeholder="Ваш пароль"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError("") }}
+                className="bg-[#0f0f0f] border-[#262626] text-white placeholder-gray-600 focus:border-violet-500 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+              >
+                <Icon name={showPassword ? "EyeOff" : "Eye"} className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
           {error && (
             <p className="text-xs text-red-400 flex items-center gap-1.5">
               <Icon name="AlertCircle" className="h-3.5 w-3.5 flex-shrink-0" />
@@ -67,8 +94,12 @@ export function LoginModal({ open, onOpenChange, onRegister }: LoginModalProps) 
             </p>
           )}
 
-          <Button type="submit" className="w-full rounded-full bg-blue-600 hover:bg-blue-700 text-white">
-            Войти
+          <Button type="submit" disabled={loading} className="w-full rounded-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60">
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Icon name="Loader2" className="h-4 w-4 animate-spin" /> Вход...
+              </span>
+            ) : "Войти"}
           </Button>
 
           <div className="text-center">
