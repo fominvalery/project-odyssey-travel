@@ -1,7 +1,11 @@
+import { useState } from "react"
 import { ArrowUpRight, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { RegisterModal } from "@/components/RegisterModal"
 
 export function HeroSection() {
+  const [registerOpen, setRegisterOpen] = useState(false)
+
   return (
     <section className="flex flex-col items-center justify-center px-4 pt-8 pb-6 text-center">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] py-2 text-sm px-2">
@@ -19,13 +23,18 @@ export function HeroSection() {
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4">
-        <Button className="rounded-full bg-violet-600 px-6 hover:bg-violet-700 text-white">
+        <Button
+          onClick={() => setRegisterOpen(true)}
+          className="rounded-full bg-violet-600 px-6 hover:bg-violet-700 text-white"
+        >
           Зарегистрироваться бесплатно <ArrowUpRight className="ml-2 h-4 w-4" />
         </Button>
         <Button variant="outline" className="rounded-full border-gray-700 bg-transparent text-white hover:bg-gray-800">
           <Play className="mr-2 h-4 w-4 fill-violet-500 text-violet-500" /> Смотреть обзор
         </Button>
       </div>
+
+      <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="green" />
 
       <div className="mt-10 flex flex-wrap justify-center gap-6">
         {[
