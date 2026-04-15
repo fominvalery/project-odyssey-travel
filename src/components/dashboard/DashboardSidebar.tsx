@@ -58,6 +58,16 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
               {item.label}
             </button>
           ))}
+
+          <div className="my-1 border-t border-[#1f1f1f]" />
+
+          <button
+            onClick={() => navigate("/marketplace")}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
+          >
+            <Icon name="Store" className="h-4 w-4 shrink-0" />
+            Маркетплейс
+          </button>
         </nav>
 
         <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
