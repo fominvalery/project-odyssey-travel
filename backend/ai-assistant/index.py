@@ -1,6 +1,5 @@
 import json
 import os
-import uuid
 import requests
 
 SYSTEM_PROMPT_RU = """Ты — ИИ-помощник платформы Кабинет-24 (kabinet-24.ru) — платформы коммерческой недвижимости.
@@ -41,50 +40,33 @@ SYSTEM_PROMPT_RU = """Ты — ИИ-помощник платформы Каби
 Отвечай только на вопросы о платформе Кабинет-24. Отвечай кратко на русском языке."""
 
 
-def get_gigachat_token(auth_key: str) -> str:
-    response = requests.post(
-        "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-        headers={
-            "Authorization": f"Basic {auth_key}",
-            "RqUID": str(uuid.uuid4()),
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        data={"scope": "GIGACHAT_API_PERS"},
-        verify=False,
-        timeout=10
-    )
-    return response.json()["access_token"]
-
-
 def handler(event: dict, context) -> dict:
-    """ИИ-помощник платформы Кабинет-24 на базе GigaChat — отвечает на вопросы по функционалу платформы"""
-    
+    """ИИ-помощник платформы Кабинет-24 на базе Groq — отвечает на вопросы по функционалу платформы"""
+
     cors_headers = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, X-User-Id, X-Auth-Token",
         "Content-Type": "application/json"
     }
-    
+
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": cors_headers, "body": ""}
-    
+
     body = json.loads(event.get("body") or "{}")
     messages = body.get("messages", [])
-    
+
     if not messages:
         return {
             "statusCode": 400,
             "headers": cors_headers,
             "body": json.dumps({"error": "messages required"}, ensure_ascii=False)
         }
-    
-    auth_key = os.environ.get("GIGACHAT_AUTH_KEY", "")
-    
-    token = get_gigachat_token(auth_key)
-    
+
+    api_key = os.environ.get("GROQ_API_KEY", "")
+
     payload = {
-        "model": "GigaChat",
+        "model": "llama3-8b-8192",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT_RU},
             *messages
@@ -92,23 +74,22 @@ def handler(event: dict, context) -> dict:
         "max_tokens": 500,
         "temperature": 0.7
     }
-    
+
     response = requests.post(
-        "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
+        "https://api.groq.com/openai/v1/chat/completions",
         json=payload,
         headers={
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         },
-        verify=False,
         timeout=25
     )
-    
+
     result = response.json()
-    
+
     if "choices" not in result:
-        error_msg = str(result)
-        print(f"[ERROR] GigaChat error: {error_msg}")
+        error_msg = str(result.get("error", result))
+        print(f"[ERROR] Groq error: {error_msg}")
         return {
             "statusCode": 200,
             "headers": cors_headers,
@@ -116,9 +97,9 @@ def handler(event: dict, context) -> dict:
                 "reply": "Извини, ИИ-помощник временно недоступен. Попробуй позже или обратись в поддержку.",
             }, ensure_ascii=False)
         }
-    
+
     reply = result["choices"][0]["message"]["content"]
-    
+
     return {
         "statusCode": 200,
         "headers": cors_headers,
