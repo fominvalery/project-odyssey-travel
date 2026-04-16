@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import func2url from "../../../backend/func2url.json"
 import { type Lead, type Comment, type LeadFile, formatDateTime, formatSize } from "./leadCard.types"
+import { LeadMatches } from "./LeadMatches"
 
 interface LeadExpandedBodyProps {
   lead: Lead
@@ -206,6 +207,15 @@ export function LeadExpandedBody({ lead, ownerId, onDelete }: LeadExpandedBodyPr
             ))}
           </div>
         )}
+      </div>
+
+      {/* Автоподбор объектов */}
+      <div>
+        <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
+          <Icon name="Sparkles" className="h-3.5 w-3.5 text-violet-400" />
+          <span>Автоподбор объектов</span>
+        </p>
+        <LeadMatches leadId={lead.id} ownerId={ownerId} />
       </div>
 
       {/* Удаление */}

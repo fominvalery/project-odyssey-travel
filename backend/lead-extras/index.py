@@ -1,11 +1,13 @@
 """
-Дополнения карточки клиента: комментарии, задачи-планировщик, файлы-предложения.
-Маршруты через query-параметр ?kind=comments|tasks|files
+Дополнения карточки клиента: комментарии, задачи-планировщик, файлы-предложения, автоподбор объектов.
+Маршруты через query-параметр ?kind=comments|tasks|files|matches|overdue
 GET    ?kind=...&lead_id=&owner_id=  — список
 POST   ?kind=...                      — создать
-PUT    ?kind=...                      — обновить (для задач: отметить выполненной)
+PUT    ?kind=...                      — обновить
 DELETE ?kind=...&id=&owner_id=        — удалить
-Также: GET ?kind=overdue&owner_id=    — список lead_id с просроченными невыполненными задачами (красный значок)
+Также: GET ?kind=overdue&owner_id=    — список lead_id с просроченными задачами
+       GET ?kind=matches&lead_id=&owner_id=  — авто-подобранные объекты
+       POST ?kind=matches             — добавить объект в предложения / пометить просмотренным
 """
 import os
 import json
@@ -67,6 +69,33 @@ def file_row(r):
     }
 
 
+def match_row(r):
+    """
+    r: id, lead_id, owner_id, object_id, added_to_proposals, seen, created_at,
+       obj_title, obj_category, obj_type, obj_city, obj_price, obj_area, obj_status, obj_photos
+    """
+    return {
+        "id": str(r[0]),
+        "lead_id": str(r[1]),
+        "owner_id": str(r[2]),
+        "object_id": str(r[3]),
+        "added_to_proposals": bool(r[4]),
+        "seen": bool(r[5]),
+        "created_at": r[6].isoformat() if r[6] else "",
+        "object": {
+            "id": str(r[3]),
+            "title": r[7] or "",
+            "category": r[8] or "",
+            "type": r[9] or "",
+            "city": r[10] or "",
+            "price": r[11] or "",
+            "area": r[12] or "",
+            "status": r[13] or "",
+            "photos": list(r[14]) if r[14] else [],
+        },
+    }
+
+
 def upload_to_s3(lead_id: str, name: str, mime: str, data: bytes) -> str:
     s3 = boto3.client(
         "s3",
@@ -91,7 +120,7 @@ def handler(event: dict, context) -> dict:
     cur = conn.cursor()
 
     try:
-        # ---------- OVERDUE: lead_ids с просроченными задачами ----------
+        # ---------- OVERDUE ----------
         if method == "GET" and kind == "overdue":
             owner_id = params.get("owner_id")
             if not owner_id:
@@ -104,6 +133,141 @@ def handler(event: dict, context) -> dict:
             )
             ids = [str(r[0]) for r in cur.fetchall()]
             return resp(200, {"overdue_lead_ids": ids})
+
+        # ---------- MATCHES (автоподбор объектов) ----------
+        if kind == "matches":
+            if method == "GET":
+                lead_id = params.get("lead_id")
+                owner_id = params.get("owner_id")
+                if not lead_id or not owner_id:
+                    return resp(400, {"error": "lead_id and owner_id required"})
+
+                # 1. Получаем параметры лида (category/type/city через связанный объект)
+                cur.execute(
+                    f"""SELECT l.object_id, o.category, o.type, o.city
+                        FROM {schema}.leads l
+                        LEFT JOIN {schema}.objects o ON o.id = l.object_id
+                        WHERE l.id = %s AND l.owner_id = %s""",
+                    (lead_id, owner_id),
+                )
+                lead_row = cur.fetchone()
+                if not lead_row:
+                    return resp(404, {"error": "lead not found"})
+
+                orig_object_id = str(lead_row[0]) if lead_row[0] else None
+                category = lead_row[1] or ""
+                obj_type = lead_row[2] or ""
+                city = lead_row[3] or ""
+
+                # 2. Ищем похожие объекты того же владельца (опубликованные и активные)
+                #    Совпадение по category — обязательно, type и city — дополнительные баллы
+                #    Исключаем исходный объект лида
+                conditions = ["o.user_id = %s", "o.published = true", "o.status = 'Активен'"]
+                args = [owner_id]
+                if orig_object_id:
+                    conditions.append("o.id != %s")
+                    args.append(orig_object_id)
+                if category:
+                    conditions.append("o.category = %s")
+                    args.append(category)
+
+                where_clause = " AND ".join(conditions)
+                cur.execute(
+                    f"""SELECT o.id, o.title, o.category, o.type, o.city, o.price, o.area, o.status, o.photos,
+                               m.id AS match_id, m.added_to_proposals, m.seen, m.created_at AS match_created
+                        FROM {schema}.objects o
+                        LEFT JOIN {schema}.lead_matches m
+                            ON m.object_id = o.id AND m.lead_id = %s
+                        WHERE {where_clause}
+                        ORDER BY
+                            CASE WHEN o.type = %s THEN 0 ELSE 1 END,
+                            CASE WHEN o.city = %s THEN 0 ELSE 1 END,
+                            o.created_at DESC
+                        LIMIT 20""",
+                    [lead_id] + args + [obj_type, city],
+                )
+                rows = cur.fetchall()
+
+                matches = []
+                for r in rows:
+                    obj_id = str(r[0])
+                    match_id = str(r[9]) if r[9] else None
+                    # Если совпадения ещё нет в таблице — создаём
+                    if not match_id:
+                        cur.execute(
+                            f"""INSERT INTO {schema}.lead_matches (lead_id, owner_id, object_id)
+                                VALUES (%s, %s, %s)
+                                ON CONFLICT (lead_id, object_id) DO NOTHING
+                                RETURNING id, added_to_proposals, seen, created_at""",
+                            (lead_id, owner_id, obj_id),
+                        )
+                        ins = cur.fetchone()
+                        if ins:
+                            match_id = str(ins[0])
+                            added = bool(ins[1])
+                            seen = bool(ins[2])
+                            match_created = ins[3].isoformat() if ins[3] else ""
+                        else:
+                            added, seen, match_created = False, False, ""
+                    else:
+                        added = bool(r[10])
+                        seen = bool(r[11])
+                        match_created = r[12].isoformat() if r[12] else ""
+
+                    matches.append({
+                        "match_id": match_id,
+                        "added_to_proposals": added,
+                        "seen": seen,
+                        "match_created": match_created,
+                        "object": {
+                            "id": obj_id,
+                            "title": r[1] or "",
+                            "category": r[2] or "",
+                            "type": r[3] or "",
+                            "city": r[4] or "",
+                            "price": r[5] or "",
+                            "area": r[6] or "",
+                            "status": r[7] or "",
+                            "photos": list(r[8]) if r[8] else [],
+                        },
+                    })
+
+                conn.commit()
+                return resp(200, {"matches": matches})
+
+            if method == "PUT":
+                # Обновить: added_to_proposals или seen
+                body = json.loads(event.get("body") or "{}")
+                match_id = body.get("match_id")
+                owner_id = body.get("owner_id")
+                if not match_id or not owner_id:
+                    return resp(400, {"error": "match_id and owner_id required"})
+
+                fields = []
+                vals = []
+                if "added_to_proposals" in body:
+                    fields.append("added_to_proposals = %s")
+                    vals.append(bool(body["added_to_proposals"]))
+                if "seen" in body:
+                    fields.append("seen = %s")
+                    vals.append(bool(body["seen"]))
+                if not fields:
+                    return resp(400, {"error": "nothing to update"})
+
+                vals += [match_id, owner_id]
+                cur.execute(
+                    f"""UPDATE {schema}.lead_matches SET {', '.join(fields)}
+                        WHERE id = %s AND owner_id = %s
+                        RETURNING id, lead_id, owner_id, object_id, added_to_proposals, seen, created_at""",
+                    vals,
+                )
+                row = cur.fetchone()
+                conn.commit()
+                if not row:
+                    return resp(404, {"error": "not found"})
+                return resp(200, {"ok": True, "match": {
+                    "id": str(row[0]), "added_to_proposals": bool(row[4]), "seen": bool(row[5])
+                }})
 
         # ---------- COMMENTS ----------
         if kind == "comments":
@@ -148,7 +312,7 @@ def handler(event: dict, context) -> dict:
                 conn.commit()
                 return resp(200, {"ok": True})
 
-        # ---------- TASKS (планировщик) ----------
+        # ---------- TASKS ----------
         if kind == "tasks":
             if method == "GET":
                 lead_id = params.get("lead_id")
@@ -174,8 +338,7 @@ def handler(event: dict, context) -> dict:
                         VALUES (%s, %s, %s, %s, %s)
                         RETURNING id, lead_id, owner_id, done_text, todo_text, due_at, completed, created_at""",
                     (
-                        lead_id,
-                        owner_id,
+                        lead_id, owner_id,
                         (body.get("done_text") or "").strip(),
                         (body.get("todo_text") or "").strip(),
                         body.get("due_at") or None,
@@ -192,8 +355,7 @@ def handler(event: dict, context) -> dict:
                 if not tid or not owner_id:
                     return resp(400, {"error": "id and owner_id required"})
                 cur.execute(
-                    f"""UPDATE {schema}.lead_tasks
-                        SET completed = %s
+                    f"""UPDATE {schema}.lead_tasks SET completed = %s
                         WHERE id = %s AND owner_id = %s
                         RETURNING id, lead_id, owner_id, done_text, todo_text, due_at, completed, created_at""",
                     (bool(body.get("completed", True)), tid, owner_id),
@@ -204,7 +366,7 @@ def handler(event: dict, context) -> dict:
                     return resp(404, {"error": "not found"})
                 return resp(200, {"task": task_row(row)})
 
-        # ---------- FILES (PDF-предложения и пр.) ----------
+        # ---------- FILES ----------
         if kind == "files":
             if method == "GET":
                 lead_id = params.get("lead_id")
