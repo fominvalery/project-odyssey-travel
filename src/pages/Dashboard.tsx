@@ -7,8 +7,10 @@ import DashboardHome from "@/components/dashboard/DashboardHome"
 import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import { DashboardCRM, DashboardReferral, DashboardProfile } from "@/components/dashboard/DashboardSections"
 import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
+import DashboardSupport from "@/components/dashboard/DashboardSupport"
+import AiChatBubble from "@/components/AiChatBubble"
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
 
 const INITIAL_OBJECTS: ObjectData[] = []
 
@@ -97,7 +99,11 @@ export default function Dashboard() {
             onStatusChange={(status) => updateProfile({ status })}
           />
         )}
+
+        {section === "support" && <DashboardSupport />}
       </main>
+
+      {section !== "support" && <AiChatBubble />}
     </div>
   )
 }

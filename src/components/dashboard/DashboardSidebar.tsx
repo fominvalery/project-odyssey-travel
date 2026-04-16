@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
 
 const PLAN_LABELS: Record<string, string> = {
   green: "FREE",
@@ -18,6 +18,14 @@ const navItems = [
   { id: "analytics",  label: "Аналитика", icon: "BarChart2" },
   { id: "referral",   label: "Рефералы",  icon: "Gift" },
   { id: "profile",    label: "Профиль",   icon: "User" },
+] as const
+
+const mobileNavItems = [
+  { id: "dashboard",  label: "Объекты",   icon: "Building2" },
+  { id: "objects",    label: "Объекты",   icon: "Building2" },
+  { id: "analytics",  label: "Аналитика", icon: "BarChart2" },
+  { id: "crm",        label: "CRM",       icon: "Users" },
+  { id: "support",    label: "Поддержка", icon: "Headphones" },
 ] as const
 
 interface Props {
@@ -68,6 +76,18 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             <Icon name="Store" className="h-4 w-4 shrink-0" />
             Маркетплейс
           </button>
+
+          <button
+            onClick={() => setSection("support")}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
+              section === "support"
+                ? "bg-blue-600 text-white"
+                : "text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
+            }`}
+          >
+            <Icon name="Headphones" className="h-4 w-4 shrink-0" />
+            Поддержка
+          </button>
         </nav>
 
         <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
@@ -92,19 +112,35 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
       </aside>
 
       {/* Мобильное меню */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0d0d0d] border-t border-[#1f1f1f] flex justify-around px-2 py-2">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setSection(item.id)}
-            className={`flex flex-col items-center gap-1 px-4 py-1.5 rounded-xl text-xs transition-colors ${
-              section === item.id ? "text-blue-400" : "text-gray-500"
-            }`}
-          >
-            <Icon name={item.icon} className="h-5 w-5" />
-            {item.label}
-          </button>
-        ))}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-[#1f1f1f] flex justify-around px-2 py-2">
+        {(["dashboard", "objects", "analytics", "crm", "support"] as const).map((id) => {
+          const icons: Record<string, string> = {
+            dashboard: "LayoutDashboard",
+            objects: "Building2",
+            analytics: "BarChart2",
+            crm: "Users",
+            support: "Headphones",
+          }
+          const labels: Record<string, string> = {
+            dashboard: "Главная",
+            objects: "Объекты",
+            analytics: "Аналитика",
+            crm: "CRM",
+            support: "Поддержка",
+          }
+          return (
+            <button
+              key={id}
+              onClick={() => setSection(id)}
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${
+                section === id ? "text-blue-400" : "text-gray-500"
+              }`}
+            >
+              <Icon name={icons[id]} className="h-5 w-5" />
+              {labels[id]}
+            </button>
+          )
+        })}
       </div>
     </>
   )

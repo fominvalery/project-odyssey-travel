@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Ask about platform",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "messages": [{"role": "user", "content": "Как добавить объект?"}]
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"reply": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
