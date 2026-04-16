@@ -155,7 +155,7 @@ export default function Dashboard() {
           />
         )}
 
-        {section === "crm" && <DashboardCRM />}
+        {section === "crm" && <DashboardCRM userId={user.id} />}
 
         {section === "analytics" && (
           <DashboardAnalytics objects={objects} />

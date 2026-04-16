@@ -1,29 +1,25 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
+import func2url from "../../../backend/func2url.json"
 
 // ── Типы ─────────────────────────────────────────────────────────────────────
 
 type FunnelStage = "Лид" | "Подбор" | "Показ" | "Переговоры" | "Сделка" | "Отказ"
-type DealType = "Покупка" | "Аренда"
-type PropertyCategory = "Инвестиции" | "Коммерция" | "Торги" | "Новостройки"
 
 interface Lead {
-  id: number
+  id: string
+  owner_id: string | null
+  object_id: string | null
+  object_title: string
   name: string
   phone: string
   email: string
-  dealType: DealType
-  category: PropertyCategory
-  budget: string
-  area: string
-  city: string
-  notes: string
+  message: string
   source: string
   stage: FunnelStage
-  date: string
+  created_at: string
 }
 
 // ── Константы ─────────────────────────────────────────────────────────────────
@@ -37,210 +33,53 @@ const FUNNEL_STAGES: { stage: FunnelStage; color: string; bg: string; icon: stri
   { stage: "Отказ",      color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20",      icon: "XCircle" },
 ]
 
-const DEAL_TYPES: DealType[] = ["Покупка", "Аренда"]
-const PROPERTY_CATEGORIES: PropertyCategory[] = ["Коммерция", "Инвестиции", "Новостройки", "Торги"]
-const SOURCES = ["Входящий звонок", "Сайт", "Маркетплейс", "AI-чат", "Реклама", "Рекомендация", "Другое"]
+const ALL_STAGES: FunnelStage[] = FUNNEL_STAGES.map(s => s.stage)
 
-const INITIAL_LEADS: Lead[] = [
-  { id: 1, name: "Алексей Петров", phone: "+7 900 123-45-67", email: "", dealType: "Покупка", category: "Коммерция", budget: "5 000 000", area: "120", city: "Москва", notes: "", source: "AI-чат", stage: "Подбор", date: "10 апр" },
-  { id: 2, name: "Ирина Смирнова", phone: "+7 911 987-65-43", email: "", dealType: "Аренда", category: "Коммерция", budget: "150 000", area: "80", city: "Москва", notes: "", source: "Маркетплейс", stage: "Показ", date: "12 апр" },
-  { id: 3, name: "Дмитрий Козлов", phone: "+7 925 555-00-11", email: "", dealType: "Покупка", category: "Инвестиции", budget: "12 000 000", area: "200", city: "СПб", notes: "", source: "Рекомендация", stage: "Сделка", date: "14 апр" },
-]
-
-// ── Форма добавления лида ─────────────────────────────────────────────────────
-
-const EMPTY_FORM = {
-  name: "", phone: "", email: "", dealType: "Покупка" as DealType,
-  category: "Коммерция" as PropertyCategory, budget: "", area: "",
-  city: "", notes: "", source: "Входящий звонок",
-}
-
-interface AddLeadFormProps {
-  onAdd: (lead: Lead) => void
-  onClose: () => void
-}
-
-function AddLeadForm({ onAdd, onClose }: AddLeadFormProps) {
-  const [form, setForm] = useState({ ...EMPTY_FORM })
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    onAdd({
-      id: Date.now(),
-      ...form,
-      stage: "Лид",
-      date: new Date().toLocaleDateString("ru", { day: "numeric", month: "short" }),
-    })
-    onClose()
+function formatDate(iso: string) {
+  if (!iso) return ""
+  try {
+    const d = new Date(iso)
+    return d.toLocaleDateString("ru", { day: "numeric", month: "short" })
+  } catch {
+    return ""
   }
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-[#141414] border border-[#262626] rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-[#1f1f1f]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600/20 flex items-center justify-center">
-              <Icon name="UserPlus" className="h-4 w-4 text-blue-400" />
-            </div>
-            <h2 className="font-bold text-lg">Новый лид</h2>
-          </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
-            <Icon name="X" className="h-5 w-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Контакт */}
-          <div>
-            <p className="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-3">Контакт</p>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs text-gray-400 mb-1.5 block">ФИО клиента *</Label>
-                <Input required placeholder="Иван Иванович Иванов" value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                  className="bg-[#0f0f0f] border-[#262626] text-white placeholder:text-gray-600" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs text-gray-400 mb-1.5 block">Телефон *</Label>
-                  <Input required type="tel" placeholder="+7 (___) ___-__-__" value={form.phone}
-                    onChange={e => setForm({ ...form, phone: e.target.value })}
-                    className="bg-[#0f0f0f] border-[#262626] text-white placeholder:text-gray-600" />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-400 mb-1.5 block">Email</Label>
-                  <Input type="email" placeholder="email@mail.ru" value={form.email}
-                    onChange={e => setForm({ ...form, email: e.target.value })}
-                    className="bg-[#0f0f0f] border-[#262626] text-white placeholder:text-gray-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Запрос */}
-          <div>
-            <p className="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-3">Запрос</p>
-            <div className="space-y-3">
-              {/* Тип сделки */}
-              <div>
-                <Label className="text-xs text-gray-400 mb-2 block">Тип сделки</Label>
-                <div className="flex gap-2">
-                  {DEAL_TYPES.map(t => (
-                    <button key={t} type="button" onClick={() => setForm({ ...form, dealType: t })}
-                      className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                        form.dealType === t ? "bg-blue-600 border-blue-600 text-white" : "bg-[#0f0f0f] border-[#262626] text-gray-400 hover:text-white"
-                      }`}>{t}</button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Категория недвижимости */}
-              <div>
-                <Label className="text-xs text-gray-400 mb-2 block">Категория недвижимости</Label>
-                <div className="flex flex-wrap gap-2">
-                  {PROPERTY_CATEGORIES.map(c => (
-                    <button key={c} type="button" onClick={() => setForm({ ...form, category: c })}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                        form.category === c ? "bg-blue-600 border-blue-600 text-white" : "bg-[#0f0f0f] border-[#262626] text-gray-400 hover:text-white"
-                      }`}>{c}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs text-gray-400 mb-1.5 block">
-                    {form.dealType === "Аренда" ? "Бюджет (₽/мес)" : "Бюджет (₽)"}
-                  </Label>
-                  <Input placeholder="5 000 000" value={form.budget}
-                    onChange={e => setForm({ ...form, budget: e.target.value })}
-                    className="bg-[#0f0f0f] border-[#262626] text-white placeholder:text-gray-600" />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-400 mb-1.5 block">Площадь (м²)</Label>
-                  <Input placeholder="100" value={form.area}
-                    onChange={e => setForm({ ...form, area: e.target.value })}
-                    className="bg-[#0f0f0f] border-[#262626] text-white placeholder:text-gray-600" />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs text-gray-400 mb-1.5 block">Город / район</Label>
-                <Input placeholder="Москва, ЦАО" value={form.city}
-                  onChange={e => setForm({ ...form, city: e.target.value })}
-                  className="bg-[#0f0f0f] border-[#262626] text-white placeholder:text-gray-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Источник */}
-          <div>
-            <p className="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-3">Источник</p>
-            <div className="flex flex-wrap gap-2">
-              {SOURCES.map(s => (
-                <button key={s} type="button" onClick={() => setForm({ ...form, source: s })}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                    form.source === s ? "bg-blue-600 border-blue-600 text-white" : "bg-[#0f0f0f] border-[#262626] text-gray-400 hover:text-white"
-                  }`}>{s}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Заметки */}
-          <div>
-            <Label className="text-xs text-gray-400 mb-1.5 block">Заметки</Label>
-            <textarea rows={3} placeholder="Пожелания клиента, дополнительная информация..."
-              value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}
-              className="w-full bg-[#0f0f0f] border border-[#262626] text-white placeholder:text-gray-600 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          </div>
-
-          <div className="flex gap-3 pt-1">
-            <Button type="button" variant="outline" onClick={onClose}
-              className="flex-1 rounded-xl border-[#2a2a2a] bg-transparent text-white hover:bg-[#1a1a1a]">
-              Отмена
-            </Button>
-            <Button type="submit" className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
-              Добавить лид
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
 }
 
 // ── Карточка лида ─────────────────────────────────────────────────────────────
 
 interface LeadCardProps {
   lead: Lead
-  onStageChange: (id: number, stage: FunnelStage) => void
+  onStageChange: (id: string, stage: FunnelStage) => void
+  onDelete: (id: string) => void
 }
 
-function LeadCard({ lead, onStageChange }: LeadCardProps) {
+function LeadCard({ lead, onStageChange, onDelete }: LeadCardProps) {
   const [expanded, setExpanded] = useState(false)
-  const stageInfo = FUNNEL_STAGES.find(s => s.stage === lead.stage)!
+  const stageInfo = FUNNEL_STAGES.find(s => s.stage === lead.stage) ?? FUNNEL_STAGES[0]
 
   return (
     <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden hover:border-[#2a2a2a] transition-colors">
-      {/* Основная строка */}
       <div
         className="p-5 flex items-center gap-4 cursor-pointer"
         onClick={() => setExpanded(v => !v)}
       >
         <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center shrink-0 text-sm font-bold text-gray-400">
-          {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+          {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold truncate">{lead.name}</p>
+          <p className="font-semibold truncate">{lead.name || "Без имени"}</p>
           <p className="text-xs text-gray-400">{lead.phone}</p>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] text-gray-400">{lead.dealType}</span>
-            <span className="text-xs text-gray-500">{lead.category}</span>
-            {lead.budget && <span className="text-xs text-gray-500">· {lead.budget} ₽</span>}
-            {lead.city && <span className="text-xs text-gray-500">· {lead.city}</span>}
+            {lead.object_title && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 truncate max-w-[180px]">
+                {lead.object_title}
+              </span>
+            )}
+            <span className="text-xs text-gray-500">· {lead.source}</span>
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          <span className="text-xs text-gray-500">{formatDate(lead.created_at)}</span>
           <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${stageInfo.bg} ${stageInfo.color}`}>
             {lead.stage}
           </span>
@@ -248,41 +87,34 @@ function LeadCard({ lead, onStageChange }: LeadCardProps) {
         </div>
       </div>
 
-      {/* Раскрытая часть */}
       {expanded && (
         <div className="border-t border-[#1a1a1a] px-5 py-4 space-y-4">
-          {/* Детали */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            {lead.area && (
-              <div>
-                <p className="text-xs text-gray-500">Площадь</p>
-                <p className="text-white font-medium">{lead.area} м²</p>
-              </div>
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-gray-500">Телефон</p>
+              <a href={`tel:${lead.phone}`} className="text-white font-medium hover:text-blue-400">{lead.phone}</a>
+            </div>
             {lead.email && (
               <div>
                 <p className="text-xs text-gray-500">Email</p>
-                <p className="text-white font-medium truncate">{lead.email}</p>
+                <a href={`mailto:${lead.email}`} className="text-white font-medium truncate hover:text-blue-400">{lead.email}</a>
               </div>
             )}
-            <div>
-              <p className="text-xs text-gray-500">Источник</p>
-              <p className="text-white font-medium">{lead.source}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Дата</p>
-              <p className="text-white font-medium">{lead.date}</p>
-            </div>
+            {lead.object_title && (
+              <div className="sm:col-span-2">
+                <p className="text-xs text-gray-500">Объект</p>
+                <p className="text-white font-medium truncate">{lead.object_title}</p>
+              </div>
+            )}
           </div>
 
-          {lead.notes && (
+          {lead.message && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Заметки</p>
-              <p className="text-sm text-gray-300">{lead.notes}</p>
+              <p className="text-xs text-gray-500 mb-1">Сообщение от клиента</p>
+              <p className="text-sm text-gray-300 whitespace-pre-wrap">{lead.message}</p>
             </div>
           )}
 
-          {/* Воронка */}
           <div>
             <p className="text-xs text-gray-500 mb-2">Этап воронки</p>
             <div className="flex flex-wrap gap-2">
@@ -302,6 +134,15 @@ function LeadCard({ lead, onStageChange }: LeadCardProps) {
               ))}
             </div>
           </div>
+
+          <div className="flex justify-end pt-2 border-t border-[#1a1a1a]">
+            <button
+              onClick={() => onDelete(lead.id)}
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-400 transition-colors"
+            >
+              <Icon name="Trash2" className="h-3.5 w-3.5" /> Удалить лид
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -310,46 +151,89 @@ function LeadCard({ lead, onStageChange }: LeadCardProps) {
 
 // ── Основной компонент CRM ────────────────────────────────────────────────────
 
-export function DashboardCRM() {
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS)
-  const [showForm, setShowForm] = useState(false)
+interface DashboardCRMProps {
+  userId: string
+}
+
+export function DashboardCRM({ userId }: DashboardCRMProps) {
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(false)
   const [filterStage, setFilterStage] = useState<FunnelStage | "Все">("Все")
-  const [filterDeal, setFilterDeal] = useState<DealType | "Все">("Все")
   const [search, setSearch] = useState("")
 
-  function handleAdd(lead: Lead) {
-    setLeads(prev => [lead, ...prev])
+  const loadLeads = useCallback(async () => {
+    if (!userId) return
+    setLoading(true)
+    try {
+      const r = await fetch(`${func2url.leads}?owner_id=${encodeURIComponent(userId)}`)
+      const data = await r.json()
+      setLeads(Array.isArray(data.leads) ? (data.leads as Lead[]) : [])
+    } catch {
+      setLeads([])
+    } finally {
+      setLoading(false)
+    }
+  }, [userId])
+
+  useEffect(() => {
+    loadLeads()
+  }, [loadLeads])
+
+  async function handleStageChange(id: string, stage: FunnelStage) {
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, stage } : l))
+    const target = leads.find(l => l.id === id)
+    if (!target) return
+    try {
+      await fetch(func2url.leads, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          owner_id: userId,
+          stage,
+          message: target.message,
+        }),
+      })
+    } catch {
+      /* noop */
+    }
   }
 
-  function handleStageChange(id: number, stage: FunnelStage) {
-    setLeads(prev => prev.map(l => l.id === id ? { ...l, stage } : l))
+  async function handleDelete(id: string) {
+    if (!confirm("Удалить лид? Это действие необратимо.")) return
+    try {
+      await fetch(`${func2url.leads}?id=${encodeURIComponent(id)}&owner_id=${encodeURIComponent(userId)}`, {
+        method: "DELETE",
+      })
+      setLeads(prev => prev.filter(l => l.id !== id))
+    } catch {
+      /* noop */
+    }
   }
 
   const filtered = leads.filter(l => {
     const matchStage = filterStage === "Все" || l.stage === filterStage
-    const matchDeal = filterDeal === "Все" || l.dealType === filterDeal
-    const matchSearch = !search || l.name.toLowerCase().includes(search.toLowerCase()) || l.phone.includes(search)
-    return matchStage && matchDeal && matchSearch
+    const matchSearch = !search
+      || l.name.toLowerCase().includes(search.toLowerCase())
+      || l.phone.includes(search)
+      || (l.object_title || "").toLowerCase().includes(search.toLowerCase())
+    return matchStage && matchSearch
   })
 
-  // Счётчики по воронке
-  const counts = FUNNEL_STAGES.reduce((acc, { stage }) => {
+  const counts = ALL_STAGES.reduce((acc, stage) => {
     acc[stage] = leads.filter(l => l.stage === stage).length
     return acc
   }, {} as Record<FunnelStage, number>)
 
   return (
     <div className="p-6 md:p-8 max-w-4xl">
-      {showForm && <AddLeadForm onAdd={handleAdd} onClose={() => setShowForm(false)} />}
-
-      {/* Заголовок */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">CRM — Лиды</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{leads.length} контактов</p>
+          <h1 className="text-2xl font-bold">CRM — Заявки</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{leads.length} входящих контактов из маркетплейса</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
-          <Icon name="Plus" className="h-4 w-4 mr-2" /> Добавить лид
+        <Button onClick={loadLeads} variant="outline" className="rounded-xl border-[#2a2a2a] bg-transparent text-white hover:bg-[#1a1a1a]">
+          <Icon name="RotateCw" className="h-4 w-4 mr-2" /> Обновить
         </Button>
       </div>
 
@@ -370,44 +254,45 @@ export function DashboardCRM() {
         ))}
       </div>
 
-      {/* Фильтры */}
+      {/* Поиск */}
       <div className="flex flex-wrap items-center gap-2 mb-5">
         <div className="relative flex-1 min-w-[180px]">
           <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
           <Input
-            placeholder="Поиск по имени или телефону..."
+            placeholder="Поиск по имени, телефону или объекту..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-8 h-8 text-xs bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
           />
         </div>
-        <div className="flex gap-1">
-          {(["Все", "Покупка", "Аренда"] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setFilterDeal(t === "Все" ? "Все" : t as DealType)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                filterDeal === t ? "bg-[#1f1f1f] text-white border border-[#333]" : "text-gray-500 hover:text-white"
-              }`}
-            >{t}</button>
-          ))}
-        </div>
       </div>
 
       {/* Список */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="rounded-2xl border border-[#1f1f1f] bg-[#111] py-20 text-center">
+          <Icon name="Loader2" className="h-8 w-8 text-blue-400 animate-spin mx-auto" />
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-[#1f1f1f] bg-[#111] py-20 text-center">
           <Icon name="Users" className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-          <p className="text-gray-400 font-medium">Лидов не найдено</p>
-          <p className="text-gray-600 text-sm mt-1">Добавьте первый контакт вручную</p>
-          <Button onClick={() => setShowForm(true)} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
-            <Icon name="Plus" className="h-4 w-4 mr-2" /> Добавить лид
-          </Button>
+          <p className="text-gray-400 font-medium">
+            {leads.length === 0 ? "Заявок пока нет" : "Ничего не найдено"}
+          </p>
+          <p className="text-gray-600 text-sm mt-1">
+            {leads.length === 0
+              ? "Заявки от покупателей с маркетплейса появятся здесь автоматически"
+              : "Попробуйте изменить фильтры или поисковый запрос"}
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map(lead => (
-            <LeadCard key={lead.id} lead={lead} onStageChange={handleStageChange} />
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              onStageChange={handleStageChange}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}

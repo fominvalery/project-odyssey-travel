@@ -63,6 +63,45 @@ export default function ObjectDetail() {
   const [error, setError] = useState("")
   const [activePhoto, setActivePhoto] = useState(0)
   const [showContacts, setShowContacts] = useState(false)
+  const [leadForm, setLeadForm] = useState({ name: "", phone: "", email: "", message: "" })
+  const [sending, setSending] = useState(false)
+  const [leadSent, setLeadSent] = useState(false)
+  const [leadError, setLeadError] = useState("")
+
+  async function handleSendLead(e: React.FormEvent) {
+    e.preventDefault()
+    if (!obj || !obj.user_id) return
+    setLeadError("")
+    setSending(true)
+    try {
+      const res = await fetch(func2url.leads, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner_id: obj.user_id,
+          object_id: obj.id,
+          object_title: obj.title,
+          name: leadForm.name,
+          phone: leadForm.phone,
+          email: leadForm.email,
+          message: leadForm.message,
+          source: "Маркетплейс",
+          stage: "Лид",
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        setLeadError(data.error || "Не удалось отправить заявку")
+        return
+      }
+      setLeadSent(true)
+      setLeadForm({ name: "", phone: "", email: "", message: "" })
+    } catch {
+      setLeadError("Ошибка сети. Попробуйте ещё раз.")
+    } finally {
+      setSending(false)
+    }
+  }
 
   useEffect(() => {
     if (!id) return
@@ -199,9 +238,9 @@ export default function ObjectDetail() {
             )}
           </div>
 
-          {/* Правая колонка — цена + контакты */}
-          <aside className="lg:col-span-1">
-            <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-6 sticky top-24">
+          {/* Правая колонка — цена + контакты + форма заявки */}
+          <aside className="lg:col-span-1 space-y-4">
+            <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-6">
               <p className="text-xs text-gray-500 mb-1">Стоимость</p>
               <p className="text-3xl font-bold mb-6">{obj.price ? `${obj.price} ₽` : "По запросу"}</p>
 
@@ -259,6 +298,83 @@ export default function ObjectDetail() {
                 Поделиться
               </button>
             </div>
+
+            {/* Форма заявки */}
+            {obj.user_id && (
+              <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Icon name="MessageSquare" className="h-4 w-4 text-blue-400" />
+                  <h3 className="font-semibold">Оставить заявку</h3>
+                </div>
+
+                {leadSent ? (
+                  <div className="text-center py-6">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                      <Icon name="Check" className="h-6 w-6 text-emerald-400" />
+                    </div>
+                    <p className="font-medium mb-1">Заявка отправлена</p>
+                    <p className="text-sm text-gray-400 mb-4">Владелец свяжется с вами в ближайшее время</p>
+                    <button
+                      onClick={() => setLeadSent(false)}
+                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      Отправить ещё одну
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSendLead} className="space-y-3">
+                    <input
+                      required
+                      placeholder="Ваше имя *"
+                      value={leadForm.name}
+                      onChange={e => setLeadForm({ ...leadForm, name: e.target.value })}
+                      className="w-full rounded-xl bg-[#0f0f0f] border border-[#262626] text-white placeholder:text-gray-600 px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
+                    />
+                    <input
+                      required
+                      type="tel"
+                      placeholder="Телефон *"
+                      value={leadForm.phone}
+                      onChange={e => setLeadForm({ ...leadForm, phone: e.target.value })}
+                      className="w-full rounded-xl bg-[#0f0f0f] border border-[#262626] text-white placeholder:text-gray-600 px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email (необязательно)"
+                      value={leadForm.email}
+                      onChange={e => setLeadForm({ ...leadForm, email: e.target.value })}
+                      className="w-full rounded-xl bg-[#0f0f0f] border border-[#262626] text-white placeholder:text-gray-600 px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
+                    />
+                    <textarea
+                      placeholder="Сообщение"
+                      rows={3}
+                      value={leadForm.message}
+                      onChange={e => setLeadForm({ ...leadForm, message: e.target.value })}
+                      className="w-full rounded-xl bg-[#0f0f0f] border border-[#262626] text-white placeholder:text-gray-600 px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 resize-none"
+                    />
+
+                    {leadError && (
+                      <p className="text-xs text-red-400">{leadError}</p>
+                    )}
+
+                    <Button
+                      type="submit"
+                      disabled={sending}
+                      className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
+                    >
+                      {sending ? (
+                        <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Отправка...</>
+                      ) : (
+                        <><Icon name="Send" className="h-4 w-4 mr-2" />Отправить заявку</>
+                      )}
+                    </Button>
+                    <p className="text-[11px] text-gray-500 text-center">
+                      Нажимая «Отправить», вы соглашаетесь на обработку персональных данных
+                    </p>
+                  </form>
+                )}
+              </div>
+            )}
           </aside>
         </div>
       </section>
