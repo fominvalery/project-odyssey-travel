@@ -1,9 +1,6 @@
 import json
 import os
 import requests
-import urllib3
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SYSTEM_PROMPT_RU = """Ты — ИИ-помощник платформы Кабинет-24 (kabinet-24.ru) — платформы коммерческой недвижимости.
 Твоя задача — помогать пользователям разобраться с функционалом платформы.
@@ -43,23 +40,8 @@ SYSTEM_PROMPT_RU = """Ты — ИИ-помощник платформы Каби
 Отвечай только на вопросы о платформе Кабинет-24. Отвечай кратко на русском языке."""
 
 
-def get_gigachat_token(auth_key: str) -> str:
-    response = requests.post(
-        "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-        headers={
-            "Authorization": f"Basic {auth_key}",
-            "RqUID": "12345678-1234-1234-1234-123456789012",
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        data={"scope": "GIGACHAT_API_PERS"},
-        verify=False,
-        timeout=15
-    )
-    return response.json()["access_token"]
-
-
 def handler(event: dict, context) -> dict:
-    """ИИ-помощник платформы Кабинет-24 на базе GigaChat"""
+    """ИИ-помощник платформы Кабинет-24 на базе OpenRouter"""
 
     cors_headers = {
         "Access-Control-Allow-Origin": "*",
@@ -81,39 +63,35 @@ def handler(event: dict, context) -> dict:
             "body": json.dumps({"error": "messages required"}, ensure_ascii=False)
         }
 
-    auth_key = os.environ.get("GIGACHAT_AUTH_KEY", "")
-
-    token = get_gigachat_token(auth_key)
-
-    gigachat_messages = [{"role": "system", "content": SYSTEM_PROMPT_RU}]
-    for msg in messages:
-        gigachat_messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
 
     payload = {
-        "model": "GigaChat",
-        "messages": gigachat_messages,
+        "model": "meta-llama/llama-3.1-8b-instruct:free",
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT_RU},
+            *messages
+        ],
         "max_tokens": 500,
         "temperature": 0.7
     }
 
     response = requests.post(
-        "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
+        "https://openrouter.ai/api/v1/chat/completions",
         json=payload,
         headers={
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         },
-        verify=False,
         timeout=25
     )
 
     result = response.json()
-    print(f"[DEBUG] GigaChat status: {response.status_code}, keys: {list(result.keys())}")
+    print(f"[DEBUG] OpenRouter status: {response.status_code}, keys: {list(result.keys())}")
 
     try:
         reply = result["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as e:
-        print(f"[ERROR] GigaChat error: {e}, response: {result}")
+        print(f"[ERROR] OpenRouter error: {e}, response: {result}")
         return {
             "statusCode": 200,
             "headers": cors_headers,
