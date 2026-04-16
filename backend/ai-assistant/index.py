@@ -2,12 +2,6 @@ import json
 import os
 import requests
 
-SYSTEM_PROMPT = (
-    "Ty — II-pomoshchnik platformy Kabinet-24 (kabinet-24.ru) — platformy kommercheskoy nedvizhimosti. "
-    "Tvoya zadacha — pomogat polzovatelyam razobratsya s funktsionalom platformy. "
-    "Otvechay tolko na voprosy o platforme na russkom yazyke kratkо i po delu."
-)
-
 SYSTEM_PROMPT_RU = """Ты — ИИ-помощник платформы Кабинет-24 (kabinet-24.ru) — платформы коммерческой недвижимости.
 Твоя задача — помогать пользователям разобраться с функционалом платформы.
 
@@ -69,11 +63,10 @@ def handler(event: dict, context) -> dict:
             "body": json.dumps({"error": "messages required"}, ensure_ascii=False)
         }
     
-    api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    print(f"[DEBUG] api_key present: {bool(api_key)}, length: {len(api_key)}, starts: {api_key[:8] if api_key else 'EMPTY'}")
+    api_key = os.environ.get("GROQ_API_KEY", "")
     
     payload = {
-        "model": "mistralai/mistral-7b-instruct:free",
+        "model": "llama3-8b-8192",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT_RU},
             *messages
@@ -83,31 +76,26 @@ def handler(event: dict, context) -> dict:
     }
     
     response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
+        "https://api.groq.com/openai/v1/chat/completions",
         json=payload,
         headers={
             "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://kabinet-24.ru",
-            "X-Title": "Kabinet-24"
+            "Content-Type": "application/json"
         },
         timeout=25
     )
     
     result = response.json()
-    print(f"[DEBUG] OpenRouter response status: {response.status_code}, keys: {list(result.keys())}")
-    if "error" in result:
-        print(f"[DEBUG] OpenRouter error: {result['error']}")
     
     if "choices" not in result:
         error_info = result.get("error", {})
         error_msg = error_info.get("message", str(result)) if isinstance(error_info, dict) else str(result)
+        print(f"[ERROR] Groq error: {error_msg}")
         return {
             "statusCode": 200,
             "headers": cors_headers,
             "body": json.dumps({
                 "reply": "Извини, ИИ-помощник временно недоступен. Попробуй позже или обратись в поддержку.",
-                "debug": error_msg
             }, ensure_ascii=False)
         }
     
