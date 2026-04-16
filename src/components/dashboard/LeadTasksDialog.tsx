@@ -179,14 +179,14 @@ export function LeadTasksDialog({ lead, ownerId, hasOverdue, onOverdueRefresh }:
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
+          <div className="grid grid-cols-2 gap-3 items-start">
+            <div className="flex flex-col">
               <label className="text-xs text-gray-400 mb-1 block">Дата напоминания</label>
               <Popover open={calOpen} onOpenChange={setCalOpen}>
                 <PopoverTrigger asChild>
-                  <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-[#111] border border-[#1f1f1f] text-sm text-white hover:border-blue-500/40 transition-colors">
-                    <Icon name="CalendarDays" className="h-4 w-4 text-blue-400 shrink-0" />
-                    <span className="flex-1 text-left truncate text-xs">
+                  <button className="w-full h-[90px] flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg bg-[#111] border border-[#1f1f1f] text-white hover:border-blue-500/40 transition-colors">
+                    <Icon name="CalendarDays" className="h-5 w-5 text-blue-400" />
+                    <span className="text-sm font-semibold text-center leading-tight">
                       {formatPickedDate(dueDate)}
                     </span>
                   </button>
@@ -211,9 +211,9 @@ export function LeadTasksDialog({ lead, ownerId, hasOverdue, onOverdueRefresh }:
               </Popover>
             </div>
 
-            <div>
+            <div className="flex flex-col">
               <label className="text-xs text-gray-400 mb-1 block">Время</label>
-              <div className="bg-[#111] border border-[#1f1f1f] rounded-lg px-2 py-1">
+              <div className="h-[90px] bg-[#111] border border-[#1f1f1f] rounded-lg px-2 flex items-center justify-center">
                 <TimePicker value={dueTime} onChange={setDueTime} />
               </div>
             </div>
