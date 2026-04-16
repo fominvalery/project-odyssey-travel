@@ -19,9 +19,10 @@ interface LeadCardProps {
   onStageChange: (id: string, stage: FunnelStage) => void
   onDelete: (id: string) => void
   onOverdueRefresh: () => void
+  onLeadUpdate?: (lead: Lead) => void
 }
 
-export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, onOverdueRefresh }: LeadCardProps) {
+export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, onOverdueRefresh, onLeadUpdate }: LeadCardProps) {
   const [expanded, setExpanded] = useState(false)
   const stageInfo = FUNNEL_STAGES.find(s => s.stage === lead.stage) ?? FUNNEL_STAGES[0]
 
@@ -122,6 +123,7 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
           lead={lead}
           ownerId={ownerId}
           onDelete={onDelete}
+          onLeadUpdate={onLeadUpdate}
         />
       )}
     </div>

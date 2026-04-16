@@ -12,6 +12,14 @@ export interface Lead {
   source: string
   stage: FunnelStage
   created_at: string
+  // предпочтения клиента для автоподбора
+  budget_from: number | null
+  budget_to: number | null
+  area_from: number | null
+  area_to: number | null
+  preferred_type: string
+  preferred_city: string
+  preferred_category: string
 }
 
 export interface Comment {

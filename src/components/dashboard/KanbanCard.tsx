@@ -22,6 +22,7 @@ interface KanbanCardProps {
   onStageChange: (id: string, stage: FunnelStage) => void
   onDelete: (id: string) => void
   onOverdueRefresh: () => void
+  onLeadUpdate?: (lead: Lead) => void
 }
 
 function StagePopover({ lead, onStageChange }: { lead: Lead; onStageChange: (id: string, stage: FunnelStage) => void }) {
@@ -52,7 +53,7 @@ function StagePopover({ lead, onStageChange }: { lead: Lead; onStageChange: (id:
   )
 }
 
-export function KanbanCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, onOverdueRefresh }: KanbanCardProps) {
+export function KanbanCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, onOverdueRefresh, onLeadUpdate }: KanbanCardProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
 
   return (
@@ -133,6 +134,7 @@ export function KanbanCard({ lead, ownerId, hasOverdue, onStageChange, onDelete,
             lead={lead}
             ownerId={ownerId}
             onDelete={(id) => { onDelete(id); setSheetOpen(false) }}
+            onLeadUpdate={onLeadUpdate}
           />
         </SheetContent>
       </Sheet>

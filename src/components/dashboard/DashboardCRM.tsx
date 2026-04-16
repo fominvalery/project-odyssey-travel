@@ -2,9 +2,16 @@ import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import func2url from "../../../backend/func2url.json"
 import { LeadCard, FUNNEL_STAGES, type FunnelStage, type Lead } from "./LeadCard"
 import { KanbanCard } from "./KanbanCard"
+import { LeadForm } from "./LeadForm"
 
 const ALL_STAGES: FunnelStage[] = FUNNEL_STAGES.map(s => s.stage)
 
@@ -27,9 +34,10 @@ interface KanbanColumnProps {
   onStageChange: (id: string, stage: FunnelStage) => void
   onDelete: (id: string) => void
   onOverdueRefresh: () => void
+  onLeadUpdate: (lead: Lead) => void
 }
 
-function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onStageChange, onDelete, onOverdueRefresh }: KanbanColumnProps) {
+function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onStageChange, onDelete, onOverdueRefresh, onLeadUpdate }: KanbanColumnProps) {
   return (
     <div className="flex flex-col min-w-[260px] w-[260px]">
       <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border mb-2 ${bg}`}>
@@ -51,6 +59,7 @@ function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onSta
             onStageChange={onStageChange}
             onDelete={onDelete}
             onOverdueRefresh={onOverdueRefresh}
+            onLeadUpdate={onLeadUpdate}
           />
         ))}
       </div>
@@ -67,6 +76,7 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
   const [search, setSearch] = useState("")
   const [overdueIds, setOverdueIds] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [createOpen, setCreateOpen] = useState(false)
 
   const loadLeads = useCallback(async () => {
     if (!userId) return
@@ -172,6 +182,12 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
             </button>
           </div>
           <Button
+            onClick={() => setCreateOpen(true)}
+            className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            <Icon name="UserPlus" className="h-4 w-4 mr-2" /> Добавить клиента
+          </Button>
+          <Button
             onClick={() => { loadLeads(); loadOverdue() }}
             variant="outline"
             className="rounded-xl border-[#2a2a2a] bg-transparent text-white hover:bg-[#1a1a1a]"
@@ -241,6 +257,7 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
                 onStageChange={sharedCardProps.onStageChange}
                 onDelete={sharedCardProps.onDelete}
                 onOverdueRefresh={sharedCardProps.onOverdueRefresh}
+                onLeadUpdate={(updated) => setLeads(prev => prev.map(l => l.id === updated.id ? updated : l))}
               />
             ))}
           </div>
@@ -264,12 +281,30 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
                   onStageChange={handleStageChange}
                   onDelete={handleDelete}
                   onOverdueRefresh={loadOverdue}
+                  onLeadUpdate={(updated) => setLeads(prev => prev.map(l => l.id === updated.id ? updated : l))}
                 />
               )
             })}
           </div>
         </div>
       )}
+
+      {/* Диалог создания нового лида */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="bg-[#0d0d0d] border-[#1f1f1f] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Добавить клиента</DialogTitle>
+          </DialogHeader>
+          <LeadForm
+            ownerId={userId}
+            onSave={(lead) => {
+              setLeads(prev => [lead, ...prev])
+              setCreateOpen(false)
+            }}
+            onCancel={() => setCreateOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

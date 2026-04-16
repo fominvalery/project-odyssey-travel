@@ -142,9 +142,11 @@ def handler(event: dict, context) -> dict:
                 if not lead_id or not owner_id:
                     return resp(400, {"error": "lead_id and owner_id required"})
 
-                # 1. Получаем параметры лида (category/type/city через связанный объект)
+                # 1. Получаем параметры лида: из полей предпочтений и/или из связанного объекта
                 cur.execute(
-                    f"""SELECT l.object_id, o.category, o.type, o.city
+                    f"""SELECT l.object_id, o.category, o.type, o.city,
+                               l.preferred_category, l.preferred_type, l.preferred_city,
+                               l.budget_from, l.budget_to, l.area_from, l.area_to
                         FROM {schema}.leads l
                         LEFT JOIN {schema}.objects o ON o.id = l.object_id
                         WHERE l.id = %s AND l.owner_id = %s""",
@@ -155,13 +157,16 @@ def handler(event: dict, context) -> dict:
                     return resp(404, {"error": "lead not found"})
 
                 orig_object_id = str(lead_row[0]) if lead_row[0] else None
-                category = lead_row[1] or ""
-                obj_type = lead_row[2] or ""
-                city = lead_row[3] or ""
+                # Предпочтения клиента имеют приоритет над параметрами объекта
+                category = lead_row[4] or lead_row[1] or ""
+                obj_type = lead_row[5] or lead_row[2] or ""
+                city = lead_row[6] or lead_row[3] or ""
+                budget_from = lead_row[7]
+                budget_to = lead_row[8]
+                area_from = float(lead_row[9]) if lead_row[9] is not None else None
+                area_to = float(lead_row[10]) if lead_row[10] is not None else None
 
-                # 2. Ищем похожие объекты того же владельца (опубликованные и активные)
-                #    Совпадение по category — обязательно, type и city — дополнительные баллы
-                #    Исключаем исходный объект лида
+                # 2. Ищем подходящие объекты: опубликованные, активные, того же владельца
                 conditions = ["o.user_id = %s", "o.published = true", "o.status = 'Активен'"]
                 args = [owner_id]
                 if orig_object_id:
@@ -170,6 +175,28 @@ def handler(event: dict, context) -> dict:
                 if category:
                     conditions.append("o.category = %s")
                     args.append(category)
+                # Фильтр по бюджету: цена объекта <= budget_to (цена хранится как text, пробуем cast)
+                if budget_to is not None:
+                    conditions.append(
+                        "CASE WHEN o.price ~ '^[0-9]+$' THEN o.price::bigint <= %s ELSE true END"
+                    )
+                    args.append(int(budget_to))
+                if budget_from is not None:
+                    conditions.append(
+                        "CASE WHEN o.price ~ '^[0-9]+$' THEN o.price::bigint >= %s ELSE true END"
+                    )
+                    args.append(int(budget_from))
+                # Фильтр по площади
+                if area_to is not None:
+                    conditions.append(
+                        "CASE WHEN o.area ~ '^[0-9.]+$' THEN o.area::numeric <= %s ELSE true END"
+                    )
+                    args.append(area_to)
+                if area_from is not None:
+                    conditions.append(
+                        "CASE WHEN o.area ~ '^[0-9.]+$' THEN o.area::numeric >= %s ELSE true END"
+                    )
+                    args.append(area_from)
 
                 where_clause = " AND ".join(conditions)
                 cur.execute(

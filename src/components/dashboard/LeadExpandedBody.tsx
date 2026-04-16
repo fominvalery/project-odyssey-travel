@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button"
 import func2url from "../../../backend/func2url.json"
 import { type Lead, type Comment, type LeadFile, formatDateTime, formatSize } from "./leadCard.types"
 import { LeadMatches } from "./LeadMatches"
+import { LeadForm } from "./LeadForm"
 
 interface LeadExpandedBodyProps {
   lead: Lead
   ownerId: string
   onDelete: (id: string) => void
+  onLeadUpdate?: (lead: Lead) => void
 }
 
-export function LeadExpandedBody({ lead, ownerId, onDelete }: LeadExpandedBodyProps) {
+export function LeadExpandedBody({ lead, ownerId, onDelete, onLeadUpdate }: LeadExpandedBodyProps) {
+  const [editMode, setEditMode] = useState(false)
   // Комментарии
   const [comments, setComments] = useState<Comment[]>([])
   const [commentText, setCommentText] = useState("")
@@ -91,8 +94,78 @@ export function LeadExpandedBody({ lead, ownerId, onDelete }: LeadExpandedBodyPr
     }
   }
 
+  if (editMode) {
+    return (
+      <div className="border-t border-[#1a1a1a] px-5 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-semibold">Редактирование клиента</p>
+          <button onClick={() => setEditMode(false)} className="text-gray-500 hover:text-white">
+            <Icon name="X" className="h-4 w-4" />
+          </button>
+        </div>
+        <LeadForm
+          ownerId={ownerId}
+          existing={lead}
+          onSave={(updated) => {
+            setEditMode(false)
+            onLeadUpdate?.(updated)
+          }}
+          onCancel={() => setEditMode(false)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="border-t border-[#1a1a1a] px-5 py-4 space-y-5">
+      {/* Кнопка редактирования */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setEditMode(true)}
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-white transition-colors"
+        >
+          <Icon name="Pencil" className="h-3.5 w-3.5" /> Редактировать
+        </button>
+      </div>
+
+      {/* Предпочтения клиента */}
+      {(lead.preferred_category || lead.preferred_type || lead.preferred_city ||
+        lead.budget_from != null || lead.budget_to != null ||
+        lead.area_from != null || lead.area_to != null) && (
+        <div className="rounded-xl bg-[#0d0d0d] border border-violet-500/20 p-3">
+          <p className="text-xs text-violet-400 mb-2 flex items-center gap-1.5">
+            <Icon name="Sparkles" className="h-3.5 w-3.5" /> Параметры подбора
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {lead.preferred_category && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] text-gray-300">{lead.preferred_category}</span>
+            )}
+            {lead.preferred_type && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] text-gray-300">{lead.preferred_type}</span>
+            )}
+            {lead.preferred_city && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] text-gray-300 flex items-center gap-1">
+                <Icon name="MapPin" className="h-2.5 w-2.5" />{lead.preferred_city}
+              </span>
+            )}
+            {(lead.budget_from != null || lead.budget_to != null) && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] text-gray-300">
+                {lead.budget_from != null ? `от ${lead.budget_from.toLocaleString("ru")} ₽` : ""}
+                {lead.budget_from != null && lead.budget_to != null ? " " : ""}
+                {lead.budget_to != null ? `до ${lead.budget_to.toLocaleString("ru")} ₽` : ""}
+              </span>
+            )}
+            {(lead.area_from != null || lead.area_to != null) && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] text-gray-300">
+                {lead.area_from != null ? `от ${lead.area_from} м²` : ""}
+                {lead.area_from != null && lead.area_to != null ? " " : ""}
+                {lead.area_to != null ? `до ${lead.area_to} м²` : ""}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Контакты */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
         <div>

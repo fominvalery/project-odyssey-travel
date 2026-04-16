@@ -1,8 +1,8 @@
 """
 Заявки от покупателей владельцам объектов.
-POST   /                      — создать заявку (публично)
+POST   /                      — создать заявку (публично или вручную)
 GET    /?owner_id={uuid}      — список заявок владельца (для CRM)
-PUT    /                      — обновить стадию/заметки (только владелец)
+PUT    /                      — обновить стадию/поля (только владелец)
 DELETE /?id={uuid}&owner_id={uuid} — удалить заявку (только владелец)
 """
 import os
@@ -35,6 +35,14 @@ def row_to_lead(r):
         "source": r[8] or "",
         "stage": r[9] or "Лид",
         "created_at": r[10].isoformat() if r[10] else "",
+        # предпочтения клиента
+        "budget_from": r[11],
+        "budget_to": r[12],
+        "area_from": float(r[13]) if r[13] is not None else None,
+        "area_to": float(r[14]) if r[14] is not None else None,
+        "preferred_type": r[15] or "",
+        "preferred_city": r[16] or "",
+        "preferred_category": r[17] or "",
     }
 
 
@@ -44,7 +52,9 @@ def resp(status, body):
 
 SELECT_COLS = (
     "id, owner_id, object_id, object_title, name, phone, email, "
-    "message, source, stage, created_at"
+    "message, source, stage, created_at, "
+    "budget_from, budget_to, area_from, area_to, "
+    "preferred_type, preferred_city, preferred_category"
 )
 
 
@@ -72,8 +82,10 @@ def handler(event: dict, context) -> dict:
             cur.execute(
                 f"""
                 INSERT INTO {schema}.leads
-                    (owner_id, object_id, object_title, name, phone, email, message, source, stage)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (owner_id, object_id, object_title, name, phone, email, message, source, stage,
+                     budget_from, budget_to, area_from, area_to,
+                     preferred_type, preferred_city, preferred_category)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING {SELECT_COLS}
                 """,
                 (
@@ -86,6 +98,13 @@ def handler(event: dict, context) -> dict:
                     body.get("message", ""),
                     body.get("source", "Маркетплейс"),
                     body.get("stage", "Лид"),
+                    body.get("budget_from") or None,
+                    body.get("budget_to") or None,
+                    body.get("area_from") or None,
+                    body.get("area_to") or None,
+                    body.get("preferred_type", ""),
+                    body.get("preferred_city", ""),
+                    body.get("preferred_category", ""),
                 ),
             )
             row = cur.fetchone()
@@ -107,7 +126,7 @@ def handler(event: dict, context) -> dict:
             rows = cur.fetchall()
             return resp(200, {"leads": [row_to_lead(r) for r in rows]})
 
-        # ---------- PUT — обновление стадии ----------
+        # ---------- PUT — обновление полей ----------
         if method == "PUT":
             body = json.loads(event.get("body") or "{}")
             lead_id = body.get("id")
@@ -128,13 +147,28 @@ def handler(event: dict, context) -> dict:
             cur.execute(
                 f"""
                 UPDATE {schema}.leads
-                SET stage = %s, message = %s
+                SET stage = %s, message = %s, name = %s, phone = %s, email = %s,
+                    object_title = %s,
+                    budget_from = %s, budget_to = %s,
+                    area_from = %s, area_to = %s,
+                    preferred_type = %s, preferred_city = %s, preferred_category = %s
                 WHERE id = %s
                 RETURNING {SELECT_COLS}
                 """,
                 (
                     body.get("stage", "Лид"),
                     body.get("message", ""),
+                    body.get("name", ""),
+                    body.get("phone", ""),
+                    body.get("email", ""),
+                    body.get("object_title", ""),
+                    body.get("budget_from") or None,
+                    body.get("budget_to") or None,
+                    body.get("area_from") or None,
+                    body.get("area_to") or None,
+                    body.get("preferred_type", ""),
+                    body.get("preferred_city", ""),
+                    body.get("preferred_category", ""),
                     lead_id,
                 ),
             )
