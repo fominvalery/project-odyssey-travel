@@ -3,153 +3,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import func2url from "../../../backend/func2url.json"
-
-// ── Типы ─────────────────────────────────────────────────────────────────────
-
-type FunnelStage = "Лид" | "Подбор" | "Показ" | "Переговоры" | "Сделка" | "Отказ"
-
-interface Lead {
-  id: string
-  owner_id: string | null
-  object_id: string | null
-  object_title: string
-  name: string
-  phone: string
-  email: string
-  message: string
-  source: string
-  stage: FunnelStage
-  created_at: string
-}
-
-// ── Константы ─────────────────────────────────────────────────────────────────
-
-const FUNNEL_STAGES: { stage: FunnelStage; color: string; bg: string; icon: string }[] = [
-  { stage: "Лид",        color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20",    icon: "UserPlus" },
-  { stage: "Подбор",     color: "text-violet-400",  bg: "bg-violet-500/10 border-violet-500/20", icon: "Search" },
-  { stage: "Показ",      color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20",  icon: "Eye" },
-  { stage: "Переговоры", color: "text-orange-400",  bg: "bg-orange-500/10 border-orange-500/20", icon: "MessageSquare" },
-  { stage: "Сделка",     color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", icon: "Handshake" },
-  { stage: "Отказ",      color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20",      icon: "XCircle" },
-]
+import { LeadCard, FUNNEL_STAGES, type FunnelStage, type Lead } from "./LeadCard"
 
 const ALL_STAGES: FunnelStage[] = FUNNEL_STAGES.map(s => s.stage)
-
-function formatDate(iso: string) {
-  if (!iso) return ""
-  try {
-    const d = new Date(iso)
-    return d.toLocaleDateString("ru", { day: "numeric", month: "short" })
-  } catch {
-    return ""
-  }
-}
-
-// ── Карточка лида ─────────────────────────────────────────────────────────────
-
-interface LeadCardProps {
-  lead: Lead
-  onStageChange: (id: string, stage: FunnelStage) => void
-  onDelete: (id: string) => void
-}
-
-function LeadCard({ lead, onStageChange, onDelete }: LeadCardProps) {
-  const [expanded, setExpanded] = useState(false)
-  const stageInfo = FUNNEL_STAGES.find(s => s.stage === lead.stage) ?? FUNNEL_STAGES[0]
-
-  return (
-    <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden hover:border-[#2a2a2a] transition-colors">
-      <div
-        className="p-5 flex items-center gap-4 cursor-pointer"
-        onClick={() => setExpanded(v => !v)}
-      >
-        <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center shrink-0 text-sm font-bold text-gray-400">
-          {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold truncate">{lead.name || "Без имени"}</p>
-          <p className="text-xs text-gray-400">{lead.phone}</p>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {lead.object_title && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 truncate max-w-[180px]">
-                {lead.object_title}
-              </span>
-            )}
-            <span className="text-xs text-gray-500">· {lead.source}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-xs text-gray-500">{formatDate(lead.created_at)}</span>
-          <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${stageInfo.bg} ${stageInfo.color}`}>
-            {lead.stage}
-          </span>
-          <Icon name={expanded ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-gray-500" />
-        </div>
-      </div>
-
-      {expanded && (
-        <div className="border-t border-[#1a1a1a] px-5 py-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-xs text-gray-500">Телефон</p>
-              <a href={`tel:${lead.phone}`} className="text-white font-medium hover:text-blue-400">{lead.phone}</a>
-            </div>
-            {lead.email && (
-              <div>
-                <p className="text-xs text-gray-500">Email</p>
-                <a href={`mailto:${lead.email}`} className="text-white font-medium truncate hover:text-blue-400">{lead.email}</a>
-              </div>
-            )}
-            {lead.object_title && (
-              <div className="sm:col-span-2">
-                <p className="text-xs text-gray-500">Объект</p>
-                <p className="text-white font-medium truncate">{lead.object_title}</p>
-              </div>
-            )}
-          </div>
-
-          {lead.message && (
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Сообщение от клиента</p>
-              <p className="text-sm text-gray-300 whitespace-pre-wrap">{lead.message}</p>
-            </div>
-          )}
-
-          <div>
-            <p className="text-xs text-gray-500 mb-2">Этап воронки</p>
-            <div className="flex flex-wrap gap-2">
-              {FUNNEL_STAGES.map(({ stage, color, bg, icon }) => (
-                <button
-                  key={stage}
-                  onClick={() => onStageChange(lead.id, stage)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    lead.stage === stage
-                      ? `${bg} ${color} scale-105`
-                      : "bg-[#1a1a1a] border-[#2a2a2a] text-gray-500 hover:text-white"
-                  }`}
-                >
-                  <Icon name={icon as "Eye"} className="h-3 w-3" />
-                  {stage}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-2 border-t border-[#1a1a1a]">
-            <button
-              onClick={() => onDelete(lead.id)}
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-400 transition-colors"
-            >
-              <Icon name="Trash2" className="h-3.5 w-3.5" /> Удалить лид
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Основной компонент CRM ────────────────────────────────────────────────────
 
 interface DashboardCRMProps {
   userId: string
@@ -160,6 +16,7 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
   const [loading, setLoading] = useState(false)
   const [filterStage, setFilterStage] = useState<FunnelStage | "Все">("Все")
   const [search, setSearch] = useState("")
+  const [overdueIds, setOverdueIds] = useState<Set<string>>(new Set())
 
   const loadLeads = useCallback(async () => {
     if (!userId) return
@@ -175,9 +32,23 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
     }
   }, [userId])
 
+  const loadOverdue = useCallback(async () => {
+    if (!userId) return
+    try {
+      const r = await fetch(`${func2url["lead-extras"]}?kind=overdue&owner_id=${encodeURIComponent(userId)}`)
+      const data = await r.json()
+      setOverdueIds(new Set<string>(data.overdue_lead_ids || []))
+    } catch {
+      setOverdueIds(new Set())
+    }
+  }, [userId])
+
   useEffect(() => {
     loadLeads()
-  }, [loadLeads])
+    loadOverdue()
+    const t = setInterval(loadOverdue, 60000)
+    return () => clearInterval(t)
+  }, [loadLeads, loadOverdue])
 
   async function handleStageChange(id: string, stage: FunnelStage) {
     setLeads(prev => prev.map(l => l.id === id ? { ...l, stage } : l))
@@ -232,7 +103,7 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
           <h1 className="text-2xl font-bold">CRM — Заявки</h1>
           <p className="text-sm text-gray-500 mt-0.5">{leads.length} входящих контактов из маркетплейса</p>
         </div>
-        <Button onClick={loadLeads} variant="outline" className="rounded-xl border-[#2a2a2a] bg-transparent text-white hover:bg-[#1a1a1a]">
+        <Button onClick={() => { loadLeads(); loadOverdue() }} variant="outline" className="rounded-xl border-[#2a2a2a] bg-transparent text-white hover:bg-[#1a1a1a]">
           <Icon name="RotateCw" className="h-4 w-4 mr-2" /> Обновить
         </Button>
       </div>
@@ -290,8 +161,11 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
             <LeadCard
               key={lead.id}
               lead={lead}
+              ownerId={userId}
+              hasOverdue={overdueIds.has(lead.id)}
               onStageChange={handleStageChange}
               onDelete={handleDelete}
+              onOverdueRefresh={loadOverdue}
             />
           ))}
         </div>
@@ -299,3 +173,5 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
     </div>
   )
 }
+
+export default DashboardCRM

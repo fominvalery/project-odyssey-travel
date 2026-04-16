@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET comments without params",
+      "method": "GET",
+      "path": "/?kind=comments",
+      "expectedStatus": 400
+    },
+    {
+      "name": "POST comment without body",
+      "method": "POST",
+      "path": "/?kind=comments",
+      "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Unknown kind",
+      "method": "GET",
+      "path": "/?kind=unknown",
+      "expectedStatus": 400
+    }
+  ]
+}
