@@ -68,7 +68,7 @@ def handler(event: dict, context) -> dict:
     print(f"[DEBUG] Key length: {len(api_key)}, starts with: {api_key[:10] if api_key else 'EMPTY'}")
 
     payload = {
-        "model": "deepseek/deepseek-chat:free",
+        "model": "google/gemma-3-27b-it:free",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT_RU},
             *messages
