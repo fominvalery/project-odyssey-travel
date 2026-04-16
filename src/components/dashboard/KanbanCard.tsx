@@ -7,6 +7,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import Icon from "@/components/ui/icon"
 
 interface KanbanCardProps {
@@ -18,12 +24,40 @@ interface KanbanCardProps {
   onOverdueRefresh: () => void
 }
 
+function StagePopover({ lead, onStageChange }: { lead: Lead; onStageChange: (id: string, stage: FunnelStage) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="text-[11px] px-2 py-1 rounded-full font-medium border bg-[#1a1a1a] border-[#2a2a2a] text-gray-300 hover:text-white flex items-center gap-1 transition-colors">
+          {lead.stage}
+          <Icon name="ChevronDown" className="h-3 w-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-56 p-1 bg-[#0d0d0d] border-[#1f1f1f] text-white z-50">
+        {FUNNEL_STAGES.map(({ stage, color, bg, icon }) => (
+          <button
+            key={stage}
+            onClick={() => onStageChange(lead.id, stage)}
+            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all ${
+              lead.stage === stage ? `${bg} ${color}` : "text-gray-300 hover:bg-[#1a1a1a]"
+            }`}
+          >
+            <Icon name={icon as "Eye"} className="h-3.5 w-3.5" />
+            {stage}
+            {lead.stage === stage && <Icon name="Check" className="h-3.5 w-3.5 ml-auto" />}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export function KanbanCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, onOverdueRefresh }: KanbanCardProps) {
-  const [expanded, setExpanded] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   return (
-    <div className="rounded-xl bg-[#111] border border-[#1f1f1f] hover:border-[#2a2a2a] transition-colors overflow-hidden">
-      <div className="p-3">
+    <>
+      <div className="rounded-xl bg-[#111] border border-[#1f1f1f] hover:border-[#2a2a2a] transition-colors p-3">
         {/* Источник */}
         <p className="text-[10px] text-gray-500 mb-1">{lead.source || "Маркетплейс"}</p>
 
@@ -47,59 +81,61 @@ export function KanbanCard({ lead, ownerId, hasOverdue, onStageChange, onDelete,
           <span className="text-[10px] text-gray-600">{formatDate(lead.created_at)}</span>
 
           <div className="flex items-center gap-1.5">
-            {/* Задачи */}
-            <LeadTasksDialog
-              lead={lead}
-              ownerId={ownerId}
-              hasOverdue={hasOverdue}
-              onOverdueRefresh={onOverdueRefresh}
-            />
-
-            {/* Смена этапа */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="text-[11px] px-2 py-1 rounded-full font-medium border bg-[#1a1a1a] border-[#2a2a2a] text-gray-300 hover:text-white flex items-center gap-1 transition-colors">
-                  {lead.stage}
-                  <Icon name="ChevronDown" className="h-3 w-3" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-56 p-1 bg-[#0d0d0d] border-[#1f1f1f] text-white">
-                {FUNNEL_STAGES.map(({ stage, color, bg, icon }) => (
-                  <button
-                    key={stage}
-                    onClick={() => onStageChange(lead.id, stage)}
-                    className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all ${
-                      lead.stage === stage ? `${bg} ${color}` : "text-gray-300 hover:bg-[#1a1a1a]"
-                    }`}
-                  >
-                    <Icon name={icon as "Eye"} className="h-3.5 w-3.5" />
-                    {stage}
-                    {lead.stage === stage && <Icon name="Check" className="h-3.5 w-3.5 ml-auto" />}
-                  </button>
-                ))}
-              </PopoverContent>
-            </Popover>
-
-            {/* Раскрыть карточку */}
+            <LeadTasksDialog lead={lead} ownerId={ownerId} hasOverdue={hasOverdue} onOverdueRefresh={onOverdueRefresh} />
+            <StagePopover lead={lead} onStageChange={onStageChange} />
             <button
-              onClick={() => setExpanded(v => !v)}
+              onClick={() => setSheetOpen(true)}
               className="h-6 w-6 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white transition-colors"
-              title={expanded ? "Свернуть" : "Открыть карточку"}
+              title="Открыть карточку"
             >
-              <Icon name={expanded ? "ChevronUp" : "ChevronDown"} className="h-3.5 w-3.5" />
+              <Icon name="ChevronDown" className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Раскрытое тело — контакты, файлы, комментарии */}
-      {expanded && (
-        <LeadExpandedBody
-          lead={lead}
-          ownerId={ownerId}
-          onDelete={onDelete}
-        />
-      )}
-    </div>
+      {/* Панель снизу с полной карточкой */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent
+          side="bottom"
+          className="bg-[#0d0d0d] border-t border-[#1f1f1f] text-white max-h-[80vh] overflow-y-auto rounded-t-2xl p-0"
+        >
+          {/* Шапка панели */}
+          <SheetHeader className="px-5 py-4 border-b border-[#1a1a1a]">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center shrink-0 text-sm font-bold text-gray-400">
+                {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <SheetTitle className="text-white text-base font-semibold truncate">
+                  {lead.name || "Без имени"}
+                </SheetTitle>
+                <p className="text-xs text-gray-400">{lead.phone}</p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  {lead.object_title && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 truncate max-w-[200px]">
+                      {lead.object_title}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500">· {lead.source}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-gray-500">{formatDate(lead.created_at)}</span>
+                <LeadTasksDialog lead={lead} ownerId={ownerId} hasOverdue={hasOverdue} onOverdueRefresh={onOverdueRefresh} />
+                <StagePopover lead={lead} onStageChange={onStageChange} />
+              </div>
+            </div>
+          </SheetHeader>
+
+          {/* Тело — контакты, объект, файлы, комментарии */}
+          <LeadExpandedBody
+            lead={lead}
+            ownerId={ownerId}
+            onDelete={(id) => { onDelete(id); setSheetOpen(false) }}
+          />
+        </SheetContent>
+      </Sheet>
+    </>
   )
 }
