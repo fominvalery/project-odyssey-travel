@@ -9,8 +9,30 @@ interface ShareDialogProps {
 
 export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
   const [linkCopied, setLinkCopied] = useState(false)
+  const [maxHint, setMaxHint] = useState(false)
+  const [moreFallback, setMoreFallback] = useState(false)
   const encodedUrl = encodeURIComponent(url)
   const encodedText = encodeURIComponent(title)
+
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function handleMax() {
+    // У MAX нет публичного share-URL, который гарантированно открывает окно "поделиться".
+    // Копируем ссылку в буфер и открываем MAX — пользователь вставит её в нужный чат.
+    const ok = await copyToClipboard(`${title}\n${url}`)
+    if (ok) {
+      setMaxHint(true)
+      setTimeout(() => setMaxHint(false), 3500)
+    }
+    window.open("https://max.ru/", "_blank", "noopener,noreferrer")
+  }
 
   const targets = [
     {
@@ -36,13 +58,6 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
       href: `https://mail.yandex.ru/compose?subject=${encodedText}&body=${encodedUrl}`,
     },
     {
-      id: "max",
-      name: "MAX",
-      bg: "bg-gradient-to-br from-[#7B61FF] to-[#5D3FE0]",
-      icon: <span className="text-white font-black text-lg tracking-tight">M</span>,
-      href: `https://max.ru/share?url=${encodedUrl}&text=${encodedText}`,
-    },
-    {
       id: "vk",
       name: "ВКонтакте",
       bg: "bg-[#0077FF]",
@@ -56,13 +71,26 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
   ]
 
   async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(url)
+    const ok = await copyToClipboard(url)
+    if (ok) {
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 2000)
-    } catch {
-      /* noop */
     }
+  }
+
+  async function handleMoreShare() {
+    const shareData = { title, text: title, url }
+    const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
+    if (nav.share) {
+      try {
+        await nav.share(shareData)
+        return
+      } catch {
+        /* пользователь отменил или браузер отказал — покажем fallback */
+      }
+    }
+    setMoreFallback(true)
+    setTimeout(() => setMoreFallback(false), 3500)
   }
 
   return (
@@ -85,24 +113,95 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
         </div>
 
         <div className="p-5">
-          <div className="grid grid-cols-4 gap-3 mb-5">
-            {targets.map(t => (
-              <a
-                key={t.id}
-                href={t.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center gap-2 group"
-              >
-                <div className={`w-14 h-14 rounded-2xl ${t.bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
-                  {t.icon}
-                </div>
-                <span className="text-[11px] text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
-                  {t.name}
-                </span>
-              </a>
-            ))}
+          <div className="grid grid-cols-4 gap-3 mb-4">
+            {/* Telegram */}
+            <a
+              href={targets[0].href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-2 group"
+            >
+              <div className={`w-14 h-14 rounded-2xl ${targets[0].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
+                {targets[0].icon}
+              </div>
+              <span className="text-[11px] text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
+                {targets[0].name}
+              </span>
+            </a>
+
+            {/* Яндекс Почта */}
+            <a
+              href={targets[1].href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-2 group"
+            >
+              <div className={`w-14 h-14 rounded-2xl ${targets[1].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
+                {targets[1].icon}
+              </div>
+              <span className="text-[11px] text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
+                {targets[1].name}
+              </span>
+            </a>
+
+            {/* MAX — кастомный клик */}
+            <button
+              type="button"
+              onClick={handleMax}
+              className="flex flex-col items-center gap-2 group"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7B61FF] to-[#5D3FE0] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                <span className="text-white font-black text-lg tracking-tight">M</span>
+              </div>
+              <span className="text-[11px] text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
+                MAX
+              </span>
+            </button>
+
+            {/* ВКонтакте */}
+            <a
+              href={targets[2].href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-2 group"
+            >
+              <div className={`w-14 h-14 rounded-2xl ${targets[2].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
+                {targets[2].icon}
+              </div>
+              <span className="text-[11px] text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
+                {targets[2].name}
+              </span>
+            </a>
           </div>
+
+          {/* Подсказка для MAX */}
+          {maxHint && (
+            <div className="mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 flex items-start gap-2">
+              <Icon name="Check" className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+              <p className="text-xs text-emerald-300 leading-relaxed">
+                Ссылка скопирована. Откройте MAX и вставьте её в нужный чат.
+              </p>
+            </div>
+          )}
+
+          {/* Неяркая строка "другим способом" */}
+          <button
+            type="button"
+            onClick={handleMoreShare}
+            className="w-full flex items-center justify-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-300 transition-colors mb-4 py-1"
+          >
+            <Icon name="MoreHorizontal" className="h-3.5 w-3.5" />
+            Поделиться другим способом
+          </button>
+
+          {moreFallback && (
+            <div className="mb-4 rounded-xl bg-[#0f0f0f] border border-[#262626] px-3 py-2 flex items-start gap-2">
+              <Icon name="Info" className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Ваш браузер не поддерживает системный диалог. Скопируйте ссылку ниже и отправьте вручную.
+              </p>
+            </div>
+          )}
 
           <div className="rounded-xl bg-[#0f0f0f] border border-[#262626] p-3 flex items-center gap-3">
             <Icon name="Link" className="h-4 w-4 text-gray-500 shrink-0" />
