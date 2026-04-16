@@ -1,6 +1,9 @@
 import json
 import os
 import requests
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SYSTEM_PROMPT_RU = """Ты — ИИ-помощник платформы Кабинет-24 (kabinet-24.ru) — платформы коммерческой недвижимости.
 Твоя задача — помогать пользователям разобраться с функционалом платформы.
@@ -40,8 +43,23 @@ SYSTEM_PROMPT_RU = """Ты — ИИ-помощник платформы Каби
 Отвечай только на вопросы о платформе Кабинет-24. Отвечай кратко на русском языке."""
 
 
+def get_gigachat_token(auth_key: str) -> str:
+    response = requests.post(
+        "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
+        headers={
+            "Authorization": f"Basic {auth_key}",
+            "RqUID": "12345678-1234-1234-1234-123456789012",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        data={"scope": "GIGACHAT_API_PERS"},
+        verify=False,
+        timeout=15
+    )
+    return response.json()["access_token"]
+
+
 def handler(event: dict, context) -> dict:
-    """ИИ-помощник платформы Кабинет-24 на базе Groq — отвечает на вопросы по функционалу платформы"""
+    """ИИ-помощник платформы Кабинет-24 на базе GigaChat"""
 
     cors_headers = {
         "Access-Control-Allow-Origin": "*",
@@ -63,37 +81,39 @@ def handler(event: dict, context) -> dict:
             "body": json.dumps({"error": "messages required"}, ensure_ascii=False)
         }
 
-    api_key = os.environ.get("YANDEX_API_KEY", "")
-    folder_id = os.environ.get("YANDEX_FOLDER_ID", "")
+    auth_key = os.environ.get("GIGACHAT_AUTH_KEY", "")
 
-    yandex_messages = [{"role": "system", "text": SYSTEM_PROMPT_RU}]
+    token = get_gigachat_token(auth_key)
+
+    gigachat_messages = [{"role": "system", "content": SYSTEM_PROMPT_RU}]
     for msg in messages:
-        role = msg.get("role", "user")
-        yandex_messages.append({"role": role, "text": msg.get("content", "")})
+        gigachat_messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
 
     payload = {
-        "modelUri": f"gpt://{folder_id}/yandexgpt-lite",
-        "completionOptions": {"stream": False, "temperature": 0.7, "maxTokens": 500},
-        "messages": yandex_messages
+        "model": "GigaChat",
+        "messages": gigachat_messages,
+        "max_tokens": 500,
+        "temperature": 0.7
     }
 
     response = requests.post(
-        "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
+        "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
         json=payload,
         headers={
-            "Authorization": f"Api-Key {api_key}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         },
+        verify=False,
         timeout=25
     )
 
     result = response.json()
-    print(f"[DEBUG] YandexGPT status: {response.status_code}, keys: {list(result.keys())}")
+    print(f"[DEBUG] GigaChat status: {response.status_code}, keys: {list(result.keys())}")
 
     try:
-        reply = result["result"]["alternatives"][0]["message"]["text"]
+        reply = result["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as e:
-        print(f"[ERROR] YandexGPT error: {e}, response: {result}")
+        print(f"[ERROR] GigaChat error: {e}, response: {result}")
         return {
             "statusCode": 200,
             "headers": cors_headers,
