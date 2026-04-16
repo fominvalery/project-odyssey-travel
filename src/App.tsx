@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Profile from "./pages/Profile";
 import Referral from "./pages/Referral";
 import Marketplace from "./pages/Marketplace";
+import ObjectDetail from "./pages/ObjectDetail";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/referral" element={<Referral />} />
             <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/object/:id" element={<ObjectDetail />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin-k24" element={<AdminPanel />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

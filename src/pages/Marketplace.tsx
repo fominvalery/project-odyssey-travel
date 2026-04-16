@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { Header } from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import func2url from "../../backend/func2url.json"
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const CATEGORIES = ["Все", "Коммерческая", "Инвестиционная", "С торгов", "Новостройки", "Редевелопмент"]
 
@@ -214,9 +217,17 @@ export default function Marketplace() {
                     )}
                   </div>
 
-                  <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                    Подробнее
-                  </Button>
+                  {UUID_RE.test(String(obj.id)) ? (
+                    <Link to={`/object/${obj.id}`} className="block">
+                      <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm">
+                        Подробнее
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button disabled className="w-full rounded-xl bg-[#1a1a1a] text-gray-500 text-sm cursor-not-allowed">
+                      Демо-объект
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

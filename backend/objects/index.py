@@ -72,13 +72,28 @@ def handler(event: dict, context) -> dict:
 
             if obj_id:
                 cur.execute(
-                    f"SELECT {SELECT_COLS} FROM {schema}.objects WHERE id = %s",
+                    f"""
+                    SELECT o.id, o.user_id, o.category, o.type, o.title, o.city, o.address, o.price,
+                           o.area, o.description, o.yield_percent, o.extra_fields, o.status, o.published,
+                           o.created_at, o.photos,
+                           u.name, u.phone, u.company, u.avatar_url
+                    FROM {schema}.objects o
+                    LEFT JOIN {schema}.users u ON u.id = o.user_id
+                    WHERE o.id = %s
+                    """,
                     (obj_id,),
                 )
                 row = cur.fetchone()
                 if not row:
                     return resp(404, {"error": "not found"})
-                return resp(200, {"object": row_to_obj(row)})
+                obj = row_to_obj(row[:16])
+                obj["owner"] = {
+                    "name": row[16] or "",
+                    "phone": row[17] or "",
+                    "company": row[18] or "",
+                    "avatar_url": row[19] or "",
+                }
+                return resp(200, {"object": obj})
 
             if user_id:
                 cur.execute(
