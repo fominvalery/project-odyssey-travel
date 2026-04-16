@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import func2url from "../../../backend/func2url.json"
 import { LeadCard, FUNNEL_STAGES, type FunnelStage, type Lead } from "./LeadCard"
+import { KanbanCard } from "./KanbanCard"
 
 const ALL_STAGES: FunnelStage[] = FUNNEL_STAGES.map(s => s.stage)
 
@@ -42,7 +43,7 @@ function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onSta
             <p className="text-xs text-gray-600">Нет заявок</p>
           </div>
         ) : leads.map(lead => (
-          <LeadCard
+          <KanbanCard
             key={lead.id}
             lead={lead}
             ownerId={userId}
