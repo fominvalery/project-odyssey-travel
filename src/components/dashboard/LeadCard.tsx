@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import Icon from "@/components/ui/icon"
 import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
   Popover,
@@ -15,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Calendar } from "@/components/ui/calendar"
 import func2url from "../../../backend/func2url.json"
 
 export type FunnelStage = "Лид" | "Подбор" | "Показ" | "Переговоры" | "Сделка" | "Отказ"
@@ -78,7 +78,7 @@ function formatDateTime(iso: string | null) {
   try {
     const d = new Date(iso)
     return d.toLocaleString("ru", {
-      day: "2-digit", month: "2-digit", year: "numeric",
+      day: "2-digit", month: "long", year: "numeric",
       hour: "2-digit", minute: "2-digit",
     })
   } catch {
@@ -90,6 +90,48 @@ function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} Б`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} КБ`
   return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function nowTime() {
+  const d = new Date()
+  d.setMinutes(d.getMinutes() + 30)
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+}
+
+// Счётчик времени: HH:MM крутилки
+function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [h, m] = value.split(":").map(Number)
+  const hours = isNaN(h) ? 9 : h
+  const mins = isNaN(m) ? 0 : m
+
+  function adjustH(delta: number) {
+    const nh = ((hours + delta + 24) % 24)
+    onChange(`${String(nh).padStart(2, "0")}:${String(mins).padStart(2, "0")}`)
+  }
+  function adjustM(delta: number) {
+    const nm = ((mins + delta + 60) % 60)
+    onChange(`${String(hours).padStart(2, "0")}:${String(nm).padStart(2, "0")}`)
+  }
+
+  return (
+    <div className="flex items-center gap-1 justify-center">
+      <div className="flex flex-col items-center">
+        <button type="button" onClick={() => adjustH(1)} className="px-2 py-0.5 text-gray-400 hover:text-white text-lg leading-none">▲</button>
+        <span className="text-2xl font-bold text-white w-10 text-center">{String(hours).padStart(2, "0")}</span>
+        <button type="button" onClick={() => adjustH(-1)} className="px-2 py-0.5 text-gray-400 hover:text-white text-lg leading-none">▼</button>
+      </div>
+      <span className="text-2xl font-bold text-gray-400 mb-0.5">:</span>
+      <div className="flex flex-col items-center">
+        <button type="button" onClick={() => adjustM(5)} className="px-2 py-0.5 text-gray-400 hover:text-white text-lg leading-none">▲</button>
+        <span className="text-2xl font-bold text-white w-10 text-center">{String(mins).padStart(2, "0")}</span>
+        <button type="button" onClick={() => adjustM(-5)} className="px-2 py-0.5 text-gray-400 hover:text-white text-lg leading-none">▼</button>
+      </div>
+    </div>
+  )
 }
 
 interface LeadCardProps {
@@ -122,8 +164,9 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
   const [tasksOpen, setTasksOpen] = useState(false)
   const [doneText, setDoneText] = useState("")
   const [todoText, setTodoText] = useState("")
-  const [dueDate, setDueDate] = useState("")
-  const [dueTime, setDueTime] = useState("")
+  const [dueDate, setDueDate] = useState<Date>(new Date())
+  const [dueTime, setDueTime] = useState(nowTime())
+  const [calOpen, setCalOpen] = useState(false)
 
   const loadComments = useCallback(async () => {
     const url = `${func2url["lead-extras"]}?kind=comments&lead_id=${lead.id}&owner_id=${ownerId}`
@@ -154,6 +197,16 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
   useEffect(() => {
     if (tasksOpen && !tasksLoaded) loadTasks()
   }, [tasksOpen, tasksLoaded, loadTasks])
+
+  // Сбрасываем форму при открытии диалога
+  useEffect(() => {
+    if (tasksOpen) {
+      setDoneText("")
+      setTodoText("")
+      setDueDate(new Date())
+      setDueTime(nowTime())
+    }
+  }, [tasksOpen])
 
   async function addComment() {
     const text = commentText.trim()
@@ -201,11 +254,11 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
 
   async function addTask() {
     if (!doneText.trim() && !todoText.trim()) return
-    let due_at: string | null = null
-    if (dueDate) {
-      const dt = new Date(`${dueDate}T${dueTime || "09:00"}:00`)
-      if (!isNaN(dt.getTime())) due_at = dt.toISOString()
-    }
+    const [hh, mm] = dueTime.split(":").map(Number)
+    const dt = new Date(dueDate)
+    dt.setHours(isNaN(hh) ? 9 : hh, isNaN(mm) ? 0 : mm, 0, 0)
+    const due_at = dt.toISOString()
+
     const r = await fetch(`${func2url["lead-extras"]}?kind=tasks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -221,8 +274,8 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
       setTasks(prev => [r.task, ...prev])
       setDoneText("")
       setTodoText("")
-      setDueDate("")
-      setDueTime("")
+      setDueDate(new Date())
+      setDueTime(nowTime())
       onOverdueRefresh()
     }
   }
@@ -238,6 +291,9 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
       onOverdueRefresh()
     }
   }
+
+  const formatPickedDate = (d: Date) =>
+    d.toLocaleDateString("ru", { day: "numeric", month: "long", year: "numeric" })
 
   return (
     <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden hover:border-[#2a2a2a] transition-colors">
@@ -266,7 +322,7 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
         <div className="flex items-center gap-3 shrink-0">
           <span className="text-xs text-gray-500">{formatDate(lead.created_at)}</span>
 
-          {/* Иконка-планировщик (красная при просрочке) */}
+          {/* Иконка-планировщик */}
           <Dialog open={tasksOpen} onOpenChange={setTasksOpen}>
             <DialogTrigger asChild>
               <button
@@ -283,11 +339,12 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
                 )}
               </button>
             </DialogTrigger>
-            <DialogContent className="bg-[#0d0d0d] border-[#1f1f1f] text-white max-w-lg">
+            <DialogContent className="bg-[#0d0d0d] border-[#1f1f1f] text-white max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Задачи по клиенту: {lead.name || "Без имени"}</DialogTitle>
+                <DialogTitle className="text-base">Задачи по клиенту: {lead.name || "Без имени"}</DialogTitle>
               </DialogHeader>
 
+              {/* Форма добавления задачи */}
               <div className="space-y-3">
                 <div>
                   <label className="text-xs text-gray-400 mb-1 block">Сделано</label>
@@ -295,7 +352,7 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
                     value={doneText}
                     onChange={e => setDoneText(e.target.value)}
                     placeholder="Что уже сделано с клиентом..."
-                    className="bg-[#111] border-[#1f1f1f] text-white resize-none"
+                    className="bg-[#111] border-[#1f1f1f] text-white resize-none text-sm"
                     rows={2}
                   />
                 </div>
@@ -305,49 +362,76 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
                     value={todoText}
                     onChange={e => setTodoText(e.target.value)}
                     placeholder="Что нужно сделать на следующем шаге..."
-                    className="bg-[#111] border-[#1f1f1f] text-white resize-none"
+                    className="bg-[#111] border-[#1f1f1f] text-white resize-none text-sm"
                     rows={2}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+
+                {/* Дата + Время */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Календарь */}
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Дата напоминания</label>
-                    <Input
-                      type="date"
-                      value={dueDate}
-                      onChange={e => setDueDate(e.target.value)}
-                      className="bg-[#111] border-[#1f1f1f] text-white"
-                    />
+                    <Popover open={calOpen} onOpenChange={setCalOpen}>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-[#111] border border-[#1f1f1f] text-sm text-white hover:border-blue-500/40 transition-colors">
+                          <Icon name="CalendarDays" className="h-4 w-4 text-blue-400 shrink-0" />
+                          <span className="flex-1 text-left truncate text-xs">
+                            {formatPickedDate(dueDate)}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto p-0 bg-[#0d0d0d] border-[#1f1f1f] text-white"
+                        align="start"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={dueDate}
+                          onSelect={(d) => { if (d) { setDueDate(d); setCalOpen(false) } }}
+                          defaultMonth={dueDate}
+                          locale={ruLocale}
+                          className="rounded-xl"
+                          classNames={{
+                            day_selected: "bg-blue-500 text-white hover:bg-blue-600",
+                            day_today: "border border-blue-400 text-blue-400",
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
+
+                  {/* Счётчик времени */}
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Время</label>
-                    <Input
-                      type="time"
-                      value={dueTime}
-                      onChange={e => setDueTime(e.target.value)}
-                      className="bg-[#111] border-[#1f1f1f] text-white"
-                    />
+                    <div className="bg-[#111] border border-[#1f1f1f] rounded-lg px-2 py-1">
+                      <TimePicker value={dueTime} onChange={setDueTime} />
+                    </div>
                   </div>
                 </div>
+
                 <Button
                   onClick={addTask}
+                  disabled={!doneText.trim() && !todoText.trim()}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white"
                 >
                   <Icon name="Plus" className="h-4 w-4 mr-1" /> Добавить задачу
                 </Button>
               </div>
 
-              <div className="border-t border-[#1a1a1a] pt-3 max-h-80 overflow-y-auto space-y-2">
+              {/* История задач */}
+              <div className="border-t border-[#1a1a1a] pt-3 space-y-2">
+                <p className="text-xs text-gray-500 mb-2">История задач</p>
                 {tasks.length === 0 ? (
-                  <p className="text-xs text-gray-500 text-center py-4">Задач пока нет</p>
+                  <p className="text-xs text-gray-600 text-center py-4">Задач пока нет</p>
                 ) : tasks.map(t => {
                   const overdue = !t.completed && t.due_at && new Date(t.due_at) <= new Date()
                   return (
                     <div
                       key={t.id}
-                      className={`p-3 rounded-lg border ${
+                      className={`p-3 rounded-xl border ${
                         t.completed
-                          ? "bg-[#0d1a0d] border-emerald-500/20 opacity-60"
+                          ? "bg-emerald-500/5 border-emerald-500/20 opacity-70"
                           : overdue
                             ? "bg-red-500/10 border-red-500/30"
                             : "bg-[#111] border-[#1f1f1f]"
@@ -356,23 +440,30 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
                       <div className="flex items-start gap-2">
                         <button
                           onClick={() => toggleTask(t)}
-                          className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center shrink-0 ${
-                            t.completed ? "bg-emerald-500 border-emerald-500" : "border-gray-500"
+                          className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                            t.completed ? "bg-emerald-500 border-emerald-500" : "border-gray-600 hover:border-emerald-400"
                           }`}
                         >
                           {t.completed && <Icon name="Check" className="h-3 w-3 text-white" />}
                         </button>
                         <div className="flex-1 min-w-0">
+                          <p className="text-[10px] text-gray-500">{formatDate(t.created_at)}</p>
                           {t.done_text && (
-                            <p className="text-xs"><span className="text-emerald-400 font-semibold">Сделано:</span> <span className="text-gray-300">{t.done_text}</span></p>
+                            <div className="mt-1">
+                              <span className="text-[11px] font-semibold text-emerald-400">Что сделано</span>
+                              <p className="text-sm text-gray-200 mt-0.5">{t.done_text}</p>
+                            </div>
                           )}
                           {t.todo_text && (
-                            <p className="text-xs mt-1"><span className="text-amber-400 font-semibold">Сделать:</span> <span className="text-gray-300">{t.todo_text}</span></p>
+                            <div className="mt-1.5">
+                              <span className="text-[11px] font-semibold text-amber-400">Следующий шаг</span>
+                              <p className="text-sm text-gray-200 mt-0.5">{t.todo_text}</p>
+                            </div>
                           )}
                           {t.due_at && (
-                            <p className={`text-[11px] mt-1 flex items-center gap-1 ${overdue ? "text-red-400" : "text-gray-500"}`}>
+                            <p className={`text-[11px] mt-1.5 font-semibold flex items-center gap-1 ${overdue ? "text-red-400" : "text-blue-400"}`}>
                               <Icon name="Clock" className="h-3 w-3" />
-                              {formatDateTime(t.due_at)}
+                              Напоминание {formatDateTime(t.due_at)}
                               {overdue && " · просрочено"}
                             </p>
                           )}
@@ -385,7 +476,7 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
             </DialogContent>
           </Dialog>
 
-          {/* Этап воронки — кликабельный с выпадающим меню */}
+          {/* Этап воронки — выпадающее меню */}
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -400,7 +491,6 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
               align="end"
               className="w-72 p-0 bg-[#0d0d0d] border-[#1f1f1f] text-white"
             >
-              {/* Шапка с объектом */}
               {lead.object_title && (
                 <div className="px-4 py-3 border-b border-[#1a1a1a] bg-[#111]">
                   <p className="text-[10px] text-gray-500 uppercase tracking-wider">Объект из маркетплейса</p>
@@ -454,7 +544,6 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
             )}
           </div>
 
-          {/* Объект — кликабельный + файлы */}
           {lead.object_title && (
             <div className="rounded-xl bg-[#0d0d0d] border border-[#1a1a1a] p-3">
               <p className="text-xs text-gray-500 mb-1">Объект</p>
@@ -521,7 +610,6 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
             </div>
           )}
 
-          {/* Комментарии */}
           <div>
             <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
               <Icon name="MessageCircle" className="h-3.5 w-3.5" /> Мои комментарии ({comments.length})
@@ -568,5 +656,34 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
     </div>
   )
 }
+
+// Простая русская локаль для календаря
+const ruLocale = {
+  localize: {
+    month: (n: number) => ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"][n],
+    day: (n: number) => ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"][n],
+    ordinalNumber: (n: number) => String(n),
+    era: (n: number) => ["до н.э.", "н.э."][n],
+    quarter: (n: number) => `Q${n + 1}`,
+    dayPeriod: (v: string) => v,
+  },
+  formatLong: {
+    date: () => "dd.MM.yyyy",
+    time: () => "HH:mm",
+    dateTime: () => "dd.MM.yyyy HH:mm",
+  },
+  match: {
+    month: () => ({ value: 0, rest: "" }),
+    day: () => ({ value: 0, rest: "" }),
+    ordinalNumber: () => ({ value: 0, rest: "" }),
+    era: () => ({ value: 0, rest: "" }),
+    quarter: () => ({ value: 0, rest: "" }),
+    dayPeriod: () => ({ value: "am", rest: "" }),
+  },
+  options: { weekStartsOn: 1 as const, firstWeekContainsDate: 1 },
+  formatRelative: () => "",
+  code: "ru",
+  formatDistance: () => "",
+} as unknown as Locale
 
 export default LeadCard
