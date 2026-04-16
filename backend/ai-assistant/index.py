@@ -65,6 +65,7 @@ def handler(event: dict, context) -> dict:
         }
 
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    print(f"[DEBUG] Key length: {len(api_key)}, starts with: {api_key[:10] if api_key else 'EMPTY'}")
 
     payload = {
         "model": "meta-llama/llama-3.1-8b-instruct:free",
