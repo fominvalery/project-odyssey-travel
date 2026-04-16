@@ -1,10 +1,28 @@
 {
   "tests": [
     {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
       "name": "GET marketplace objects",
       "method": "GET",
       "path": "/?marketplace=true",
       "expectedStatus": 200
+    },
+    {
+      "name": "DELETE without params",
+      "method": "DELETE",
+      "path": "/",
+      "expectedStatus": 400
+    },
+    {
+      "name": "PUT without body",
+      "method": "PUT",
+      "path": "/",
+      "expectedStatus": 400
     }
   ]
 }

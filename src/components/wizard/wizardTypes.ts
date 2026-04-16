@@ -12,6 +12,8 @@ export interface ObjectData {
   category: string
   published?: boolean
   photos?: string[]
+  user_id?: string | null
+  extra_fields?: Record<string, string>
 }
 
 export interface WizardForm {

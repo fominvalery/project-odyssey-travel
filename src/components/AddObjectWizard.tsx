@@ -11,20 +11,30 @@ interface AddObjectWizardProps {
   onClose: () => void
   onSave: (obj: ObjectData) => void
   userId?: string
+  initial?: ObjectData
 }
 
-export function AddObjectWizard({ onClose, onSave, userId }: AddObjectWizardProps) {
+export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectWizardProps) {
+  const isEditing = Boolean(initial)
   const [step, setStep] = useState(0)
-  const [category, setCategory] = useState("")
-  const [publishToMarket, setPublishToMarket] = useState(true)
+  const [category, setCategory] = useState(initial?.category ?? "")
+  const [publishToMarket, setPublishToMarket] = useState(initial?.published ?? true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<WizardForm>({
-    title: "", city: "", address: "", price: "", area: "",
-    description: "", landing_title: "", landing_cta: "",
+    title: initial?.title ?? "",
+    city: initial?.city ?? "",
+    address: initial?.address ?? "",
+    price: initial?.price ?? "",
+    area: initial?.area ?? "",
+    description: initial?.description ?? "",
+    landing_title: "",
+    landing_cta: "",
     presentation_notes: "",
   })
-  const [categoryFields, setCategoryFields] = useState<Record<string, string>>({})
-  const [photos, setPhotos] = useState<string[]>([])
+  const [categoryFields, setCategoryFields] = useState<Record<string, string>>(
+    initial?.extra_fields ?? (initial?.yield ? { yield: initial.yield } : {})
+  )
+  const [photos, setPhotos] = useState<string[]>(initial?.photos ?? [])
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
   function handleCategoryField(key: string, value: string) {
@@ -43,7 +53,7 @@ export function AddObjectWizard({ onClose, onSave, userId }: AddObjectWizardProp
 
   async function handlePublish() {
     const cat = CATEGORIES.find(c => c.id === category)
-    const objData = {
+    const payload = {
       user_id: userId ?? "",
       category,
       type: cat?.label ?? category,
@@ -55,7 +65,7 @@ export function AddObjectWizard({ onClose, onSave, userId }: AddObjectWizardProp
       yield_percent: categoryFields["yield"] ?? "",
       description: form.description,
       extra_fields: categoryFields,
-      status: "Активен",
+      status: initial?.status ?? "Активен",
       published: publishToMarket,
       photos,
     }
@@ -63,19 +73,49 @@ export function AddObjectWizard({ onClose, onSave, userId }: AddObjectWizardProp
     setSaving(true)
     try {
       const res = await fetch(func2url.objects, {
-        method: "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(objData),
+        body: JSON.stringify(isEditing ? { ...payload, id: initial!.id } : payload),
       })
       const data = await res.json()
-      onSave({
-        id: data.id ?? Date.now(),
-        ...objData,
-        yield: objData.yield_percent,
-      })
+      const server = data.object as Record<string, unknown> | undefined
+
+      const saved: ObjectData = server ? {
+        id: String(server.id),
+        type: String(server.type ?? payload.type),
+        title: String(server.title ?? payload.title),
+        city: String(server.city ?? ""),
+        address: String(server.address ?? ""),
+        price: String(server.price ?? ""),
+        area: String(server.area ?? ""),
+        yield: String(server.yield_percent ?? ""),
+        description: String(server.description ?? ""),
+        status: String(server.status ?? "Активен"),
+        category: String(server.category ?? ""),
+        published: Boolean(server.published),
+        photos: Array.isArray(server.photos) ? server.photos as string[] : [],
+        user_id: (server.user_id as string) ?? null,
+        extra_fields: (server.extra_fields as Record<string, string>) ?? {},
+      } : {
+        id: initial?.id ?? Date.now(),
+        type: payload.type,
+        title: payload.title,
+        city: payload.city,
+        address: payload.address,
+        price: payload.price,
+        area: payload.area,
+        yield: payload.yield_percent,
+        description: payload.description,
+        status: payload.status,
+        category: payload.category,
+        published: payload.published,
+        photos: payload.photos,
+        extra_fields: categoryFields,
+      }
+      onSave(saved)
     } catch {
       onSave({
-        id: Date.now(),
+        id: initial?.id ?? Date.now(),
         type: cat?.label ?? category,
         category,
         title: form.title || "Новый объект",
@@ -85,9 +125,10 @@ export function AddObjectWizard({ onClose, onSave, userId }: AddObjectWizardProp
         area: form.area,
         yield: categoryFields["yield"] ?? "",
         description: form.description,
-        status: "Активен",
+        status: initial?.status ?? "Активен",
         published: publishToMarket,
         photos,
+        extra_fields: categoryFields,
       })
     } finally {
       setSaving(false)
@@ -104,7 +145,7 @@ export function AddObjectWizard({ onClose, onSave, userId }: AddObjectWizardProp
           <button onClick={handleBack} className="text-gray-400 hover:text-white transition-colors">
             <Icon name="ArrowLeft" className="h-5 w-5" />
           </button>
-          <h1 className="text-2xl font-bold">Новый объект</h1>
+          <h1 className="text-2xl font-bold">{isEditing ? "Редактирование объекта" : "Новый объект"}</h1>
         </div>
 
         {/* Прогресс */}
@@ -180,7 +221,7 @@ export function AddObjectWizard({ onClose, onSave, userId }: AddObjectWizardProp
             <Button onClick={handlePublish} disabled={saving} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60">
               {saving
                 ? <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Сохранение...</>
-                : <><Icon name="Rocket" className="h-4 w-4 mr-2" />Опубликовать объект</>
+                : <><Icon name={isEditing ? "Save" : "Rocket"} className="h-4 w-4 mr-2" />{isEditing ? "Сохранить изменения" : "Опубликовать объект"}</>
               }
             </Button>
           )}

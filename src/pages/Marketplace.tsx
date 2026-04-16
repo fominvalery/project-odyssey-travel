@@ -100,18 +100,21 @@ export default function Marketplace() {
       .then(r => r.json())
       .then(data => {
         const parsed = JSON.parse(typeof data === "string" ? data : JSON.stringify(data))
-        const arr = (parsed.objects || []).map((o: Record<string, string>) => ({
-          id: o.id,
-          title: o.title,
-          type: CAT_MAP[o.category] ?? o.type,
-          city: o.city,
-          price: o.price ? `${o.price} ₽` : "—",
-          area: o.area ? `${o.area} м²` : "—",
-          yield: o.yield_percent || "—",
-          img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
-          badge: null,
-          badgeColor: "",
-        }))
+        const arr = (parsed.objects || []).map((o: Record<string, unknown>) => {
+          const photos = Array.isArray(o.photos) ? (o.photos as string[]) : []
+          return {
+            id: String(o.id),
+            title: String(o.title ?? ""),
+            type: CAT_MAP[o.category as string] ?? (o.type as string),
+            city: String(o.city ?? ""),
+            price: o.price ? `${o.price} ₽` : "—",
+            area: o.area ? `${o.area} м²` : "—",
+            yield: (o.yield_percent as string) || "—",
+            img: photos[0] || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
+            badge: null,
+            badgeColor: "",
+          }
+        })
         setDbObjects(arr)
       })
       .catch(() => {})
