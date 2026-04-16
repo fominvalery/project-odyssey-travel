@@ -4,6 +4,7 @@ import { Header } from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
+import ShareDialog from "@/components/ShareDialog"
 import func2url from "../../backend/func2url.json"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -97,6 +98,7 @@ export default function Marketplace() {
   const [search, setSearch] = useState("")
   const [dbObjects, setDbObjects] = useState<typeof OBJECTS>([])
   const [loading, setLoading] = useState(true)
+  const [shareTarget, setShareTarget] = useState<{ id: string; title: string } | null>(null)
 
   useEffect(() => {
     fetch(`${func2url.objects}?marketplace=true`)
@@ -217,23 +219,42 @@ export default function Marketplace() {
                     )}
                   </div>
 
-                  {UUID_RE.test(String(obj.id)) ? (
-                    <Link to={`/object/${obj.id}`} className="block">
-                      <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                        Подробнее
+                  <div className="flex gap-2">
+                    {UUID_RE.test(String(obj.id)) ? (
+                      <Link to={`/object/${obj.id}`} className="flex-1">
+                        <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm">
+                          Подробнее
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button disabled className="flex-1 rounded-xl bg-[#1a1a1a] text-gray-500 text-sm cursor-not-allowed">
+                        Демо-объект
                       </Button>
-                    </Link>
-                  ) : (
-                    <Button disabled className="w-full rounded-xl bg-[#1a1a1a] text-gray-500 text-sm cursor-not-allowed">
-                      Демо-объект
-                    </Button>
-                  )}
+                    )}
+                    {UUID_RE.test(String(obj.id)) && (
+                      <button
+                        onClick={() => setShareTarget({ id: String(obj.id), title: obj.title })}
+                        aria-label="Поделиться"
+                        className="shrink-0 w-10 h-10 rounded-xl border border-[#262626] bg-[#1a1a1a] text-gray-300 hover:text-white hover:border-blue-500/40 flex items-center justify-center transition-colors"
+                      >
+                        <Icon name="Share2" className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </section>
+
+      {shareTarget && (
+        <ShareDialog
+          title={shareTarget.title}
+          url={`${window.location.origin}/object/${shareTarget.id}`}
+          onClose={() => setShareTarget(null)}
+        />
+      )}
     </main>
   )
 }
