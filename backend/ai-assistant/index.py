@@ -70,6 +70,7 @@ def handler(event: dict, context) -> dict:
         }
     
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    print(f"[DEBUG] api_key present: {bool(api_key)}, length: {len(api_key)}, starts: {api_key[:8] if api_key else 'EMPTY'}")
     
     payload = {
         "model": "mistralai/mistral-7b-instruct:free",
@@ -94,6 +95,9 @@ def handler(event: dict, context) -> dict:
     )
     
     result = response.json()
+    print(f"[DEBUG] OpenRouter response status: {response.status_code}, keys: {list(result.keys())}")
+    if "error" in result:
+        print(f"[DEBUG] OpenRouter error: {result['error']}")
     
     if "choices" not in result:
         error_info = result.get("error", {})
