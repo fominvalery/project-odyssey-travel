@@ -63,33 +63,37 @@ def handler(event: dict, context) -> dict:
             "body": json.dumps({"error": "messages required"}, ensure_ascii=False)
         }
 
-    api_key = os.environ.get("GROQ_API_KEY", "")
+    api_key = os.environ.get("YANDEX_API_KEY", "")
+    folder_id = os.environ.get("YANDEX_FOLDER_ID", "")
+
+    yandex_messages = [{"role": "system", "text": SYSTEM_PROMPT_RU}]
+    for msg in messages:
+        role = msg.get("role", "user")
+        yandex_messages.append({"role": role, "text": msg.get("content", "")})
 
     payload = {
-        "model": "llama3-8b-8192",
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT_RU},
-            *messages
-        ],
-        "max_tokens": 500,
-        "temperature": 0.7
+        "modelUri": f"gpt://{folder_id}/yandexgpt-lite",
+        "completionOptions": {"stream": False, "temperature": 0.7, "maxTokens": 500},
+        "messages": yandex_messages
     }
 
     response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
+        "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
         json=payload,
         headers={
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Api-Key {api_key}",
             "Content-Type": "application/json"
         },
         timeout=25
     )
 
     result = response.json()
+    print(f"[DEBUG] YandexGPT status: {response.status_code}, keys: {list(result.keys())}")
 
-    if "choices" not in result:
-        error_msg = str(result.get("error", result))
-        print(f"[ERROR] Groq error: {error_msg}")
+    try:
+        reply = result["result"]["alternatives"][0]["message"]["text"]
+    except (KeyError, IndexError) as e:
+        print(f"[ERROR] YandexGPT error: {e}, response: {result}")
         return {
             "statusCode": 200,
             "headers": cors_headers,
@@ -97,8 +101,6 @@ def handler(event: dict, context) -> dict:
                 "reply": "Извини, ИИ-помощник временно недоступен. Попробуй позже или обратись в поддержку.",
             }, ensure_ascii=False)
         }
-
-    reply = result["choices"][0]["message"]["content"]
 
     return {
         "statusCode": 200,
