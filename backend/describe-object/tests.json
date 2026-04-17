@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST generate description",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "category": "Коммерция",
+        "title": "Офис в БЦ Арбат",
+        "city": "Москва",
+        "price": "18500000",
+        "area": "142"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"description": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -185,6 +185,8 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
           <Step3Landing
             form={form}
             setForm={setForm}
+            category={category}
+            categoryFields={categoryFields}
             photos={photos}
             uploadingPhoto={uploadingPhoto}
             onPhotosChange={setPhotos}

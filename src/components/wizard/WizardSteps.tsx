@@ -1,8 +1,10 @@
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
 import { CATEGORIES, getCategoryFields, WizardForm } from "./wizardTypes"
 import SortablePhotoGrid from "./SortablePhotoGrid"
+import func2url from "../../../backend/func2url.json"
 
 // ── Шаг 1: Выбор категории ──────────────────────────────────────────────────
 
@@ -107,13 +109,48 @@ export function Step2Details({
 interface Step3Props {
   form: WizardForm
   setForm: (f: WizardForm) => void
+  category: string
+  categoryFields: Record<string, string>
   photos: string[]
   uploadingPhoto: boolean
   onPhotosChange: (photos: string[]) => void
   onUploadingChange: (v: boolean) => void
 }
 
-export function Step3Landing({ form, setForm, photos, uploadingPhoto, onPhotosChange, onUploadingChange }: Step3Props) {
+export function Step3Landing({ form, setForm, category, categoryFields, photos, uploadingPhoto, onPhotosChange, onUploadingChange }: Step3Props) {
+  const [generating, setGenerating] = useState(false)
+  const [aiError, setAiError] = useState("")
+
+  async function handleGenerate() {
+    setGenerating(true)
+    setAiError("")
+    try {
+      const r = await fetch(func2url["describe-object"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          title: form.title,
+          city: form.city,
+          address: form.address,
+          price: form.price,
+          area: form.area,
+          extra_fields: categoryFields,
+          user_draft: form.description,
+        }),
+      }).then(r => r.json())
+      if (r.description) {
+        setForm({ ...form, description: r.description })
+      } else {
+        setAiError(r.error || "Не удалось сгенерировать описание")
+      }
+    } catch {
+      setAiError("Ошибка соединения с ИИ")
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div>
@@ -127,14 +164,38 @@ export function Step3Landing({ form, setForm, photos, uploadingPhoto, onPhotosCh
       </div>
 
       <div>
-        <Label className="text-xs text-gray-400 mb-1.5 block">Описание объекта</Label>
+        <div className="flex items-center justify-between mb-1.5">
+          <Label className="text-xs text-gray-400">Описание объекта</Label>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={generating}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-300 hover:bg-violet-500/20 hover:text-violet-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {generating ? (
+              <><Icon name="Loader2" className="h-3.5 w-3.5 animate-spin" />Генерирую...</>
+            ) : (
+              <><Icon name="Sparkles" className="h-3.5 w-3.5" />Написать с ИИ</>
+            )}
+          </button>
+        </div>
         <textarea
-          rows={5}
-          placeholder="Краткое описание для покупателей — особенности, преимущества, условия..."
+          rows={6}
+          placeholder="Опишите объект в свободной форме или оставьте поле пустым — ИИ составит описание на основе введённых характеристик..."
           value={form.description}
           onChange={e => setForm({ ...form, description: e.target.value })}
-          className="w-full bg-[#111] border border-[#1f1f1f] text-white placeholder:text-gray-600 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full bg-[#111] border border-[#1f1f1f] text-white placeholder:text-gray-600 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
         />
+        {aiError && (
+          <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+            <Icon name="AlertCircle" className="h-3.5 w-3.5" />{aiError}
+          </p>
+        )}
+        {!generating && (
+          <p className="text-[11px] text-gray-600 mt-1">
+            Можно написать свой текст, ввести ключевые тезисы или нажать «Написать с ИИ» — он учтёт все данные объекта
+          </p>
+        )}
       </div>
 
       <div>
