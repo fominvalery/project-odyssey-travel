@@ -2,6 +2,7 @@
 Заявки от покупателей владельцам объектов.
 POST   /                      — создать заявку (публично или вручную)
 GET    /?owner_id={uuid}      — список заявок владельца (для CRM)
+GET    /?org_id={uuid}        — список заявок агентства (с опц. department_id)
 PUT    /                      — обновить стадию/поля (только владелец)
 DELETE /?id={uuid}&owner_id={uuid} — удалить заявку (только владелец)
 """
@@ -35,7 +36,6 @@ def row_to_lead(r):
         "source": r[8] or "",
         "stage": r[9] or "Лид",
         "created_at": r[10].isoformat() if r[10] else "",
-        # предпочтения клиента
         "budget_from": r[11],
         "budget_to": r[12],
         "area_from": float(r[13]) if r[13] is not None else None,
@@ -43,6 +43,8 @@ def row_to_lead(r):
         "preferred_type": r[15] or "",
         "preferred_city": r[16] or "",
         "preferred_category": r[17] or "",
+        "org_id": str(r[18]) if len(r) > 18 and r[18] else None,
+        "department_id": str(r[19]) if len(r) > 19 and r[19] else None,
     }
 
 
@@ -54,7 +56,8 @@ SELECT_COLS = (
     "id, owner_id, object_id, object_title, name, phone, email, "
     "message, source, stage, created_at, "
     "budget_from, budget_to, area_from, area_to, "
-    "preferred_type, preferred_city, preferred_category"
+    "preferred_type, preferred_city, preferred_category, "
+    "org_id, department_id"
 )
 
 
@@ -78,49 +81,60 @@ def handler(event: dict, context) -> dict:
                 return resp(400, {"error": "owner_id, name, phone required"})
 
             object_id = body.get("object_id") or None
+            org_id = body.get("org_id") or None
+            dept_id = body.get("department_id") or None
 
-            cur.execute(
-                f"""
-                INSERT INTO {schema}.leads
-                    (owner_id, object_id, object_title, name, phone, email, message, source, stage,
-                     budget_from, budget_to, area_from, area_to,
-                     preferred_type, preferred_city, preferred_category)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING {SELECT_COLS}
-                """,
-                (
-                    owner_id,
-                    object_id,
-                    body.get("object_title", ""),
-                    name,
-                    phone,
-                    body.get("email", ""),
-                    body.get("message", ""),
-                    body.get("source", "Маркетплейс"),
-                    body.get("stage", "Лид"),
-                    body.get("budget_from") or None,
-                    body.get("budget_to") or None,
-                    body.get("area_from") or None,
-                    body.get("area_to") or None,
-                    body.get("preferred_type", ""),
-                    body.get("preferred_city", ""),
-                    body.get("preferred_category", ""),
-                ),
+            sql = (
+                "INSERT INTO " + schema + ".leads"
+                " (owner_id, object_id, object_title, name, phone, email, message, source, stage,"
+                "  budget_from, budget_to, area_from, area_to,"
+                "  preferred_type, preferred_city, preferred_category, org_id, department_id)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                " RETURNING " + SELECT_COLS
             )
+            cur.execute(sql, (
+                owner_id, object_id,
+                body.get("object_title", ""), name, phone,
+                body.get("email", ""), body.get("message", ""),
+                body.get("source", "Маркетплейс"), body.get("stage", "Лид"),
+                body.get("budget_from") or None, body.get("budget_to") or None,
+                body.get("area_from") or None, body.get("area_to") or None,
+                body.get("preferred_type", ""), body.get("preferred_city", ""),
+                body.get("preferred_category", ""), org_id, dept_id,
+            ))
             row = cur.fetchone()
             conn.commit()
             return resp(200, {"ok": True, "lead": row_to_lead(row)})
 
-        # ---------- GET — список заявок владельца ----------
+        # ---------- GET — список заявок владельца или агентства ----------
         if method == "GET":
             params = event.get("queryStringParameters") or {}
             owner_id = params.get("owner_id")
+            org_id = params.get("org_id")
+            dept_id = params.get("department_id")
+
+            if org_id:
+                if dept_id:
+                    cur.execute(
+                        "SELECT " + SELECT_COLS + " FROM " + schema + ".leads"
+                        " WHERE org_id = %s AND department_id = %s ORDER BY created_at DESC",
+                        (org_id, dept_id),
+                    )
+                else:
+                    cur.execute(
+                        "SELECT " + SELECT_COLS + " FROM " + schema + ".leads"
+                        " WHERE org_id = %s ORDER BY created_at DESC",
+                        (org_id,),
+                    )
+                rows = cur.fetchall()
+                return resp(200, {"leads": [row_to_lead(r) for r in rows]})
+
             if not owner_id:
-                return resp(400, {"error": "owner_id required"})
+                return resp(400, {"error": "owner_id or org_id required"})
 
             cur.execute(
-                f"SELECT {SELECT_COLS} FROM {schema}.leads "
-                f"WHERE owner_id = %s ORDER BY created_at DESC",
+                "SELECT " + SELECT_COLS + " FROM " + schema + ".leads"
+                " WHERE owner_id = %s ORDER BY created_at DESC",
                 (owner_id,),
             )
             rows = cur.fetchall()

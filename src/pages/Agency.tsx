@@ -22,6 +22,7 @@ import {
   AgencyInvitesTab,
   AgencyAboutTab,
 } from "@/components/agency/AgencyInvitesTab"
+import AgencyAnalyticsTab from "@/components/agency/AgencyAnalyticsTab"
 import {
   Dialog,
   DialogContent,
@@ -176,13 +177,18 @@ export default function Agency() {
       />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 pb-6 pt-6">
-        <Tabs defaultValue="employees">
+        <Tabs defaultValue="analytics">
           <TabsList className="bg-white/5 border border-white/10">
+            <TabsTrigger value="analytics">Аналитика</TabsTrigger>
             <TabsTrigger value="employees">Сотрудники</TabsTrigger>
             <TabsTrigger value="departments">Отделы</TabsTrigger>
             <TabsTrigger value="invites">Приглашения</TabsTrigger>
             <TabsTrigger value="about">Об агентстве</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics" className="mt-4">
+            {orgId && <AgencyAnalyticsTab orgId={orgId} />}
+          </TabsContent>
 
           <TabsContent value="employees" className="mt-4">
             <AgencyEmployeesTab

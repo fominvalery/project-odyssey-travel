@@ -218,4 +218,48 @@ export const agencyApi = {
       userId,
       body: { token },
     }),
+
+  orgAnalytics: (userId: string, orgId: string) =>
+    call<OrgAnalytics>({ action: "org_analytics", userId, orgId, method: "GET" }),
+}
+
+export interface DeptObjectStat {
+  dept_id: string
+  dept_name: string
+  total: number
+  published: number
+  active: number
+}
+
+export interface DeptLeadStat {
+  dept_id: string
+  dept_name: string
+  total: number
+  deals: number
+  new_leads: number
+}
+
+export interface EmployeeStat {
+  user_id: string
+  full_name: string
+  avatar_url: string | null
+  role_code: RoleCode
+  role_title: string
+  department_id: string | null
+  objects_count?: number
+  leads_count?: number
+  deals_count?: number
+}
+
+export interface OrgAnalytics {
+  summary: {
+    total_objects: number
+    published_objects: number
+    total_leads: number
+    total_deals: number
+  }
+  dept_objects: DeptObjectStat[]
+  dept_leads: DeptLeadStat[]
+  top_by_objects: EmployeeStat[]
+  top_by_leads: EmployeeStat[]
 }

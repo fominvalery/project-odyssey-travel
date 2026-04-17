@@ -482,6 +482,121 @@ def accept_invite(user_id, body):
         return _cors({'ok': True, 'organization_id': str(inv['organization_id'])})
 
 
+# ── Analytics ──────────────────────────────────────────────────────────
+
+def org_analytics(user_id, org_id):
+    """Сводная аналитика агентства: объекты и лиды по отделам и сотрудникам."""
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        role = m['role_code']
+
+        # Ограничиваем scope для ROP
+        dept_filter_sql = ''
+        dept_params = [org_id]
+        if role == 'rop' and m['department_id']:
+            dept_filter_sql = ' AND department_id=%s'
+            dept_params.append(m['department_id'])
+        elif ROLE_LEVEL.get(role, 0) < ROLE_LEVEL['rop']:
+            # broker и ниже видят только свои данные
+            dept_filter_sql = ' AND o_user_id=%s'
+            dept_params.append(user_id)
+
+        # Статистика объектов по отделам
+        cur.execute(
+            "SELECT d.id AS dept_id, d.name AS dept_name, "
+            "COUNT(o.id) AS total, "
+            "SUM(CASE WHEN o.published=true THEN 1 ELSE 0 END) AS published, "
+            "SUM(CASE WHEN o.status='Активен' THEN 1 ELSE 0 END) AS active "
+            "FROM departments d "
+            "LEFT JOIN objects o ON o.department_id=d.id AND o.org_id=%s "
+            "WHERE d.organization_id=%s "
+            "GROUP BY d.id, d.name ORDER BY d.name",
+            (org_id, org_id),
+        )
+        dept_objects = cur.fetchall()
+
+        # Статистика лидов по отделам
+        cur.execute(
+            "SELECT d.id AS dept_id, d.name AS dept_name, "
+            "COUNT(l.id) AS total, "
+            "SUM(CASE WHEN l.stage='Сделка' THEN 1 ELSE 0 END) AS deals, "
+            "SUM(CASE WHEN l.stage='Лид' THEN 1 ELSE 0 END) AS new_leads "
+            "FROM departments d "
+            "LEFT JOIN leads l ON l.department_id=d.id AND l.org_id=%s "
+            "WHERE d.organization_id=%s "
+            "GROUP BY d.id, d.name ORDER BY d.name",
+            (org_id, org_id),
+        )
+        dept_leads = cur.fetchall()
+
+        # Топ сотрудников по объектам
+        cur.execute(
+            "SELECT u.id AS user_id, u.name AS full_name, u.avatar_url, "
+            "m2.role_code, m2.department_id, "
+            "COUNT(o.id) AS objects_count "
+            "FROM org_memberships m2 "
+            "JOIN users u ON u.id=m2.user_id "
+            "LEFT JOIN objects o ON o.user_id=m2.user_id AND o.org_id=%s "
+            "WHERE m2.organization_id=%s AND m2.status='active' "
+            "GROUP BY u.id, u.name, u.avatar_url, m2.role_code, m2.department_id "
+            "ORDER BY objects_count DESC LIMIT 10",
+            (org_id, org_id),
+        )
+        top_by_objects = cur.fetchall()
+        for r in top_by_objects:
+            r['role_title'] = ROLE_TITLES.get(r['role_code'], r['role_code'])
+
+        # Топ сотрудников по лидам
+        cur.execute(
+            "SELECT u.id AS user_id, u.name AS full_name, "
+            "m2.role_code, m2.department_id, "
+            "COUNT(l.id) AS leads_count, "
+            "SUM(CASE WHEN l.stage='Сделка' THEN 1 ELSE 0 END) AS deals_count "
+            "FROM org_memberships m2 "
+            "JOIN users u ON u.id=m2.user_id "
+            "LEFT JOIN leads l ON l.owner_id=m2.user_id AND l.org_id=%s "
+            "WHERE m2.organization_id=%s AND m2.status='active' "
+            "GROUP BY u.id, u.name, m2.role_code, m2.department_id "
+            "ORDER BY leads_count DESC LIMIT 10",
+            (org_id, org_id),
+        )
+        top_by_leads = cur.fetchall()
+        for r in top_by_leads:
+            r['role_title'] = ROLE_TITLES.get(r['role_code'], r['role_code'])
+
+        # Итоги по всему агентству
+        cur.execute(
+            "SELECT COUNT(*) AS total_objects, "
+            "SUM(CASE WHEN published=true THEN 1 ELSE 0 END) AS published_objects "
+            "FROM objects WHERE org_id=%s",
+            (org_id,),
+        )
+        obj_total = cur.fetchone()
+
+        cur.execute(
+            "SELECT COUNT(*) AS total_leads, "
+            "SUM(CASE WHEN stage='Сделка' THEN 1 ELSE 0 END) AS total_deals "
+            "FROM leads WHERE org_id=%s",
+            (org_id,),
+        )
+        lead_total = cur.fetchone()
+
+        return _cors({
+            'summary': {
+                'total_objects': int(obj_total['total_objects'] or 0),
+                'published_objects': int(obj_total['published_objects'] or 0),
+                'total_leads': int(lead_total['total_leads'] or 0),
+                'total_deals': int(lead_total['total_deals'] or 0),
+            },
+            'dept_objects': list(dept_objects),
+            'dept_leads': list(dept_leads),
+            'top_by_objects': list(top_by_objects),
+            'top_by_leads': list(top_by_leads),
+        })
+
+
 # ── Router ─────────────────────────────────────────────────────────────
 
 def handler(event, context) -> dict:
@@ -547,6 +662,8 @@ def handler(event, context) -> dict:
             return list_invites(user_id, org_id)
         if action == 'accept_invite':
             return accept_invite(user_id, body)
+        if action == 'org_analytics':
+            return org_analytics(user_id, org_id)
 
         return _cors({'error': f'Неизвестное действие: {action}'}, 400)
 
