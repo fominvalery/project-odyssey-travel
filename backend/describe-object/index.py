@@ -70,27 +70,44 @@ def handler(event: dict, context) -> dict:
 - На русском языке"""
 
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    headers_ai = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
 
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        json={
-            "model": "openrouter/free",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 900,
-            "temperature": 0.75,
-        },
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        timeout=55,
-    )
+    def call_ai(p: str, max_tok: int) -> str:
+        r = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            json={
+                "model": "openrouter/free",
+                "messages": [{"role": "user", "content": p}],
+                "max_tokens": max_tok,
+                "temperature": 0.75,
+            },
+            headers=headers_ai,
+            timeout=25,
+        )
+        data = r.json()
+        return ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
 
-    result = response.json()
-
+    # Попытка 1 — полный промпт
+    reply = ""
     try:
-        reply = result["choices"][0]["message"]["content"].strip()
-    except (KeyError, IndexError):
+        reply = call_ai(prompt, 900).strip()
+    except Exception:
+        pass
+
+    # Попытка 2 — укороченный промпт если первый дал пустой ответ
+    if not reply:
+        short_prompt = f"""Напиши продающее описание объекта недвижимости для маркетплейса. 3 абзаца, деловой стиль, на русском языке.
+
+{object_info}{user_block}"""
+        try:
+            reply = call_ai(short_prompt, 600).strip()
+        except Exception:
+            pass
+
+    if not reply:
         return {
             "statusCode": 200,
             "headers": CORS,
