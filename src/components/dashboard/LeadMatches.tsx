@@ -161,7 +161,7 @@ export function LeadMatches({ leadId, ownerId }: LeadMatchesProps) {
                 {/* Действия */}
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <a
-                    href={`/marketplace/${obj.id}`}
+                    href={`/object/${obj.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="h-7 w-7 flex items-center justify-center rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white transition-colors"

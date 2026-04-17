@@ -186,7 +186,7 @@ export function LeadExpandedBody({ lead, ownerId, onDelete, onLeadUpdate }: Lead
           <p className="text-xs text-gray-500 mb-1">Объект</p>
           {lead.object_id ? (
             <a
-              href={`/marketplace/${lead.object_id}`}
+              href={`/object/${lead.object_id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-white font-medium hover:text-blue-400 flex items-center gap-1 group"
