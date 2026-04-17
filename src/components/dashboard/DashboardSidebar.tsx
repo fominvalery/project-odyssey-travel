@@ -1,6 +1,9 @@
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
+import { useMyOrgs } from "@/hooks/useMyOrgs"
+import AddStatusModal from "@/components/agency/AddStatusModal"
 
 type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
 
@@ -38,6 +41,8 @@ interface Props {
 
 export default function DashboardSidebar({ section, setSection, user, initials, onLogout }: Props) {
   const navigate = useNavigate()
+  const { orgs, reload: reloadOrgs } = useMyOrgs()
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
 
   return (
     <>
@@ -91,6 +96,39 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
         </nav>
 
         <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
+          {/* Мои агентства */}
+          {orgs.length > 0 && (
+            <div className="mb-3 space-y-1">
+              <div className="text-[10px] uppercase tracking-wider text-gray-500 px-2 mb-1">
+                Мои агентства
+              </div>
+              {orgs.map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => navigate(`/agency/${o.id}`)}
+                  className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-[#1a1a1a] text-left group"
+                >
+                  <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0">
+                    <Icon name="Building2" className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-medium truncate text-white">{o.name}</div>
+                    <div className="text-[10px] text-violet-300 truncate">{o.role_title}</div>
+                  </div>
+                  <Icon name="ChevronRight" className="h-3.5 w-3.5 text-gray-500 group-hover:text-white shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => setStatusModalOpen(true)}
+            className="w-full flex items-center gap-2 px-3 py-2 mb-3 rounded-xl text-xs font-medium bg-gradient-to-r from-violet-500/15 to-pink-500/15 border border-violet-500/30 text-violet-200 hover:from-violet-500/25 hover:to-pink-500/25 transition-colors"
+          >
+            <Icon name="Plus" className="h-3.5 w-3.5" />
+            Добавить статус
+          </button>
+
           <div className="flex items-center gap-3 px-2 mb-3">
             <Avatar className="h-8 w-8">
               {user.avatar ? <AvatarImage src={user.avatar} /> : null}
@@ -142,6 +180,12 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
           )
         })}
       </div>
+
+      <AddStatusModal
+        open={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        onCreated={reloadOrgs}
+      />
     </>
   )
 }

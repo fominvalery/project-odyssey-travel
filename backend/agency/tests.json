@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Unauthorized without X-User-Id",
+      "method": "GET",
+      "path": "/?action=list_my_orgs",
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Unknown action returns 400",
+      "method": "GET",
+      "path": "/?action=unknown_xyz",
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000000"},
+      "expectedStatus": 400
+    }
+  ]
+}

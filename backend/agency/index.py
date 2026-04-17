@@ -1,0 +1,462 @@
+import json
+import os
+import secrets
+from datetime import datetime, timedelta, timezone
+import psycopg2
+import psycopg2.extras
+
+ROLE_LEVEL = {
+    'director': 100,
+    'rop': 80,
+    'broker': 60,
+    'manager': 40,
+    'marketer': 40,
+    'accountant': 40,
+    'lawyer': 40,
+    'mortgage_broker': 40,
+}
+ROLE_TITLES = {
+    'director': 'Директор',
+    'rop': 'Руководитель отдела продаж',
+    'broker': 'Брокер',
+    'manager': 'Менеджер',
+    'marketer': 'Маркетолог',
+    'accountant': 'Бухгалтер',
+    'lawyer': 'Юрист',
+    'mortgage_broker': 'Ипотечный брокер',
+}
+INVITE_TTL_HOURS = 168  # 7 дней
+
+
+def _cors(body, status=200):
+    return {
+        'statusCode': status,
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Org-Id',
+            'Access-Control-Max-Age': '86400',
+            'Content-Type': 'application/json',
+        },
+        'body': json.dumps(body, default=str, ensure_ascii=False),
+    }
+
+
+def _conn():
+    schema = os.environ['MAIN_DB_SCHEMA']
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    cur = conn.cursor()
+    cur.execute(f"SET search_path TO {schema}")
+    cur.close()
+    return conn
+
+
+def _user_id(event):
+    headers = event.get('headers') or {}
+    return headers.get('X-User-Id') or headers.get('x-user-id')
+
+
+def _org_id(event):
+    headers = event.get('headers') or {}
+    return headers.get('X-Org-Id') or headers.get('x-org-id')
+
+
+def _membership(cur, user_id, org_id):
+    cur.execute(
+        "SELECT id, role_code, department_id, status FROM org_memberships "
+        "WHERE user_id=%s AND organization_id=%s AND status='active'",
+        (user_id, org_id),
+    )
+    return cur.fetchone()
+
+
+def _audit_safe(text):
+    return str(text).replace("'", "''") if text else ''
+
+
+# ── Organizations CRUD ─────────────────────────────────────────────────
+
+def list_my_orgs(user_id):
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "SELECT o.id, o.name, o.logo_url, o.inn, o.description, "
+            "m.role_code, m.department_id "
+            "FROM organizations o "
+            "JOIN org_memberships m ON m.organization_id=o.id "
+            "WHERE m.user_id=%s AND m.status='active' "
+            "ORDER BY o.created_at DESC",
+            (user_id,),
+        )
+        rows = cur.fetchall()
+        for r in rows:
+            r['role_title'] = ROLE_TITLES.get(r['role_code'], r['role_code'])
+        return _cors(rows)
+
+
+def create_org(user_id, body):
+    name = (body.get('name') or '').strip()
+    if not name:
+        return _cors({'error': 'Название обязательно'}, 400)
+    inn = (body.get('inn') or '').strip() or None
+    logo_url = (body.get('logo_url') or '').strip() or None
+    description = (body.get('description') or '').strip()
+
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "INSERT INTO organizations(name, inn, logo_url, admin_id, description) "
+            "VALUES (%s,%s,%s,%s,%s) RETURNING id",
+            (name, inn, logo_url, user_id, description),
+        )
+        org_id = cur.fetchone()['id']
+        cur.execute(
+            "INSERT INTO org_memberships(user_id, organization_id, role_code) "
+            "VALUES (%s,%s,'director')",
+            (user_id, org_id),
+        )
+        cur.execute("UPDATE users SET status='agency' WHERE id=%s", (user_id,))
+        conn.commit()
+        return _cors({
+            'id': str(org_id),
+            'name': name,
+            'logo_url': logo_url,
+            'inn': inn,
+            'description': description,
+            'role_code': 'director',
+            'role_title': ROLE_TITLES['director'],
+        }, 201)
+
+
+def get_org(user_id, org_id):
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        cur.execute(
+            "SELECT id, name, inn, logo_url, description, admin_id, created_at "
+            "FROM organizations WHERE id=%s",
+            (org_id,),
+        )
+        org = cur.fetchone()
+        if not org:
+            return _cors({'error': 'Не найдено'}, 404)
+        org['my_role'] = m['role_code']
+        org['my_role_title'] = ROLE_TITLES.get(m['role_code'], m['role_code'])
+        org['my_department_id'] = m['department_id']
+        return _cors(org)
+
+
+def update_org(user_id, org_id, body):
+    with _conn() as conn, conn.cursor() as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m or m[1] != 'director':
+            return _cors({'error': 'Нужна роль директора'}, 403)
+        fields, params = [], []
+        for k in ('name', 'inn', 'logo_url', 'description'):
+            if k in body:
+                fields.append(f"{k}=%s")
+                params.append(body[k])
+        if not fields:
+            return _cors({'error': 'Нечего обновлять'}, 400)
+        params.append(org_id)
+        cur.execute(f"UPDATE organizations SET {', '.join(fields)} WHERE id=%s", params)
+        conn.commit()
+        return _cors({'ok': True})
+
+
+# ── Employees ──────────────────────────────────────────────────────────
+
+def list_employees(user_id, org_id):
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        role = m['role_code']
+
+        sql = (
+            "SELECT u.id AS user_id, u.name AS full_name, u.email, u.phone, u.avatar_url, "
+            "m.role_code, m.department_id, m.status, m.joined_at "
+            "FROM org_memberships m JOIN users u ON u.id=m.user_id "
+            "WHERE m.organization_id=%s"
+        )
+        params = [org_id]
+
+        if role == 'rop' and m['department_id']:
+            sql += " AND (m.department_id=%s OR m.user_id=%s)"
+            params.extend([m['department_id'], user_id])
+        elif ROLE_LEVEL.get(role, 0) < ROLE_LEVEL['rop']:
+            sql += " AND m.user_id=%s"
+            params.append(user_id)
+
+        sql += " ORDER BY m.joined_at DESC"
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        for r in rows:
+            r['role_title'] = ROLE_TITLES.get(r['role_code'], r['role_code'])
+        return _cors(rows)
+
+
+def update_employee(user_id, org_id, target_user_id, body):
+    with _conn() as conn, conn.cursor() as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m or m[1] != 'director':
+            return _cors({'error': 'Нужна роль директора'}, 403)
+
+        new_role = body.get('role_code')
+        new_dept = body.get('department_id')
+        new_status = body.get('status')
+
+        if new_role and new_role not in ROLE_LEVEL:
+            return _cors({'error': 'Неизвестная роль'}, 400)
+
+        fields, params = [], []
+        if new_role:
+            fields.append("role_code=%s")
+            params.append(new_role)
+        if 'department_id' in body:
+            fields.append("department_id=%s")
+            params.append(new_dept)
+        if new_status:
+            fields.append("status=%s")
+            params.append(new_status)
+
+        if not fields:
+            return _cors({'error': 'Нечего обновлять'}, 400)
+
+        params.extend([target_user_id, org_id])
+        cur.execute(
+            f"UPDATE org_memberships SET {', '.join(fields)} "
+            f"WHERE user_id=%s AND organization_id=%s",
+            params,
+        )
+        conn.commit()
+        return _cors({'ok': True})
+
+
+# ── Departments ────────────────────────────────────────────────────────
+
+def list_departments(user_id, org_id):
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        cur.execute(
+            "SELECT d.id, d.name, d.head_id, u.name AS head_name, "
+            "(SELECT COUNT(*) FROM org_memberships WHERE department_id=d.id AND status='active') AS members_count "
+            "FROM departments d LEFT JOIN users u ON u.id=d.head_id "
+            "WHERE d.organization_id=%s ORDER BY d.created_at",
+            (org_id,),
+        )
+        return _cors(cur.fetchall())
+
+
+def create_department(user_id, org_id, body):
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m or m['role_code'] != 'director':
+            return _cors({'error': 'Нужна роль директора'}, 403)
+        name = (body.get('name') or '').strip()
+        if not name:
+            return _cors({'error': 'Название обязательно'}, 400)
+        head_id = body.get('head_id') or None
+        cur.execute(
+            "INSERT INTO departments(organization_id, name, head_id) VALUES (%s,%s,%s) RETURNING id",
+            (org_id, name, head_id),
+        )
+        dept_id = cur.fetchone()['id']
+        if head_id:
+            cur.execute(
+                "UPDATE org_memberships SET department_id=%s, role_code='rop' "
+                "WHERE user_id=%s AND organization_id=%s",
+                (dept_id, head_id, org_id),
+            )
+        conn.commit()
+        return _cors({'id': str(dept_id), 'name': name, 'head_id': head_id}, 201)
+
+
+# ── Invites ────────────────────────────────────────────────────────────
+
+def create_invite(user_id, org_id, body):
+    full_name = (body.get('full_name') or '').strip()
+    email = (body.get('email') or '').strip().lower()
+    phone = (body.get('phone') or '').strip() or None
+    role_code = body.get('role_code', 'broker')
+    dept_id = body.get('department_id') or None
+
+    if not full_name or not email:
+        return _cors({'error': 'Укажите ФИО и email'}, 400)
+    if role_code not in ROLE_LEVEL:
+        return _cors({'error': 'Неизвестная роль'}, 400)
+
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        if ROLE_LEVEL.get(m['role_code'], 0) < ROLE_LEVEL['rop']:
+            return _cors({'error': 'Приглашать могут только директор и ROP'}, 403)
+        if m['role_code'] == 'rop':
+            if dept_id and dept_id != str(m['department_id']):
+                return _cors({'error': 'ROP приглашает только в свой отдел'}, 403)
+            dept_id = m['department_id']
+            if ROLE_LEVEL[role_code] >= ROLE_LEVEL['rop']:
+                return _cors({'error': 'ROP не может приглашать равных или выше'}, 403)
+
+        token = secrets.token_urlsafe(24)
+        expires = datetime.now(timezone.utc) + timedelta(hours=INVITE_TTL_HOURS)
+
+        cur.execute(
+            "INSERT INTO org_invites(organization_id, invited_by, email, phone, full_name, "
+            "role_code, department_id, token, expires_at) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+            (org_id, user_id, email, phone, full_name, role_code, dept_id, token, expires),
+        )
+        invite_id = cur.fetchone()['id']
+
+        cur.execute(
+            "SELECT id FROM users WHERE lower(email)=%s OR (phone IS NOT NULL AND phone=%s) LIMIT 1",
+            (email, phone or ''),
+        )
+        existing = cur.fetchone()
+        auto_joined = False
+        if existing:
+            cur.execute(
+                "INSERT INTO org_memberships(user_id, organization_id, department_id, role_code) "
+                "VALUES (%s,%s,%s,%s) ON CONFLICT (user_id, organization_id) DO NOTHING",
+                (existing['id'], org_id, dept_id, role_code),
+            )
+            cur.execute("UPDATE org_invites SET status='accepted' WHERE id=%s", (invite_id,))
+            auto_joined = True
+
+        conn.commit()
+        return _cors({
+            'invite_id': str(invite_id),
+            'token': token,
+            'invite_url': f"/invite/{token}",
+            'expires_at': expires.isoformat(),
+            'auto_joined': auto_joined,
+        }, 201)
+
+
+def list_invites(user_id, org_id):
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        if ROLE_LEVEL.get(m['role_code'], 0) < ROLE_LEVEL['rop']:
+            return _cors([])
+        cur.execute(
+            "SELECT id, email, phone, full_name, role_code, department_id, status, "
+            "token, expires_at, created_at "
+            "FROM org_invites WHERE organization_id=%s ORDER BY created_at DESC",
+            (org_id,),
+        )
+        return _cors(cur.fetchall())
+
+
+def lookup_invite(token):
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "SELECT i.id, i.email, i.full_name, i.role_code, i.status, i.expires_at, "
+            "o.id AS organization_id, o.name AS organization_name, o.logo_url "
+            "FROM org_invites i JOIN organizations o ON o.id=i.organization_id "
+            "WHERE i.token=%s",
+            (token,),
+        )
+        row = cur.fetchone()
+        if not row:
+            return _cors({'error': 'Приглашение не найдено'}, 404)
+        if row['status'] != 'pending':
+            return _cors({'error': 'Приглашение уже использовано или отозвано', 'status': row['status']}, 410)
+        if row['expires_at'] < datetime.now(timezone.utc):
+            return _cors({'error': 'Срок действия приглашения истёк'}, 410)
+        row['role_title'] = ROLE_TITLES.get(row['role_code'], row['role_code'])
+        return _cors(row)
+
+
+def accept_invite(user_id, body):
+    token = body.get('token')
+    if not token:
+        return _cors({'error': 'token обязателен'}, 400)
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "SELECT * FROM org_invites WHERE token=%s AND status='pending' AND expires_at > now()",
+            (token,),
+        )
+        inv = cur.fetchone()
+        if not inv:
+            return _cors({'error': 'Приглашение недействительно'}, 410)
+        cur.execute(
+            "INSERT INTO org_memberships(user_id, organization_id, department_id, role_code) "
+            "VALUES (%s,%s,%s,%s) ON CONFLICT (user_id, organization_id) DO NOTHING",
+            (user_id, inv['organization_id'], inv['department_id'], inv['role_code']),
+        )
+        cur.execute("UPDATE org_invites SET status='accepted' WHERE id=%s", (inv['id'],))
+        conn.commit()
+        return _cors({'ok': True, 'organization_id': str(inv['organization_id'])})
+
+
+# ── Router ─────────────────────────────────────────────────────────────
+
+def handler(event, context) -> dict:
+    """Кабинет агентства: организации, сотрудники, отделы, приглашения, RBAC."""
+    if isinstance(event, str):
+        event = json.loads(event)
+
+    method = event.get('httpMethod', 'GET')
+    if method == 'OPTIONS':
+        return _cors({}, 200)
+
+    path = event.get('path') or event.get('rawPath') or ''
+    qs = event.get('queryStringParameters') or {}
+    raw_body = event.get('body')
+    body = {}
+    if raw_body:
+        try:
+            parsed = raw_body
+            while isinstance(parsed, str):
+                parsed = json.loads(parsed) if parsed else {}
+            if isinstance(parsed, dict):
+                body = parsed
+        except Exception:
+            body = {}
+
+    action = (qs.get('action') or body.get('action') or '').strip()
+    user_id = _user_id(event)
+    org_id = _org_id(event) or qs.get('org_id') or body.get('org_id')
+    token = qs.get('token') or body.get('token')
+
+    try:
+        if action == 'lookup_invite':
+            if not token:
+                return _cors({'error': 'token обязателен'}, 400)
+            return lookup_invite(token)
+
+        if not user_id:
+            return _cors({'error': 'Не авторизован'}, 401)
+
+        if action == 'list_my_orgs':
+            return list_my_orgs(user_id)
+        if action == 'create_org':
+            return create_org(user_id, body)
+        if action == 'get_org':
+            return get_org(user_id, org_id)
+        if action == 'update_org':
+            return update_org(user_id, org_id, body)
+        if action == 'list_employees':
+            return list_employees(user_id, org_id)
+        if action == 'update_employee':
+            return update_employee(user_id, org_id, body.get('user_id'), body)
+        if action == 'list_departments':
+            return list_departments(user_id, org_id)
+        if action == 'create_department':
+            return create_department(user_id, org_id, body)
+        if action == 'create_invite':
+            return create_invite(user_id, org_id, body)
+        if action == 'list_invites':
+            return list_invites(user_id, org_id)
+        if action == 'accept_invite':
+            return accept_invite(user_id, body)
+
+        return _cors({'error': f'Неизвестное действие: {action}'}, 400)
+
+    except Exception as e:
+        return _cors({'error': 'internal', 'detail': str(e)}, 500)

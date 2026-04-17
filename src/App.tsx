@@ -11,6 +11,8 @@ import Marketplace from "./pages/Marketplace";
 import ObjectDetail from "./pages/ObjectDetail";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
+import Agency from "./pages/Agency";
+import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/object/:id" element={<ObjectDetail />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/agency/:id" element={<Agency />} />
+            <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route path="/admin-k24" element={<AdminPanel />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
