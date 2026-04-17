@@ -8,7 +8,7 @@ export interface UserProfile {
   phone: string
   company: string
   plan: string
-  status: "resident" | "broker" | "investor" | "buyer" | "owner" | "agency"
+  status: "resident" | "broker" | "agency"
   avatar: string | null
   createdAt: string
 }
