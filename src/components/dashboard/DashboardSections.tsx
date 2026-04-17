@@ -137,17 +137,16 @@ export function DashboardReferral({ userId }: ReferralProps) {
 
 // --- Profile ---
 
-type UserStatus = "resident" | "broker" | "investor" | "buyer" | "owner" | "agency"
+type UserStatus = "resident" | "broker" | "agency"
 
 const STATUS_OPTIONS: { value: UserStatus; label: string; icon: string; desc: string }[] = [
-  { value: "resident",  label: "Резидент",       icon: "Home",       desc: "По умолчанию" },
-  { value: "broker",    label: "Брокер (Агент)",  icon: "Briefcase",  desc: "Профессиональный агент" },
-  { value: "agency",    label: "Агентство/Компания", icon: "Building2",  desc: "Агентство недвижимости" },
-  { value: "owner",     label: "Собственник",        icon: "Key",        desc: "Владею объектами" },
+  { value: "resident", label: "Резидент",            icon: "User",      desc: "По умолчанию" },
+  { value: "broker",   label: "Брокер / Собственник", icon: "Briefcase", desc: "Профессиональный игрок" },
+  { value: "agency",   label: "Агентство / Компания", icon: "Building2", desc: "Крупный игрок" },
 ]
 
 interface ProfileProps {
-  user: { name: string; email: string; plan: string; avatar: string | null; status: string }
+  user: { name: string; email: string; plan: string; avatar: string | null; status: UserStatus }
   initials: string
   form: { name: string; phone: string; company: string }
   setForm: React.Dispatch<React.SetStateAction<{ name: string; phone: string; company: string }>>
