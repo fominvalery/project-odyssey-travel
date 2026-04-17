@@ -179,14 +179,17 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             category={category}
             categoryFields={categoryFields}
             onCategoryField={handleCategoryField}
+          />
+        )}
+        {step === 2 && (
+          <Step3Landing
+            form={form}
+            setForm={setForm}
             photos={photos}
             uploadingPhoto={uploadingPhoto}
             onPhotosChange={setPhotos}
             onUploadingChange={setUploadingPhoto}
           />
-        )}
-        {step === 2 && (
-          <Step3Landing form={form} setForm={setForm} />
         )}
         {step === 3 && (
           <Step4Presentation form={form} setForm={setForm} />

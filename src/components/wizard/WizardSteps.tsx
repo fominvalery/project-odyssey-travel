@@ -13,10 +13,10 @@ interface Step1Props {
   setForm: (f: WizardForm) => void
 }
 
-export function Step1Category({ category, setCategory, form, setForm }: Step1Props) {
+export function Step1Category({ category, setCategory }: Step1Props) {
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}
@@ -35,12 +35,6 @@ export function Step1Category({ category, setCategory, form, setForm }: Step1Pro
           </button>
         ))}
       </div>
-      <Input
-        placeholder="Название объекта"
-        value={form.title}
-        onChange={e => setForm({ ...form, title: e.target.value })}
-        className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
-      />
     </div>
   )
 }
@@ -53,15 +47,10 @@ interface Step2Props {
   category: string
   categoryFields: Record<string, string>
   onCategoryField: (key: string, value: string) => void
-  photos: string[]
-  uploadingPhoto: boolean
-  onPhotosChange: (photos: string[]) => void
-  onUploadingChange: (v: boolean) => void
 }
 
 export function Step2Details({
   form, setForm, category, categoryFields, onCategoryField,
-  photos, uploadingPhoto, onPhotosChange, onUploadingChange,
 }: Step2Props) {
   return (
     <div className="space-y-4">
@@ -109,11 +98,39 @@ export function Step2Details({
         </div>
       )}
 
+    </div>
+  )
+}
+
+// ── Шаг 3: Описание ─────────────────────────────────────────────────────────
+
+interface Step3Props {
+  form: WizardForm
+  setForm: (f: WizardForm) => void
+  photos: string[]
+  uploadingPhoto: boolean
+  onPhotosChange: (photos: string[]) => void
+  onUploadingChange: (v: boolean) => void
+}
+
+export function Step3Landing({ form, setForm, photos, uploadingPhoto, onPhotosChange, onUploadingChange }: Step3Props) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <Label className="text-xs text-gray-400 mb-1.5 block">Название объекта</Label>
+        <Input
+          placeholder="Офисное помещение в центре, БЦ Арбат..."
+          value={form.title}
+          onChange={e => setForm({ ...form, title: e.target.value })}
+          className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
+        />
+      </div>
+
       <div>
         <Label className="text-xs text-gray-400 mb-1.5 block">Описание объекта</Label>
         <textarea
-          rows={3}
-          placeholder="Краткое описание для покупателей..."
+          rows={5}
+          placeholder="Краткое описание для покупателей — особенности, преимущества, условия..."
           value={form.description}
           onChange={e => setForm({ ...form, description: e.target.value })}
           className="w-full bg-[#111] border border-[#1f1f1f] text-white placeholder:text-gray-600 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -128,47 +145,6 @@ export function Step2Details({
           onPhotosChange={onPhotosChange}
           onUploadingChange={onUploadingChange}
         />
-      </div>
-    </div>
-  )
-}
-
-// ── Шаг 3: Лендинг ──────────────────────────────────────────────────────────
-
-interface Step3Props {
-  form: WizardForm
-  setForm: (f: WizardForm) => void
-}
-
-export function Step3Landing({ form, setForm }: Step3Props) {
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5">
-        <p className="text-sm text-gray-400 mb-4">Каждый объект получает персональный лендинг. Настройте заголовок и призыв к действию.</p>
-        <div className="space-y-4">
-          <div>
-            <Label className="text-xs text-gray-400 mb-1.5 block">Заголовок лендинга</Label>
-            <Input
-              placeholder={form.title || "Название объекта"}
-              value={form.landing_title}
-              onChange={e => setForm({ ...form, landing_title: e.target.value })}
-              className="bg-[#0a0a0a] border-[#1f1f1f] text-white placeholder:text-gray-600"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-gray-400 mb-1.5 block">Призыв к действию (кнопка)</Label>
-            <Input
-              placeholder="Запросить информацию"
-              value={form.landing_cta}
-              onChange={e => setForm({ ...form, landing_cta: e.target.value })}
-              className="bg-[#0a0a0a] border-[#1f1f1f] text-white placeholder:text-gray-600"
-            />
-          </div>
-        </div>
-      </div>
-      <div className="rounded-2xl bg-blue-900/20 border border-blue-500/20 p-4 flex gap-3">
-        <Icon name="Zap" className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
-        <p className="text-sm text-gray-300">Лендинг автоматически оптимизирован для мобильных и SEO. Добавленные фото появятся на лендинге объекта.</p>
       </div>
     </div>
   )
