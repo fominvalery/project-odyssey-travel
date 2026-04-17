@@ -19,7 +19,8 @@
       },
       "expectedStatus": 200,
       "expectedBody": {"description": "string"},
-      "bodyMatcher": "partial"
+      "bodyMatcher": "partial",
+      "timeoutMs": 65000
     }
   ]
 }

@@ -180,11 +180,11 @@ export function Step3Landing({ form, setForm, category, categoryFields, photos, 
           </button>
         </div>
         <textarea
-          rows={6}
+          rows={generating ? 6 : Math.max(6, (form.description.match(/\n/g) || []).length * 2 + 6)}
           placeholder="Опишите объект в свободной форме или оставьте поле пустым — ИИ составит описание на основе введённых характеристик..."
           value={form.description}
           onChange={e => setForm({ ...form, description: e.target.value })}
-          className="w-full bg-[#111] border border-[#1f1f1f] text-white placeholder:text-gray-600 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+          className="w-full bg-[#111] border border-[#1f1f1f] text-white placeholder:text-gray-600 rounded-xl px-4 py-3 text-sm leading-relaxed resize-y focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
         />
         {aiError && (
           <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
