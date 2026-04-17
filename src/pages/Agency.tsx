@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useAuthContext } from "@/context/AuthContext"
 import {
   agencyApi,
+  Department,
   Employee,
   InviteRow,
   OrgSummary,
@@ -24,6 +25,15 @@ import {
 } from "@/components/ui/select"
 import Icon from "@/components/ui/icon"
 import InviteModal from "@/components/agency/InviteModal"
+import DepartmentModal from "@/components/agency/DepartmentModal"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { toast } from "@/hooks/use-toast"
 
 const EDITABLE_ROLES: RoleCode[] = [
@@ -44,9 +54,14 @@ export default function Agency() {
   const [org, setOrg] = useState<(OrgSummary & { my_role: RoleCode }) | null>(null)
   const [employees, setEmployees] = useState<Employee[]>([])
   const [invites, setInvites] = useState<InviteRow[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [deptModalOpen, setDeptModalOpen] = useState(false)
+  const [editingDept, setEditingDept] = useState<Department | null>(null)
+  const [deletingDept, setDeletingDept] = useState<Department | null>(null)
+  const [deptFilter, setDeptFilter] = useState<string>("all")
 
   useEffect(() => {
     if (!user) {
@@ -64,20 +79,58 @@ export default function Agency() {
     setLoading(true)
     setError(null)
     try {
-      const [o, emp, inv] = await Promise.all([
+      const [o, emp, inv, deps] = await Promise.all([
         agencyApi.getOrg(user.id, orgId),
         agencyApi.listEmployees(user.id, orgId),
         agencyApi
           .listInvites(user.id, orgId)
           .catch(() => [] as InviteRow[]),
+        agencyApi
+          .listDepartments(user.id, orgId)
+          .catch(() => [] as Department[]),
       ])
       setOrg(o as OrgSummary & { my_role: RoleCode })
       setEmployees(emp)
       setInvites(inv)
+      setDepartments(deps)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const changeDepartment = async (targetUserId: string, deptId: string | null) => {
+    if (!user || !orgId) return
+    try {
+      await agencyApi.updateEmployee(user.id, orgId, {
+        user_id: targetUserId,
+        department_id: deptId,
+      })
+      toast({ title: "Отдел обновлён" })
+      reload()
+    } catch (e) {
+      toast({
+        title: "Ошибка",
+        description: e instanceof Error ? e.message : "Не удалось",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const confirmDeleteDept = async () => {
+    if (!user || !orgId || !deletingDept) return
+    try {
+      await agencyApi.deleteDepartment(user.id, orgId, deletingDept.id)
+      toast({ title: "Отдел архивирован" })
+      setDeletingDept(null)
+      reload()
+    } catch (e) {
+      toast({
+        title: "Ошибка",
+        description: e instanceof Error ? e.message : "Не удалось",
+        variant: "destructive",
+      })
     }
   }
 
@@ -130,9 +183,16 @@ export default function Agency() {
 
   const stats = [
     { label: "Сотрудников", value: employees.length, icon: "Users", color: "from-violet-500 to-indigo-500" },
+    { label: "Отделов", value: departments.length, icon: "Network", color: "from-emerald-500 to-teal-500" },
     { label: "Активных приглашений", value: invites.filter((i) => i.status === "pending").length, icon: "Send", color: "from-blue-500 to-cyan-500" },
     { label: "Моя роль", value: ROLE_TITLES[org.my_role], icon: "Shield", color: "from-pink-500 to-rose-500" },
   ]
+
+  const filteredEmployees = employees.filter((e) => {
+    if (deptFilter === "all") return true
+    if (deptFilter === "none") return !e.department_id
+    return e.department_id === deptFilter
+  })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
@@ -192,7 +252,7 @@ export default function Agency() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((s) => (
             <Card key={s.label} className="bg-white/5 border-white/10 p-5 text-white">
               <div className="flex items-center gap-3">
@@ -214,58 +274,216 @@ export default function Agency() {
         <Tabs defaultValue="employees">
           <TabsList className="bg-white/5 border border-white/10">
             <TabsTrigger value="employees">Сотрудники</TabsTrigger>
+            <TabsTrigger value="departments">Отделы</TabsTrigger>
             <TabsTrigger value="invites">Приглашения</TabsTrigger>
             <TabsTrigger value="about">Об агентстве</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="employees" className="mt-4">
+          <TabsContent value="employees" className="mt-4 space-y-3">
+            {departments.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-400 mr-1">Отдел:</span>
+                <FilterChip
+                  active={deptFilter === "all"}
+                  onClick={() => setDeptFilter("all")}
+                >
+                  Все ({employees.length})
+                </FilterChip>
+                {departments.map((d) => {
+                  const count = employees.filter(
+                    (e) => e.department_id === d.id,
+                  ).length
+                  return (
+                    <FilterChip
+                      key={d.id}
+                      active={deptFilter === d.id}
+                      onClick={() => setDeptFilter(d.id)}
+                    >
+                      {d.name} ({count})
+                    </FilterChip>
+                  )
+                })}
+                <FilterChip
+                  active={deptFilter === "none"}
+                  onClick={() => setDeptFilter("none")}
+                >
+                  Без отдела (
+                  {employees.filter((e) => !e.department_id).length})
+                </FilterChip>
+              </div>
+            )}
+
             <Card className="bg-white/5 border-white/10 overflow-hidden">
-              {employees.length === 0 ? (
+              {filteredEmployees.length === 0 ? (
                 <div className="p-10 text-center text-slate-400">
                   <Icon name="Users" size={36} className="mx-auto mb-3 opacity-50" />
-                  Пока нет сотрудников
+                  Нет сотрудников в выбранном отделе
                 </div>
               ) : (
                 <div className="divide-y divide-white/10">
-                  {employees.map((e) => (
-                    <div
-                      key={e.user_id}
-                      className="p-4 flex items-center gap-4 hover:bg-white/5"
-                    >
-                      <Avatar className="h-10 w-10">
-                        {e.avatar_url && <AvatarImage src={e.avatar_url} />}
-                        <AvatarFallback className="bg-violet-500/30 text-violet-200">
-                          {e.full_name.slice(0, 1)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{e.full_name}</div>
-                        <div className="text-xs text-slate-400 truncate">
-                          {e.email}
-                          {e.phone ? ` · ${e.phone}` : ""}
+                  {filteredEmployees.map((e) => {
+                    const deptName = departments.find(
+                      (d) => d.id === e.department_id,
+                    )?.name
+                    return (
+                      <div
+                        key={e.user_id}
+                        className="p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 hover:bg-white/5"
+                      >
+                        <Avatar className="h-10 w-10 shrink-0">
+                          {e.avatar_url && <AvatarImage src={e.avatar_url} />}
+                          <AvatarFallback className="bg-violet-500/30 text-violet-200">
+                            {e.full_name.slice(0, 1)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{e.full_name}</div>
+                          <div className="text-xs text-slate-400 truncate">
+                            {e.email}
+                            {e.phone ? ` · ${e.phone}` : ""}
+                          </div>
+                          {deptName && (
+                            <div className="text-[11px] text-emerald-300 mt-1 flex items-center gap-1">
+                              <Icon name="Network" size={11} />
+                              {deptName}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {isDirector && e.user_id !== user?.id && departments.length > 0 && (
+                            <Select
+                              value={e.department_id ?? "__none__"}
+                              onValueChange={(v) =>
+                                changeDepartment(
+                                  e.user_id,
+                                  v === "__none__" ? null : v,
+                                )
+                              }
+                            >
+                              <SelectTrigger className="w-[180px] bg-white/5 border-white/10">
+                                <SelectValue placeholder="Отдел" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">Без отдела</SelectItem>
+                                {departments.map((d) => (
+                                  <SelectItem key={d.id} value={d.id}>
+                                    {d.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {isDirector && e.user_id !== user?.id ? (
+                            <Select
+                              value={e.role_code}
+                              onValueChange={(v) =>
+                                changeRole(e.user_id, v as RoleCode)
+                              }
+                            >
+                              <SelectTrigger className="w-[220px] bg-white/5 border-white/10">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {EDITABLE_ROLES.map((r) => (
+                                  <SelectItem key={r} value={r}>
+                                    {ROLE_TITLES[r]}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="border-violet-500/50 text-violet-200"
+                            >
+                              {ROLE_TITLES[e.role_code]}
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                      {isDirector && e.user_id !== user?.id ? (
-                        <Select
-                          value={e.role_code}
-                          onValueChange={(v) => changeRole(e.user_id, v as RoleCode)}
-                        >
-                          <SelectTrigger className="w-[220px] bg-white/5 border-white/10">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {EDITABLE_ROLES.map((r) => (
-                              <SelectItem key={r} value={r}>
-                                {ROLE_TITLES[r]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge variant="outline" className="border-violet-500/50 text-violet-200">
-                          {ROLE_TITLES[e.role_code]}
-                        </Badge>
-                      )}
+                    )
+                  })}
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="departments" className="mt-4">
+            <Card className="bg-white/5 border-white/10 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="font-semibold">Отделы агентства</div>
+                  <div className="text-xs text-slate-400">
+                    Группируют сотрудников под руководством РОПа
+                  </div>
+                </div>
+                {isDirector && (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEditingDept(null)
+                      setDeptModalOpen(true)
+                    }}
+                    className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
+                  >
+                    <Icon name="Plus" size={14} className="mr-1" />
+                    Новый отдел
+                  </Button>
+                )}
+              </div>
+
+              {departments.length === 0 ? (
+                <div className="p-10 text-center text-slate-400">
+                  <Icon name="Network" size={36} className="mx-auto mb-3 opacity-50" />
+                  Пока нет отделов
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {departments.map((d) => (
+                    <div
+                      key={d.id}
+                      className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0">
+                          <div className="font-semibold truncate">{d.name}</div>
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            Сотрудников: {d.members_count}
+                          </div>
+                        </div>
+                        {isDirector && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-white hover:bg-white/10"
+                              onClick={() => {
+                                setEditingDept(d)
+                                setDeptModalOpen(true)
+                              }}
+                            >
+                              <Icon name="Pencil" size={13} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-red-300 hover:bg-red-500/10"
+                              onClick={() => setDeletingDept(d)}
+                            >
+                              <Icon name="Trash2" size={13} />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
+                        <Icon name="Crown" size={14} className="text-amber-400" />
+                        <div className="text-xs">
+                          <span className="text-slate-400">РОП: </span>
+                          <span className="font-medium">
+                            {d.head_name || "не назначен"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -346,13 +564,50 @@ export default function Agency() {
       </div>
 
       {orgId && (
-        <InviteModal
-          open={inviteOpen}
-          onClose={() => setInviteOpen(false)}
-          orgId={orgId}
-          onInvited={reload}
-        />
+        <>
+          <InviteModal
+            open={inviteOpen}
+            onClose={() => setInviteOpen(false)}
+            orgId={orgId}
+            departments={departments}
+            onInvited={reload}
+          />
+          <DepartmentModal
+            open={deptModalOpen}
+            onClose={() => setDeptModalOpen(false)}
+            orgId={orgId}
+            employees={employees}
+            department={editingDept}
+            onSaved={reload}
+          />
+        </>
       )}
+
+      <Dialog
+        open={!!deletingDept}
+        onOpenChange={(v) => !v && setDeletingDept(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Удалить отдел?</DialogTitle>
+            <DialogDescription>
+              Отдел «{deletingDept?.name}» будет архивирован. Сотрудники
+              останутся в агентстве, но будут отвязаны от этого отдела.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingDept(null)}>
+              Отмена
+            </Button>
+            <Button
+              onClick={confirmDeleteDept}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Удалить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -365,5 +620,28 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       </div>
       <div className="text-sm">{value}</div>
     </div>
+  )
+}
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+        active
+          ? "bg-gradient-to-r from-violet-500 to-pink-500 border-transparent text-white"
+          : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+      }`}
+    >
+      {children}
+    </button>
   )
 }

@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import Icon from "@/components/ui/icon"
-import { agencyApi, RoleCode, ROLE_TITLES } from "@/lib/agencyApi"
+import { agencyApi, Department, RoleCode, ROLE_TITLES } from "@/lib/agencyApi"
 import { useAuthContext } from "@/context/AuthContext"
 import { toast } from "@/hooks/use-toast"
 
@@ -33,17 +33,33 @@ interface Props {
   open: boolean
   onClose: () => void
   orgId: string
+  departments?: Department[]
   onInvited?: () => void
 }
 
-export default function InviteModal({ open, onClose, orgId, onInvited }: Props) {
+const NONE_DEPT = "__none__"
+
+export default function InviteModal({
+  open,
+  onClose,
+  orgId,
+  departments = [],
+  onInvited,
+}: Props) {
   const { user } = useAuthContext()
   const [form, setForm] = useState<{
     full_name: string
     email: string
     phone: string
     role_code: RoleCode
-  }>({ full_name: "", email: "", phone: "", role_code: "broker" })
+    department_id: string
+  }>({
+    full_name: "",
+    email: "",
+    phone: "",
+    role_code: "broker",
+    department_id: NONE_DEPT,
+  })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ url: string; autoJoined: boolean } | null>(null)
 
@@ -60,6 +76,8 @@ export default function InviteModal({ open, onClose, orgId, onInvited }: Props) 
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim() || undefined,
         role_code: form.role_code,
+        department_id:
+          form.department_id === NONE_DEPT ? undefined : form.department_id,
       })
       const fullUrl = `${window.location.origin}${res.invite_url}`
       setResult({ url: fullUrl, autoJoined: res.auto_joined })
@@ -76,7 +94,13 @@ export default function InviteModal({ open, onClose, orgId, onInvited }: Props) 
   }
 
   const handleClose = () => {
-    setForm({ full_name: "", email: "", phone: "", role_code: "broker" })
+    setForm({
+      full_name: "",
+      email: "",
+      phone: "",
+      role_code: "broker",
+      department_id: NONE_DEPT,
+    })
     setResult(null)
     onClose()
   }
@@ -133,6 +157,27 @@ export default function InviteModal({ open, onClose, orgId, onInvited }: Props) 
                 </SelectContent>
               </Select>
             </div>
+            {departments.length > 0 && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Отдел</label>
+                <Select
+                  value={form.department_id}
+                  onValueChange={(v) => setForm({ ...form, department_id: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE_DEPT}>Без отдела</SelectItem>
+                    {departments.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button onClick={submit} disabled={loading} className="w-full mt-2">
               {loading ? "Отправка..." : "Создать приглашение"}
             </Button>

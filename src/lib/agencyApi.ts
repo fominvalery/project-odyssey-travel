@@ -149,8 +149,14 @@ export const agencyApi = {
     patch: Partial<{ name: string; inn: string; logo_url: string; description: string }>,
   ) => call<{ ok: true }>({ action: "update_org", userId, orgId, body: patch }),
 
-  listEmployees: (userId: string, orgId: string) =>
-    call<Employee[]>({ action: "list_employees", userId, orgId, method: "GET" }),
+  listEmployees: (userId: string, orgId: string, departmentId?: string | null) =>
+    call<Employee[]>({
+      action: "list_employees",
+      userId,
+      orgId,
+      method: "GET",
+      query: departmentId ? { department_id: departmentId } : undefined,
+    }),
 
   updateEmployee: (
     userId: string,
@@ -166,6 +172,20 @@ export const agencyApi = {
     orgId: string,
     payload: { name: string; head_id?: string | null },
   ) => call<Department>({ action: "create_department", userId, orgId, body: payload }),
+
+  updateDepartment: (
+    userId: string,
+    orgId: string,
+    payload: { department_id: string; name?: string; head_id?: string | null },
+  ) => call<{ ok: true }>({ action: "update_department", userId, orgId, body: payload }),
+
+  deleteDepartment: (userId: string, orgId: string, departmentId: string) =>
+    call<{ ok: true; archived: boolean }>({
+      action: "delete_department",
+      userId,
+      orgId,
+      body: { department_id: departmentId },
+    }),
 
   createInvite: (
     userId: string,

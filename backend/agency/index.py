@@ -165,7 +165,9 @@ def update_org(user_id, org_id, body):
 
 # ── Employees ──────────────────────────────────────────────────────────
 
-def list_employees(user_id, org_id):
+def list_employees(user_id, org_id, qs=None):
+    qs = qs or {}
+    filter_dept = qs.get('department_id')
     with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         m = _membership(cur, user_id, org_id)
         if not m:
@@ -186,6 +188,13 @@ def list_employees(user_id, org_id):
         elif ROLE_LEVEL.get(role, 0) < ROLE_LEVEL['rop']:
             sql += " AND m.user_id=%s"
             params.append(user_id)
+
+        if filter_dept:
+            if filter_dept == 'none':
+                sql += " AND m.department_id IS NULL"
+            else:
+                sql += " AND m.department_id=%s"
+                params.append(filter_dept)
 
         sql += " ORDER BY m.joined_at DESC"
         cur.execute(sql, params)
@@ -271,6 +280,85 @@ def create_department(user_id, org_id, body):
             )
         conn.commit()
         return _cors({'id': str(dept_id), 'name': name, 'head_id': head_id}, 201)
+
+
+def update_department(user_id, org_id, body):
+    dept_id = body.get('department_id')
+    if not dept_id:
+        return _cors({'error': 'department_id обязателен'}, 400)
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m or m['role_code'] != 'director':
+            return _cors({'error': 'Нужна роль директора'}, 403)
+
+        cur.execute(
+            "SELECT id, head_id FROM departments WHERE id=%s AND organization_id=%s",
+            (dept_id, org_id),
+        )
+        dept = cur.fetchone()
+        if not dept:
+            return _cors({'error': 'Отдел не найден'}, 404)
+
+        fields, params = [], []
+        if 'name' in body and body['name']:
+            fields.append("name=%s")
+            params.append(body['name'].strip())
+        new_head = body.get('head_id') if 'head_id' in body else None
+        head_changed = 'head_id' in body
+        if head_changed:
+            fields.append("head_id=%s")
+            params.append(new_head or None)
+
+        if fields:
+            params.extend([dept_id, org_id])
+            cur.execute(
+                f"UPDATE departments SET {', '.join(fields)} "
+                f"WHERE id=%s AND organization_id=%s",
+                params,
+            )
+
+        # Переключение ROP: старому — broker (если не director), новому — rop
+        if head_changed:
+            old_head = dept['head_id']
+            if old_head and str(old_head) != str(new_head or ''):
+                cur.execute(
+                    "UPDATE org_memberships SET role_code='broker' "
+                    "WHERE user_id=%s AND organization_id=%s AND role_code='rop'",
+                    (old_head, org_id),
+                )
+            if new_head:
+                cur.execute(
+                    "UPDATE org_memberships SET department_id=%s, role_code='rop' "
+                    "WHERE user_id=%s AND organization_id=%s",
+                    (dept_id, new_head, org_id),
+                )
+
+        conn.commit()
+        return _cors({'ok': True})
+
+
+def delete_department(user_id, org_id, body):
+    dept_id = body.get('department_id')
+    if not dept_id:
+        return _cors({'error': 'department_id обязателен'}, 400)
+    with _conn() as conn, conn.cursor() as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m or m[1] != 'director':
+            return _cors({'error': 'Нужна роль директора'}, 403)
+        # Отвязываем сотрудников от отдела (без удаления сотрудников!)
+        cur.execute(
+            "UPDATE org_memberships SET department_id=NULL "
+            "WHERE department_id=%s AND organization_id=%s",
+            (dept_id, org_id),
+        )
+        # Помечаем отдел как архивный через переименование
+        cur.execute(
+            "UPDATE departments SET name=name||' (архив)', head_id=NULL "
+            "WHERE id=%s AND organization_id=%s",
+            (dept_id, org_id),
+        )
+        conn.commit()
+        return _cors({'ok': True, 'archived': True})
 
 
 # ── Invites ────────────────────────────────────────────────────────────
@@ -442,13 +530,17 @@ def handler(event, context) -> dict:
         if action == 'update_org':
             return update_org(user_id, org_id, body)
         if action == 'list_employees':
-            return list_employees(user_id, org_id)
+            return list_employees(user_id, org_id, qs)
         if action == 'update_employee':
             return update_employee(user_id, org_id, body.get('user_id'), body)
         if action == 'list_departments':
             return list_departments(user_id, org_id)
         if action == 'create_department':
             return create_department(user_id, org_id, body)
+        if action == 'update_department':
+            return update_department(user_id, org_id, body)
+        if action == 'delete_department':
+            return delete_department(user_id, org_id, body)
         if action == 'create_invite':
             return create_invite(user_id, org_id, body)
         if action == 'list_invites':
