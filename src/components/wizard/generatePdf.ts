@@ -1,4 +1,5 @@
 import jsPDF from "jspdf"
+import html2canvas from "html2canvas"
 
 export interface HighlightItem {
   icon?: string
@@ -20,551 +21,292 @@ export interface PresentationContent {
   contact: { name: string; phone: string; company: string }
 }
 
-// ── Палитра Gamma-style ──────────────────────────────────────────────────────
-const PALETTE = {
-  bg: [10, 12, 24] as [number, number, number],
-  bgAlt: [18, 20, 36] as [number, number, number],
-  card: [24, 26, 45] as [number, number, number],
-  accent: [139, 92, 246] as [number, number, number],   // violet-500
-  accent2: [59, 130, 246] as [number, number, number],  // blue-500
-  accent3: [236, 72, 153] as [number, number, number],  // pink-500
-  text: [240, 242, 250] as [number, number, number],
-  muted: [148, 163, 184] as [number, number, number],
-  white: [255, 255, 255] as [number, number, number],
-}
+const PAGE_W = 794
+const PAGE_H = 1123
 
-// ── Рендер текста через canvas (поддержка кириллицы) ─────────────────────────
-function textToImage(
-  text: string,
-  opts: {
-    fontSize: number
-    fontWeight?: string
-    color?: string
-    maxWidth: number
-    lineHeight?: number
-    align?: "left" | "center" | "right"
-  }
-): { dataUrl: string; height: number; lines: number; width: number } {
-  const { fontSize, fontWeight = "400", color = "#111", maxWidth, lineHeight = 1.35, align = "left" } = opts
-  const dpr = 2
-  const canvas = document.createElement("canvas")
-  const ctx = canvas.getContext("2d")!
-  const font = `${fontWeight} ${fontSize * dpr}px Inter, "Helvetica Neue", Arial, sans-serif`
-  ctx.font = font
-
-  // Перенос по словам + жёсткий перенос длинных слов
-  const words = text.split(/(\s+)/)
-  const lines: string[] = []
-  let current = ""
-  for (const raw of words) {
-    if (raw === "") continue
-    const test = current + raw
-    if (ctx.measureText(test).width > maxWidth * dpr && current.trim()) {
-      lines.push(current.trim())
-      current = raw.trim() ? raw : ""
-    } else {
-      current = test
-    }
-  }
-  if (current.trim()) lines.push(current.trim())
-  if (lines.length === 0) lines.push("")
-
-  const lh = fontSize * lineHeight
-  canvas.width = Math.ceil(maxWidth * dpr)
-  canvas.height = Math.ceil(lines.length * lh * dpr + 4 * dpr)
-
-  ctx.font = font
-  ctx.fillStyle = color
-  ctx.textBaseline = "top"
-  ctx.textAlign = align
-  const x = align === "center" ? canvas.width / 2 : align === "right" ? canvas.width : 0
-  lines.forEach((line, i) => {
-    ctx.fillText(line, x, i * lh * dpr + 2 * dpr)
-  })
-
-  return { dataUrl: canvas.toDataURL("image/png"), height: lines.length * lh + 4, lines: lines.length, width: maxWidth }
-}
-
-// ── Градиентный фон страницы ─────────────────────────────────────────────────
-function gradientBackground(doc: jsPDF, color1: [number, number, number], color2: [number, number, number]) {
-  const W = 210, H = 297
-  const steps = 60
-  for (let i = 0; i < steps; i++) {
-    const t = i / steps
-    const r = Math.round(color1[0] + (color2[0] - color1[0]) * t)
-    const g = Math.round(color1[1] + (color2[1] - color1[1]) * t)
-    const b = Math.round(color1[2] + (color2[2] - color1[2]) * t)
-    doc.setFillColor(r, g, b)
-    doc.rect(0, (H / steps) * i, W, H / steps + 0.5, "F")
-  }
-}
-
-// ── Декоративные круги (эффект Gamma) ────────────────────────────────────────
-function decorCircles(doc: jsPDF) {
-  // Большой фиолетовый круг сверху справа
-  doc.setFillColor(139, 92, 246)
-  doc.setGState((doc as unknown as { GState: new (o: object) => unknown }).GState ? new (doc as unknown as { GState: new (o: object) => unknown }).GState({ opacity: 0.15 }) as never : undefined as never)
-  try { doc.circle(195, 15, 40, "F") } catch { /* noop */ }
-
-  // Синий круг снизу слева
-  doc.setFillColor(59, 130, 246)
-  try { doc.circle(15, 280, 50, "F") } catch { /* noop */ }
-}
-
-// ── Страница: обложка ────────────────────────────────────────────────────────
-async function renderCover(doc: jsPDF, data: PresentationContent, photos: string[]) {
-  const W = 210, H = 297
-  gradientBackground(doc, [15, 15, 35], [45, 20, 75])
-
-  // Фото-героя (если есть) — верхние 55% с градиентным затемнением
-  if (photos.length > 0) {
-    try {
-      const img = await loadImageAsDataUrl(photos[0])
-      doc.addImage(img, "JPEG", 0, 0, W, 170, undefined, "MEDIUM")
-      // Градиентное затемнение снизу
-      for (let i = 0; i < 40; i++) {
-        const alpha = (i / 40)
-        const y = 130 + i
-        doc.setFillColor(10, 12, 24)
-        try {
-          const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-          if (GStateCtor) doc.setGState(new GStateCtor({ opacity: alpha }) as never)
-        } catch { /* noop */ }
-        doc.rect(0, y, W, 1.2, "F")
-      }
-      // Сбрасываем прозрачность
-      try {
-        const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-        if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 1 }) as never)
-      } catch { /* noop */ }
-    } catch { /* фото недоступно */ }
-  }
-
-  // Цветная акцентная полоса слева
-  doc.setFillColor(...PALETTE.accent)
-  doc.rect(0, 0, 6, H, "F")
-
-  // Метка вверху
-  const labelImg = textToImage("КОММЕРЧЕСКАЯ НЕДВИЖИМОСТЬ", {
-    fontSize: 9, fontWeight: "700", color: "#C4B5FD", maxWidth: 180,
-  })
-  doc.addImage(labelImg.dataUrl, "PNG", 20, 180, 180, labelImg.height)
-
-  // Крупный заголовок
-  const headlineImg = textToImage(data.headline, {
-    fontSize: 34, fontWeight: "800", color: "#FFFFFF", maxWidth: 170, lineHeight: 1.1,
-  })
-  doc.addImage(headlineImg.dataUrl, "PNG", 20, 190, 170, headlineImg.height)
-
-  // Тагалайн
-  const tagY = 190 + headlineImg.height + 4
-  const taglineImg = textToImage(data.tagline, {
-    fontSize: 14, fontWeight: "400", color: "#CBD5E1", maxWidth: 170, lineHeight: 1.35,
-  })
-  doc.addImage(taglineImg.dataUrl, "PNG", 20, tagY, 170, taglineImg.height)
-
-  // Hero-stat карточка
-  if (data.hero_stat?.value) {
-    const cardY = H - 55
-    doc.setFillColor(255, 255, 255)
-    try {
-      const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-      if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 0.1 }) as never)
-    } catch { /* noop */ }
-    doc.roundedRect(20, cardY, 170, 30, 4, 4, "F")
-    try {
-      const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-      if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 1 }) as never)
-    } catch { /* noop */ }
-
-    const valImg = textToImage(data.hero_stat.value, {
-      fontSize: 22, fontWeight: "700", color: "#FFFFFF", maxWidth: 160,
-    })
-    doc.addImage(valImg.dataUrl, "PNG", 28, cardY + 5, 160, valImg.height)
-
-    const lblImg = textToImage(data.hero_stat.label, {
-      fontSize: 9, fontWeight: "500", color: "#A78BFA", maxWidth: 160,
-    })
-    doc.addImage(lblImg.dataUrl, "PNG", 28, cardY + 5 + valImg.height + 1, 160, lblImg.height)
-  }
-
-  // Номер страницы
-  const pageImg = textToImage("01", { fontSize: 8, fontWeight: "600", color: "#64748B", maxWidth: 20, align: "right" })
-  doc.addImage(pageImg.dataUrl, "PNG", W - 25, H - 10, 20, pageImg.height)
-}
-
-// ── Страница: описание + фото ─────────────────────────────────────────────────
-async function renderSummary(doc: jsPDF, data: PresentationContent, photos: string[]) {
-  doc.addPage()
-  const W = 210, H = 297
-  doc.setFillColor(...PALETTE.bg)
-  doc.rect(0, 0, W, H, "F")
-
-  // Шапка страницы
-  doc.setFillColor(...PALETTE.accent)
-  doc.rect(0, 0, W, 2, "F")
-
-  // Номер страницы
-  doc.setFillColor(...PALETTE.card)
-  doc.circle(195, 15, 8, "F")
-  const numImg = textToImage("02", { fontSize: 9, fontWeight: "700", color: "#FFFFFF", maxWidth: 20, align: "center" })
-  doc.addImage(numImg.dataUrl, "PNG", 185, 11, 20, numImg.height)
-
-  // Секция: Описание
-  let y = 30
-  const tagImg = textToImage("О ОБЪЕКТЕ", {
-    fontSize: 10, fontWeight: "700", color: "#A78BFA", maxWidth: 170,
-  })
-  doc.addImage(tagImg.dataUrl, "PNG", 20, y, 170, tagImg.height)
-  y += tagImg.height + 6
-
-  const titleImg = textToImage(data.object_title, {
-    fontSize: 20, fontWeight: "700", color: "#FFFFFF", maxWidth: 170, lineHeight: 1.2,
-  })
-  doc.addImage(titleImg.dataUrl, "PNG", 20, y, 170, titleImg.height)
-  y += titleImg.height + 8
-
-  // Цветная полоса-разделитель
-  doc.setFillColor(...PALETTE.accent)
-  doc.rect(20, y, 30, 1, "F")
-  y += 8
-
-  const summaryImg = textToImage(data.summary, {
-    fontSize: 11, fontWeight: "400", color: "#CBD5E1", maxWidth: 170, lineHeight: 1.55,
-  })
-  doc.addImage(summaryImg.dataUrl, "PNG", 20, y, 170, summaryImg.height)
-  y += summaryImg.height + 15
-
-  // Сетка фото 2×2
-  if (photos.length > 0) {
-    const galleryPhotos = photos.slice(0, 4)
-    const gap = 4
-    const gridW = (W - 40 - gap) / 2
-    const gridH = 45
-    for (let i = 0; i < galleryPhotos.length; i++) {
-      const gx = 20 + (i % 2) * (gridW + gap)
-      const gy = y + Math.floor(i / 2) * (gridH + gap)
-      try {
-        const img = await loadImageAsDataUrl(galleryPhotos[i])
-        doc.addImage(img, "JPEG", gx, gy, gridW, gridH, undefined, "MEDIUM")
-      } catch {
-        doc.setFillColor(...PALETTE.card)
-        doc.roundedRect(gx, gy, gridW, gridH, 2, 2, "F")
-      }
-    }
-  }
-}
-
-// ── Страница: Преимущества 2×2 с иконками-кружками ──────────────────────────
-function renderHighlights(doc: jsPDF, data: PresentationContent) {
-  doc.addPage()
-  const W = 210, H = 297
-  gradientBackground(doc, [15, 20, 40], [25, 15, 45])
-
-  doc.setFillColor(...PALETTE.accent)
-  doc.rect(0, 0, W, 2, "F")
-
-  doc.setFillColor(...PALETTE.card)
-  doc.circle(195, 15, 8, "F")
-  const numImg = textToImage("03", { fontSize: 9, fontWeight: "700", color: "#FFFFFF", maxWidth: 20, align: "center" })
-  doc.addImage(numImg.dataUrl, "PNG", 185, 11, 20, numImg.height)
-
-  // Заголовок
-  let y = 30
-  const tagImg = textToImage("КЛЮЧЕВЫЕ ПРЕИМУЩЕСТВА", {
-    fontSize: 10, fontWeight: "700", color: "#A78BFA", maxWidth: 170,
-  })
-  doc.addImage(tagImg.dataUrl, "PNG", 20, y, 170, tagImg.height)
-  y += tagImg.height + 4
-
-  const hTitleImg = textToImage("Что делает объект привлекательным", {
-    fontSize: 22, fontWeight: "700", color: "#FFFFFF", maxWidth: 170, lineHeight: 1.15,
-  })
-  doc.addImage(hTitleImg.dataUrl, "PNG", 20, y, 170, hTitleImg.height)
-  y += hTitleImg.height + 12
-
-  // Нормализуем highlights в объекты
-  const items: HighlightItem[] = (data.highlights || []).slice(0, 4).map((h, i) => {
-    if (typeof h === "string") {
-      const defaults: HighlightItem[] = [
-        { icon: "⬢", title: "Локация", text: h },
-        { icon: "▲", title: "Планировка", text: h },
-        { icon: "●", title: "Доходность", text: h },
-        { icon: "■", title: "Стабильность", text: h },
-      ]
-      return defaults[i] ?? { title: `Пункт ${i + 1}`, text: h }
-    }
-    return h
-  })
-
-  // Сетка 2×2 карточек
-  const gap = 6
-  const cardW = (W - 40 - gap) / 2
-  const cardH = 55
-  const accentColors: [number, number, number][] = [
-    PALETTE.accent,
-    PALETTE.accent2,
-    PALETTE.accent3,
-    [34, 197, 94],
+function normalizeHighlights(items: (HighlightItem | string)[]): HighlightItem[] {
+  const defaults = [
+    { emoji: "📍", title: "Локация" },
+    { emoji: "🏢", title: "Планировка" },
+    { emoji: "📈", title: "Доходность" },
+    { emoji: "🛡", title: "Стабильность" },
   ]
-  const iconChars = ["◆", "▲", "●", "■"]
-
-  items.forEach((item, i) => {
-    const cx = 20 + (i % 2) * (cardW + gap)
-    const cy = y + Math.floor(i / 2) * (cardH + gap)
-    const color = accentColors[i % accentColors.length]
-
-    // Карточка
-    doc.setFillColor(255, 255, 255)
-    try {
-      const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-      if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 0.06 }) as never)
-    } catch { /* noop */ }
-    doc.roundedRect(cx, cy, cardW, cardH, 4, 4, "F")
-    try {
-      const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-      if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 1 }) as never)
-    } catch { /* noop */ }
-
-    // Левая цветная полоса
-    doc.setFillColor(...color)
-    doc.roundedRect(cx, cy, 2, cardH, 1, 1, "F")
-
-    // Иконка (круг + символ)
-    doc.setFillColor(...color)
-    try {
-      const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-      if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 0.2 }) as never)
-    } catch { /* noop */ }
-    doc.circle(cx + 12, cy + 12, 5, "F")
-    try {
-      const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-      if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 1 }) as never)
-    } catch { /* noop */ }
-
-    const iconImg = textToImage(iconChars[i % iconChars.length], {
-      fontSize: 10, fontWeight: "700",
-      color: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-      maxWidth: 10, align: "center",
-    })
-    doc.addImage(iconImg.dataUrl, "PNG", cx + 7, cy + 8.5, 10, iconImg.height)
-
-    // Заголовок карточки
-    const tI = textToImage(item.title, {
-      fontSize: 12, fontWeight: "700", color: "#FFFFFF", maxWidth: cardW - 10,
-    })
-    doc.addImage(tI.dataUrl, "PNG", cx + 22, cy + 8, cardW - 26, tI.height)
-
-    // Текст
-    const txtI = textToImage(item.text, {
-      fontSize: 8.5, fontWeight: "400", color: "#CBD5E1",
-      maxWidth: cardW - 10, lineHeight: 1.4,
-    })
-    doc.addImage(txtI.dataUrl, "PNG", cx + 6, cy + 22, cardW - 12, Math.min(txtI.height, cardH - 25))
-  })
-}
-
-// ── Страница: Характеристики + Инвест ─────────────────────────────────────────
-function renderSpecsAndWhyBuy(doc: jsPDF, data: PresentationContent) {
-  doc.addPage()
-  const W = 210, H = 297
-  doc.setFillColor(...PALETTE.bg)
-  doc.rect(0, 0, W, H, "F")
-
-  doc.setFillColor(...PALETTE.accent2)
-  doc.rect(0, 0, W, 2, "F")
-
-  doc.setFillColor(...PALETTE.card)
-  doc.circle(195, 15, 8, "F")
-  const numImg = textToImage("04", { fontSize: 9, fontWeight: "700", color: "#FFFFFF", maxWidth: 20, align: "center" })
-  doc.addImage(numImg.dataUrl, "PNG", 185, 11, 20, numImg.height)
-
-  let y = 30
-  const tagImg = textToImage("ХАРАКТЕРИСТИКИ", {
-    fontSize: 10, fontWeight: "700", color: "#60A5FA", maxWidth: 170,
-  })
-  doc.addImage(tagImg.dataUrl, "PNG", 20, y, 170, tagImg.height)
-  y += tagImg.height + 4
-
-  const hImg = textToImage("Ключевые параметры", {
-    fontSize: 22, fontWeight: "700", color: "#FFFFFF", maxWidth: 170,
-  })
-  doc.addImage(hImg.dataUrl, "PNG", 20, y, 170, hImg.height)
-  y += hImg.height + 12
-
-  // Таблица specs: 2 колонки вертикально
-  const specs = Object.entries(data.specs).filter(([, v]) => v)
-  const rowH = 12
-  specs.forEach(([key, val], i) => {
-    const ry = y + i * rowH
-    // Чередование фона
-    if (i % 2 === 0) {
-      doc.setFillColor(...PALETTE.card)
-      doc.roundedRect(20, ry - 1, W - 40, rowH - 1, 2, 2, "F")
+  return items.slice(0, 4).map((h, i) => {
+    if (typeof h === "string") {
+      return { icon: defaults[i].emoji, title: defaults[i].title, text: h }
     }
-    const kImg = textToImage(key, { fontSize: 10, fontWeight: "500", color: "#94A3B8", maxWidth: 80 })
-    doc.addImage(kImg.dataUrl, "PNG", 25, ry + 2, 80, kImg.height)
-    const vImg = textToImage(val, { fontSize: 11, fontWeight: "700", color: "#FFFFFF", maxWidth: 100, align: "right" })
-    doc.addImage(vImg.dataUrl, "PNG", 110, ry + 2, W - 135, vImg.height)
+    return {
+      icon: h.icon || defaults[i].emoji,
+      title: h.title || defaults[i].title,
+      text: h.text || "",
+    }
   })
-  y += specs.length * rowH + 10
-
-  // Секция: Инвестиционная привлекательность
-  if (data.investment_appeal) {
-    // Градиентная карточка
-    doc.setFillColor(...PALETTE.accent)
-    try {
-      const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-      if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 0.15 }) as never)
-    } catch { /* noop */ }
-    const iaText = textToImage(data.investment_appeal, {
-      fontSize: 11, fontWeight: "400", color: "#F1F5F9", maxWidth: W - 60, lineHeight: 1.55,
-    })
-    const cardH = iaText.height + 22
-    doc.roundedRect(20, y, W - 40, cardH, 4, 4, "F")
-    try {
-      const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-      if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 1 }) as never)
-    } catch { /* noop */ }
-
-    // Акцентная полоса
-    doc.setFillColor(...PALETTE.accent)
-    doc.roundedRect(20, y, 3, cardH, 1.5, 1.5, "F")
-
-    const iaTag = textToImage("ИНВЕСТИЦИОННАЯ ПРИВЛЕКАТЕЛЬНОСТЬ", {
-      fontSize: 8, fontWeight: "700", color: "#A78BFA", maxWidth: W - 60,
-    })
-    doc.addImage(iaTag.dataUrl, "PNG", 30, y + 6, W - 60, iaTag.height)
-    doc.addImage(iaText.dataUrl, "PNG", 30, y + 6 + iaTag.height + 2, W - 60, iaText.height)
-  }
 }
 
-// ── Страница: Почему купить + контакты ───────────────────────────────────────
-function renderClosing(doc: jsPDF, data: PresentationContent) {
-  doc.addPage()
-  const W = 210, H = 297
-  gradientBackground(doc, [20, 15, 45], [45, 20, 80])
-
-  doc.setFillColor(...PALETTE.accent)
-  doc.rect(0, 0, W, 2, "F")
-
-  doc.setFillColor(...PALETTE.card)
-  doc.circle(195, 15, 8, "F")
-  const numImg = textToImage("05", { fontSize: 9, fontWeight: "700", color: "#FFFFFF", maxWidth: 20, align: "center" })
-  doc.addImage(numImg.dataUrl, "PNG", 185, 11, 20, numImg.height)
-
-  let y = 30
-  const tagImg = textToImage("ПОЧЕМУ СТОИТ ВЫБРАТЬ", {
-    fontSize: 10, fontWeight: "700", color: "#F0ABFC", maxWidth: 170,
-  })
-  doc.addImage(tagImg.dataUrl, "PNG", 20, y, 170, tagImg.height)
-  y += tagImg.height + 6
-
-  const reasons = data.why_buy && data.why_buy.length > 0 ? data.why_buy : []
-
-  if (reasons.length > 0) {
-    const hImg = textToImage("5 причин инвестировать", {
-      fontSize: 22, fontWeight: "700", color: "#FFFFFF", maxWidth: 170,
-    })
-    doc.addImage(hImg.dataUrl, "PNG", 20, y, 170, hImg.height)
-    y += hImg.height + 12
-
-    reasons.slice(0, 5).forEach((reason, i) => {
-      // Номер в кружке
-      doc.setFillColor(...PALETTE.accent)
-      doc.circle(26, y + 4, 4.5, "F")
-      const numI = textToImage(String(i + 1), {
-        fontSize: 10, fontWeight: "800", color: "#FFFFFF", maxWidth: 10, align: "center",
-      })
-      doc.addImage(numI.dataUrl, "PNG", 21, y + 1, 10, numI.height)
-
-      // Текст
-      const rImg = textToImage(reason, {
-        fontSize: 11, fontWeight: "500", color: "#F1F5F9", maxWidth: W - 50, lineHeight: 1.45,
-      })
-      doc.addImage(rImg.dataUrl, "PNG", 36, y + 0.5, W - 50, rImg.height)
-
-      y += Math.max(rImg.height, 10) + 4
-    })
-  }
-
-  // CTA + Контакты (низ страницы)
-  const footerY = H - 70
-  doc.setFillColor(255, 255, 255)
-  try {
-    const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-    if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 0.08 }) as never)
-  } catch { /* noop */ }
-  doc.roundedRect(20, footerY, W - 40, 55, 5, 5, "F")
-  try {
-    const GStateCtor = (doc as unknown as { GState?: new (o: object) => unknown }).GState
-    if (GStateCtor) doc.setGState(new GStateCtor({ opacity: 1 }) as never)
-  } catch { /* noop */ }
-
-  const ctaTag = textToImage("ГОТОВЫ ОБСУДИТЬ", {
-    fontSize: 9, fontWeight: "700", color: "#A78BFA", maxWidth: W - 60,
-  })
-  doc.addImage(ctaTag.dataUrl, "PNG", 30, footerY + 8, W - 60, ctaTag.height)
-
-  const ctaImg = textToImage(data.call_to_action, {
-    fontSize: 13, fontWeight: "600", color: "#FFFFFF", maxWidth: W - 60, lineHeight: 1.35,
-  })
-  doc.addImage(ctaImg.dataUrl, "PNG", 30, footerY + 14, W - 60, ctaImg.height)
-
-  // Контакты
-  const contactLines: string[] = []
-  if (data.contact.name) contactLines.push(data.contact.name)
-  if (data.contact.company) contactLines.push(data.contact.company)
-  if (data.contact.phone) contactLines.push(data.contact.phone)
-  const contactText = contactLines.join("  •  ")
-  if (contactText) {
-    const cImg = textToImage(contactText, {
-      fontSize: 10, fontWeight: "500", color: "#CBD5E1", maxWidth: W - 60,
-    })
-    doc.addImage(cImg.dataUrl, "PNG", 30, footerY + 45, W - 60, cImg.height)
-  }
+function createPageContainer(): HTMLDivElement {
+  const div = document.createElement("div")
+  div.style.position = "fixed"
+  div.style.left = "-99999px"
+  div.style.top = "0"
+  div.style.width = `${PAGE_W}px`
+  div.style.height = `${PAGE_H}px`
+  div.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`
+  div.style.color = "#fff"
+  div.style.overflow = "hidden"
+  document.body.appendChild(div)
+  return div
 }
 
-// ── Публичный API ────────────────────────────────────────────────────────────
-export async function buildPdf(data: PresentationContent, photoUrls: string[]): Promise<void> {
+function escapeHtml(s: string): string {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!))
+}
+
+function pageCover(data: PresentationContent, heroPhoto?: string): string {
+  const heroBg = heroPhoto
+    ? `background-image: linear-gradient(to bottom, rgba(15,15,35,0.3) 0%, rgba(15,15,35,0.55) 50%, rgba(10,12,24,0.98) 100%), url('${heroPhoto}'); background-size: cover; background-position: center;`
+    : `background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #6d28d9 100%);`
+  const stat = data.hero_stat
+  return `
+    <div style="width:100%;height:100%;${heroBg};position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:60px 56px 56px;box-sizing:border-box;">
+      <div style="position:absolute;top:40px;left:56px;display:flex;align-items:center;gap:10px;">
+        <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#ec4899);"></div>
+        <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.9);letter-spacing:1px;">КОММЕРЧЕСКАЯ НЕДВИЖИМОСТЬ</div>
+      </div>
+      <div style="position:absolute;top:40px;right:56px;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:3px;">01 / 05</div>
+
+      <div style="display:inline-block;padding:6px 14px;background:rgba(139,92,246,0.25);border:1px solid rgba(167,139,250,0.4);border-radius:999px;font-size:11px;font-weight:600;color:#c4b5fd;letter-spacing:2px;margin-bottom:24px;width:fit-content;">
+        ПРЕМИУМ-ОБЪЕКТ
+      </div>
+
+      <h1 style="font-size:56px;font-weight:800;line-height:1.05;margin:0 0 20px;color:#fff;letter-spacing:-1px;max-width:620px;">${escapeHtml(data.headline)}</h1>
+
+      <p style="font-size:20px;font-weight:400;line-height:1.4;color:rgba(226,232,240,0.9);margin:0 0 40px;max-width:620px;">${escapeHtml(data.tagline)}</p>
+
+      ${stat?.value ? `
+        <div style="display:inline-flex;align-items:baseline;gap:16px;padding:20px 28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:16px;width:fit-content;">
+          <div style="font-size:40px;font-weight:800;color:#fff;line-height:1;">${escapeHtml(stat.value)}</div>
+          <div style="font-size:13px;color:#a78bfa;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">${escapeHtml(stat.label)}</div>
+        </div>
+      ` : ""}
+    </div>
+  `
+}
+
+function pageSummary(data: PresentationContent, photos: string[]): string {
+  const gallery = photos.slice(1, 5)
+  return `
+    <div style="width:100%;height:100%;background:#0a0c18;padding:64px 56px;box-sizing:border-box;position:relative;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#8b5cf6,#ec4899);"></div>
+      <div style="position:absolute;top:30px;right:56px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:3px;">02 / 05</div>
+
+      <div style="font-size:12px;font-weight:700;color:#a78bfa;letter-spacing:3px;margin-bottom:12px;">О ОБЪЕКТЕ</div>
+      <h2 style="font-size:34px;font-weight:700;color:#fff;margin:0 0 8px;line-height:1.15;letter-spacing:-0.5px;">${escapeHtml(data.object_title)}</h2>
+      <div style="width:48px;height:3px;background:linear-gradient(90deg,#8b5cf6,#ec4899);border-radius:2px;margin-bottom:24px;"></div>
+
+      <p style="font-size:15px;line-height:1.7;color:#cbd5e1;margin:0 0 36px;max-width:720px;">${escapeHtml(data.summary)}</p>
+
+      ${gallery.length > 0 ? `
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+          ${gallery.map(url => `
+            <div style="aspect-ratio:16/10;background-image:url('${url}');background-size:cover;background-position:center;border-radius:12px;border:1px solid rgba(255,255,255,0.08);"></div>
+          `).join("")}
+        </div>
+      ` : ""}
+
+      <div style="position:absolute;bottom:40px;left:56px;right:56px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.3);">
+        <div>${escapeHtml(data.contact.company || "")}</div>
+        <div>${escapeHtml(data.contact.phone || "")}</div>
+      </div>
+    </div>
+  `
+}
+
+function pageHighlights(data: PresentationContent): string {
+  const items = normalizeHighlights(data.highlights)
+  const colors = [
+    { grad: "linear-gradient(135deg,#8b5cf6,#6366f1)", bar: "#8b5cf6" },
+    { grad: "linear-gradient(135deg,#3b82f6,#06b6d4)", bar: "#3b82f6" },
+    { grad: "linear-gradient(135deg,#ec4899,#f43f5e)", bar: "#ec4899" },
+    { grad: "linear-gradient(135deg,#10b981,#059669)", bar: "#10b981" },
+  ]
+  return `
+    <div style="width:100%;height:100%;background:linear-gradient(135deg,#0f0f2a 0%,#1a1438 100%);padding:64px 56px;box-sizing:border-box;position:relative;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#8b5cf6,#ec4899);"></div>
+      <div style="position:absolute;top:30px;right:56px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:3px;">03 / 05</div>
+
+      <div style="font-size:12px;font-weight:700;color:#a78bfa;letter-spacing:3px;margin-bottom:12px;">ПРЕИМУЩЕСТВА</div>
+      <h2 style="font-size:34px;font-weight:700;color:#fff;margin:0 0 6px;line-height:1.15;letter-spacing:-0.5px;">Что делает объект привлекательным</h2>
+      <div style="width:48px;height:3px;background:linear-gradient(90deg,#8b5cf6,#ec4899);border-radius:2px;margin-bottom:32px;"></div>
+
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
+        ${items.map((item, i) => {
+          const c = colors[i % colors.length]
+          return `
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;position:relative;overflow:hidden;">
+              <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${c.bar};"></div>
+              <div style="width:48px;height:48px;border-radius:12px;background:${c.grad};display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px;">${escapeHtml(item.icon || "◆")}</div>
+              <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;line-height:1.2;">${escapeHtml(item.title)}</div>
+              <div style="font-size:13px;line-height:1.55;color:#cbd5e1;">${escapeHtml(item.text)}</div>
+            </div>
+          `
+        }).join("")}
+      </div>
+    </div>
+  `
+}
+
+function pageSpecs(data: PresentationContent): string {
+  const specs = Object.entries(data.specs).filter(([, v]) => v)
+  return `
+    <div style="width:100%;height:100%;background:#0a0c18;padding:64px 56px;box-sizing:border-box;position:relative;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#3b82f6,#06b6d4);"></div>
+      <div style="position:absolute;top:30px;right:56px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:3px;">04 / 05</div>
+
+      <div style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:3px;margin-bottom:12px;">ХАРАКТЕРИСТИКИ</div>
+      <h2 style="font-size:34px;font-weight:700;color:#fff;margin:0 0 6px;line-height:1.15;letter-spacing:-0.5px;">Ключевые параметры</h2>
+      <div style="width:48px;height:3px;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:2px;margin-bottom:28px;"></div>
+
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:28px;">
+        ${specs.map(([k, v], i) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 24px;${i < specs.length - 1 ? "border-bottom:1px solid rgba(255,255,255,0.06);" : ""}background:${i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)"};">
+            <div style="font-size:13px;color:#94a3b8;font-weight:500;">${escapeHtml(k)}</div>
+            <div style="font-size:16px;color:#fff;font-weight:700;">${escapeHtml(v)}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div style="background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(236,72,153,0.10));border:1px solid rgba(167,139,250,0.3);border-radius:16px;padding:24px 28px;position:relative;">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#8b5cf6,#ec4899);border-radius:4px 0 0 4px;"></div>
+        <div style="font-size:11px;font-weight:700;color:#a78bfa;letter-spacing:2.5px;margin-bottom:10px;">ИНВЕСТИЦИОННАЯ ПРИВЛЕКАТЕЛЬНОСТЬ</div>
+        <div style="font-size:14.5px;line-height:1.65;color:#f1f5f9;">${escapeHtml(data.investment_appeal)}</div>
+      </div>
+    </div>
+  `
+}
+
+function pageClosing(data: PresentationContent): string {
+  const reasons = (data.why_buy && data.why_buy.length > 0 ? data.why_buy : [
+    "Удобное расположение",
+    "Прозрачные документы",
+    "Потенциал роста стоимости",
+    "Возможность быстрого выхода на сделку",
+    "Профессиональная поддержка",
+  ]).slice(0, 5)
+
+  return `
+    <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a0f3d 0%,#2d1b69 50%,#4c1d95 100%);padding:64px 56px;box-sizing:border-box;position:relative;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#ec4899,#8b5cf6);"></div>
+      <div style="position:absolute;top:30px;right:56px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:3px;">05 / 05</div>
+
+      <div style="font-size:12px;font-weight:700;color:#f0abfc;letter-spacing:3px;margin-bottom:12px;">ПОЧЕМУ СТОИТ ВЫБРАТЬ</div>
+      <h2 style="font-size:34px;font-weight:700;color:#fff;margin:0 0 6px;line-height:1.15;letter-spacing:-0.5px;">${reasons.length} причин инвестировать</h2>
+      <div style="width:48px;height:3px;background:linear-gradient(90deg,#ec4899,#8b5cf6);border-radius:2px;margin-bottom:28px;"></div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:40px;">
+        ${reasons.map((r, i) => `
+          <div style="display:flex;align-items:flex-start;gap:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 18px;">
+            <div style="flex-shrink:0;width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#ec4899);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;">${i + 1}</div>
+            <div style="padding-top:5px;font-size:14.5px;line-height:1.45;color:#f1f5f9;">${escapeHtml(r)}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div style="position:absolute;left:56px;right:56px;bottom:56px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:26px 32px;">
+        <div style="font-size:11px;font-weight:700;color:#a78bfa;letter-spacing:3px;margin-bottom:10px;">ГОТОВЫ ОБСУДИТЬ</div>
+        <div style="font-size:17px;font-weight:600;color:#fff;margin-bottom:16px;line-height:1.4;">${escapeHtml(data.call_to_action)}</div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:#cbd5e1;">
+          ${data.contact.name ? `<div style="display:flex;align-items:center;gap:6px;"><span style="color:#a78bfa;">●</span> ${escapeHtml(data.contact.name)}</div>` : ""}
+          ${data.contact.company ? `<div style="display:flex;align-items:center;gap:6px;"><span style="color:#a78bfa;">●</span> ${escapeHtml(data.contact.company)}</div>` : ""}
+          ${data.contact.phone ? `<div style="display:flex;align-items:center;gap:6px;"><span style="color:#a78bfa;">●</span> ${escapeHtml(data.contact.phone)}</div>` : ""}
+        </div>
+      </div>
+    </div>
+  `
+}
+
+async function renderHtmlToCanvas(html: string): Promise<HTMLCanvasElement> {
+  const container = createPageContainer()
+  container.innerHTML = html
+  // Ждём загрузки всех img
+  await Promise.all(
+    Array.from(container.querySelectorAll("img")).map(img =>
+      (img as HTMLImageElement).complete
+        ? Promise.resolve()
+        : new Promise(res => { (img as HTMLImageElement).onload = () => res(null); (img as HTMLImageElement).onerror = () => res(null) })
+    )
+  )
+  await new Promise(r => setTimeout(r, 400))
+
+  const canvas = await html2canvas(container, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
+    width: PAGE_W,
+    height: PAGE_H,
+    logging: false,
+  })
+  container.remove()
+  return canvas
+}
+
+async function buildDoc(data: PresentationContent, photos: string[]): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true })
-  await renderCover(doc, data, photoUrls)
-  await renderSummary(doc, data, photoUrls)
-  renderHighlights(doc, data)
-  renderSpecsAndWhyBuy(doc, data)
-  renderClosing(doc, data)
 
-  const safeName = (data.object_title || "presentation")
-    .replace(/[^a-zA-Zа-яА-Я0-9\s]/g, "")
-    .trim().replace(/\s+/g, "_")
-  doc.save(`${safeName || "presentation"}.pdf`)
+  // Предзагружаем фото в dataURL чтобы background-image гарантированно отрендерился
+  const preloadedPhotos: string[] = []
+  for (const url of photos.slice(0, 5)) {
+    try {
+      preloadedPhotos.push(await urlToDataUrl(url))
+    } catch {
+      preloadedPhotos.push(url)
+    }
+  }
+
+  const pages = [
+    pageCover(data, preloadedPhotos[0]),
+    pageSummary(data, preloadedPhotos),
+    pageHighlights(data),
+    pageSpecs(data),
+    pageClosing(data),
+  ]
+
+  for (let i = 0; i < pages.length; i++) {
+    if (i > 0) doc.addPage()
+    const canvas = await renderHtmlToCanvas(pages[i])
+    const imgData = canvas.toDataURL("image/jpeg", 0.92)
+    doc.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "MEDIUM")
+  }
+
+  return doc
 }
 
-export async function buildPdfBase64(data: PresentationContent, photoUrls: string[]): Promise<string> {
-  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true })
-  await renderCover(doc, data, photoUrls)
-  await renderSummary(doc, data, photoUrls)
-  renderHighlights(doc, data)
-  renderSpecsAndWhyBuy(doc, data)
-  renderClosing(doc, data)
-  return doc.output("datauristring").split(",")[1]
-}
-
-// ── Загрузка изображения через прокси-канвас ─────────────────────────────────
-async function loadImageAsDataUrl(url: string): Promise<string> {
+async function urlToDataUrl(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = "anonymous"
     img.onload = () => {
       const canvas = document.createElement("canvas")
       const maxSize = 1400
-      const ratio = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight))
-      canvas.width = Math.round(img.naturalWidth * ratio)
-      canvas.height = Math.round(img.naturalHeight * ratio)
+      const r = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight))
+      canvas.width = Math.round(img.naturalWidth * r)
+      canvas.height = Math.round(img.naturalHeight * r)
       canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height)
-      resolve(canvas.toDataURL("image/jpeg", 0.82))
+      resolve(canvas.toDataURL("image/jpeg", 0.88))
     }
     img.onerror = reject
     img.src = url
   })
+}
+
+export async function buildPdf(data: PresentationContent, photoUrls: string[]): Promise<void> {
+  const doc = await buildDoc(data, photoUrls)
+  const safeName = (data.object_title || "presentation")
+    .replace(/[^a-zA-Zа-яА-Я0-9\s]/g, "").trim().replace(/\s+/g, "_")
+  doc.save(`${safeName || "presentation"}.pdf`)
+}
+
+export async function buildPdfBase64(data: PresentationContent, photoUrls: string[]): Promise<string> {
+  const doc = await buildDoc(data, photoUrls)
+  return doc.output("datauristring").split(",")[1]
 }
