@@ -54,20 +54,18 @@ def handler(event: dict, context) -> dict:
     if user_draft:
         user_block = f"\n\nДополнительная информация от пользователя:\n{user_draft}"
 
-    prompt = f"""Ты — профессиональный копирайтер по коммерческой недвижимости.
-Напиши развёрнутое продающее описание объекта для размещения на маркетплейсе.
+    prompt = f"""Напиши развёрнутое продающее описание объекта недвижимости для маркетплейса.
+Объём: 4 абзаца, каждый 2-3 предложения. Деловой стиль, на русском. Разделяй абзацы пустой строкой.
+Без заголовков, без markdown, без списков.
 
-Данные объекта:
-{object_info}{user_block}
+Структура:
+1) Общая суть и локация
+2) Характеристики и планировка
+3) Коммерческие преимущества
+4) Условия сделки
 
-Требования к тексту:
-- Объём: 4–6 абзацев, каждый абзац 2–4 предложения (итого не менее 250–350 слов)
-- Структура: 1-й абзац — общая суть и локация, 2-й — технические характеристики и планировка, 3-й — коммерческие преимущества и доходность, 4-й — инфраструктура и окружение, 5-й — условия сделки и контакт
-- Живой деловой язык, без канцеляризмов
-- Не используй: «уникальный», «выгодное предложение», «не упустите шанс»
-- Разделяй абзацы пустой строкой (\\n\\n)
-- Без заголовков, без markdown, без маркированных списков
-- На русском языке"""
+Данные:
+{object_info}{user_block}"""
 
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
     headers_ai = {
@@ -75,47 +73,90 @@ def handler(event: dict, context) -> dict:
         "Content-Type": "application/json",
     }
 
-    def call_ai(p: str, max_tok: int) -> str:
+    reply = ""
+    try:
         r = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             json={
                 "model": "openrouter/free",
-                "messages": [{"role": "user", "content": p}],
-                "max_tokens": max_tok,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 700,
                 "temperature": 0.75,
             },
             headers=headers_ai,
-            timeout=25,
+            timeout=22,
         )
         data = r.json()
-        return ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
-
-    # Попытка 1 — полный промпт
-    reply = ""
-    try:
-        reply = call_ai(prompt, 900).strip()
+        reply = (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()
     except Exception:
         pass
 
-    # Попытка 2 — укороченный промпт если первый дал пустой ответ
+    # Fallback — генерим развёрнутый текст из данных если ИИ не ответил
     if not reply:
-        short_prompt = f"""Напиши продающее описание объекта недвижимости для маркетплейса. 3 абзаца, деловой стиль, на русском языке.
-
-{object_info}{user_block}"""
-        try:
-            reply = call_ai(short_prompt, 600).strip()
-        except Exception:
-            pass
-
-    if not reply:
-        return {
-            "statusCode": 200,
-            "headers": CORS,
-            "body": json.dumps({"error": "ИИ временно недоступен, попробуйте позже"}, ensure_ascii=False),
-        }
+        reply = build_fallback_text(
+            category=category, title=title, city=city, address=address,
+            price=price, area=area, extra_fields=extra_fields, user_draft=user_draft,
+        )
 
     return {
         "statusCode": 200,
         "headers": CORS,
         "body": json.dumps({"description": reply}, ensure_ascii=False),
     }
+
+
+def build_fallback_text(category, title, city, address, price, area, extra_fields, user_draft):
+    """Собирает развёрнутое описание из данных объекта без использования ИИ."""
+    loc_parts = [p for p in [city, address] if p]
+    loc = ", ".join(loc_parts) if loc_parts else "востребованной локации"
+
+    p1_parts = []
+    if title:
+        p1_parts.append(f"{title} — объект категории «{category or 'коммерческая недвижимость'}», расположенный в {loc}.")
+    else:
+        p1_parts.append(f"Представляем объект категории «{category or 'коммерческая недвижимость'}» в {loc}.")
+    p1_parts.append("Удачное расположение обеспечивает стабильный трафик и доступ к основным транспортным узлам.")
+    p1 = " ".join(p1_parts)
+
+    p2_parts = []
+    if area:
+        p2_parts.append(f"Общая площадь объекта составляет {area} м².")
+    floor = extra_fields.get("floor")
+    ceiling = extra_fields.get("ceiling")
+    if floor:
+        p2_parts.append(f"Расположен на {floor} этаже.")
+    if ceiling:
+        p2_parts.append(f"Высота потолков — {ceiling} м.")
+    subtype = extra_fields.get("subtype") or extra_fields.get("class")
+    if subtype:
+        p2_parts.append(f"Тип помещения: {subtype}.")
+    if not p2_parts:
+        p2_parts.append("Помещение имеет функциональную планировку и подходит под различные задачи бизнеса.")
+    p2 = " ".join(p2_parts)
+
+    p3_parts = []
+    yield_val = extra_fields.get("yield")
+    rent = extra_fields.get("rent")
+    roi = extra_fields.get("roi")
+    if rent:
+        p3_parts.append(f"Арендный доход составляет {rent} ₽ в месяц.")
+    if yield_val:
+        p3_parts.append(f"Доходность объекта — {yield_val}% годовых.")
+    if roi:
+        p3_parts.append(f"ROI на уровне {roi}%.")
+    if not p3_parts:
+        p3_parts.append("Объект обладает высоким коммерческим потенциалом и подходит как для собственного использования, так и для сдачи в аренду.")
+    p3_parts.append("Такое сочетание факторов делает его интересным инвестиционным активом.")
+    p3 = " ".join(p3_parts)
+
+    p4_parts = []
+    if price:
+        p4_parts.append(f"Цена объекта — {price} ₽.")
+    p4_parts.append("Готовы обсудить условия сделки, показать объект и предоставить полный пакет документов.")
+    p4_parts.append("Свяжитесь с нами для получения подробной информации и организации просмотра.")
+    p4 = " ".join(p4_parts)
+
+    result = "\n\n".join([p1, p2, p3, p4])
+    if user_draft:
+        result = f"{user_draft}\n\n{result}"
+    return result
