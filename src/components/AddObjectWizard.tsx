@@ -30,6 +30,9 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
     landing_title: "",
     landing_cta: "",
     presentation_notes: "",
+    presentation_contact_name: "",
+    presentation_contact_phone: "",
+    presentation_contact_company: "",
   })
   const [categoryFields, setCategoryFields] = useState<Record<string, string>>(
     initial?.extra_fields ?? (initial?.yield ? { yield: initial.yield } : {})
@@ -194,7 +197,13 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
           />
         )}
         {step === 3 && (
-          <Step4Presentation form={form} setForm={setForm} />
+          <Step4Presentation
+            form={form}
+            setForm={setForm}
+            category={category}
+            categoryFields={categoryFields}
+            photos={photos}
+          />
         )}
         {step === 4 && (
           <Step5Publish

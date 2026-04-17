@@ -26,6 +26,9 @@ export interface WizardForm {
   landing_title: string
   landing_cta: string
   presentation_notes: string
+  presentation_contact_name: string
+  presentation_contact_phone: string
+  presentation_contact_company: string
 }
 
 export const STEPS = ["Основное", "Характеристики", "Описание", "Презентация", "Публикация"]

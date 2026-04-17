@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST generate presentation",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "category": "Коммерция",
+        "title": "Офис в БЦ Арбат",
+        "city": "Москва",
+        "address": "ул. Арбат, 1",
+        "price": "18500000",
+        "area": "142",
+        "description": "Современный офис с отделкой",
+        "contact_name": "Иван Иванов",
+        "contact_phone": "+7 999 000 00 00"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"presentation": {}},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
