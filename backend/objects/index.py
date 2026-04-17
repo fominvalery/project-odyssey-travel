@@ -20,7 +20,8 @@ CORS = {
 
 SELECT_COLS = """
     id, user_id, category, type, title, city, address, price,
-    area, description, yield_percent, extra_fields, status, published, created_at, photos
+    area, description, yield_percent, extra_fields, status, published, created_at, photos,
+    presentation_url
 """
 
 
@@ -48,6 +49,7 @@ def row_to_obj(r):
         "published": r[13] or False,
         "created_at": r[14].isoformat() if r[14] else "",
         "photos": list(r[15]) if r[15] else [],
+        "presentation_url": r[16] or None,
     }
 
 
@@ -75,7 +77,7 @@ def handler(event: dict, context) -> dict:
                     f"""
                     SELECT o.id, o.user_id, o.category, o.type, o.title, o.city, o.address, o.price,
                            o.area, o.description, o.yield_percent, o.extra_fields, o.status, o.published,
-                           o.created_at, o.photos,
+                           o.created_at, o.photos, o.presentation_url,
                            u.name, u.phone, u.company, u.avatar_url
                     FROM {schema}.objects o
                     LEFT JOIN {schema}.users u ON u.id = o.user_id
@@ -86,12 +88,12 @@ def handler(event: dict, context) -> dict:
                 row = cur.fetchone()
                 if not row:
                     return resp(404, {"error": "not found"})
-                obj = row_to_obj(row[:16])
+                obj = row_to_obj(row[:17])
                 obj["owner"] = {
-                    "name": row[16] or "",
-                    "phone": row[17] or "",
-                    "company": row[18] or "",
-                    "avatar_url": row[19] or "",
+                    "name": row[17] or "",
+                    "phone": row[18] or "",
+                    "company": row[19] or "",
+                    "avatar_url": row[20] or "",
                 }
                 return resp(200, {"object": obj})
 
@@ -121,8 +123,8 @@ def handler(event: dict, context) -> dict:
                 f"""
                 INSERT INTO {schema}.objects
                     (user_id, category, type, title, city, address, price, area,
-                     description, yield_percent, extra_fields, status, published, photos)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s)
+                     description, yield_percent, extra_fields, status, published, photos, presentation_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s)
                 RETURNING {SELECT_COLS}
                 """,
                 (
@@ -140,6 +142,7 @@ def handler(event: dict, context) -> dict:
                     body.get("status", "Активен"),
                     bool(body.get("published", False)),
                     photos,
+                    body.get("presentation_url") or None,
                 ),
             )
             row = cur.fetchone()
@@ -154,7 +157,6 @@ def handler(event: dict, context) -> dict:
             if not obj_id or not user_id:
                 return resp(400, {"error": "id and user_id required"})
 
-            # Проверка владельца
             cur.execute(
                 f"SELECT user_id FROM {schema}.objects WHERE id = %s",
                 (obj_id,),
@@ -168,32 +170,63 @@ def handler(event: dict, context) -> dict:
             extra = json.dumps(body.get("extra_fields", {}))
             photos = body.get("photos") or []
 
-            cur.execute(
-                f"""
-                UPDATE {schema}.objects
-                SET category = %s, type = %s, title = %s, city = %s, address = %s,
-                    price = %s, area = %s, description = %s, yield_percent = %s,
-                    extra_fields = %s::jsonb, status = %s, published = %s, photos = %s
-                WHERE id = %s
-                RETURNING {SELECT_COLS}
-                """,
-                (
-                    body.get("category", ""),
-                    body.get("type", ""),
-                    body.get("title", ""),
-                    body.get("city", ""),
-                    body.get("address", ""),
-                    body.get("price", ""),
-                    body.get("area", ""),
-                    body.get("description", ""),
-                    body.get("yield_percent", ""),
-                    extra,
-                    body.get("status", "Активен"),
-                    bool(body.get("published", False)),
-                    photos,
-                    obj_id,
-                ),
-            )
+            # presentation_url: если передан явно — обновляем, если не передан — не трогаем
+            if "presentation_url" in body:
+                cur.execute(
+                    f"""
+                    UPDATE {schema}.objects
+                    SET category = %s, type = %s, title = %s, city = %s, address = %s,
+                        price = %s, area = %s, description = %s, yield_percent = %s,
+                        extra_fields = %s::jsonb, status = %s, published = %s, photos = %s,
+                        presentation_url = %s
+                    WHERE id = %s
+                    RETURNING {SELECT_COLS}
+                    """,
+                    (
+                        body.get("category", ""),
+                        body.get("type", ""),
+                        body.get("title", ""),
+                        body.get("city", ""),
+                        body.get("address", ""),
+                        body.get("price", ""),
+                        body.get("area", ""),
+                        body.get("description", ""),
+                        body.get("yield_percent", ""),
+                        extra,
+                        body.get("status", "Активен"),
+                        bool(body.get("published", False)),
+                        photos,
+                        body.get("presentation_url") or None,
+                        obj_id,
+                    ),
+                )
+            else:
+                cur.execute(
+                    f"""
+                    UPDATE {schema}.objects
+                    SET category = %s, type = %s, title = %s, city = %s, address = %s,
+                        price = %s, area = %s, description = %s, yield_percent = %s,
+                        extra_fields = %s::jsonb, status = %s, published = %s, photos = %s
+                    WHERE id = %s
+                    RETURNING {SELECT_COLS}
+                    """,
+                    (
+                        body.get("category", ""),
+                        body.get("type", ""),
+                        body.get("title", ""),
+                        body.get("city", ""),
+                        body.get("address", ""),
+                        body.get("price", ""),
+                        body.get("area", ""),
+                        body.get("description", ""),
+                        body.get("yield_percent", ""),
+                        extra,
+                        body.get("status", "Активен"),
+                        bool(body.get("published", False)),
+                        photos,
+                        obj_id,
+                    ),
+                )
             updated = cur.fetchone()
             conn.commit()
             return resp(200, {"ok": True, "object": row_to_obj(updated)})

@@ -37,6 +37,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
   const [categoryFields, setCategoryFields] = useState<Record<string, string>>(
     initial?.extra_fields ?? (initial?.yield ? { yield: initial.yield } : {})
   )
+  const [presentationUrl, setPresentationUrl] = useState<string | null>(initial?.presentation_url ?? null)
   const [photos, setPhotos] = useState<string[]>(initial?.photos ?? [])
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
@@ -71,6 +72,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
       status: initial?.status ?? "Активен",
       published: publishToMarket,
       photos,
+      ...(presentationUrl !== null ? { presentation_url: presentationUrl } : {}),
     }
 
     setSaving(true)
@@ -203,6 +205,8 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             category={category}
             categoryFields={categoryFields}
             photos={photos}
+            objectId={initial ? String(initial.id) : undefined}
+            onPresentationReady={(url) => setPresentationUrl(url)}
           />
         )}
         {step === 4 && (

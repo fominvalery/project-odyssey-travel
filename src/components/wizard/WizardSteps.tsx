@@ -219,9 +219,11 @@ interface Step4Props {
   category: string
   categoryFields: Record<string, string>
   photos: string[]
+  objectId?: string
+  onPresentationReady?: (url: string) => void
 }
 
-export function Step4Presentation({ form, setForm, category, categoryFields, photos }: Step4Props) {
+export function Step4Presentation({ form, setForm, category, categoryFields, photos, objectId, onPresentationReady }: Step4Props) {
   const [contactName, setContactName] = useState(form.presentation_contact_name ?? "")
   const [contactPhone, setContactPhone] = useState(form.presentation_contact_phone ?? "")
   const [contactCompany, setContactCompany] = useState(form.presentation_contact_company ?? "")
@@ -270,8 +272,28 @@ export function Step4Presentation({ form, setForm, category, categoryFields, pho
       if (r.presentation) {
         setGenerating(false)
         setDownloading(true)
-        const { buildPdf } = await import("./generatePdf")
+        const { buildPdf, buildPdfBase64 } = await import("./generatePdf")
+
+        // Скачиваем локально
         await buildPdf(r.presentation, photos)
+
+        // Загружаем в S3 для хранения
+        try {
+          const pdfB64 = await buildPdfBase64(r.presentation, photos)
+          const uploadResp = await fetch(`${func2url["generate-presentation"]}?upload=1`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pdf_base64: pdfB64, object_id: objectId || "" }),
+          }).then(r => r.json())
+
+          if (uploadResp.cdn_url) {
+            onPresentationReady?.(uploadResp.cdn_url)
+            setForm({ ...form, presentation_notes: notes, presentation_contact_name: contactName, presentation_contact_phone: contactPhone, presentation_contact_company: contactCompany })
+          }
+        } catch {
+          // Загрузка в S3 не критична — PDF уже скачан
+        }
+
         setStatus("ready")
       } else {
         setErrorMsg(r.error || "Не удалось создать презентацию")

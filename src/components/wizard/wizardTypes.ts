@@ -14,6 +14,7 @@ export interface ObjectData {
   photos?: string[]
   user_id?: string | null
   extra_fields?: Record<string, string>
+  presentation_url?: string | null
 }
 
 export interface WizardForm {

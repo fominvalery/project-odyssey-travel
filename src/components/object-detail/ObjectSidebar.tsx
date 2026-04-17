@@ -60,6 +60,18 @@ export default function ObjectSidebar({
         </div>
       )}
 
+      {obj.presentation_url && (
+        <a
+          href={obj.presentation_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full rounded-xl bg-violet-600/15 hover:bg-violet-600/25 border border-violet-500/30 text-violet-300 hover:text-violet-200 py-2.5 text-sm font-medium transition-all mb-2"
+        >
+          <Icon name="FileDown" className="h-4 w-4" />
+          Скачать презентацию PDF
+        </a>
+      )}
+
       <button
         onClick={onShareClick}
         className="flex items-center justify-center gap-2 w-full rounded-xl border border-[#2a2a2a] bg-transparent text-white hover:bg-[#1a1a1a] py-2.5 text-sm transition-colors"

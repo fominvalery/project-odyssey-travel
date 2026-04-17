@@ -92,6 +92,17 @@ export default function ObjectCard({ obj, onEdit, onDelete }: ObjectCardProps) {
             <Icon name="Pencil" className="h-3.5 w-3.5" />
             Изменить
           </button>
+          {obj.presentation_url && (
+            <a
+              href={obj.presentation_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Скачать PDF-презентацию"
+              className="shrink-0 w-10 flex items-center justify-center rounded-xl text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors border border-violet-500/20"
+            >
+              <Icon name="FileDown" className="h-3.5 w-3.5" />
+            </a>
+          )}
           <button
             onClick={() => onDelete(String(obj.id))}
             className="shrink-0 w-10 flex items-center justify-center rounded-xl text-gray-400 bg-[#1a1a1a] hover:bg-red-500/10 hover:text-red-400 transition-colors"

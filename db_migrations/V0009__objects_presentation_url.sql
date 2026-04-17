@@ -1,0 +1,1 @@
+ALTER TABLE objects ADD COLUMN IF NOT EXISTS presentation_url text DEFAULT NULL;

@@ -23,6 +23,7 @@ export interface ObjectDetailData {
   created_at: string
   photos: string[]
   owner?: Owner
+  presentation_url?: string | null
 }
 
 export const FIELD_LABELS: Record<string, string> = {
