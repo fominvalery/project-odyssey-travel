@@ -102,6 +102,7 @@ export default function Marketplace() {
   const [priceTo, setPriceTo] = useState("")
   const [areaFrom, setAreaFrom] = useState("")
   const [areaTo, setAreaTo] = useState("")
+  const [cityFilter, setCityFilter] = useState("")
 
   // Меняем категорию — сбрасываем доп. фильтры, открываем панель если есть характеристики
   function handleCategoryChange(cat: string) {
@@ -118,11 +119,12 @@ export default function Marketplace() {
     setPriceTo("")
     setAreaFrom("")
     setAreaTo("")
+    setCityFilter("")
   }
 
   const hasActiveFilters =
     Object.values(extraFilters).some(v => v.trim()) ||
-    priceFrom || priceTo || areaFrom || areaTo
+    priceFrom || priceTo || areaFrom || areaTo || cityFilter
 
   // Поля фильтра для активной категории
   const activeCatFields = activeCategory !== "Все" && CAT_ID_MAP[activeCategory]
@@ -179,7 +181,10 @@ export default function Marketplace() {
     const matchAreaFrom = areaFrom ? areaNum >= parseFloat(areaFrom) : true
     const matchAreaTo = areaTo ? areaNum <= parseFloat(areaTo) : true
 
-    return matchCat && matchSearch && matchExtra && matchPriceFrom && matchPriceTo && matchAreaFrom && matchAreaTo
+    // Фильтрация по городу
+    const matchCity = cityFilter ? o.city.toLowerCase().includes(cityFilter.trim().toLowerCase()) : true
+
+    return matchCat && matchSearch && matchExtra && matchPriceFrom && matchPriceTo && matchAreaFrom && matchAreaTo && matchCity
   })
 
   return (
@@ -261,6 +266,17 @@ export default function Marketplace() {
             </div>
 
             <div className="p-5 space-y-5">
+              {/* Город */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Город</p>
+                <Input
+                  value={cityFilter}
+                  onChange={e => setCityFilter(e.target.value)}
+                  placeholder="Москва, Санкт-Петербург..."
+                  className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500 max-w-xs"
+                />
+              </div>
+
               {/* Цена и площадь */}
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Цена и площадь</p>
