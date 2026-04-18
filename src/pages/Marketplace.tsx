@@ -6,10 +6,19 @@ import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
 import func2url from "../../backend/func2url.json"
+import { getCategoryFields } from "@/components/wizard/wizardTypes"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const CATEGORIES = ["Все", "Коммерческая", "Инвестиционная", "С торгов", "Новостройки", "Редевелопмент"]
+
+// Маппинг категорий маркетплейса -> id категории визарда
+const CAT_ID_MAP: Record<string, string> = {
+  "Коммерческая": "commercial",
+  "Инвестиционная": "investment",
+  "С торгов": "auction",
+  "Новостройки": "newbuild",
+}
 
 const OBJECTS = [
   {
@@ -99,6 +108,20 @@ export default function Marketplace() {
   const [dbObjects, setDbObjects] = useState<typeof OBJECTS>([])
   const [loading, setLoading] = useState(true)
   const [shareTarget, setShareTarget] = useState<{ id: string; title: string } | null>(null)
+  const [extraFilters, setExtraFilters] = useState<Record<string, string>>({})
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Сбрасываем доп. фильтры при смене категории
+  function handleCategoryChange(cat: string) {
+    setActiveCategory(cat)
+    setExtraFilters({})
+    setShowFilters(cat !== "Все" && CAT_ID_MAP[cat] !== undefined)
+  }
+
+  // Поля фильтра для активной категории
+  const activeCatFields = activeCategory !== "Все" && CAT_ID_MAP[activeCategory]
+    ? getCategoryFields(CAT_ID_MAP[activeCategory])
+    : []
 
   useEffect(() => {
     fetch(`${func2url.objects}?marketplace=true`)
@@ -131,7 +154,14 @@ export default function Marketplace() {
   const filtered = allObjects.filter((o) => {
     const matchCat = activeCategory === "Все" || o.type === activeCategory
     const matchSearch = o.title.toLowerCase().includes(search.toLowerCase()) || o.city.toLowerCase().includes(search.toLowerCase())
-    return matchCat && matchSearch
+    // Фильтрация по extra_fields категории
+    const matchExtra = activeCatFields.every(({ key }) => {
+      const filterVal = (extraFilters[key] ?? "").trim().toLowerCase()
+      if (!filterVal) return true
+      const objVal = ((o as Record<string, unknown>).extra_fields as Record<string, string> | undefined)?.[key] ?? ""
+      return objVal.toLowerCase().includes(filterVal)
+    })
+    return matchCat && matchSearch && matchExtra
   })
 
   return (
@@ -156,11 +186,11 @@ export default function Marketplace() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-8">
+        <div className="flex flex-wrap gap-2 mb-4">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => handleCategoryChange(cat)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 activeCategory === cat
                   ? "bg-blue-600 text-white"
@@ -171,6 +201,40 @@ export default function Marketplace() {
             </button>
           ))}
         </div>
+
+        {/* Панель фильтров по параметрам категории */}
+        {showFilters && activeCatFields.length > 0 && (
+          <div className="mb-6 rounded-2xl bg-[#111] border border-[#262626] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-white">
+                <Icon name="SlidersHorizontal" className="h-4 w-4 text-blue-400" />
+                Фильтры: {activeCategory}
+              </div>
+              {Object.values(extraFilters).some(v => v.trim()) && (
+                <button
+                  onClick={() => setExtraFilters({})}
+                  className="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1"
+                >
+                  <Icon name="X" className="h-3 w-3" />
+                  Сбросить
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              {activeCatFields.map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">{label}</label>
+                  <Input
+                    value={extraFilters[key] ?? ""}
+                    onChange={e => setExtraFilters(prev => ({ ...prev, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                    className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-20">
