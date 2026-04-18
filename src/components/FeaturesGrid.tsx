@@ -6,40 +6,43 @@ const features = [
     title: "Все типы недвижимости",
     description: "Коммерческая, инвестиционная, с торгов и новостройки — в одном каталоге",
     color: "text-violet-400",
-    bg: "bg-violet-500/10 border-violet-500/20",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e6cec24f-7520-4be6-b02a-b4756d54ec30.jpg",
   },
   {
     icon: "Users",
     title: "CRM для агентов",
     description: "Управляйте клиентами, сделками и задачами без сторонних сервисов",
     color: "text-blue-400",
-    bg: "bg-blue-500/10 border-blue-500/20",
-  },
-  {
-    icon: "Share2",
-    title: "Реферальная программа",
-    description: "Приглашайте коллег и зарабатывайте с каждой их сделки на платформе",
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/10 border-emerald-500/20",
-  },
-  {
-    icon: "BarChart3",
-    title: "Аналитика и статистика",
-    description: "Отслеживайте просмотры объектов, заявки и эффективность размещений",
-    color: "text-amber-400",
-    bg: "bg-amber-500/10 border-amber-500/20",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/aa5ed488-2cdb-4be3-8a18-1cfdd5117a62.jpg",
   },
   {
     icon: "Gavel",
     title: "Недвижимость с торгов",
     description: "Эксклюзивные объекты из банкротств и аукционов по сниженным ценам",
     color: "text-rose-400",
-    bg: "bg-rose-500/10 border-rose-500/20",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/cec11c52-110e-448c-af83-5293f36a26e5.jpg",
+  },
+]
+
+const smallFeatures = [
+  {
+    icon: "Share2",
+    title: "Реферальная программа",
+    description: "Приглашайте коллег и зарабатывайте с каждой их сделки",
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10 border-emerald-500/20",
+  },
+  {
+    icon: "BarChart3",
+    title: "Аналитика",
+    description: "Просмотры, заявки и эффективность размещений в реальном времени",
+    color: "text-amber-400",
+    bg: "bg-amber-500/10 border-amber-500/20",
   },
   {
     icon: "Building",
     title: "Агентский кабинет",
-    description: "Управляйте командой, отделами и объектами через единый интерфейс",
+    description: "Команда, отделы и объекты — всё в едином интерфейсе",
     color: "text-cyan-400",
     bg: "bg-cyan-500/10 border-cyan-500/20",
   },
@@ -58,16 +61,43 @@ export function FeaturesGrid() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Крупные карточки с фото */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {features.map((f) => (
           <div
             key={f.title}
-            className="rounded-2xl border border-[#1f1f1f] bg-[#111111] p-6 hover:border-[#2a2a2a] transition-colors"
+            className="group relative rounded-2xl overflow-hidden border border-[#1f1f1f] bg-[#111111] hover:border-[#2a2a2a] transition-colors"
           >
-            <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border ${f.bg} mb-4`}>
-              <Icon name={f.icon} size={20} className={f.color} />
+            <div className="relative h-48 overflow-hidden">
+              <img
+                src={f.image}
+                alt={f.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent" />
             </div>
-            <h3 className="text-white font-semibold mb-1.5">{f.title}</h3>
+            <div className="p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Icon name={f.icon} size={16} className={f.color} />
+                <h3 className="text-white font-semibold">{f.title}</h3>
+              </div>
+              <p className="text-sm text-gray-400 leading-relaxed">{f.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Маленькие карточки */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {smallFeatures.map((f) => (
+          <div
+            key={f.title}
+            className="rounded-2xl border border-[#1f1f1f] bg-[#111111] p-5 hover:border-[#2a2a2a] transition-colors"
+          >
+            <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border ${f.bg} mb-3`}>
+              <Icon name={f.icon} size={18} className={f.color} />
+            </div>
+            <h3 className="text-white font-semibold mb-1">{f.title}</h3>
             <p className="text-sm text-gray-400 leading-relaxed">{f.description}</p>
           </div>
         ))}
