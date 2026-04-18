@@ -35,10 +35,10 @@ export function Header() {
 
         <nav className="hidden md:flex items-center gap-8">
           <button onClick={() => navigate("/")} className="text-sm text-gray-300 hover:text-white transition-colors">
-            Главная
-          </button>
-          <button onClick={() => navigate("/marketplace")} className="text-sm text-gray-300 hover:text-white transition-colors">
             Маркетплейс
+          </button>
+          <button onClick={() => navigate("/ecosystem")} className="text-sm text-gray-300 hover:text-white transition-colors">
+            Экосистема
           </button>
           <button onClick={() => navigate("/referral")} className="text-sm text-gray-300 hover:text-white transition-colors">
             Реферальная программа
