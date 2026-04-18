@@ -1,8 +1,5 @@
 import { Header } from "@/components/Header"
 import { HeroSection } from "@/components/HeroSection"
-import { CategoriesSection } from "@/components/CategoriesSection"
-import { SellerToolsSection } from "@/components/SellerToolsSection"
-import { BuyerToolsSection } from "@/components/BuyerToolsSection"
 import { PricingPlansSection } from "@/components/PricingPlansSection"
 import { CtaSection } from "@/components/CtaSection"
 
@@ -11,9 +8,6 @@ export default function Index() {
     <main className="min-h-screen bg-[#0a0a0a] pt-0 mt-0">
       <Header />
       <HeroSection />
-      <CategoriesSection />
-      <SellerToolsSection />
-      <BuyerToolsSection />
       <PricingPlansSection />
       <CtaSection />
       <footer className="py-8 text-center text-sm text-gray-400">
