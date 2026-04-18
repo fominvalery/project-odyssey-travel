@@ -14,6 +14,8 @@ import AdminPanel from "./pages/AdminPanel";
 import Agency from "./pages/Agency";
 import AcceptInvite from "./pages/AcceptInvite";
 import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Offer from "./pages/Offer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,8 @@ const App = () => (
             <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route path="/admin-k24" element={<AdminPanel />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/offer" element={<Offer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
