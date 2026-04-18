@@ -76,7 +76,7 @@ export function Footer() {
       <div className="border-t border-border">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-gray-500">
           <div className="space-y-1">
-            <p>© 2026 Кабинет-24. Профессиональная платформа коммерческой недвижимости. Все права защищены.</p>
+            <p>© 2026 Кабинет-24. Платформа коммерческой недвижимости. Все права защищены.</p>
             <p className="flex items-center gap-1">
               <Icon name="Clock" size={12} />
               Часовой пояс: UTC+3 (Москва)
