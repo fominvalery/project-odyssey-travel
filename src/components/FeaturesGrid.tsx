@@ -22,29 +22,26 @@ const features = [
     color: "text-rose-400",
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/cec11c52-110e-448c-af83-5293f36a26e5.jpg",
   },
-]
-
-const smallFeatures = [
   {
     icon: "Share2",
     title: "Реферальная программа",
     description: "Приглашайте коллег и зарабатывайте с каждой их сделки",
     color: "text-emerald-400",
-    bg: "bg-emerald-500/10 border-emerald-500/20",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/683e926a-29b9-4a75-984e-fd0422e0a55d.jpg",
   },
   {
     icon: "BarChart3",
     title: "Аналитика",
     description: "Просмотры, заявки и эффективность размещений в реальном времени",
     color: "text-amber-400",
-    bg: "bg-amber-500/10 border-amber-500/20",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2cb7da0f-331c-4d91-b271-2337da80c636.jpg",
   },
   {
     icon: "Building",
     title: "Агентский кабинет",
     description: "Команда, отделы и объекты — всё в едином интерфейсе",
     color: "text-cyan-400",
-    bg: "bg-cyan-500/10 border-cyan-500/20",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/935b2ef7-7117-4d56-a586-bf75e8054d32.jpg",
   },
 ]
 
@@ -61,44 +58,27 @@ export function FeaturesGrid() {
         </p>
       </div>
 
-      {/* Крупные карточки с фото */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {features.map((f) => (
           <div
             key={f.title}
-            className="group relative rounded-2xl overflow-hidden border border-[#1f1f1f] bg-[#111111] hover:border-[#2a2a2a] transition-colors"
+            className="group rounded-2xl overflow-hidden border border-[#1f1f1f] bg-[#111111] hover:border-[#2a2a2a] transition-colors"
           >
-            <div className="relative h-48 overflow-hidden">
+            <div className="relative h-44 overflow-hidden">
               <img
                 src={f.image}
                 alt={f.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/30 to-transparent" />
             </div>
             <div className="p-5">
               <div className="flex items-center gap-2 mb-2">
-                <Icon name={f.icon} size={16} className={f.color} />
+                <Icon name={f.icon} size={15} className={f.color} />
                 <h3 className="text-white font-semibold">{f.title}</h3>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">{f.description}</p>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Маленькие карточки */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {smallFeatures.map((f) => (
-          <div
-            key={f.title}
-            className="rounded-2xl border border-[#1f1f1f] bg-[#111111] p-5 hover:border-[#2a2a2a] transition-colors"
-          >
-            <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border ${f.bg} mb-3`}>
-              <Icon name={f.icon} size={18} className={f.color} />
-            </div>
-            <h3 className="text-white font-semibold mb-1">{f.title}</h3>
-            <p className="text-sm text-gray-400 leading-relaxed">{f.description}</p>
           </div>
         ))}
       </div>
