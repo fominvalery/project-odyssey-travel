@@ -34,7 +34,7 @@ export function Footer() {
         <div>
           <h4 className="text-white font-semibold mb-4">Юридическая информация</h4>
           <ul className="space-y-2 text-sm text-gray-400">
-            <li><a href="#" className="hover:text-white transition-colors">Пользовательское соглашение</a></li>
+            <li><Link to="/terms" className="hover:text-white transition-colors">Пользовательское соглашение</Link></li>
             <li><a href="#" className="hover:text-white transition-colors">Политика конфиденциальности</a></li>
             <li><a href="#" className="hover:text-white transition-colors">Публичная оферта</a></li>
           </ul>

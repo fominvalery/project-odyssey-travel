@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import Agency from "./pages/Agency";
 import AcceptInvite from "./pages/AcceptInvite";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/agency/:id" element={<Agency />} />
             <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route path="/admin-k24" element={<AdminPanel />} />
+            <Route path="/terms" element={<Terms />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
