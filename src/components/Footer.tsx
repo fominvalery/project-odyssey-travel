@@ -15,7 +15,7 @@ export function Footer() {
             <span className="text-white font-bold text-lg">Кабинет-24</span>
           </div>
           <p className="text-sm text-gray-400 leading-relaxed">
-            Профессиональная платформа коммерческой недвижимости: CRM, маркетплейс и реферальная программа в одном месте.
+            Платформа коммерческой недвижимости
           </p>
         </div>
 
@@ -44,11 +44,11 @@ export function Footer() {
         <div>
           <h4 className="text-white font-semibold mb-4">Реквизиты оператора</h4>
           <ul className="space-y-1.5 text-sm text-gray-400">
-            <li className="text-gray-300 font-medium">ООО «Кабинет-24»</li>
-            <li>ИНН: 1400022716</li>
-            <li>ОГРН: 1231400005682</li>
+            <li className="text-gray-300 font-medium">ИП Фомин В.А.</li>
+            <li>ИНН: 614702918553</li>
+            <li>ОГРНИП: 322619600050324</li>
             <li className="text-xs leading-relaxed mt-2">
-              Юридический адрес: г. Нюрба, ул. Степана Васильева, д. 15
+              Юридический адрес: 347805, Россия, г. Каменск-Шахтинский, ул. Ворошилова, д. 21, кв. 91
             </li>
           </ul>
         </div>
