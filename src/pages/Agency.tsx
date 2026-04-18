@@ -8,6 +8,7 @@ import {
   InviteRow,
   OrgSummary,
   RoleCode,
+  isAdmin,
 } from "@/lib/agencyApi"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
@@ -164,7 +165,8 @@ export default function Agency() {
     )
   }
 
-  const isDirector = org.my_role === "director"
+  const isDirector = isAdmin(org.my_role)
+  const isFounder = org.my_role === "founder"
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
@@ -197,6 +199,7 @@ export default function Agency() {
               deptFilter={deptFilter}
               setDeptFilter={setDeptFilter}
               isDirector={isDirector}
+              isFounder={isFounder}
               currentUserId={user?.id}
               onChangeRole={changeRole}
               onChangeDepartment={changeDepartment}
@@ -237,6 +240,7 @@ export default function Agency() {
             orgId={orgId}
             departments={departments}
             onInvited={reload}
+            canInviteDirector={isFounder}
           />
           <DepartmentModal
             open={deptModalOpen}

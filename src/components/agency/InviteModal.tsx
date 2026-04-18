@@ -19,7 +19,7 @@ import { agencyApi, Department, RoleCode, ROLE_TITLES } from "@/lib/agencyApi"
 import { useAuthContext } from "@/context/AuthContext"
 import { toast } from "@/hooks/use-toast"
 
-const ROLE_OPTIONS: RoleCode[] = [
+const BASE_ROLE_OPTIONS: RoleCode[] = [
   "rop",
   "broker",
   "manager",
@@ -35,6 +35,8 @@ interface Props {
   orgId: string
   departments?: Department[]
   onInvited?: () => void
+  /** Если true — добавим опцию «Директор» (доступна только учредителю) */
+  canInviteDirector?: boolean
 }
 
 const NONE_DEPT = "__none__"
@@ -45,7 +47,11 @@ export default function InviteModal({
   orgId,
   departments = [],
   onInvited,
+  canInviteDirector = false,
 }: Props) {
+  const roleOptions: RoleCode[] = canInviteDirector
+    ? ["director", ...BASE_ROLE_OPTIONS]
+    : BASE_ROLE_OPTIONS
   const { user } = useAuthContext()
   const [form, setForm] = useState<{
     full_name: string
@@ -149,7 +155,7 @@ export default function InviteModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROLE_OPTIONS.map((r) => (
+                  {roleOptions.map((r) => (
                     <SelectItem key={r} value={r}>
                       {ROLE_TITLES[r]}
                     </SelectItem>

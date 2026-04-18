@@ -118,7 +118,7 @@ export default function DepartmentModal({
               <SelectContent>
                 <SelectItem value={NONE}>Без руководителя</SelectItem>
                 {employees
-                  .filter((e) => e.role_code !== "director")
+                  .filter((e) => e.role_code !== "director" && e.role_code !== "founder")
                   .map((e) => (
                     <SelectItem key={e.user_id} value={e.user_id}>
                       {e.full_name} · {e.email}

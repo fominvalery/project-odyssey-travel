@@ -6,6 +6,7 @@ import psycopg2
 import psycopg2.extras
 
 ROLE_LEVEL = {
+    'founder': 110,
     'director': 100,
     'rop': 80,
     'broker': 60,
@@ -16,6 +17,7 @@ ROLE_LEVEL = {
     'mortgage_broker': 40,
 }
 ROLE_TITLES = {
+    'founder': 'Учредитель',
     'director': 'Директор',
     'rop': 'Руководитель отдела продаж',
     'broker': 'Брокер',
@@ -25,6 +27,9 @@ ROLE_TITLES = {
     'lawyer': 'Юрист',
     'mortgage_broker': 'Ипотечный брокер',
 }
+
+# Роли с правами управления (founder + director)
+ADMIN_ROLES = ('founder', 'director')
 INVITE_TTL_HOURS = 168  # 7 дней
 
 
@@ -107,7 +112,7 @@ def create_org(user_id, body):
         org_id = cur.fetchone()['id']
         cur.execute(
             "INSERT INTO org_memberships(user_id, organization_id, role_code) "
-            "VALUES (%s,%s,'director')",
+            "VALUES (%s,%s,'founder')",
             (user_id, org_id),
         )
         cur.execute("UPDATE users SET status='agency' WHERE id=%s", (user_id,))
@@ -118,8 +123,8 @@ def create_org(user_id, body):
             'logo_url': logo_url,
             'inn': inn,
             'description': description,
-            'role_code': 'director',
-            'role_title': ROLE_TITLES['director'],
+            'role_code': 'founder',
+            'role_title': ROLE_TITLES['founder'],
         }, 201)
 
 
@@ -145,8 +150,8 @@ def get_org(user_id, org_id):
 def update_org(user_id, org_id, body):
     with _conn() as conn, conn.cursor() as cur:
         m = _membership(cur, user_id, org_id)
-        if not m or m[1] != 'director':
-            return _cors({'error': 'Нужна роль директора'}, 403)
+        if not m or m[1] not in ADMIN_ROLES:
+            return _cors({'error': 'Нужна роль учредителя или директора'}, 403)
         fields, params = [], []
         for k in ('name', 'inn', 'logo_url', 'description'):
             if k in body:
@@ -204,8 +209,8 @@ def list_employees(user_id, org_id, qs=None):
 def update_employee(user_id, org_id, target_user_id, body):
     with _conn() as conn, conn.cursor() as cur:
         m = _membership(cur, user_id, org_id)
-        if not m or m[1] != 'director':
-            return _cors({'error': 'Нужна роль директора'}, 403)
+        if not m or m[1] not in ADMIN_ROLES:
+            return _cors({'error': 'Нужна роль учредителя или директора'}, 403)
 
         new_role = body.get('role_code')
         new_dept = body.get('department_id')
@@ -213,6 +218,19 @@ def update_employee(user_id, org_id, target_user_id, body):
 
         if new_role and new_role not in ROLE_LEVEL:
             return _cors({'error': 'Неизвестная роль'}, 400)
+
+        # Запреты для директора (не учредителя): не трогать учредителя/директора
+        if m[1] == 'director':
+            cur.execute(
+                "SELECT role_code FROM org_memberships WHERE user_id=%s AND organization_id=%s",
+                (target_user_id, org_id),
+            )
+            trow = cur.fetchone()
+            target_role = trow[0] if trow else None
+            if target_role in ADMIN_ROLES:
+                return _cors({'error': 'Директор не может изменять учредителя или другого директора'}, 403)
+            if new_role in ADMIN_ROLES:
+                return _cors({'error': 'Директор не может назначать роль учредителя или директора'}, 403)
 
         fields, params = [], []
         if new_role:
@@ -258,8 +276,8 @@ def list_departments(user_id, org_id):
 def create_department(user_id, org_id, body):
     with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         m = _membership(cur, user_id, org_id)
-        if not m or m['role_code'] != 'director':
-            return _cors({'error': 'Нужна роль директора'}, 403)
+        if not m or m['role_code'] not in ADMIN_ROLES:
+            return _cors({'error': 'Нужна роль учредителя или директора'}, 403)
         name = (body.get('name') or '').strip()
         if not name:
             return _cors({'error': 'Название обязательно'}, 400)
@@ -285,8 +303,8 @@ def update_department(user_id, org_id, body):
         return _cors({'error': 'department_id обязателен'}, 400)
     with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         m = _membership(cur, user_id, org_id)
-        if not m or m['role_code'] != 'director':
-            return _cors({'error': 'Нужна роль директора'}, 403)
+        if not m or m['role_code'] not in ADMIN_ROLES:
+            return _cors({'error': 'Нужна роль учредителя или директора'}, 403)
 
         cur.execute(
             "SELECT id, head_id FROM departments WHERE id=%s AND organization_id=%s",
@@ -340,8 +358,8 @@ def delete_department(user_id, org_id, body):
         return _cors({'error': 'department_id обязателен'}, 400)
     with _conn() as conn, conn.cursor() as cur:
         m = _membership(cur, user_id, org_id)
-        if not m or m[1] != 'director':
-            return _cors({'error': 'Нужна роль директора'}, 403)
+        if not m or m[1] not in ADMIN_ROLES:
+            return _cors({'error': 'Нужна роль учредителя или директора'}, 403)
         # Отвязываем сотрудников от отдела (без удаления сотрудников!)
         cur.execute(
             "UPDATE org_memberships SET department_id=NULL "
@@ -377,13 +395,19 @@ def create_invite(user_id, org_id, body):
         if not m:
             return _cors({'error': 'Нет доступа'}, 403)
         if ROLE_LEVEL.get(m['role_code'], 0) < ROLE_LEVEL['rop']:
-            return _cors({'error': 'Приглашать могут только директор и ROP'}, 403)
+            return _cors({'error': 'Приглашать могут только учредитель, директор и ROP'}, 403)
         if m['role_code'] == 'rop':
             if dept_id and dept_id != str(m['department_id']):
                 return _cors({'error': 'ROP приглашает только в свой отдел'}, 403)
             dept_id = m['department_id']
             if ROLE_LEVEL[role_code] >= ROLE_LEVEL['rop']:
                 return _cors({'error': 'ROP не может приглашать равных или выше'}, 403)
+        # Приглашать учредителя/директора может только учредитель
+        if role_code in ADMIN_ROLES and m['role_code'] != 'founder':
+            return _cors({'error': 'Только учредитель может приглашать на роль директора'}, 403)
+        # Второго учредителя назначать нельзя через приглашение
+        if role_code == 'founder':
+            return _cors({'error': 'Нельзя назначать второго учредителя'}, 403)
 
         token = secrets.token_urlsafe(24)
         expires = datetime.now(timezone.utc) + timedelta(hours=INVITE_TTL_HOURS)

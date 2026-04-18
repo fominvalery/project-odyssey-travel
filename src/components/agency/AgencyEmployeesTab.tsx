@@ -9,10 +9,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import Icon from "@/components/ui/icon"
-import { Department, Employee, ROLE_TITLES, RoleCode } from "@/lib/agencyApi"
+import { Department, Employee, ROLE_TITLES, RoleCode, ADMIN_ROLES } from "@/lib/agencyApi"
 
-const EDITABLE_ROLES: RoleCode[] = [
-  "director",
+// Базовые роли, доступные для назначения всем админам
+const BASE_EDITABLE_ROLES: RoleCode[] = [
   "rop",
   "broker",
   "manager",
@@ -22,12 +22,16 @@ const EDITABLE_ROLES: RoleCode[] = [
   "mortgage_broker",
 ]
 
+// Роли, которые может назначать только учредитель
+const FOUNDER_ONLY_ROLES: RoleCode[] = ["director"]
+
 interface Props {
   employees: Employee[]
   departments: Department[]
   deptFilter: string
   setDeptFilter: (v: string) => void
   isDirector: boolean
+  isFounder?: boolean
   currentUserId?: string
   onChangeRole: (userId: string, role: RoleCode) => void
   onChangeDepartment: (userId: string, deptId: string | null) => void
@@ -62,10 +66,15 @@ export default function AgencyEmployeesTab({
   deptFilter,
   setDeptFilter,
   isDirector,
+  isFounder = false,
   currentUserId,
   onChangeRole,
   onChangeDepartment,
 }: Props) {
+  // Учредителю доступен полный список ролей, директору — без founder/director
+  const editableRoles: RoleCode[] = isFounder
+    ? [...FOUNDER_ONLY_ROLES, ...BASE_EDITABLE_ROLES]
+    : BASE_EDITABLE_ROLES
   const filteredEmployees = employees.filter((e) => {
     if (deptFilter === "all") return true
     if (deptFilter === "none") return !e.department_id
@@ -116,6 +125,13 @@ export default function AgencyEmployeesTab({
               const deptName = departments.find(
                 (d) => d.id === e.department_id,
               )?.name
+              // Директор не может редактировать учредителя и других директоров.
+              // Учредителя может редактировать только он сам (логика бэкенда).
+              const targetIsAdmin = ADMIN_ROLES.includes(e.role_code)
+              const canEditThisUser =
+                isDirector &&
+                e.user_id !== currentUserId &&
+                (isFounder || !targetIsAdmin)
               return (
                 <div
                   key={e.user_id}
@@ -141,32 +157,30 @@ export default function AgencyEmployeesTab({
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {isDirector &&
-                      e.user_id !== currentUserId &&
-                      departments.length > 0 && (
-                        <Select
-                          value={e.department_id ?? "__none__"}
-                          onValueChange={(v) =>
-                            onChangeDepartment(
-                              e.user_id,
-                              v === "__none__" ? null : v,
-                            )
-                          }
-                        >
-                          <SelectTrigger className="w-[180px] bg-white/5 border-white/10">
-                            <SelectValue placeholder="Отдел" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">Без отдела</SelectItem>
-                            {departments.map((d) => (
-                              <SelectItem key={d.id} value={d.id}>
-                                {d.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    {isDirector && e.user_id !== currentUserId ? (
+                    {canEditThisUser && departments.length > 0 && (
+                      <Select
+                        value={e.department_id ?? "__none__"}
+                        onValueChange={(v) =>
+                          onChangeDepartment(
+                            e.user_id,
+                            v === "__none__" ? null : v,
+                          )
+                        }
+                      >
+                        <SelectTrigger className="w-[180px] bg-white/5 border-white/10">
+                          <SelectValue placeholder="Отдел" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Без отдела</SelectItem>
+                          {departments.map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              {d.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {canEditThisUser ? (
                       <Select
                         value={e.role_code}
                         onValueChange={(v) => onChangeRole(e.user_id, v as RoleCode)}
@@ -175,7 +189,7 @@ export default function AgencyEmployeesTab({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {EDITABLE_ROLES.map((r) => (
+                          {editableRoles.map((r) => (
                             <SelectItem key={r} value={r}>
                               {ROLE_TITLES[r]}
                             </SelectItem>
@@ -185,8 +199,17 @@ export default function AgencyEmployeesTab({
                     ) : (
                       <Badge
                         variant="outline"
-                        className="border-violet-500/50 text-violet-200"
+                        className={
+                          e.role_code === "founder"
+                            ? "border-amber-400/60 text-amber-300 bg-amber-400/10"
+                            : e.role_code === "director"
+                            ? "border-sky-400/60 text-sky-300 bg-sky-400/10"
+                            : "border-violet-500/50 text-violet-200"
+                        }
                       >
+                        {e.role_code === "founder" && (
+                          <Icon name="Crown" size={11} className="mr-1" />
+                        )}
                         {ROLE_TITLES[e.role_code]}
                       </Badge>
                     )}

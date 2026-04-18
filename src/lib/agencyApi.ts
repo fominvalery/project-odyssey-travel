@@ -3,6 +3,7 @@ import func2url from "../../backend/func2url.json"
 const BASE = (func2url as Record<string, string>).agency
 
 export type RoleCode =
+  | "founder"
   | "director"
   | "rop"
   | "broker"
@@ -13,6 +14,7 @@ export type RoleCode =
   | "mortgage_broker"
 
 export const ROLE_TITLES: Record<RoleCode, string> = {
+  founder: "Учредитель",
   director: "Директор",
   rop: "Руководитель отдела продаж",
   broker: "Брокер",
@@ -24,6 +26,7 @@ export const ROLE_TITLES: Record<RoleCode, string> = {
 }
 
 export const ROLE_LEVEL: Record<RoleCode, number> = {
+  founder: 110,
   director: 100,
   rop: 80,
   broker: 60,
@@ -32,6 +35,13 @@ export const ROLE_LEVEL: Record<RoleCode, number> = {
   accountant: 40,
   lawyer: 40,
   mortgage_broker: 40,
+}
+
+// Роли с правами управления
+export const ADMIN_ROLES: RoleCode[] = ["founder", "director"]
+
+export function isAdmin(role: RoleCode): boolean {
+  return ADMIN_ROLES.includes(role)
 }
 
 export interface OrgSummary {
