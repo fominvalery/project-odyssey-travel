@@ -114,37 +114,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Статус на платформе */}
-        <div className="rounded-2xl bg-[#141414] border border-[#262626] p-6">
-          <h2 className="text-sm font-semibold text-white mb-1">Статус на платформе</h2>
-          <p className="text-xs text-gray-500 mb-4">Определяет ваши возможности и отображение в системе</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {STATUS_OPTIONS.map((opt) => {
-              const active = user.status === opt.value
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => updateProfile({ status: opt.value })}
-                  className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
-                    active
-                      ? "border-violet-500/50 bg-violet-500/10"
-                      : "border-[#262626] bg-[#0f0f0f] hover:border-[#3a3a3a]"
-                  }`}
-                >
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${active ? "bg-violet-500/20" : "bg-[#1f1f1f]"}`}>
-                    <Icon name={opt.icon} className={`h-4 w-4 ${active ? "text-violet-400" : "text-gray-500"}`} />
-                  </div>
-                  <div>
-                    <p className={`text-sm font-medium ${active ? "text-white" : "text-gray-400"}`}>{opt.label}</p>
-                    <p className="text-xs text-gray-600">{opt.desc}</p>
-                  </div>
-                  {active && <Icon name="CheckCircle" className="ml-auto h-4 w-4 text-violet-400 flex-shrink-0" />}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
         {/* Личные данные */}
         <div className="rounded-2xl bg-[#141414] border border-[#262626] p-6">
           <h2 className="text-sm font-semibold text-white mb-1">Личные данные</h2>

@@ -8,13 +8,20 @@ import AddStatusModal from "@/components/agency/AddStatusModal"
 type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
 
 const PLAN_LABELS: Record<string, string> = {
-  green: "FREE",
+  green: "Грин",
   pro: "ПРО",
   proplus: "Про+",
   constructor: "Конструктор",
 }
 
-const navItems = [
+// Пункты меню для резидента (базовые)
+const residentNavItems = [
+  { id: "referral",  label: "Рефералы",   icon: "Gift" },
+  { id: "profile",   label: "Профиль",    icon: "User" },
+] as const
+
+// Полное меню для broker/agency
+const fullNavItems = [
   { id: "dashboard",  label: "Дашборд",   icon: "LayoutDashboard" },
   { id: "objects",    label: "Объекты",   icon: "Building2" },
   { id: "crm",        label: "CRM",       icon: "Users" },
@@ -23,18 +30,10 @@ const navItems = [
   { id: "profile",    label: "Профиль",   icon: "User" },
 ] as const
 
-const mobileNavItems = [
-  { id: "dashboard",  label: "Объекты",   icon: "Building2" },
-  { id: "objects",    label: "Объекты",   icon: "Building2" },
-  { id: "analytics",  label: "Аналитика", icon: "BarChart2" },
-  { id: "crm",        label: "CRM",       icon: "Users" },
-  { id: "support",    label: "Поддержка", icon: "Headphones" },
-] as const
-
 interface Props {
   section: Section
   setSection: (s: Section) => void
-  user: { name: string; email: string; plan: string; avatar: string | null }
+  user: { name: string; email: string; plan: string; avatar: string | null; status?: string }
   initials: string
   onLogout: () => void
 }
@@ -43,6 +42,9 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
   const navigate = useNavigate()
   const { orgs, reload: reloadOrgs } = useMyOrgs()
   const [statusModalOpen, setStatusModalOpen] = useState(false)
+
+  const isResident = !user.status || user.status === "resident"
+  const navItems = isResident ? residentNavItems : fullNavItems
 
   return (
     <>
@@ -96,8 +98,8 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
         </nav>
 
         <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
-          {/* Мои агентства */}
-          {orgs.length > 0 && (
+          {/* Мои агентства — только для agency */}
+          {!isResident && orgs.length > 0 && (
             <div className="mb-3 space-y-1">
               <div className="text-[10px] uppercase tracking-wider text-gray-500 px-2 mb-1">
                 Мои агентства
@@ -151,34 +153,73 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
 
       {/* Мобильное меню */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-[#1f1f1f] flex justify-around px-2 py-2">
-        {(["dashboard", "objects", "analytics", "crm", "support"] as const).map((id) => {
-          const icons: Record<string, string> = {
-            dashboard: "LayoutDashboard",
-            objects: "Building2",
-            analytics: "BarChart2",
-            crm: "Users",
-            support: "Headphones",
-          }
-          const labels: Record<string, string> = {
-            dashboard: "Главная",
-            objects: "Объекты",
-            analytics: "Аналитика",
-            crm: "CRM",
-            support: "Поддержка",
-          }
-          return (
+        {isResident ? (
+          // Резидент: Рефералы, Профиль, Маркетплейс, Поддержка
+          <>
+            {(["referral", "profile"] as const).map((id) => {
+              const icons: Record<string, string> = { referral: "Gift", profile: "User" }
+              const labels: Record<string, string> = { referral: "Рефералы", profile: "Профиль" }
+              return (
+                <button
+                  key={id}
+                  onClick={() => setSection(id)}
+                  className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${
+                    section === id ? "text-blue-400" : "text-gray-500"
+                  }`}
+                >
+                  <Icon name={icons[id]} className="h-5 w-5" />
+                  {labels[id]}
+                </button>
+              )
+            })}
             <button
-              key={id}
-              onClick={() => setSection(id)}
+              onClick={() => navigate("/marketplace")}
+              className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs text-gray-500"
+            >
+              <Icon name="Store" className="h-5 w-5" />
+              Маркетплейс
+            </button>
+            <button
+              onClick={() => setSection("support")}
               className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${
-                section === id ? "text-blue-400" : "text-gray-500"
+                section === "support" ? "text-blue-400" : "text-gray-500"
               }`}
             >
-              <Icon name={icons[id]} className="h-5 w-5" />
-              {labels[id]}
+              <Icon name="Headphones" className="h-5 w-5" />
+              Поддержка
             </button>
-          )
-        })}
+          </>
+        ) : (
+          // Полное меню
+          (["dashboard", "objects", "analytics", "crm", "support"] as const).map((id) => {
+            const icons: Record<string, string> = {
+              dashboard: "LayoutDashboard",
+              objects: "Building2",
+              analytics: "BarChart2",
+              crm: "Users",
+              support: "Headphones",
+            }
+            const labels: Record<string, string> = {
+              dashboard: "Главная",
+              objects: "Объекты",
+              analytics: "Аналитика",
+              crm: "CRM",
+              support: "Поддержка",
+            }
+            return (
+              <button
+                key={id}
+                onClick={() => setSection(id)}
+                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${
+                  section === id ? "text-blue-400" : "text-gray-500"
+                }`}
+              >
+                <Icon name={icons[id]} className="h-5 w-5" />
+                {labels[id]}
+              </button>
+            )
+          })
+        )}
       </div>
 
       <AddStatusModal
