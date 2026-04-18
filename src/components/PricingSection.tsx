@@ -6,7 +6,7 @@ import { RegisterModal } from "@/components/RegisterModal"
 const plans = [
   {
     id: "green",
-    name: "Грин",
+    name: "Green",
     badge: null,
     price: "Бесплатно",
     period: "навсегда",
@@ -16,14 +16,13 @@ const plans = [
     badgeBg: "",
     buttonClass: "bg-[#252525] text-white hover:bg-[#2f2f2f]",
     features: [
-      { text: "3 объекта на маркетплейсе", included: true },
-      { text: "Базовая CRM (до 10 клиентов)", included: true },
-      { text: "Профиль резидента", included: true },
-      { text: "Реферальная ссылка", included: true },
-      { text: "Коммерческая недвижимость", included: false },
-      { text: "Объекты с торгов", included: false },
-      { text: "Аналитика и отчёты", included: false },
-      { text: "Приоритетная поддержка", included: false },
+      { text: "Размещение объектов без ограничений", included: true },
+      { text: "CRM и воронка продаж", included: true },
+      { text: "Дашборд", included: true },
+      { text: "Аналитика", included: true },
+      { text: "Реферальная программа", included: true },
+      { text: "Архив", included: true },
+      { text: "Размещение объектов на Маркетплейс", included: true },
     ],
   },
   {
