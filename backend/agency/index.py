@@ -44,10 +44,7 @@ def _cors(body, status=200):
 
 def _conn():
     schema = os.environ['MAIN_DB_SCHEMA']
-    conn = psycopg2.connect(os.environ['DATABASE_URL'])
-    cur = conn.cursor()
-    cur.execute(f"SET search_path TO {schema}")
-    cur.close()
+    conn = psycopg2.connect(os.environ['DATABASE_URL'], options=f'-c search_path={schema}')
     return conn
 
 
