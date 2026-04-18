@@ -6,9 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 
 const PLAN_LABELS: Record<string, string> = {
-  green: "FREE",
+  green: "Грин",
   pro: "ПРО",
   proplus: "Про+",
+  business: "Бизнес",
   constructor: "Конструктор",
 }
 
@@ -188,67 +189,33 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
         </div>
       </div>
 
-      {/* Двухколоночный блок */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Личные данные */}
-        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-6">
-          <h2 className="font-semibold mb-5">Личные данные</h2>
-          <form onSubmit={onSave} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-gray-400">ФИО</Label>
-              <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-gray-400">Телефон</Label>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-gray-400">Компания</Label>
-              <Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
-                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-gray-400">Email</Label>
-              <Input value={user.email} disabled className="bg-[#0a0a0a] border-[#1f1f1f] text-gray-600 cursor-not-allowed" />
-            </div>
-            <Button type="submit" className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
-              {saved ? <span className="flex items-center gap-2"><Icon name="CheckCircle" className="h-4 w-4" />Сохранено</span> : "Сохранить"}
-            </Button>
-          </form>
-        </div>
-
-        {/* Статус на платформе */}
-        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-6">
-          <h2 className="font-semibold mb-1">Статус на платформе</h2>
-          <p className="text-xs text-gray-500 mb-4">Определяет ваши возможности и отображение в системе</p>
-          <div className="flex flex-col gap-2">
-            {STATUS_OPTIONS.map((opt) => {
-              const active = user.status === opt.value
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => onStatusChange(opt.value)}
-                  className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
-                    active
-                      ? "border-blue-500/50 bg-blue-500/10"
-                      : "border-[#1f1f1f] bg-[#0f0f0f] hover:border-[#2a2a2a]"
-                  }`}
-                >
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg shrink-0 ${active ? "bg-blue-500/20" : "bg-[#1a1a1a]"}`}>
-                    <Icon name={opt.icon as "Home"} className={`h-4 w-4 ${active ? "text-blue-400" : "text-gray-500"}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${active ? "text-white" : "text-gray-400"}`}>{opt.label}</p>
-                    <p className="text-xs text-gray-600">{opt.desc}</p>
-                  </div>
-                  {active && <Icon name="CheckCircle" className="h-4 w-4 text-blue-400 shrink-0" />}
-                </button>
-              )
-            })}
+      {/* Личные данные */}
+      <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-6 max-w-xl">
+        <h2 className="font-semibold mb-5">Личные данные</h2>
+        <form onSubmit={onSave} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-400">ФИО</Label>
+            <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
           </div>
-        </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-400">Телефон</Label>
+            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-400">Компания</Label>
+            <Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
+              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-400">Email</Label>
+            <Input value={user.email} disabled className="bg-[#0a0a0a] border-[#1f1f1f] text-gray-600 cursor-not-allowed" />
+          </div>
+          <Button type="submit" className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
+            {saved ? <span className="flex items-center gap-2"><Icon name="CheckCircle" className="h-4 w-4" />Сохранено</span> : "Сохранить"}
+          </Button>
+        </form>
       </div>
     </div>
   )
