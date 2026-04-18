@@ -2,6 +2,12 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const plans = [
   {
@@ -12,6 +18,7 @@ const plans = [
     price: "Бесплатно",
     period: "",
     featured: false,
+    comingSoon: false,
     features: [
       "Размещение объектов без ограничений",
       "CRM и воронка продаж",
@@ -31,6 +38,7 @@ const plans = [
     period: "/ мес",
     featured: true,
     badge: "Выгодный",
+    comingSoon: true,
     features: [
       "Всё что в тарифе Грин",
       "Брендированный лендинг под каждый объект",
@@ -49,6 +57,7 @@ const plans = [
     price: "14 900 ₽",
     period: "/ мес",
     featured: false,
+    comingSoon: true,
     features: [
       "Всё что в тарифе Про",
       "ИИ-генерация лендингов и презентаций",
@@ -64,6 +73,15 @@ const plans = [
 
 export function PricingPlansSection() {
   const [registerOpen, setRegisterOpen] = useState(false)
+  const [comingSoonPlan, setComingSoonPlan] = useState<string | null>(null)
+
+  function handlePlanClick(plan: typeof plans[0]) {
+    if (plan.comingSoon) {
+      setComingSoonPlan(plan.name)
+    } else {
+      setRegisterOpen(true)
+    }
+  }
 
   return (
     <section className="px-4 md:px-8 py-20 max-w-6xl mx-auto">
@@ -114,20 +132,71 @@ export function PricingPlansSection() {
             </ul>
 
             <Button
-              onClick={() => setRegisterOpen(true)}
+              onClick={() => handlePlanClick(plan)}
               className={`mt-auto rounded-xl w-full ${
                 plan.featured
                   ? "bg-blue-600 hover:bg-blue-700 text-white"
                   : "bg-[#1a1a1a] hover:bg-[#222] text-white border border-[#2a2a2a]"
               }`}
             >
-              Начать бесплатно
+              {plan.comingSoon ? "Узнать подробнее" : "Начать бесплатно"}
             </Button>
           </div>
         ))}
       </div>
 
       <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="green" />
+
+      {/* Модальное окно "В разработке" */}
+      <Dialog open={!!comingSoonPlan} onOpenChange={() => setComingSoonPlan(null)}>
+        <DialogContent className="max-w-md bg-[#111] border-[#262626] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white text-lg">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                <Icon name="Clock" className="h-4 w-4 text-amber-400" />
+              </div>
+              Тариф «{comingSoonPlan}» — скоро
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-1">
+            <p className="text-gray-300 text-sm leading-relaxed">
+              Данный тариф находится в стадии разработки и будет доступен в ближайшее время.
+            </p>
+
+            <div className="rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] p-4 space-y-3">
+              <p className="text-xs uppercase tracking-widest text-gray-500 font-medium">Пока доступно</p>
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Icon name="Shield" className="h-4 w-4 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Тариф Грин — Бесплатно</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Полный доступ к платформе: объекты, CRM, аналитика, маркетплейс и реферальная программа
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="outline"
+                onClick={() => setComingSoonPlan(null)}
+                className="flex-1 border-[#2a2a2a] bg-transparent text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
+              >
+                Закрыть
+              </Button>
+              <Button
+                onClick={() => { setComingSoonPlan(null); setRegisterOpen(true) }}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              >
+                Начать с Грин
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }
