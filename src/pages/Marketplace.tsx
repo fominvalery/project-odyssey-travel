@@ -138,8 +138,8 @@ export default function Marketplace() {
     <main className="min-h-screen bg-[#0a0a0a]">
       <Header />
 
-      <section className="px-4 md:px-8 pt-16 pb-16 max-w-7xl mx-auto">
-        <div className="text-center mb-12">
+      <section className="px-4 md:px-8 pt-8 pb-16 max-w-7xl mx-auto">
+        <div className="text-center mb-6">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">Каталог недвижимости</h1>
           <p className="text-gray-400 text-lg">Коммерческая, инвестиционная недвижимость, торги и новостройки</p>
         </div>
