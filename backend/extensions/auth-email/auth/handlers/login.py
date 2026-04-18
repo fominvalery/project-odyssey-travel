@@ -45,7 +45,7 @@ def handle(event: dict, origin: str = '*') -> dict:
                 return error(429, f'Слишком много попыток. Повторите через {remaining // 60 + 1} мин.', origin)
 
     user = query_one(f"""
-        SELECT id, email, name, password_hash, email_verified
+        SELECT id, email, name, password_hash, email_verified, phone, company, plan, status, avatar_url
         FROM {S}users WHERE email = {escape(email)}
     """)
 
@@ -54,7 +54,7 @@ def handle(event: dict, origin: str = '*') -> dict:
     if not user:
         return error(401, auth_error_msg, origin)
 
-    user_id, user_email, user_name, stored_hash, email_verified = user
+    user_id, user_email, user_name, stored_hash, email_verified, user_phone, user_company, user_plan, user_status, user_avatar = user
 
     if not verify_password(password, stored_hash):
         now = datetime.utcnow().isoformat()
@@ -97,9 +97,14 @@ def handle(event: dict, origin: str = '*') -> dict:
         'expires_in': ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         'refresh_expires_in': REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         'user': {
-            'id': user_id,
+            'id': str(user_id),
             'email': user_email,
-            'name': user_name,
+            'name': user_name or '',
+            'phone': user_phone or '',
+            'company': user_company or '',
+            'plan': user_plan or 'green',
+            'status': user_status or 'resident',
+            'avatar_url': user_avatar,
             'email_verified': email_verified
         }
     }, origin)
