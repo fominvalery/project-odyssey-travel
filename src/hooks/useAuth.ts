@@ -48,7 +48,8 @@ export function useAuth() {
 
   async function login(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
     try {
-      const res = await fetch((func2url as Record<string, string>).login, {
+      const authUrl = (func2url as Record<string, string>)["auth-email-auth"]
+      const res = await fetch(`${authUrl}?action=login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -58,16 +59,23 @@ export function useAuth() {
       if (!res.ok) {
         return { ok: false, error: data?.error || "Неверный email или пароль" }
       }
+      const userData = data.user || data
       const profile: UserProfile = {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone || "",
-        company: data.company || "",
-        plan: data.plan || "green",
-        status: data.status || "resident",
-        avatar: data.avatar || null,
-        createdAt: new Date().toISOString(),
+        id: String(userData.id || userData.user_id || ""),
+        name: userData.name || "",
+        email: userData.email || email,
+        phone: userData.phone || "",
+        company: userData.company || "",
+        plan: userData.plan || "green",
+        status: userData.status || "resident",
+        avatar: userData.avatar_url || userData.avatar || null,
+        createdAt: userData.created_at || new Date().toISOString(),
+      }
+      if (data.access_token) {
+        localStorage.setItem("estatepro_access_token", data.access_token)
+      }
+      if (data.refresh_token) {
+        localStorage.setItem("estatepro_refresh_token", data.refresh_token)
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
       setUser(profile)
