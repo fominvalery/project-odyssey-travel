@@ -27,7 +27,7 @@ const features = [
     title: "Реферальная программа",
     description: "Приглашайте коллег и зарабатывайте с каждой их сделки",
     color: "text-emerald-400",
-    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/683e926a-29b9-4a75-984e-fd0422e0a55d.jpg",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/263f905b-8678-4519-ae7a-4d69acd143b3.jpg",
   },
   {
     icon: "BarChart3",
