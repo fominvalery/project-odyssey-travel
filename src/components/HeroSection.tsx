@@ -19,7 +19,7 @@ export function HeroSection() {
       </h1>
 
       <p className="mb-8 max-w-xl text-gray-400">
-        Коммерческая, инвестиционная, с торгов, новостройки и редевелопмент — CRM, маркетплейс и реферальная программа в одном месте.
+        Коммерческая, инвестиционная, с торгов и новостройки — CRM, маркетплейс и реферальная программа в одном месте.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -41,7 +41,7 @@ export function HeroSection() {
           { label: "Коммерческая недвижимость", color: "text-violet-400" },
           { label: "Инвестиционная недвижимость", color: "text-violet-400" },
           { label: "Недвижимость с Торгов", color: "text-violet-400" },
-          { label: "Новостройки и Редевелопмент", color: "text-violet-400" },
+          { label: "Новостройки", color: "text-violet-400" },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-2 text-sm text-gray-400">
             <span className={`h-1.5 w-1.5 rounded-full bg-violet-500`} />

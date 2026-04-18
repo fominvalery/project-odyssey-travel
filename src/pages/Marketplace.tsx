@@ -10,7 +10,7 @@ import { getCategoryFields } from "@/components/wizard/wizardTypes"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-const CATEGORIES = ["Все", "Коммерческая", "Инвестиционная", "С торгов", "Новостройки", "Редевелопмент"]
+const CATEGORIES = ["Все", "Коммерческая", "Инвестиционная", "С торгов", "Новостройки"]
 
 // Маппинг категорий маркетплейса -> id категории визарда
 const CAT_ID_MAP: Record<string, string> = {
@@ -81,18 +81,6 @@ const OBJECTS = [
     badge: "Новостройка",
     badgeColor: "bg-blue-600",
   },
-  {
-    id: 6,
-    title: "Промышленный объект под редевелопмент",
-    type: "Редевелопмент",
-    city: "Москва, ВАО",
-    price: "135 000 000 ₽",
-    area: "3 500 м²",
-    yield: "—",
-    img: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80",
-    badge: "Редевелопмент",
-    badgeColor: "bg-amber-600",
-  },
 ]
 
 const CAT_MAP: Record<string, string> = {
@@ -110,6 +98,10 @@ export default function Marketplace() {
   const [shareTarget, setShareTarget] = useState<{ id: string; title: string } | null>(null)
   const [extraFilters, setExtraFilters] = useState<Record<string, string>>({})
   const [showFilters, setShowFilters] = useState(false)
+  const [priceFrom, setPriceFrom] = useState("")
+  const [priceTo, setPriceTo] = useState("")
+  const [areaFrom, setAreaFrom] = useState("")
+  const [areaTo, setAreaTo] = useState("")
 
   // Сбрасываем доп. фильтры при смене категории
   function handleCategoryChange(cat: string) {
@@ -117,6 +109,18 @@ export default function Marketplace() {
     setExtraFilters({})
     setShowFilters(cat !== "Все" && CAT_ID_MAP[cat] !== undefined)
   }
+
+  function resetAllFilters() {
+    setExtraFilters({})
+    setPriceFrom("")
+    setPriceTo("")
+    setAreaFrom("")
+    setAreaTo("")
+  }
+
+  const hasActiveFilters =
+    Object.values(extraFilters).some(v => v.trim()) ||
+    priceFrom || priceTo || areaFrom || areaTo
 
   // Поля фильтра для активной категории
   const activeCatFields = activeCategory !== "Все" && CAT_ID_MAP[activeCategory]
@@ -154,6 +158,7 @@ export default function Marketplace() {
   const filtered = allObjects.filter((o) => {
     const matchCat = activeCategory === "Все" || o.type === activeCategory
     const matchSearch = o.title.toLowerCase().includes(search.toLowerCase()) || o.city.toLowerCase().includes(search.toLowerCase())
+
     // Фильтрация по extra_fields категории
     const matchExtra = activeCatFields.every(({ key }) => {
       const filterVal = (extraFilters[key] ?? "").trim().toLowerCase()
@@ -161,7 +166,18 @@ export default function Marketplace() {
       const objVal = ((o as Record<string, unknown>).extra_fields as Record<string, string> | undefined)?.[key] ?? ""
       return objVal.toLowerCase().includes(filterVal)
     })
-    return matchCat && matchSearch && matchExtra
+
+    // Фильтрация по цене (убираем нечисловые символы)
+    const priceNum = parseFloat(o.price.replace(/[^\d.]/g, "")) || 0
+    const matchPriceFrom = priceFrom ? priceNum >= parseFloat(priceFrom.replace(/\s/g, "")) : true
+    const matchPriceTo = priceTo ? priceNum <= parseFloat(priceTo.replace(/\s/g, "")) : true
+
+    // Фильтрация по площади
+    const areaNum = parseFloat(o.area.replace(/[^\d.]/g, "")) || 0
+    const matchAreaFrom = areaFrom ? areaNum >= parseFloat(areaFrom) : true
+    const matchAreaTo = areaTo ? areaNum <= parseFloat(areaTo) : true
+
+    return matchCat && matchSearch && matchExtra && matchPriceFrom && matchPriceTo && matchAreaFrom && matchAreaTo
   })
 
   return (
@@ -202,23 +218,69 @@ export default function Marketplace() {
           ))}
         </div>
 
+        {/* Фильтры цены и площади — для всех категорий */}
+        <div className="mb-4 rounded-2xl bg-[#111] border border-[#262626] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-white">
+              <Icon name="SlidersHorizontal" className="h-4 w-4 text-blue-400" />
+              Цена и площадь
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={resetAllFilters}
+                className="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1"
+              >
+                <Icon name="X" className="h-3 w-3" />
+                Сбросить все
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Цена от, ₽</label>
+              <Input
+                value={priceFrom}
+                onChange={e => setPriceFrom(e.target.value)}
+                placeholder="1 000 000"
+                className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Цена до, ₽</label>
+              <Input
+                value={priceTo}
+                onChange={e => setPriceTo(e.target.value)}
+                placeholder="100 000 000"
+                className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Площадь от, м²</label>
+              <Input
+                value={areaFrom}
+                onChange={e => setAreaFrom(e.target.value)}
+                placeholder="50"
+                className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Площадь до, м²</label>
+              <Input
+                value={areaTo}
+                onChange={e => setAreaTo(e.target.value)}
+                placeholder="5000"
+                className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Панель фильтров по параметрам категории */}
         {showFilters && activeCatFields.length > 0 && (
-          <div className="mb-6 rounded-2xl bg-[#111] border border-[#262626] p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-white">
-                <Icon name="SlidersHorizontal" className="h-4 w-4 text-blue-400" />
-                Фильтры: {activeCategory}
-              </div>
-              {Object.values(extraFilters).some(v => v.trim()) && (
-                <button
-                  onClick={() => setExtraFilters({})}
-                  className="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1"
-                >
-                  <Icon name="X" className="h-3 w-3" />
-                  Сбросить
-                </button>
-              )}
+          <div className="mb-6 rounded-2xl bg-[#111] border border-[#1f2937] p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-white mb-3">
+              <Icon name="Filter" className="h-4 w-4 text-violet-400" />
+              Характеристики: {activeCategory}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {activeCatFields.map(({ key, label, placeholder }) => (
@@ -228,7 +290,7 @@ export default function Marketplace() {
                     value={extraFilters[key] ?? ""}
                     onChange={e => setExtraFilters(prev => ({ ...prev, [key]: e.target.value }))}
                     placeholder={placeholder}
-                    className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
+                    className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-violet-500"
                   />
                 </div>
               ))}
