@@ -34,7 +34,7 @@ const features = [
     title: "Аналитика",
     description: "Просмотры, заявки и эффективность размещений в реальном времени",
     color: "text-amber-400",
-    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2cb7da0f-331c-4d91-b271-2337da80c636.jpg",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/bf01a684-3b20-44a1-8a01-b2f1b74caf4f.jpg",
   },
   {
     icon: "Building",
