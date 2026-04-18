@@ -668,4 +668,7 @@ def handler(event, context) -> dict:
         return _cors({'error': f'Неизвестное действие: {action}'}, 400)
 
     except Exception as e:
-        return _cors({'error': 'internal', 'detail': str(e)}, 500)
+        import traceback
+        print(f"AGENCY ERROR action={action} user_id={user_id}: {type(e).__name__}: {e}")
+        print(traceback.format_exc())
+        return _cors({'error': 'internal', 'detail': f'{type(e).__name__}: {str(e)}'}, 500)
