@@ -38,7 +38,8 @@ def handle(event: dict, origin: str = '*') -> dict:
 
     email = str(payload.get('email', '')).lower().strip()
     password = str(payload.get('password', ''))
-    name = str(payload.get('name', '')).strip()[:255]
+    name = str(payload.get('name', '') or '').strip()[:255] or email.split('@')[0]
+    phone = str(payload.get('phone', '') or '').strip()[:50]
 
     if not email or not validate_email(email):
         return error(400, 'Некорректный email', origin)
@@ -88,8 +89,8 @@ def handle(event: dict, origin: str = '*') -> dict:
     now = datetime.utcnow().isoformat()
 
     user_id = execute_returning(f"""
-        INSERT INTO {S}users (email, password_hash, name, email_verified, created_at, updated_at)
-        VALUES ({escape(email)}, {escape(password_hash)}, {escape(name or None)}, {escape(not email_enabled)}, {escape(now)}, {escape(now)})
+        INSERT INTO {S}users (email, password_hash, name, phone, email_verified, created_at, updated_at)
+        VALUES ({escape(email)}, {escape(password_hash)}, {escape(name)}, {escape(phone)}, {escape(not email_enabled)}, {escape(now)}, {escape(now)})
         RETURNING id
     """)
 
