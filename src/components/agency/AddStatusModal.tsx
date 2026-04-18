@@ -21,7 +21,7 @@ interface Props {
   onCreated?: () => void
 }
 
-type Mode = "choice" | "broker" | "agency"
+type Mode = "choice" | "resident" | "broker" | "agency"
 
 export default function AddStatusModal({ open, onClose, onCreated }: Props) {
   const { user, updateProfile } = useAuthContext()
@@ -38,6 +38,14 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
   const handleClose = () => {
     reset()
     onClose()
+  }
+
+  const activateResident = () => {
+    if (!user) return
+    updateProfile({ status: "resident" })
+    toast({ title: "Готово", description: "Статус резидента активирован" })
+    handleClose()
+    onCreated?.()
   }
 
   const upgradeBroker = () => {
@@ -84,11 +92,13 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
         <DialogHeader>
           <DialogTitle>
             {mode === "choice" && "Добавить статус"}
+            {mode === "resident" && "Резидент"}
             {mode === "broker" && "Брокер / Собственник"}
             {mode === "agency" && "Агентство / Компания"}
           </DialogTitle>
           <DialogDescription>
             {mode === "choice" && "Выбери профессиональный профиль в Кабинете 24"}
+            {mode === "resident" && "Базовый профиль участника платформы"}
             {mode === "broker" && "Расширенный личный кабинет для частного специалиста"}
             {mode === "agency" && "Создай организацию с командой и ролями"}
           </DialogDescription>
@@ -96,6 +106,23 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
 
         {mode === "choice" && (
           <div className="grid gap-3">
+            <button
+              onClick={() => setMode("resident")}
+              className="text-left p-4 rounded-xl border-2 border-transparent hover:border-primary bg-muted/50 transition-all group"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white">
+                  <Icon name="Star" size={20} />
+                </div>
+                <div>
+                  <div className="font-semibold mb-1">Резидент</div>
+                  <div className="text-sm text-muted-foreground">
+                    Участник платформы: рефералы, профиль, маркетплейс и базовый доступ к инструментам
+                  </div>
+                </div>
+              </div>
+            </button>
+
             <button
               onClick={() => setMode("broker")}
               className="text-left p-4 rounded-xl border-2 border-transparent hover:border-primary bg-muted/50 transition-all group"
@@ -129,6 +156,37 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
                 </div>
               </div>
             </button>
+          </div>
+        )}
+
+        {mode === "resident" && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-muted/50 text-sm space-y-2">
+              <div className="flex items-center gap-2">
+                <Icon name="Check" size={16} className="text-green-500" />
+                Реферальная программа и приглашения
+              </div>
+              <div className="flex items-center gap-2">
+                <Icon name="Check" size={16} className="text-green-500" />
+                Личный профиль участника платформы
+              </div>
+              <div className="flex items-center gap-2">
+                <Icon name="Check" size={16} className="text-green-500" />
+                Просмотр объектов на Маркетплейсе
+              </div>
+              <div className="flex items-center gap-2">
+                <Icon name="Check" size={16} className="text-green-500" />
+                Доступ к поддержке и обновлениям
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setMode("choice")} className="flex-1">
+                Назад
+              </Button>
+              <Button onClick={activateResident} className="flex-1">
+                Активировать
+              </Button>
+            </div>
           </div>
         )}
 
