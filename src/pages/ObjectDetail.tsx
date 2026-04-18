@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { Header } from "@/components/Header"
+import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
@@ -150,6 +151,7 @@ export default function ObjectDetail() {
           </aside>
         </div>
       </section>
+      <Footer />
     </main>
   )
 }

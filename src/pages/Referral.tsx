@@ -3,6 +3,7 @@ import { Header } from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
+import { Footer } from "@/components/Footer"
 
 const levels = [
   {
@@ -256,6 +257,7 @@ export default function Referral() {
       </section>
 
       <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="green" />
+      <Footer />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
+import { Footer } from "@/components/Footer"
 import func2url from "../../backend/func2url.json"
 import { getCategoryFields } from "@/components/wizard/wizardTypes"
 
@@ -425,6 +426,7 @@ export default function Marketplace() {
           onClose={() => setShareTarget(null)}
         />
       )}
+      <Footer />
     </main>
   )
 }

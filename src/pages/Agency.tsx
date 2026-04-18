@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { Footer } from "@/components/Footer"
 import { useAuthContext } from "@/context/AuthContext"
 import {
   agencyApi,
@@ -278,6 +279,7 @@ export default function Agency() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Footer />
     </div>
   )
 }
