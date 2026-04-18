@@ -103,11 +103,13 @@ export default function Marketplace() {
   const [areaFrom, setAreaFrom] = useState("")
   const [areaTo, setAreaTo] = useState("")
 
-  // Сбрасываем доп. фильтры при смене категории
+  // Меняем категорию — сбрасываем доп. фильтры, открываем панель если есть характеристики
   function handleCategoryChange(cat: string) {
     setActiveCategory(cat)
     setExtraFilters({})
-    setShowFilters(cat !== "Все" && CAT_ID_MAP[cat] !== undefined)
+    if (cat !== "Все" && CAT_ID_MAP[cat]) {
+      setShowFilters(true)
+    }
   }
 
   function resetAllFilters() {
@@ -190,8 +192,9 @@ export default function Marketplace() {
           <p className="text-gray-400 text-lg">Коммерческая, инвестиционная недвижимость, торги и новостройки</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
+        {/* Строка поиска + кнопки категорий + кнопка фильтров */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
             <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
               placeholder="Поиск по названию или городу..."
@@ -200,8 +203,25 @@ export default function Marketplace() {
               className="pl-9 bg-[#141414] border-[#262626] text-white placeholder:text-gray-500 focus-visible:ring-violet-500"
             />
           </div>
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors shrink-0 ${
+              showFilters || hasActiveFilters
+                ? "bg-blue-600 border-blue-600 text-white"
+                : "bg-[#141414] border-[#262626] text-gray-400 hover:text-white hover:border-[#3a3a3a]"
+            }`}
+          >
+            <Icon name="SlidersHorizontal" className="h-4 w-4" />
+            Фильтры
+            {hasActiveFilters && (
+              <span className="ml-1 bg-white/20 rounded-full text-xs px-1.5 py-0.5 leading-none">
+                {[priceFrom, priceTo, areaFrom, areaTo, ...Object.values(extraFilters)].filter(v => v.trim()).length}
+              </span>
+            )}
+          </button>
         </div>
 
+        {/* Кнопки категорий */}
         <div className="flex flex-wrap gap-2 mb-4">
           {CATEGORIES.map((cat) => (
             <button
@@ -218,82 +238,90 @@ export default function Marketplace() {
           ))}
         </div>
 
-        {/* Фильтры цены и площади — для всех категорий */}
-        <div className="mb-4 rounded-2xl bg-[#111] border border-[#262626] p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-white">
-              <Icon name="SlidersHorizontal" className="h-4 w-4 text-blue-400" />
-              Цена и площадь
+        {/* Единая панель фильтров */}
+        {showFilters && (
+          <div className="mb-6 rounded-2xl bg-[#111] border border-[#262626] overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#1f1f1f]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Icon name="SlidersHorizontal" className="h-4 w-4 text-blue-400" />
+                Фильтры подбора
+                {activeCategory !== "Все" && (
+                  <span className="text-blue-400">— {activeCategory}</span>
+                )}
+              </div>
+              {hasActiveFilters && (
+                <button
+                  onClick={resetAllFilters}
+                  className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors"
+                >
+                  <Icon name="RotateCcw" className="h-3 w-3" />
+                  Сбросить все
+                </button>
+              )}
             </div>
-            {hasActiveFilters && (
-              <button
-                onClick={resetAllFilters}
-                className="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1"
-              >
-                <Icon name="X" className="h-3 w-3" />
-                Сбросить все
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div>
-              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Цена от, ₽</label>
-              <Input
-                value={priceFrom}
-                onChange={e => setPriceFrom(e.target.value)}
-                placeholder="1 000 000"
-                className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Цена до, ₽</label>
-              <Input
-                value={priceTo}
-                onChange={e => setPriceTo(e.target.value)}
-                placeholder="100 000 000"
-                className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Площадь от, м²</label>
-              <Input
-                value={areaFrom}
-                onChange={e => setAreaFrom(e.target.value)}
-                placeholder="50"
-                className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Площадь до, м²</label>
-              <Input
-                value={areaTo}
-                onChange={e => setAreaTo(e.target.value)}
-                placeholder="5000"
-                className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Панель фильтров по параметрам категории */}
-        {showFilters && activeCatFields.length > 0 && (
-          <div className="mb-6 rounded-2xl bg-[#111] border border-[#1f2937] p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-white mb-3">
-              <Icon name="Filter" className="h-4 w-4 text-violet-400" />
-              Характеристики: {activeCategory}
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-              {activeCatFields.map(({ key, label, placeholder }) => (
-                <div key={key}>
-                  <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">{label}</label>
-                  <Input
-                    value={extraFilters[key] ?? ""}
-                    onChange={e => setExtraFilters(prev => ({ ...prev, [key]: e.target.value }))}
-                    placeholder={placeholder}
-                    className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-violet-500"
-                  />
+            <div className="p-5 space-y-5">
+              {/* Цена и площадь */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Цена и площадь</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Цена от, ₽</label>
+                    <Input value={priceFrom} onChange={e => setPriceFrom(e.target.value)} placeholder="1 000 000"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Цена до, ₽</label>
+                    <Input value={priceTo} onChange={e => setPriceTo(e.target.value)} placeholder="100 000 000"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Площадь от, м²</label>
+                    <Input value={areaFrom} onChange={e => setAreaFrom(e.target.value)} placeholder="50"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Площадь до, м²</label>
+                    <Input value={areaTo} onChange={e => setAreaTo(e.target.value)} placeholder="5000"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-blue-500" />
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Характеристики категории */}
+              {activeCatFields.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Характеристики</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                    {activeCatFields.map(({ key, label, placeholder }) => (
+                      <div key={key}>
+                        <label className="text-[10px] text-gray-600 block mb-1">{label}</label>
+                        <Input
+                          value={extraFilters[key] ?? ""}
+                          onChange={e => setExtraFilters(prev => ({ ...prev, [key]: e.target.value }))}
+                          placeholder={placeholder}
+                          className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-violet-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Итог и сброс */}
+              <div className="flex items-center justify-between pt-3 border-t border-[#1f1f1f]">
+                <p className="text-sm text-gray-400">
+                  Найдено объектов:{" "}
+                  <span className="text-white font-semibold">{filtered.length}</span>
+                </p>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+                >
+                  <Icon name="Check" className="h-3.5 w-3.5" />
+                  Применить
+                </button>
+              </div>
             </div>
           </div>
         )}
