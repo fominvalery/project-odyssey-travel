@@ -35,20 +35,6 @@ export function HeroSection() {
       </div>
 
       <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="green" />
-
-      <div className="mt-10 flex flex-wrap justify-center gap-6">
-        {[
-          { label: "Коммерческая недвижимость", color: "text-violet-400" },
-          { label: "Инвестиционная недвижимость", color: "text-violet-400" },
-          { label: "Недвижимость с Торгов", color: "text-violet-400" },
-          { label: "Новостройки", color: "text-violet-400" },
-        ].map((item) => (
-          <div key={item.label} className="flex items-center gap-2 text-sm text-gray-400">
-            <span className={`h-1.5 w-1.5 rounded-full bg-violet-500`} />
-            {item.label}
-          </div>
-        ))}
-      </div>
     </section>
   )
 }
