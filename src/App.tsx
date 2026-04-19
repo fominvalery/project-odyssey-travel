@@ -17,6 +17,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Offer from "./pages/Offer";
 import AiRules from "./pages/AiRules";
+import Consent from "./pages/Consent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/offer" element={<Offer />} />
             <Route path="/ai-rules" element={<AiRules />} />
+            <Route path="/consent" element={<Consent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
