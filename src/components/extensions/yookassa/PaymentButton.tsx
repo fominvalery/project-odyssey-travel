@@ -28,6 +28,10 @@ interface PaymentButtonProps {
   returnUrl: string;
   /** Cart items */
   cartItems?: CartItem[];
+  /** User ID for listings credit */
+  userId?: string;
+  /** Order type */
+  orderType?: string;
   /** Success callback */
   onSuccess?: (orderNumber: string) => void;
   /** Error callback */
@@ -53,6 +57,8 @@ export function PaymentButton({
   description,
   returnUrl,
   cartItems = [],
+  userId,
+  orderType = "listings",
   onSuccess,
   onError,
   buttonText = "Оплатить",
@@ -79,6 +85,8 @@ export function PaymentButton({
       description,
       returnUrl,
       cartItems,
+      userId,
+      orderType,
     });
 
     if (response?.payment_url) {

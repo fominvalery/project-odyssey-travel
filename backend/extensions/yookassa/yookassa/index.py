@@ -137,10 +137,42 @@ def create_yookassa_payment(
 # =============================================================================
 
 def handler(event, context):
-    """Handle payment creation request."""
+    """Handle payment creation and status check requests."""
     # CORS preflight
     if event.get('httpMethod') == 'OPTIONS':
         return {'statusCode': 200, 'headers': HEADERS, 'body': ''}
+
+    # GET ?action=check&payment_id=xxx — проверка статуса платежа
+    if event.get('httpMethod') == 'GET':
+        params = event.get('queryStringParameters') or {}
+        action = params.get('action', '')
+        payment_id = params.get('payment_id', '')
+
+        if action == 'check' and payment_id:
+            shop_id = os.environ.get('YOOKASSA_SHOP_ID', '')
+            secret_key = os.environ.get('YOOKASSA_SECRET_KEY', '')
+            if not shop_id or not secret_key:
+                return {'statusCode': 500, 'headers': HEADERS, 'body': json.dumps({'error': 'Not configured'})}
+
+            auth_string = f"{shop_id}:{secret_key}"
+            auth_bytes = base64.b64encode(auth_string.encode()).decode()
+            req = Request(
+                f"{YOOKASSA_API_URL}/{payment_id}",
+                headers={'Authorization': f'Basic {auth_bytes}', 'Content-Type': 'application/json'},
+                method='GET'
+            )
+            try:
+                with urlopen(req, timeout=10) as resp:
+                    payment = json.loads(resp.read().decode())
+                return {
+                    'statusCode': 200,
+                    'headers': HEADERS,
+                    'body': json.dumps({'status': payment.get('status', 'unknown')})
+                }
+            except Exception:
+                return {'statusCode': 200, 'headers': HEADERS, 'body': json.dumps({'status': 'unknown'})}
+
+        return {'statusCode': 400, 'headers': HEADERS, 'body': json.dumps({'error': 'Bad request'})}
 
     if event.get('httpMethod') != 'POST':
         return {
@@ -171,6 +203,8 @@ def handler(event, context):
     return_url = data.get('return_url', '').strip()
     description = data.get('description', 'Оплата заказа')
     cart_items = data.get('cart_items', [])
+    user_id = data.get('user_id', None)
+    order_type = data.get('order_type', 'listings')
 
     if amount < MIN_AMOUNT or amount > MAX_AMOUNT:
         return {
@@ -226,10 +260,10 @@ def handler(event, context):
         # Create order in DB
         cur.execute(f"""
             INSERT INTO {S}orders
-            (order_number, user_name, user_email, user_phone, amount, status, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, 'pending', %s, %s)
+            (order_number, user_name, user_email, user_phone, amount, status, user_id, order_type, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, 'pending', %s, %s, %s, %s)
             RETURNING id
-        """, (order_number, user_name, user_email, user_phone, amount, now, now))
+        """, (order_number, user_name, user_email, user_phone, amount, user_id, order_type, now, now))
 
         order_id = cur.fetchone()[0]
 

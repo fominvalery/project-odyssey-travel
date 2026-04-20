@@ -30,6 +30,7 @@ interface Props {
   listingsExtra?: number
   userEmail?: string
   userName?: string
+  userId?: string
 }
 
 export default function DashboardObjects({
@@ -84,6 +85,7 @@ export default function DashboardObjects({
             listingsExtra={listingsExtra}
             userEmail={userEmail}
             userName={userName}
+            userId={userId}  
             onAddListingClick={handleAddObject}
           />
         )}

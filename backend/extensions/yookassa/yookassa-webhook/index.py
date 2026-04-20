@@ -162,6 +162,28 @@ def handler(event, context):
                     SET status = 'paid', paid_at = %s, updated_at = %s
                     WHERE id = %s
                 """, (now, now, order_id))
+
+                # Пополняем listings_extra если это заказ на объявления
+                cur.execute(f"""
+                    SELECT user_id, order_type FROM {S}orders WHERE id = %s
+                """, (order_id,))
+                order_row = cur.fetchone()
+                if order_row:
+                    order_user_id, order_type = order_row
+                    if order_type == 'listings' and order_user_id:
+                        # Считаем количество объявлений из order_items
+                        cur.execute(f"""
+                            SELECT COALESCE(SUM(quantity), 0) FROM {S}order_items WHERE order_id = %s
+                        """, (order_id,))
+                        qty_row = cur.fetchone()
+                        qty = int(qty_row[0]) if qty_row else 0
+                        if qty > 0:
+                            cur.execute(f"""
+                                UPDATE {S}users
+                                SET listings_extra = listings_extra + %s
+                                WHERE id = %s
+                            """, (qty, order_user_id))
+
                 conn.commit()
 
         elif payment_status == 'canceled':

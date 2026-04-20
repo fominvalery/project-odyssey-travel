@@ -24,6 +24,8 @@ export interface PaymentPayload {
   description?: string;
   returnUrl: string;
   cartItems?: CartItem[];
+  userId?: string;
+  orderType?: string;
 }
 
 export interface PaymentResponse {
@@ -116,6 +118,8 @@ export function useYookassa(options: UseYookassaOptions): UseYookassaReturn {
           description: payload.description || "Оплата заказа",
           return_url: payload.returnUrl,
           cart_items: payload.cartItems || [],
+          user_id: payload.userId || null,
+          order_type: payload.orderType || "listings",
         };
 
         const response = await fetch(apiUrl, {
@@ -135,12 +139,15 @@ export function useYookassa(options: UseYookassaOptions): UseYookassaReturn {
 
         // Save pending order to localStorage
         if (typeof window !== "undefined") {
+          const qty = (payload.cartItems || []).reduce((sum, item) => sum + (item.quantity || 1), 0)
           localStorage.setItem(
             "yookassa_pending_order",
             JSON.stringify({
               order_number: data.order_number,
               order_id: data.order_id,
               payment_id: data.payment_id,
+              order_type: payload.orderType || "listings",
+              qty,
               created_at: new Date().toISOString(),
             })
           );

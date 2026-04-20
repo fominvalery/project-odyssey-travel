@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuthContext } from "@/context/AuthContext"
 import { type ObjectData } from "@/components/AddObjectWizard"
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar"
@@ -9,7 +9,10 @@ import { DashboardCRM, DashboardReferral, DashboardProfile } from "@/components/
 import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
 import DashboardSupport from "@/components/dashboard/DashboardSupport"
 import AiChatBubble from "@/components/AiChatBubble"
+import { useToast } from "@/hooks/use-toast"
 import func2url from "../../backend/func2url.json"
+
+const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 
 type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
 
@@ -36,6 +39,8 @@ function mapFromServer(o: Record<string, unknown>): ObjectData {
 export default function Dashboard() {
   const { user, updateProfile, logout } = useAuthContext()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { toast } = useToast()
   const isBasic = !user?.status || user?.status === "basic"
   const [section, setSection] = useState<Section>(isBasic ? "objects" : "dashboard")
   const [form, setForm] = useState({ name: user?.name ?? "", phone: user?.phone ?? "", company: user?.company ?? "" })
@@ -47,6 +52,40 @@ export default function Dashboard() {
   const [catFilter, setCatFilter] = useState("Все")
   const [statusFilter, setStatusFilter] = useState("Все")
   const [objSearch, setObjSearch] = useState("")
+
+  // Проверяем возврат после оплаты ЮКассы
+  useEffect(() => {
+    const pendingRaw = localStorage.getItem("yookassa_pending_order")
+    if (!pendingRaw || !user?.id) return
+
+    const pending = JSON.parse(pendingRaw)
+    const paymentId = pending.payment_id
+    if (!paymentId) return
+
+    // Проверяем статус платежа
+    fetch(`${YOOKASSA_URL}?action=check&payment_id=${paymentId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === "succeeded") {
+          localStorage.removeItem("yookassa_pending_order")
+          // Обновляем listings_extra локально из ответа или перезагружаем профиль
+          const qty = pending.qty || 0
+          if (qty > 0) {
+            updateProfile({ listingsExtra: (user.listingsExtra ?? 0) + qty })
+          }
+          toast({
+            title: "Оплата прошла успешно!",
+            description: qty > 0 ? `Добавлено ${qty} объявлений` : "Заказ оформлен",
+          })
+          setSection("objects")
+        } else if (data.status === "canceled") {
+          localStorage.removeItem("yookassa_pending_order")
+          toast({ title: "Оплата отменена", description: "Попробуйте снова", variant: "destructive" })
+        }
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   const loadObjects = useCallback(async (userId: string) => {
     setLoadingObjects(true)
@@ -158,6 +197,7 @@ export default function Dashboard() {
             listingsExtra={user.listingsExtra ?? 0}
             userEmail={user.email}
             userName={user.name}
+            // userId пробрасывается через userId выше
           />
         )}
 

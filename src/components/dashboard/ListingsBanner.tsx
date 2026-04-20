@@ -41,10 +41,11 @@ interface Props {
   listingsExtra: number
   userEmail: string
   userName?: string
+  userId?: string
   onAddListingClick: () => void
 }
 
-export default function ListingsBanner({ listingsUsed, listingsExtra, userEmail, userName, onAddListingClick }: Props) {
+export default function ListingsBanner({ listingsUsed, listingsExtra, userEmail, userName, userId, onAddListingClick }: Props) {
   const [buyOpen, setBuyOpen] = useState(false)
   const [qty, setQty] = useState(5)
 
@@ -222,6 +223,8 @@ export default function ListingsBanner({ listingsUsed, listingsExtra, userEmail,
                 amount={totalPrice}
                 userEmail={userEmail}
                 userName={userName}
+                userId={userId}
+                orderType="listings"
                 description={`Объявления ×${qty} — тариф Базовый`}
                 returnUrl={getReturnUrl()}
                 cartItems={[{ id: "ads", name: `Объявления ×${qty}`, quantity: qty, price: Math.round(PRICE_PER_AD * (1 - discount / 100)) }]}
