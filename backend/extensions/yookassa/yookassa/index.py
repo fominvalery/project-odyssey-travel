@@ -325,6 +325,7 @@ def handler(event, context):
     except HTTPError as e:
         conn.rollback()
         error_body = e.read().decode() if e.fp else str(e)
+        print(f"YooKassa HTTPError: {error_body}", flush=True)
         return {
             'statusCode': 500,
             'headers': HEADERS,
@@ -332,6 +333,9 @@ def handler(event, context):
         }
     except Exception as e:
         conn.rollback()
+        import traceback
+        tb = traceback.format_exc()
+        print(f"YooKassa Exception: {str(e)}\n{tb}", flush=True)
         return {
             'statusCode': 500,
             'headers': HEADERS,
