@@ -57,7 +57,7 @@ interface UseYookassaReturn {
  * Open payment page in new tab (avoids popup blocking from async calls)
  */
 export function openPaymentPage(url: string): void {
-  window.open(url, "_blank", "noopener,noreferrer");
+  window.open(url, "_blank");
 }
 
 /**

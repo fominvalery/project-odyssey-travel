@@ -75,7 +75,8 @@ export function PaymentButton({
 
   const handleClick = async () => {
     // Open tab immediately (before async) to avoid popup blocking
-    const tab = window.open("about:blank", "_blank", "noopener,noreferrer");
+    // NOTE: без noopener чтобы можно было менять location после получения URL
+    const tab = window.open("about:blank", "_blank");
 
     const response = await createPayment({
       amount,
