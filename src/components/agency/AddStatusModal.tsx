@@ -51,7 +51,7 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
   const upgradeBroker = () => {
     if (!user) return
     updateProfile({ status: "broker" })
-    toast({ title: "Готово", description: "Статус брокера/собственника активирован" })
+    toast({ title: "Готово", description: "Статус Клуб активирован" })
     handleClose()
     onCreated?.()
   }
@@ -93,13 +93,13 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
           <DialogTitle>
             {mode === "choice" && "Добавить статус"}
             {mode === "basic" && "Базовый"}
-            {mode === "broker" && "Брокер / Собственник"}
+            {mode === "broker" && "Клуб"}
             {mode === "agency" && "Агентство / Компания"}
           </DialogTitle>
           <DialogDescription>
             {mode === "choice" && "Выбери профессиональный профиль в Кабинете 24"}
             {mode === "basic" && "Базовый профиль участника платформы"}
-            {mode === "broker" && "Расширенный личный кабинет для частного специалиста"}
+            {mode === "broker" && "Участник клуба — расширенный личный кабинет"}
             {mode === "agency" && "Создай организацию с командой и ролями"}
           </DialogDescription>
         </DialogHeader>
@@ -132,9 +132,9 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
                   <Icon name="UserCheck" size={20} />
                 </div>
                 <div>
-                  <div className="font-semibold mb-1">Брокер / Собственник</div>
+                  <div className="font-semibold mb-1">Клуб</div>
                   <div className="text-sm text-muted-foreground">
-                    Апгрейд личного кабинета без команды: больше объектов, CRM, аналитика
+                    Апгрейд личного кабинета: больше объектов, CRM, аналитика
                   </div>
                 </div>
               </div>

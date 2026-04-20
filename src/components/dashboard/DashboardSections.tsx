@@ -7,7 +7,7 @@ import Icon from "@/components/ui/icon"
 
 const PLAN_LABELS: Record<string, string> = {
   basic: "Базовый",
-  pro: "ПРО",
+  pro: "Клуб",
   proplus: "Про+",
   business: "Бизнес",
   constructor: "Конструктор",
@@ -142,7 +142,7 @@ type UserStatus = "basic" | "broker" | "agency"
 
 const STATUS_OPTIONS: { value: UserStatus; label: string; icon: string; desc: string }[] = [
   { value: "basic",    label: "Базовый",              icon: "User",      desc: "По умолчанию" },
-  { value: "broker",   label: "Брокер / Собственник", icon: "Briefcase", desc: "Профессиональный игрок" },
+  { value: "broker",   label: "Клуб",                 icon: "Zap",       desc: "Участник клуба" },
   { value: "agency",   label: "Агентство / Компания", icon: "Building2", desc: "Крупный игрок" },
 ]
 

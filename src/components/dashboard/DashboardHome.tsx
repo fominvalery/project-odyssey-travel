@@ -3,7 +3,8 @@ import { type ObjectData } from "@/components/AddObjectWizard"
 
 const PLAN_LABELS: Record<string, string> = {
   green: "FREE",
-  pro: "ПРО",
+  basic: "Базовый",
+  pro: "Клуб",
   proplus: "Про+",
   constructor: "Конструктор",
 }

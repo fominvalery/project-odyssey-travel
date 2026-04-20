@@ -9,7 +9,7 @@ import { useAuthContext } from "@/context/AuthContext"
 const ADMIN_URL = "https://functions.poehali.dev/0628c75d-0129-48e8-9794-82bd87b83906"
 
 const PLAN_LABELS: Record<string, string> = {
-  green: "FREE", pro: "ПРО", proplus: "Про+", constructor: "Конструктор",
+  green: "FREE", basic: "Базовый", pro: "Клуб", proplus: "Про+", constructor: "Конструктор",
 }
 const PLAN_COLORS: Record<string, string> = {
   green: "text-gray-400 bg-gray-500/10",

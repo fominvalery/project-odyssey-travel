@@ -10,13 +10,13 @@ import type { UserProfile } from "@/hooks/useAuth"
 
 const STATUS_OPTIONS: { value: UserProfile["status"]; label: string; icon: string; desc: string }[] = [
   { value: "basic",    label: "Базовый",              icon: "User",        desc: "По умолчанию" },
-  { value: "broker",   label: "Брокер / Собственник", icon: "Briefcase",   desc: "Профессиональный игрок" },
+  { value: "broker",   label: "Клуб",                 icon: "Zap",         desc: "Участник клуба" },
   { value: "agency",   label: "Агентство / Компания", icon: "Building2",   desc: "Крупный игрок" },
 ]
 
 const PLAN_LABELS: Record<string, string> = {
   basic: "Базовый",
-  pro: "Про",
+  pro: "Клуб",
   proplus: "Про+",
   constructor: "Конструктор",
 }

@@ -1,7 +1,125 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useYookassa } from "@/components/extensions/yookassa/useYookassa"
+import func2url from "../../backend/func2url.json"
+
+const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
+
+function getReturnUrl(): string {
+  const origin = window.location.origin
+  const base = origin.startsWith("http://") ? origin.replace("http://", "https://") : origin
+  return `${base}/dashboard`
+}
+
+interface ClubPayDialogProps {
+  open: boolean
+  onClose: () => void
+}
+
+function ClubPayDialog({ open, onClose }: ClubPayDialogProps) {
+  const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
+  const [errorMsg, setErrorMsg] = useState("")
+  const PLAN_PRICE = 9900
+
+  const { createPayment, isLoading } = useYookassa({
+    apiUrl: YOOKASSA_URL,
+    onError: (e) => setErrorMsg(e.message),
+  })
+
+  async function handlePay() {
+    setErrorMsg("")
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErrorMsg("Введите корректный email")
+      return
+    }
+    const response = await createPayment({
+      amount: PLAN_PRICE,
+      userEmail: email,
+      userName: name,
+      description: "Тариф Клуб — 1 месяц",
+      returnUrl: getReturnUrl(),
+      cartItems: [{ id: "club", name: "Тариф Клуб", quantity: 1, price: PLAN_PRICE }],
+      orderType: "subscription",
+    })
+    if (response?.payment_url) {
+      window.location.href = response.payment_url
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md bg-[#111] border-[#262626] text-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-white text-lg">
+            <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
+              <Icon name="Zap" className="h-4 w-4 text-violet-400" />
+            </div>
+            Тариф Клуб — 9 900 ₽/мес
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 pt-1">
+          <p className="text-sm text-gray-400">Для оплаты укажите ваши данные — на email придёт чек.</p>
+
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Имя</label>
+            <Input
+              placeholder="Иван Иванов"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Email для чека</label>
+            <Input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500"
+            />
+          </div>
+
+          <div className="rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] p-4 flex items-center justify-between">
+            <span className="font-semibold text-white">Итого</span>
+            <span className="text-xl font-bold text-white">9 900 ₽</span>
+          </div>
+
+          {errorMsg && <p className="text-xs text-red-400">{errorMsg}</p>}
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="flex-1 border-[#2a2a2a] bg-transparent text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={handlePay}
+              disabled={isLoading}
+              className="flex-1 bg-violet-600 hover:bg-violet-700 text-white"
+            >
+              {isLoading ? "Загрузка..." : "Оплатить 9 900 ₽"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 const plans = [
   {
@@ -25,7 +143,7 @@ const plans = [
   },
   {
     id: "pro",
-    name: "Про",
+    name: "Клуб",
     badge: "Популярный",
     price: "9 900 ₽",
     period: "в месяц",
@@ -81,10 +199,15 @@ const constructorFeatures = [
 export function PricingSection() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState("basic")
+  const [clubPayOpen, setClubPayOpen] = useState(false)
 
   function openModal(planId: string) {
-    setSelectedPlan(planId)
-    setModalOpen(true)
+    if (planId === "pro") {
+      setClubPayOpen(true)
+    } else {
+      setSelectedPlan(planId)
+      setModalOpen(true)
+    }
   }
 
   return (
@@ -140,7 +263,7 @@ export function PricingSection() {
               className={`w-full rounded-full ${plan.buttonClass}`}
               onClick={() => openModal(plan.id)}
             >
-              {plan.id === "basic" ? "Начать бесплатно" : "Подключить"}
+              {plan.id === "basic" ? "Начать бесплатно" : "Выбрать тариф"}
             </Button>
           </div>
         ))}
@@ -186,6 +309,7 @@ export function PricingSection() {
       </div>
 
       <RegisterModal open={modalOpen} onOpenChange={setModalOpen} planId={selectedPlan} />
+      <ClubPayDialog open={clubPayOpen} onClose={() => setClubPayOpen(false)} />
     </section>
   )
 }
