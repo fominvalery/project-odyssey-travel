@@ -68,6 +68,9 @@ export function PaymentButton({
   });
 
   const handleClick = async () => {
+    // Open tab immediately (before async) to avoid popup blocking
+    const tab = window.open("about:blank", "_blank", "noopener,noreferrer");
+
     const response = await createPayment({
       amount,
       userEmail,
@@ -79,7 +82,13 @@ export function PaymentButton({
     });
 
     if (response?.payment_url) {
-      openPaymentPage(response.payment_url);
+      if (tab && !tab.closed) {
+        tab.location.href = response.payment_url;
+      } else {
+        window.location.href = response.payment_url;
+      }
+    } else {
+      tab?.close();
     }
   };
 
