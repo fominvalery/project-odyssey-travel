@@ -52,7 +52,7 @@ const steps = [
 
 export default function Referral() {
   const [refs, setRefs] = useState(5)
-  const [plan, setPlan] = useState(9900)
+  const [plan, setPlan] = useState(990)
   const [registerOpen, setRegisterOpen] = useState(false)
   const calcRef = useRef<HTMLElement>(null)
 

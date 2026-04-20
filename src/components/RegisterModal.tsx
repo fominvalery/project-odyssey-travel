@@ -12,7 +12,7 @@ const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 
 const planLabels: Record<string, { label: string; color: string; price: string }> = {
   basic: { label: "Базовый", color: "text-green-400 bg-green-500/10 border-green-500/20", price: "Бесплатно" },
-  pro: { label: "Клуб", color: "text-violet-400 bg-violet-500/10 border-violet-500/20", price: "4 900 ₽/мес" },
+  pro: { label: "Клуб", color: "text-violet-400 bg-violet-500/10 border-violet-500/20", price: "990 ₽/мес" },
   business: { label: "Бизнес", color: "text-amber-400 bg-amber-500/10 border-amber-500/20", price: "14 900 ₽/мес" },
 }
 

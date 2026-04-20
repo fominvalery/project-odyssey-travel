@@ -183,6 +183,13 @@ def handler(event, context):
                                 SET listings_extra = listings_extra + %s
                                 WHERE id = %s
                             """, (qty, order_user_id))
+                    elif order_type == 'subscription' and order_user_id:
+                        # Активируем тариф Клуб: plan = 'pro', status = 'broker'
+                        cur.execute(f"""
+                            UPDATE {S}users
+                            SET plan = 'pro', status = 'broker', updated_at = %s
+                            WHERE id = %s AND is_superadmin = false
+                        """, (now, order_user_id))
 
                 conn.commit()
 
