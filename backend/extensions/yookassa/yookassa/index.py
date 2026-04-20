@@ -79,7 +79,11 @@ def create_yookassa_payment(
     idempotence_key = str(uuid.uuid4())
 
     # Build receipt items for 54-FZ
+    # ВАЖНО: в receipt.items.amount.value передаётся цена за ЕДИНИЦУ товара,
+    # ЮКасса сама умножает на quantity. Также сумма всех items * qty должна
+    # точно совпадать с amount.value
     receipt_items = []
+    items_total = 0.0
     for item in cart_items:
         qty = int(item.get('quantity', 1))
         price = float(item.get('price', 0))
@@ -87,13 +91,30 @@ def create_yookassa_payment(
             "description": str(item.get('name', 'Товар'))[:128],
             "quantity": f"{qty:.3f}",
             "amount": {
-                "value": f"{price * qty:.2f}",
+                "value": f"{price:.2f}",
                 "currency": "RUB"
             },
             "vat_code": 1,
             "payment_subject": "commodity",
             "payment_mode": "full_payment"
         })
+        items_total += price * qty
+
+    # Если сумма чека не совпадает с amount, корректируем первый item
+    # чтобы избежать ошибки валидации ЮКассы
+    if receipt_items and abs(items_total - amount) > 0.01:
+        diff = amount - items_total
+        first = receipt_items[0]
+        first_qty = int(first["quantity"].split(".")[0]) if "." in first["quantity"] else 1
+        try:
+            first_qty = float(first["quantity"])
+        except Exception:
+            first_qty = 1
+        current_price = float(first["amount"]["value"])
+        new_price = current_price + (diff / first_qty if first_qty else diff)
+        if new_price < 0:
+            new_price = 0
+        first["amount"]["value"] = f"{new_price:.2f}"
 
     payload = {
         "amount": {
