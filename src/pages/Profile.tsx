@@ -6,20 +6,7 @@ import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuthContext } from "@/context/AuthContext"
-import type { UserProfile } from "@/hooks/useAuth"
-
-const STATUS_OPTIONS: { value: UserProfile["status"]; label: string; icon: string; desc: string }[] = [
-  { value: "basic",    label: "Базовый",              icon: "User",        desc: "По умолчанию" },
-  { value: "broker",   label: "Клуб",                 icon: "Zap",         desc: "Участник клуба" },
-  { value: "agency",   label: "Агентство / Компания", icon: "Building2",   desc: "Крупный игрок" },
-]
-
-const PLAN_LABELS: Record<string, string> = {
-  basic: "Базовый",
-  pro: "Клуб",
-  proplus: "Про+",
-  constructor: "Конструктор",
-}
+import { STATUS_LABELS } from "@/hooks/useAuth"
 
 export default function Profile() {
   const { user, updateProfile, logout } = useAuthContext()
@@ -109,7 +96,7 @@ export default function Profile() {
             <p className="text-sm text-gray-500">{user.email}</p>
             <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 px-2.5 py-0.5 text-xs text-violet-400">
               <Icon name="Star" className="h-3 w-3" />
-              {PLAN_LABELS[user.plan] ?? user.plan}
+              {STATUS_LABELS[user.status as keyof typeof STATUS_LABELS] ?? user.status}
             </div>
           </div>
         </div>

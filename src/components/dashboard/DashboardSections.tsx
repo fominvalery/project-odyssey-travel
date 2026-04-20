@@ -4,14 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
-
-const PLAN_LABELS: Record<string, string> = {
-  basic: "Базовый",
-  pro: "Клуб",
-  proplus: "Про+",
-  business: "Бизнес",
-  constructor: "Конструктор",
-}
+import { STATUS_LABELS } from "@/hooks/useAuth"
 
 // --- CRM ---
 export { DashboardCRM } from "./DashboardCRM"
@@ -184,7 +177,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
           <p className="text-sm text-gray-500">{user.email}</p>
           <span className="mt-1.5 inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
             <Icon name="Star" className="h-3 w-3" />
-            {PLAN_LABELS[user.plan] ?? user.plan}
+            {STATUS_LABELS[user.status as keyof typeof STATUS_LABELS] ?? user.status}
           </span>
         </div>
       </div>

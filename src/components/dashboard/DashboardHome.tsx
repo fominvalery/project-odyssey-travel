@@ -1,13 +1,6 @@
 import Icon from "@/components/ui/icon"
 import { type ObjectData } from "@/components/AddObjectWizard"
-
-const PLAN_LABELS: Record<string, string> = {
-  green: "FREE",
-  basic: "Базовый",
-  pro: "Клуб",
-  proplus: "Про+",
-  constructor: "Конструктор",
-}
+import { STATUS_LABELS } from "@/hooks/useAuth"
 
 const MOCK_OBJECTS = [
   { id: 1, title: "Торговое помещение 120 м²", price: "2 400 000 ₽", status: "Активен" },
@@ -22,7 +15,7 @@ const MOCK_LEADS = [
 ]
 
 interface Props {
-  user: { name: string; plan: string }
+  user: { name: string; status: string }
   objects: ObjectData[]
 }
 
@@ -30,7 +23,7 @@ export default function DashboardHome({ user, objects }: Props) {
   return (
     <div className="p-6 md:p-8 max-w-4xl">
       <h1 className="text-2xl font-bold mb-1">Добро пожаловать, {user.name.split(" ")[0]}!</h1>
-      <p className="text-gray-400 text-sm mb-8">Тариф: <span className="text-blue-400 font-medium">{PLAN_LABELS[user.plan] ?? user.plan}</span></p>
+      <p className="text-gray-400 text-sm mb-8">Тариф: <span className="text-blue-400 font-medium">{STATUS_LABELS[user.status as keyof typeof STATUS_LABELS] ?? user.status}</span></p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[

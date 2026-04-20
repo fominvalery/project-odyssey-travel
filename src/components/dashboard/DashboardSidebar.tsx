@@ -4,15 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { useMyOrgs } from "@/hooks/useMyOrgs"
 import AddStatusModal from "@/components/agency/AddStatusModal"
+import { STATUS_LABELS } from "@/hooks/useAuth"
 
 type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
-
-const PLAN_LABELS: Record<string, string> = {
-  basic: "Базовый",
-  pro: "ПРО",
-  proplus: "Про+",
-  constructor: "Конструктор",
-}
 
 // Пункты меню для basic
 const basicNavItems = [
@@ -139,7 +133,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             </Avatar>
             <div className="min-w-0">
               <p className="text-xs font-medium truncate">{user.name.split(" ")[0]}</p>
-              <p className="text-xs text-gray-500 truncate">{PLAN_LABELS[user.plan] ?? user.plan}</p>
+              <p className="text-xs text-gray-500 truncate">{STATUS_LABELS[user.status as keyof typeof STATUS_LABELS] ?? user.status}</p>
             </div>
           </div>
           <button

@@ -1,20 +1,57 @@
 import { useState, useEffect } from "react"
 import func2url from "../../backend/func2url.json"
 
+export type UserStatus = "basic" | "broker" | "agency"
+
 export interface UserProfile {
   id: string
   name: string
   email: string
   phone: string
   company: string
-  plan: string
-  status: "basic" | "broker" | "agency"
+  plan: string        // вычисляется из status, хранится для совместимости с бэкендом
+  status: UserStatus
   listingsUsed?: number
   listingsExtra?: number
   listingsPeriodStart?: string
   avatar: string | null
   createdAt: string
   isSuperadmin?: boolean
+}
+
+/** Карта: status → plan (единственный источник маппинга) */
+export const STATUS_TO_PLAN: Record<UserStatus, string> = {
+  basic:  "basic",
+  broker: "pro",
+  agency: "proplus",
+}
+
+/** Карта: status → читаемое название для UI */
+export const STATUS_LABELS: Record<UserStatus, string> = {
+  basic:  "Базовый",
+  broker: "Клуб",
+  agency: "Агентство",
+}
+
+/** Иконка для статуса */
+export const STATUS_ICONS: Record<UserStatus, string> = {
+  basic:  "User",
+  broker: "Zap",
+  agency: "Building2",
+}
+
+/** Вычислить plan из status */
+export function planFromStatus(status: UserStatus | string): string {
+  return STATUS_TO_PLAN[status as UserStatus] ?? "basic"
+}
+
+/** Нормализовать status: если бэкенд прислал plan=pro, broker — разбираемся */
+function resolveStatus(rawStatus: string, rawPlan: string): UserStatus {
+  if (rawStatus === "broker" || rawStatus === "agency") return rawStatus as UserStatus
+  if (rawPlan === "pro" || rawPlan === "proplus") {
+    return rawPlan === "proplus" ? "agency" : "broker"
+  }
+  return "basic"
 }
 
 const STORAGE_KEY = "estatepro_user"
@@ -26,7 +63,10 @@ export function useAuth() {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       try {
-        setUser(JSON.parse(stored))
+        const parsed = JSON.parse(stored)
+        // Миграция старых профилей: пересчитываем plan из status
+        parsed.plan = planFromStatus(parsed.status || "basic")
+        setUser(parsed)
       } catch {
         localStorage.removeItem(STORAGE_KEY)
       }
@@ -34,14 +74,15 @@ export function useAuth() {
   }, [])
 
   function register(data: { name: string; email: string; phone: string; company: string; plan: string }) {
+    const status: UserStatus = "basic"
     const newUser: UserProfile = {
       id: crypto.randomUUID(),
       name: data.name,
       email: data.email,
       phone: data.phone,
       company: data.company,
-      plan: "basic",
-      status: "basic",
+      status,
+      plan: planFromStatus(status),
       avatar: null,
       createdAt: new Date().toISOString(),
     }
@@ -64,14 +105,15 @@ export function useAuth() {
         return { ok: false, error: data?.error || "Неверный email или пароль" }
       }
       const userData = data.user || data
+      const status = resolveStatus(userData.status || "basic", userData.plan || "basic")
       const profile: UserProfile = {
         id: String(userData.id || userData.user_id || ""),
         name: userData.name || "",
         email: userData.email || email,
         phone: userData.phone || "",
         company: userData.company || "",
-        plan: userData.plan || "basic",
-        status: userData.status || "basic",
+        status,
+        plan: planFromStatus(status),
         listingsUsed: userData.listings_used ?? 0,
         listingsExtra: userData.listings_extra ?? 0,
         listingsPeriodStart: userData.listings_period_start || new Date().toISOString(),
@@ -95,9 +137,13 @@ export function useAuth() {
 
   function updateProfile(updates: Partial<UserProfile>) {
     if (!user) return
-    const updated = { ...user, ...updates }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-    setUser(updated)
+    const merged = { ...user, ...updates }
+    // Если меняется status — автоматически пересчитываем plan
+    if (updates.status !== undefined) {
+      merged.plan = planFromStatus(updates.status)
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
+    setUser(merged)
   }
 
   function logout() {

@@ -5,17 +5,14 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
+import { STATUS_LABELS } from "@/hooks/useAuth"
 
 const ADMIN_URL = "https://functions.poehali.dev/0628c75d-0129-48e8-9794-82bd87b83906"
 
-const PLAN_LABELS: Record<string, string> = {
-  green: "FREE", basic: "Базовый", pro: "Клуб", proplus: "Про+", constructor: "Конструктор",
-}
-const PLAN_COLORS: Record<string, string> = {
-  green: "text-gray-400 bg-gray-500/10",
-  pro: "text-blue-400 bg-blue-500/10",
-  proplus: "text-amber-400 bg-amber-500/10",
-  constructor: "text-violet-400 bg-violet-500/10",
+const STATUS_COLORS: Record<string, string> = {
+  basic:  "text-gray-400 bg-gray-500/10",
+  broker: "text-blue-400 bg-blue-500/10",
+  agency: "text-amber-400 bg-amber-500/10",
 }
 
 interface AdminUser {
@@ -218,8 +215,8 @@ export default function AdminPanel() {
                     <p className="text-sm font-medium truncate">{u.name}</p>
                     <p className="text-xs text-gray-500 truncate">{u.email}</p>
                   </div>
-                  <span className={`ml-auto text-xs px-2 py-0.5 rounded-full shrink-0 ${PLAN_COLORS[u.plan] || "text-gray-400 bg-gray-500/10"}`}>
-                    {PLAN_LABELS[u.plan] || u.plan}
+                  <span className={`ml-auto text-xs px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[u.status] || "text-gray-400 bg-gray-500/10"}`}>
+                    {STATUS_LABELS[u.status as keyof typeof STATUS_LABELS] || u.status}
                   </span>
                 </div>
               ))
@@ -241,8 +238,8 @@ export default function AdminPanel() {
                   <div>
                     <h2 className="text-xl font-bold">{activeUser.name}</h2>
                     <p className="text-sm text-gray-400">{activeUser.email}</p>
-                    <span className={`mt-1 inline-block text-xs px-2.5 py-0.5 rounded-full ${PLAN_COLORS[activeUser.plan] || "text-gray-400 bg-gray-500/10"}`}>
-                      {PLAN_LABELS[activeUser.plan] || activeUser.plan}
+                    <span className={`mt-1 inline-block text-xs px-2.5 py-0.5 rounded-full ${STATUS_COLORS[activeUser.status] || "text-gray-400 bg-gray-500/10"}`}>
+                      {STATUS_LABELS[activeUser.status as keyof typeof STATUS_LABELS] || activeUser.status}
                     </span>
                   </div>
                 </div>
