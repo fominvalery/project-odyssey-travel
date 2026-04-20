@@ -8,7 +8,10 @@ export interface UserProfile {
   phone: string
   company: string
   plan: string
-  status: "resident" | "broker" | "agency"
+  status: "basic" | "broker" | "agency"
+  listingsUsed?: number
+  listingsExtra?: number
+  listingsPeriodStart?: string
   avatar: string | null
   createdAt: string
 }
@@ -36,8 +39,8 @@ export function useAuth() {
       email: data.email,
       phone: data.phone,
       company: data.company,
-      plan: data.plan,
-      status: "resident",
+      plan: "basic",
+      status: "basic",
       avatar: null,
       createdAt: new Date().toISOString(),
     }
@@ -66,8 +69,11 @@ export function useAuth() {
         email: userData.email || email,
         phone: userData.phone || "",
         company: userData.company || "",
-        plan: userData.plan || "green",
-        status: userData.status || "resident",
+        plan: userData.plan || "basic",
+        status: userData.status || "basic",
+        listingsUsed: userData.listings_used ?? 0,
+        listingsExtra: userData.listings_extra ?? 0,
+        listingsPeriodStart: userData.listings_period_start || new Date().toISOString(),
         avatar: userData.avatar_url || userData.avatar || null,
         createdAt: userData.created_at || new Date().toISOString(),
       }

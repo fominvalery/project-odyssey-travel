@@ -9,13 +9,13 @@ import { useAuthContext } from "@/context/AuthContext"
 import type { UserProfile } from "@/hooks/useAuth"
 
 const STATUS_OPTIONS: { value: UserProfile["status"]; label: string; icon: string; desc: string }[] = [
-  { value: "resident",  label: "Резидент",            icon: "User",        desc: "По умолчанию" },
+  { value: "basic",    label: "Базовый",              icon: "User",        desc: "По умолчанию" },
   { value: "broker",   label: "Брокер / Собственник", icon: "Briefcase",   desc: "Профессиональный игрок" },
   { value: "agency",   label: "Агентство / Компания", icon: "Building2",   desc: "Крупный игрок" },
 ]
 
 const PLAN_LABELS: Record<string, string> = {
-  green: "Грин",
+  basic: "Базовый",
   pro: "Про",
   proplus: "Про+",
   constructor: "Конструктор",

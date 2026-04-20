@@ -8,16 +8,17 @@ import AddStatusModal from "@/components/agency/AddStatusModal"
 type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
 
 const PLAN_LABELS: Record<string, string> = {
-  green: "Грин",
+  basic: "Базовый",
   pro: "ПРО",
   proplus: "Про+",
   constructor: "Конструктор",
 }
 
-// Пункты меню для резидента (базовые)
-const residentNavItems = [
-  { id: "referral",  label: "Рефералы",   icon: "Gift" },
-  { id: "profile",   label: "Профиль",    icon: "User" },
+// Пункты меню для basic
+const basicNavItems = [
+  { id: "objects",   label: "Объекты",   icon: "Building2" },
+  { id: "referral",  label: "Рефералы",  icon: "Gift" },
+  { id: "profile",   label: "Профиль",   icon: "User" },
 ] as const
 
 // Полное меню для broker/agency
@@ -43,8 +44,8 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
   const { orgs, reload: reloadOrgs } = useMyOrgs()
   const [statusModalOpen, setStatusModalOpen] = useState(false)
 
-  const isResident = !user.status || user.status === "resident"
-  const navItems = isResident ? residentNavItems : fullNavItems
+  const isBasic = !user.status || user.status === "basic"
+  const navItems = isBasic ? basicNavItems : fullNavItems
 
   return (
     <>
@@ -99,7 +100,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
 
         <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
           {/* Мои агентства — только для agency */}
-          {!isResident && orgs.length > 0 && (
+          {!isBasic && orgs.length > 0 && (
             <div className="mb-3 space-y-1">
               <div className="text-[10px] uppercase tracking-wider text-gray-500 px-2 mb-1">
                 Мои агентства
@@ -153,12 +154,12 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
 
       {/* Мобильное меню */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-[#1f1f1f] flex justify-around px-2 py-2">
-        {isResident ? (
-          // Резидент: Рефералы, Профиль, Маркетплейс, Поддержка
+        {isBasic ? (
+          // Базовый: Объекты, Рефералы, Профиль, Маркетплейс, Поддержка
           <>
-            {(["referral", "profile"] as const).map((id) => {
-              const icons: Record<string, string> = { referral: "Gift", profile: "User" }
-              const labels: Record<string, string> = { referral: "Рефералы", profile: "Профиль" }
+            {(["objects", "referral", "profile"] as const).map((id) => {
+              const icons: Record<string, string> = { objects: "Building2", referral: "Gift", profile: "User" }
+              const labels: Record<string, string> = { objects: "Объекты", referral: "Рефералы", profile: "Профиль" }
               return (
                 <button
                   key={id}

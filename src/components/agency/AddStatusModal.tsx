@@ -21,7 +21,7 @@ interface Props {
   onCreated?: () => void
 }
 
-type Mode = "choice" | "resident" | "broker" | "agency"
+type Mode = "choice" | "basic" | "broker" | "agency"
 
 export default function AddStatusModal({ open, onClose, onCreated }: Props) {
   const { user, updateProfile } = useAuthContext()
@@ -40,10 +40,10 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
     onClose()
   }
 
-  const activateResident = () => {
+  const activateBasic = () => {
     if (!user) return
-    updateProfile({ status: "resident" })
-    toast({ title: "Готово", description: "Статус резидента активирован" })
+    updateProfile({ status: "basic" })
+    toast({ title: "Готово", description: "Базовый статус активирован" })
     handleClose()
     onCreated?.()
   }
@@ -92,13 +92,13 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
         <DialogHeader>
           <DialogTitle>
             {mode === "choice" && "Добавить статус"}
-            {mode === "resident" && "Резидент"}
+            {mode === "basic" && "Базовый"}
             {mode === "broker" && "Брокер / Собственник"}
             {mode === "agency" && "Агентство / Компания"}
           </DialogTitle>
           <DialogDescription>
             {mode === "choice" && "Выбери профессиональный профиль в Кабинете 24"}
-            {mode === "resident" && "Базовый профиль участника платформы"}
+            {mode === "basic" && "Базовый профиль участника платформы"}
             {mode === "broker" && "Расширенный личный кабинет для частного специалиста"}
             {mode === "agency" && "Создай организацию с командой и ролями"}
           </DialogDescription>
@@ -107,7 +107,7 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
         {mode === "choice" && (
           <div className="grid gap-3">
             <button
-              onClick={() => setMode("resident")}
+              onClick={() => setMode("basic")}
               className="text-left p-4 rounded-xl border-2 border-transparent hover:border-primary bg-muted/50 transition-all group"
             >
               <div className="flex items-start gap-3">
@@ -115,9 +115,9 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
                   <Icon name="Star" size={20} />
                 </div>
                 <div>
-                  <div className="font-semibold mb-1">Резидент</div>
+                  <div className="font-semibold mb-1">Базовый</div>
                   <div className="text-sm text-muted-foreground">
-                    Участник платформы: рефералы, профиль, маркетплейс и базовый доступ к инструментам
+                    3 бесплатных объявления, рефералы, профиль, маркетплейс
                   </div>
                 </div>
               </div>
@@ -162,9 +162,13 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
           </div>
         )}
 
-        {mode === "resident" && (
+        {mode === "basic" && (
           <div className="space-y-4">
             <div className="p-4 rounded-lg bg-muted/50 text-sm space-y-2">
+              <div className="flex items-center gap-2">
+                <Icon name="Check" size={16} className="text-green-500" />
+                3 бесплатных объявления в месяц
+              </div>
               <div className="flex items-center gap-2">
                 <Icon name="Check" size={16} className="text-green-500" />
                 Реферальная программа и приглашения
@@ -186,7 +190,7 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
               <Button variant="outline" onClick={() => setMode("choice")} className="flex-1">
                 Назад
               </Button>
-              <Button onClick={activateResident} className="flex-1">
+              <Button onClick={activateBasic} className="flex-1">
                 Активировать
               </Button>
             </div>

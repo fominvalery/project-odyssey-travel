@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { AddObjectWizard, type ObjectData } from "@/components/AddObjectWizard"
 import ObjectCard from "./ObjectCard"
+import ListingsBanner from "./ListingsBanner"
+
+const FREE_LIMIT = 3
 
 interface Props {
   objects: ObjectData[]
@@ -22,6 +25,11 @@ interface Props {
   objSearch: string
   setObjSearch: (v: string) => void
   userId: string
+  isBasic?: boolean
+  listingsUsed?: number
+  listingsExtra?: number
+  userEmail?: string
+  userName?: string
 }
 
 export default function DashboardObjects({
@@ -29,8 +37,17 @@ export default function DashboardObjects({
   editingObject, onEdit, onDelete, onWizardSaved, onWizardClose,
   catFilter, setCatFilter, statusFilter, setStatusFilter,
   objSearch, setObjSearch, userId,
+  isBasic = false, listingsUsed = 0, listingsExtra = 0,
+  userEmail = "", userName = "",
 }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+
+  const canAddListing = !isBasic || (listingsUsed < FREE_LIMIT + listingsExtra)
+
+  function handleAddObject() {
+    if (!canAddListing) return
+    setShowWizard(true)
+  }
 
   const filtered = objects.filter(o => {
     const matchCat = catFilter === "Все" || o.type === catFilter
@@ -52,12 +69,24 @@ export default function DashboardObjects({
         />
       )}
       <div className="p-6 md:p-8 max-w-7xl">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-5">
           <h1 className="text-2xl font-bold">Объекты</h1>
-          <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
-            <Icon name="Plus" className="h-4 w-4 mr-2" /> Добавить объект
-          </Button>
+          {!isBasic && (
+            <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
+              <Icon name="Plus" className="h-4 w-4 mr-2" /> Добавить объект
+            </Button>
+          )}
         </div>
+
+        {isBasic && (
+          <ListingsBanner
+            listingsUsed={listingsUsed}
+            listingsExtra={listingsExtra}
+            userEmail={userEmail}
+            userName={userName}
+            onAddListingClick={handleAddObject}
+          />
+        )}
 
         {/* Статистика */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

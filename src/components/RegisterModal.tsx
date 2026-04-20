@@ -11,7 +11,7 @@ import func2url from "../../backend/func2url.json"
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 
 const planLabels: Record<string, { label: string; color: string; price: string }> = {
-  green: { label: "Грин", color: "text-green-400 bg-green-500/10 border-green-500/20", price: "Бесплатно" },
+  basic: { label: "Базовый", color: "text-green-400 bg-green-500/10 border-green-500/20", price: "Бесплатно" },
   pro: { label: "Про", color: "text-violet-400 bg-violet-500/10 border-violet-500/20", price: "4 900 ₽/мес" },
   business: { label: "Бизнес", color: "text-amber-400 bg-amber-500/10 border-amber-500/20", price: "14 900 ₽/мес" },
 }
@@ -24,10 +24,10 @@ interface RegisterModalProps {
   planId?: string
 }
 
-export function RegisterModal({ open, onOpenChange, planId = "green" }: RegisterModalProps) {
+export function RegisterModal({ open, onOpenChange, planId = "basic" }: RegisterModalProps) {
   const { register, login: ctxLogin } = useAuthContext()
   const navigate = useNavigate()
-  const plan = planLabels[planId] ?? planLabels.green
+  const plan = planLabels[planId] ?? planLabels.basic
 
   const [view, setView] = useState<View>("register")
   const [loading, setLoading] = useState(false)

@@ -36,8 +36,8 @@ function mapFromServer(o: Record<string, unknown>): ObjectData {
 export default function Dashboard() {
   const { user, updateProfile, logout } = useAuthContext()
   const navigate = useNavigate()
-  const isResident = !user?.status || user?.status === "resident"
-  const [section, setSection] = useState<Section>(isResident ? "referral" : "dashboard")
+  const isBasic = !user?.status || user?.status === "basic"
+  const [section, setSection] = useState<Section>(isBasic ? "objects" : "dashboard")
   const [form, setForm] = useState({ name: user?.name ?? "", phone: user?.phone ?? "", company: user?.company ?? "" })
   const [saved, setSaved] = useState(false)
   const [objects, setObjects] = useState<ObjectData[]>([])
@@ -153,6 +153,11 @@ export default function Dashboard() {
             objSearch={objSearch}
             setObjSearch={setObjSearch}
             userId={user.id}
+            isBasic={isBasic}
+            listingsUsed={user.listingsUsed ?? objects.length}
+            listingsExtra={user.listingsExtra ?? 0}
+            userEmail={user.email}
+            userName={user.name}
           />
         )}
 

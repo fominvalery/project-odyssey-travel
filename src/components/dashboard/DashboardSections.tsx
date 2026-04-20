@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 
 const PLAN_LABELS: Record<string, string> = {
-  green: "Грин",
+  basic: "Базовый",
   pro: "ПРО",
   proplus: "Про+",
   business: "Бизнес",
@@ -138,10 +138,10 @@ export function DashboardReferral({ userId }: ReferralProps) {
 
 // --- Profile ---
 
-type UserStatus = "resident" | "broker" | "agency"
+type UserStatus = "basic" | "broker" | "agency"
 
 const STATUS_OPTIONS: { value: UserStatus; label: string; icon: string; desc: string }[] = [
-  { value: "resident", label: "Резидент",            icon: "User",      desc: "По умолчанию" },
+  { value: "basic",    label: "Базовый",              icon: "User",      desc: "По умолчанию" },
   { value: "broker",   label: "Брокер / Собственник", icon: "Briefcase", desc: "Профессиональный игрок" },
   { value: "agency",   label: "Агентство / Компания", icon: "Building2", desc: "Крупный игрок" },
 ]

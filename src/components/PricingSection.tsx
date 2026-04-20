@@ -5,24 +5,22 @@ import { RegisterModal } from "@/components/RegisterModal"
 
 const plans = [
   {
-    id: "green",
-    name: "Green",
+    id: "basic",
+    name: "Базовый",
     badge: null,
     price: "Бесплатно",
     period: "навсегда",
-    description: "Для частных риелторов и тех, кто хочет попробовать платформу",
+    description: "3 объявления бесплатно каждый месяц + докупка по необходимости",
     color: "border-green-500/30",
     accentColor: "text-green-400",
     badgeBg: "",
     buttonClass: "bg-[#252525] text-white hover:bg-[#2f2f2f]",
     features: [
-      { text: "Размещение объектов без ограничений", included: true },
-      { text: "CRM и воронка продаж", included: true },
-      { text: "Дашборд", included: true },
-      { text: "Аналитика", included: true },
+      { text: "3 объявления бесплатно каждый месяц", included: true },
+      { text: "Профиль участника платформы", included: true },
       { text: "Реферальная программа", included: true },
-      { text: "Архив", included: true },
-      { text: "Размещение объектов на Маркетплейс", included: true },
+      { text: "Поддержка", included: true },
+      { text: "Маркетплейс", included: true },
     ],
   },
   {
@@ -82,7 +80,7 @@ const constructorFeatures = [
 
 export function PricingSection() {
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState("green")
+  const [selectedPlan, setSelectedPlan] = useState("basic")
 
   function openModal(planId: string) {
     setSelectedPlan(planId)
@@ -142,7 +140,7 @@ export function PricingSection() {
               className={`w-full rounded-full ${plan.buttonClass}`}
               onClick={() => openModal(plan.id)}
             >
-              {plan.id === "green" ? "Начать бесплатно" : "Подключить"}
+              {plan.id === "basic" ? "Начать бесплатно" : "Подключить"}
             </Button>
           </div>
         ))}
@@ -177,7 +175,7 @@ export function PricingSection() {
         </div>
 
         <div className="mt-6 pt-6 border-t border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">Стоимость рассчитывается индивидуально — от 4 900 ₽/мес</p>
+          <p className="text-sm text-gray-500">Стоимость рассчитывается индивидуально — от 199 ₽</p>
           <Button
             className="rounded-full border border-violet-500 text-violet-400 bg-transparent hover:bg-violet-500/10 px-6"
             onClick={() => openModal("constructor")}
