@@ -95,7 +95,7 @@ export function Header() {
         )}
       </header>
 
-      <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="green" />
+      <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="basic" />
       <LoginModal open={loginOpen} onOpenChange={setLoginOpen} onRegister={() => { setLoginOpen(false); setRegisterOpen(true) }} />
     </>
   )

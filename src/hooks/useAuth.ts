@@ -14,6 +14,7 @@ export interface UserProfile {
   listingsPeriodStart?: string
   avatar: string | null
   createdAt: string
+  isSuperadmin?: boolean
 }
 
 const STORAGE_KEY = "estatepro_user"
@@ -76,6 +77,7 @@ export function useAuth() {
         listingsPeriodStart: userData.listings_period_start || new Date().toISOString(),
         avatar: userData.avatar_url || userData.avatar || null,
         createdAt: userData.created_at || new Date().toISOString(),
+        isSuperadmin: userData.is_superadmin || false,
       }
       if (data.access_token) {
         localStorage.setItem("estatepro_access_token", data.access_token)

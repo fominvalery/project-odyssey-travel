@@ -44,7 +44,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
   const { orgs, reload: reloadOrgs } = useMyOrgs()
   const [statusModalOpen, setStatusModalOpen] = useState(false)
 
-  const isBasic = !user.status || user.status === "basic"
+  const isBasic = !user.isSuperadmin && (!user.status || user.status === "basic")
   const navItems = isBasic ? basicNavItems : fullNavItems
 
   return (

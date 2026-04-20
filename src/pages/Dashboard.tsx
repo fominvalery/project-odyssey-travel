@@ -41,7 +41,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { toast } = useToast()
-  const isBasic = !user?.status || user?.status === "basic"
+  const isBasic = !user?.isSuperadmin && (!user?.status || user?.status === "basic")
   const [section, setSection] = useState<Section>(isBasic ? "objects" : "dashboard")
   const [form, setForm] = useState({ name: user?.name ?? "", phone: user?.phone ?? "", company: user?.company ?? "" })
   const [saved, setSaved] = useState(false)
