@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { PaymentButton } from "@/components/extensions/yookassa/PaymentButton"
+import { useYookassa } from "@/components/extensions/yookassa/useYookassa"
 import func2url from "../../../backend/func2url.json"
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
@@ -48,6 +48,31 @@ interface Props {
 export default function ListingsBanner({ listingsUsed, listingsExtra, userEmail, userName, userId, onAddListingClick }: Props) {
   const [buyOpen, setBuyOpen] = useState(false)
   const [qty, setQty] = useState(5)
+  const [payError, setPayError] = useState("")
+
+  const { createPayment, isLoading } = useYookassa({
+    apiUrl: YOOKASSA_URL,
+    onError: (e) => setPayError(e.message),
+  })
+
+  async function handlePay() {
+    setPayError("")
+    const discount = getDiscount(qty)
+    const totalPrice = calcPrice(qty)
+    const response = await createPayment({
+      amount: totalPrice,
+      userEmail,
+      userName,
+      userId,
+      orderType: "listings",
+      description: `Объявления ×${qty} — тариф Базовый`,
+      returnUrl: getReturnUrl(),
+      cartItems: [{ id: "ads", name: `Объявления ×${qty}`, quantity: qty, price: Math.round(PRICE_PER_AD * (1 - discount / 100)) }],
+    })
+    if (response?.payment_url) {
+      window.location.href = response.payment_url
+    }
+  }
 
   const total = listingsUsed
   const freeLeft = Math.max(0, FREE_LIMIT - Math.min(total, FREE_LIMIT))
@@ -210,6 +235,8 @@ export default function ListingsBanner({ listingsUsed, listingsExtra, userEmail,
               </div>
             </div>
 
+            {payError && <p className="text-xs text-red-400">{payError}</p>}
+
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -218,19 +245,13 @@ export default function ListingsBanner({ listingsUsed, listingsExtra, userEmail,
               >
                 Отмена
               </Button>
-              <PaymentButton
-                apiUrl={YOOKASSA_URL}
-                amount={totalPrice}
-                userEmail={userEmail}
-                userName={userName}
-                userId={userId}
-                orderType="listings"
-                description={`Объявления ×${qty} — тариф Базовый`}
-                returnUrl={getReturnUrl()}
-                cartItems={[{ id: "ads", name: `Объявления ×${qty}`, quantity: qty, price: Math.round(PRICE_PER_AD * (1 - discount / 100)) }]}
-                buttonText={`Оплатить ${totalPrice.toLocaleString("ru-RU")} ₽`}
+              <Button
+                onClick={handlePay}
+                disabled={isLoading}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              />
+              >
+                {isLoading ? "Загрузка..." : `Оплатить ${totalPrice.toLocaleString("ru-RU")} ₽`}
+              </Button>
             </div>
           </div>
         </DialogContent>

@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { PaymentButton } from "@/components/extensions/yookassa/PaymentButton"
+import { useYookassa } from "@/components/extensions/yookassa/useYookassa"
 import func2url from "../../backend/func2url.json"
 
 function getReturnUrl(): string {
@@ -108,12 +108,37 @@ interface BuyAdsDialogProps {
 
 function BuyAdsDialog({ open, onClose, userEmail = "", userName = "" }: BuyAdsDialogProps) {
   const [qty, setQty] = useState(5)
-  const [email, setEmail] = useState(userEmail)
+  const [email, setEmail] = useState("")
+  const [errorMsg, setErrorMsg] = useState("")
   const total = calcPrice(qty)
   const discount = getDiscount(qty)
   const currentTier = DISCOUNT_TIERS.find((t) => qty >= t.from && qty <= t.to) ?? DISCOUNT_TIERS[DISCOUNT_TIERS.length - 1]
   const effectiveEmail = userEmail || email
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(effectiveEmail)
+
+  const { createPayment, isLoading } = useYookassa({
+    apiUrl: YOOKASSA_URL,
+    onError: (e) => setErrorMsg(e.message),
+  })
+
+  async function handlePay() {
+    setErrorMsg("")
+    if (!effectiveEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(effectiveEmail)) {
+      setErrorMsg("Введите корректный email")
+      return
+    }
+    const response = await createPayment({
+      amount: total,
+      userEmail: effectiveEmail,
+      userName,
+      description: `Объявления ×${qty} — тариф Базовый`,
+      returnUrl: getReturnUrl(),
+      cartItems: [{ id: "ads", name: `Объявления ×${qty}`, quantity: qty, price: Math.round(PRICE_PER_AD * (1 - discount / 100)) }],
+      orderType: "listings",
+    })
+    if (response?.payment_url) {
+      window.location.href = response.payment_url
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -188,17 +213,20 @@ function BuyAdsDialog({ open, onClose, userEmail = "", userName = "" }: BuyAdsDi
             </div>
           </div>
 
-          {!userEmail && (
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Email для чека</label>
-              <Input
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
-              />
-            </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Email для чека</label>
+            <Input
+              type="email"
+              placeholder="your@email.com"
+              value={userEmail || email}
+              readOnly={!!userEmail}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
+            />
+          </div>
+
+          {errorMsg && (
+            <p className="text-xs text-red-400">{errorMsg}</p>
           )}
 
           <div className="flex gap-2">
@@ -209,18 +237,13 @@ function BuyAdsDialog({ open, onClose, userEmail = "", userName = "" }: BuyAdsDi
             >
               Отмена
             </Button>
-            <PaymentButton
-              apiUrl={YOOKASSA_URL}
-              amount={total}
-              userEmail={effectiveEmail}
-              userName={userName}
-              description={`Объявления ×${qty} — тариф Базовый`}
-              returnUrl={getReturnUrl()}
-              cartItems={[{ id: "ads", name: `Объявления ×${qty}`, quantity: qty, price: Math.round(PRICE_PER_AD * (1 - discount / 100)) }]}
-              buttonText={`Оплатить ${total.toLocaleString("ru-RU")} ₽`}
-              disabled={!isEmailValid}
+            <Button
+              onClick={handlePay}
+              disabled={isLoading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-            />
+            >
+              {isLoading ? "Загрузка..." : `Оплатить ${total.toLocaleString("ru-RU")} ₽`}
+            </Button>
           </div>
         </div>
       </DialogContent>
