@@ -14,6 +14,12 @@ const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 const FREE_LIMIT = 3
 const PRICE_PER_AD = 199
 
+function getReturnUrl(): string {
+  const origin = window.location.origin
+  const base = origin.startsWith("http://") ? origin.replace("http://", "https://") : origin
+  return `${base}/dashboard`
+}
+
 const DISCOUNT_TIERS = [
   { from: 1,  to: 9,   discount: 0 },
   { from: 10, to: 24,  discount: 10 },
@@ -217,8 +223,8 @@ export default function ListingsBanner({ listingsUsed, listingsExtra, userEmail,
                 userEmail={userEmail}
                 userName={userName}
                 description={`Объявления ×${qty} — тариф Базовый`}
-                returnUrl={`${window.location.origin}/dashboard`}
-                cartItems={[{ name: `Объявления ×${qty}`, quantity: 1, price: totalPrice }]}
+                returnUrl={getReturnUrl()}
+                cartItems={[{ id: "ads", name: `Объявления ×${qty}`, quantity: qty, price: Math.round(PRICE_PER_AD * (1 - discount / 100)) }]}
                 buttonText={`Оплатить ${totalPrice.toLocaleString("ru-RU")} ₽`}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               />

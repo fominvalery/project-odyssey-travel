@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
 import {
@@ -10,6 +11,12 @@ import {
 } from "@/components/ui/dialog"
 import { PaymentButton } from "@/components/extensions/yookassa/PaymentButton"
 import func2url from "../../backend/func2url.json"
+
+function getReturnUrl(): string {
+  const origin = window.location.origin
+  const base = origin.startsWith("http://") ? origin.replace("http://", "https://") : origin
+  return `${base}/dashboard`
+}
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 
@@ -101,9 +108,12 @@ interface BuyAdsDialogProps {
 
 function BuyAdsDialog({ open, onClose, userEmail = "", userName = "" }: BuyAdsDialogProps) {
   const [qty, setQty] = useState(5)
+  const [email, setEmail] = useState(userEmail)
   const total = calcPrice(qty)
   const discount = getDiscount(qty)
   const currentTier = DISCOUNT_TIERS.find((t) => qty >= t.from && qty <= t.to) ?? DISCOUNT_TIERS[DISCOUNT_TIERS.length - 1]
+  const effectiveEmail = userEmail || email
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(effectiveEmail)
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -178,6 +188,19 @@ function BuyAdsDialog({ open, onClose, userEmail = "", userName = "" }: BuyAdsDi
             </div>
           </div>
 
+          {!userEmail && (
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Email для чека</label>
+              <Input
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
+              />
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -189,12 +212,13 @@ function BuyAdsDialog({ open, onClose, userEmail = "", userName = "" }: BuyAdsDi
             <PaymentButton
               apiUrl={YOOKASSA_URL}
               amount={total}
-              userEmail={userEmail}
+              userEmail={effectiveEmail}
               userName={userName}
               description={`Объявления ×${qty} — тариф Базовый`}
-              returnUrl={`${window.location.origin}/dashboard`}
-              cartItems={[{ name: `Объявления ×${qty}`, quantity: 1, price: total }]}
+              returnUrl={getReturnUrl()}
+              cartItems={[{ id: "ads", name: `Объявления ×${qty}`, quantity: qty, price: Math.round(PRICE_PER_AD * (1 - discount / 100)) }]}
               buttonText={`Оплатить ${total.toLocaleString("ru-RU")} ₽`}
+              disabled={!isEmailValid}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             />
           </div>
