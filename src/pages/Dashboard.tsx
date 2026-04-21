@@ -10,6 +10,7 @@ import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
 import DashboardSupport from "@/components/dashboard/DashboardSupport"
 import AiChatBubble from "@/components/AiChatBubble"
 import { useToast } from "@/hooks/use-toast"
+import { addNotification } from "@/components/dashboard/NotificationBell"
 import func2url from "../../backend/func2url.json"
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
@@ -53,7 +54,7 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState("Все")
   const [objSearch, setObjSearch] = useState("")
 
-  // Проверяем возврат после оплаты ЮКассы
+  // Проверяем возврат после оплаты — докупка объявлений
   useEffect(() => {
     const pendingRaw = localStorage.getItem("yookassa_pending_order")
     if (!pendingRaw || !user?.id) return
@@ -62,13 +63,11 @@ export default function Dashboard() {
     const paymentId = pending.payment_id
     if (!paymentId) return
 
-    // Проверяем статус платежа
     fetch(`${YOOKASSA_URL}?action=check&payment_id=${paymentId}`)
       .then(r => r.json())
       .then(data => {
         if (data.status === "succeeded") {
           localStorage.removeItem("yookassa_pending_order")
-          // Обновляем listings_extra локально из ответа или перезагружаем профиль
           const qty = pending.qty || 0
           if (qty > 0) {
             updateProfile({ listingsExtra: (user.listingsExtra ?? 0) + qty })
@@ -80,6 +79,44 @@ export default function Dashboard() {
           setSection("objects")
         } else if (data.status === "canceled") {
           localStorage.removeItem("yookassa_pending_order")
+          toast({ title: "Оплата отменена", description: "Попробуйте снова", variant: "destructive" })
+        }
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
+
+  // Проверяем возврат после оплаты тарифа Клуб
+  useEffect(() => {
+    const pendingRaw = localStorage.getItem("yookassa_pending_club")
+    if (!pendingRaw || !user?.id) return
+
+    const pending = JSON.parse(pendingRaw)
+    const paymentId = pending.payment_id
+    if (!paymentId) return
+
+    fetch(`${YOOKASSA_URL}?action=check&payment_id=${paymentId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === "succeeded") {
+          localStorage.removeItem("yookassa_pending_club")
+          // Сохраняем дату истечения (через 30 дней)
+          const expiry = new Date()
+          expiry.setDate(expiry.getDate() + 30)
+          localStorage.setItem("k24_club_expiry", expiry.toISOString())
+          updateProfile({ status: "broker" })
+          addNotification({
+            type: "payment",
+            title: "Тариф Клуб активирован",
+            body: "Добро пожаловать в Клуб! Все возможности открыты на 30 дней.",
+          })
+          toast({
+            title: "Тариф Клуб активирован!",
+            description: "Добро пожаловать в Клуб — все возможности открыты",
+          })
+          setSection("dashboard")
+        } else if (data.status === "canceled") {
+          localStorage.removeItem("yookassa_pending_club")
           toast({ title: "Оплата отменена", description: "Попробуйте снова", variant: "destructive" })
         }
       })

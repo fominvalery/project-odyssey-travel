@@ -5,6 +5,8 @@ import Icon from "@/components/ui/icon"
 import { useMyOrgs } from "@/hooks/useMyOrgs"
 import AddStatusModal from "@/components/agency/AddStatusModal"
 import { STATUS_LABELS } from "@/hooks/useAuth"
+import { ClubPayDialog } from "@/components/pricing/ClubPayDialog"
+import NotificationBell from "@/components/dashboard/NotificationBell"
 
 type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
 
@@ -28,30 +30,43 @@ const fullNavItems = [
 interface Props {
   section: Section
   setSection: (s: Section) => void
-  user: { name: string; email: string; plan: string; avatar: string | null; status?: string }
+  user: { name: string; email: string; plan: string; avatar: string | null; status?: string; id?: string }
   initials: string
   onLogout: () => void
 }
 
 export default function DashboardSidebar({ section, setSection, user, initials, onLogout }: Props) {
   const navigate = useNavigate()
-  const { orgs, reload: reloadOrgs } = useMyOrgs()
+  const { orgs } = useMyOrgs()
   const [statusModalOpen, setStatusModalOpen] = useState(false)
+  const [renewOpen, setRenewOpen] = useState(false)
 
   const isBasic = !user.isSuperadmin && (!user.status || user.status === "basic")
+  const isBroker = user.status === "broker" || user.status === "agency"
   const navItems = isBasic ? basicNavItems : fullNavItems
+
+  // Дата истечения тарифа (хранится в localStorage при оплате)
+  const clubExpiry = localStorage.getItem("k24_club_expiry")
+  const daysLeft = clubExpiry
+    ? Math.ceil((new Date(clubExpiry).getTime() - Date.now()) / 86400000)
+    : null
+  const expiryWarning = daysLeft !== null && daysLeft <= 4
 
   return (
     <>
       {/* Боковое меню */}
       <aside className="hidden md:flex flex-col w-60 border-r border-[#1f1f1f] bg-[#0d0d0d] py-6 px-4 shrink-0">
-        <button onClick={() => navigate("/")} className="flex items-center gap-2 mb-8 px-2">
-          <img
-            src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/755cddaf-8b60-449f-82bf-27fe2c9dab48.jpg"
-            alt="Кабинет-24"
-            className="h-8 w-auto object-contain"
-          />
-        </button>
+        {/* Шапка: логотип + колокольчик */}
+        <div className="flex items-center justify-between mb-8 px-2">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2">
+            <img
+              src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/755cddaf-8b60-449f-82bf-27fe2c9dab48.jpg"
+              alt="Кабинет-24"
+              className="h-8 w-auto object-contain"
+            />
+          </button>
+          <NotificationBell userId={user.id} />
+        </div>
 
         <nav className="flex flex-col gap-1 flex-1">
           {navItems.map((item) => (
@@ -118,13 +133,37 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             </div>
           )}
 
-          <button
-            onClick={() => setStatusModalOpen(true)}
-            className="w-full flex items-center gap-2 px-3 py-2 mb-3 rounded-xl text-xs font-medium bg-gradient-to-r from-violet-500/15 to-pink-500/15 border border-violet-500/30 text-violet-200 hover:from-violet-500/25 hover:to-pink-500/25 transition-colors"
-          >
-            <Icon name="Plus" className="h-3.5 w-3.5" />
-            Добавить статус
-          </button>
+          {/* Плашка тарифа Клуб (для broker) */}
+          {isBroker && (
+            <button
+              onClick={() => setRenewOpen(true)}
+              className={`w-full flex items-center justify-between px-3 py-2 mb-3 rounded-xl text-xs font-medium transition-colors ${
+                expiryWarning
+                  ? "bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/15"
+                  : "bg-blue-500/10 border border-blue-500/20 text-blue-300 hover:bg-blue-500/15"
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <Icon name="Zap" className="h-3.5 w-3.5" />
+                <span>Клуб</span>
+                {expiryWarning && daysLeft !== null && (
+                  <span className="text-amber-400">· {daysLeft === 0 ? "сегодня" : `${daysLeft}д`}</span>
+                )}
+              </div>
+              <span className="opacity-60">990 ₽/мес</span>
+            </button>
+          )}
+
+          {/* Кнопка добавить статус (для basic) */}
+          {isBasic && (
+            <button
+              onClick={() => setStatusModalOpen(true)}
+              className="w-full flex items-center gap-2 px-3 py-2 mb-3 rounded-xl text-xs font-medium bg-gradient-to-r from-violet-500/15 to-pink-500/15 border border-violet-500/30 text-violet-200 hover:from-violet-500/25 hover:to-pink-500/25 transition-colors"
+            >
+              <Icon name="Plus" className="h-3.5 w-3.5" />
+              Вступить в Клуб
+            </button>
+          )}
 
           <div className="flex items-center gap-3 px-2 mb-3">
             <Avatar className="h-8 w-8">
@@ -195,7 +234,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
               support: "Headphones",
             }
             const labels: Record<string, string> = {
-              dashboard: "Главная",
+              dashboard: "Дашборд",
               objects: "Объекты",
               analytics: "Аналитика",
               crm: "CRM",
@@ -205,7 +244,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
               <button
                 key={id}
                 onClick={() => setSection(id)}
-                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${
+                className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl text-xs transition-colors ${
                   section === id ? "text-blue-400" : "text-gray-500"
                 }`}
               >
@@ -220,8 +259,11 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
       <AddStatusModal
         open={statusModalOpen}
         onClose={() => setStatusModalOpen(false)}
-        onCreated={reloadOrgs}
+        onCreated={() => {}}
       />
+
+      {/* Диалог продления тарифа Клуб */}
+      <ClubPayDialog open={renewOpen} onClose={() => setRenewOpen(false)} activateOnSuccess />
     </>
   )
 }
