@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "GET без параметров — ошибка",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400
+    },
+    {
+      "name": "OPTIONS CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}

@@ -7,6 +7,7 @@ interface ObjectSidebarProps {
   showContacts: boolean
   setShowContacts: (v: boolean) => void
   onShareClick: () => void
+  onChatClick: () => void
 }
 
 export default function ObjectSidebar({
@@ -14,6 +15,7 @@ export default function ObjectSidebar({
   showContacts,
   setShowContacts,
   onShareClick,
+  onChatClick,
 }: ObjectSidebarProps) {
   return (
     <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-6">
@@ -42,7 +44,7 @@ export default function ObjectSidebar({
           {showContacts && obj.owner.phone ? (
             <a
               href={`tel:${obj.owner.phone}`}
-              className="flex items-center justify-center gap-2 w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-3 font-medium transition-colors"
+              className="flex items-center justify-center gap-2 w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-3 font-medium transition-colors mb-2"
             >
               <Icon name="Phone" className="h-4 w-4" />
               {obj.owner.phone}
@@ -50,13 +52,21 @@ export default function ObjectSidebar({
           ) : (
             <Button
               onClick={() => setShowContacts(true)}
-              className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3"
+              className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 mb-2"
               disabled={!obj.owner.phone}
             >
               <Icon name="Phone" className="h-4 w-4 mr-2" />
               {obj.owner.phone ? "Показать телефон" : "Контакты не указаны"}
             </Button>
           )}
+
+          <button
+            onClick={onChatClick}
+            className="flex items-center justify-center gap-2 w-full rounded-xl border border-blue-500/50 text-blue-400 hover:bg-blue-600/10 hover:border-blue-400 py-2.5 text-sm font-medium transition-all"
+          >
+            <Icon name="MessageCircle" className="h-4 w-4" />
+            Перейти в чат
+          </button>
         </div>
       )}
 

@@ -8,6 +8,7 @@ import ShareDialog from "@/components/ShareDialog"
 import ObjectGallery from "@/components/object-detail/ObjectGallery"
 import ObjectSidebar from "@/components/object-detail/ObjectSidebar"
 import ObjectLeadForm from "@/components/object-detail/ObjectLeadForm"
+import ObjectChatModal from "@/components/object-detail/ObjectChatModal"
 import { ObjectDetailData } from "@/components/object-detail/types"
 import func2url from "../../backend/func2url.json"
 
@@ -24,6 +25,7 @@ export default function ObjectDetail() {
   const [leadSent, setLeadSent] = useState(false)
   const [leadError, setLeadError] = useState("")
   const [shareOpen, setShareOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
 
   async function handleSendLead(e: React.FormEvent) {
     e.preventDefault()
@@ -126,6 +128,7 @@ export default function ObjectDetail() {
               showContacts={showContacts}
               setShowContacts={setShowContacts}
               onShareClick={() => setShareOpen(true)}
+              onChatClick={() => setChatOpen(true)}
             />
 
             {shareOpen && (
@@ -133,6 +136,17 @@ export default function ObjectDetail() {
                 title={obj.title}
                 url={typeof window !== "undefined" ? window.location.href : ""}
                 onClose={() => setShareOpen(false)}
+              />
+            )}
+
+            {chatOpen && (
+              <ObjectChatModal
+                objectId={obj.id}
+                objectTitle={obj.title}
+                objectPrice={obj.price}
+                objectPhoto={obj.photos?.[0]}
+                ownerId={obj.user_id}
+                onClose={() => setChatOpen(false)}
               />
             )}
 
