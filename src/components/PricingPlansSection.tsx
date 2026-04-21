@@ -83,13 +83,13 @@ export function PricingPlansSection() {
               ))}
             </ul>
 
-            {plan.id === "basic" && (
+            {plan.id === "basic" && user && (
               <button
                 onClick={() => setBuyAdsOpen(true)}
                 className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors mt-1"
               >
                 <Icon name="Plus" className="h-3.5 w-3.5" />
-                Докупить дополнительные объявления — от 199 ₽
+                Докупить объявления
               </button>
             )}
 
