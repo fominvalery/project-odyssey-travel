@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
@@ -12,6 +12,7 @@ import func2url from "../../../backend/func2url.json"
 import { LeadCard, FUNNEL_STAGES, type FunnelStage, type Lead } from "./LeadCard"
 import { KanbanCard } from "./KanbanCard"
 import { LeadForm } from "./LeadForm"
+import { addNotification } from "@/components/dashboard/NotificationBell"
 
 const ALL_STAGES: FunnelStage[] = FUNNEL_STAGES.map(s => s.stage)
 
@@ -78,17 +79,42 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [createOpen, setCreateOpen] = useState(false)
 
-  const loadLeads = useCallback(async () => {
+  // Храним id известных лидов для определения новых
+  const knownIdsRef = useRef<Set<string> | null>(null)
+
+  const loadLeads = useCallback(async (silent = false) => {
     if (!userId) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       const r = await fetch(`${func2url.leads}?owner_id=${encodeURIComponent(userId)}`)
       const data = await r.json()
-      setLeads(Array.isArray(data.leads) ? (data.leads as Lead[]) : [])
+      const fresh: Lead[] = Array.isArray(data.leads) ? (data.leads as Lead[]) : []
+
+      // Первая загрузка — просто запоминаем id
+      if (knownIdsRef.current === null) {
+        knownIdsRef.current = new Set(fresh.map(l => l.id))
+        setLeads(fresh)
+        return
+      }
+
+      // Последующие — ищем новые
+      const newLeads = fresh.filter(l => !knownIdsRef.current!.has(l.id))
+      if (newLeads.length > 0) {
+        newLeads.forEach(lead => {
+          addNotification({
+            type: "lead",
+            title: "Новый лид",
+            body: `${lead.name || "Без имени"}${lead.object_title ? ` · ${lead.object_title}` : ""}${lead.phone ? ` · ${lead.phone}` : ""}`,
+          })
+        })
+        knownIdsRef.current = new Set(fresh.map(l => l.id))
+      }
+
+      setLeads(fresh)
     } catch {
-      setLeads([])
+      if (!silent) setLeads([])
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [userId])
 
@@ -106,8 +132,13 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
   useEffect(() => {
     loadLeads()
     loadOverdue()
-    const t = setInterval(loadOverdue, 60000)
-    return () => clearInterval(t)
+    // Polling: новые лиды каждые 30 сек, просроченные каждые 60 сек
+    const tLeads = setInterval(() => loadLeads(true), 30000)
+    const tOverdue = setInterval(loadOverdue, 60000)
+    return () => {
+      clearInterval(tLeads)
+      clearInterval(tOverdue)
+    }
   }, [loadLeads, loadOverdue])
 
   async function handleStageChange(id: string, stage: FunnelStage) {
@@ -188,7 +219,7 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
             <Icon name="UserPlus" className="h-4 w-4 mr-2" /> Добавить клиента
           </Button>
           <Button
-            onClick={() => { loadLeads(); loadOverdue() }}
+            onClick={() => { loadLeads(false); loadOverdue() }}
             variant="outline"
             className="rounded-xl border-[#2a2a2a] bg-transparent text-white hover:bg-[#1a1a1a]"
           >
@@ -299,6 +330,12 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
             ownerId={userId}
             onSave={(lead) => {
               setLeads(prev => [lead, ...prev])
+              knownIdsRef.current?.add(lead.id)
+              addNotification({
+                type: "lead",
+                title: "Лид добавлен",
+                body: `${lead.name || "Без имени"}${lead.object_title ? ` · ${lead.object_title}` : ""}`,
+              })
               setCreateOpen(false)
             }}
             onCancel={() => setCreateOpen(false)}
