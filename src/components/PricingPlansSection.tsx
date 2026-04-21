@@ -11,8 +11,10 @@ import {
 import { plans, type Plan } from "@/components/pricing/pricingPlansData"
 import { BuyAdsDialog } from "@/components/pricing/BuyAdsDialog"
 import { ClubPayDialog } from "@/components/pricing/ClubPayDialog"
+import { useAuthContext } from "@/context/AuthContext"
 
 export function PricingPlansSection() {
+  const { user } = useAuthContext()
   const [registerOpen, setRegisterOpen] = useState(false)
   const [comingSoonPlan, setComingSoonPlan] = useState<string | null>(null)
   const [buyAdsOpen, setBuyAdsOpen] = useState(false)
@@ -20,7 +22,12 @@ export function PricingPlansSection() {
 
   function handlePlanClick(plan: Plan) {
     if (plan.id === "pro") {
-      setClubPayOpen(true)
+      // Авторизован → форма оплаты, нет → регистрация
+      if (user) {
+        setClubPayOpen(true)
+      } else {
+        setRegisterOpen(true)
+      }
     } else if (plan.comingSoon) {
       setComingSoonPlan(plan.name)
     } else {
