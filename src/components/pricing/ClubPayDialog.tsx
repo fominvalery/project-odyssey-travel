@@ -15,10 +15,9 @@ import { YOOKASSA_URL, getReturnUrl } from "./pricingPlansData"
 interface ClubPayDialogProps {
   open: boolean
   onClose: () => void
-  activateOnSuccess?: boolean
 }
 
-export function ClubPayDialog({ open, onClose, activateOnSuccess }: ClubPayDialogProps) {
+export function ClubPayDialog({ open, onClose }: ClubPayDialogProps) {
   const { user } = useAuthContext()
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
@@ -50,9 +49,6 @@ export function ClubPayDialog({ open, onClose, activateOnSuccess }: ClubPayDialo
       userId: user?.id,
     })
     if (response?.payment_url) {
-      // Для активации Клуба — сохраняем в отдельный ключ и убираем стандартный pending
-      localStorage.removeItem("yookassa_pending_order")
-      localStorage.setItem("yookassa_pending_club", JSON.stringify({ payment_id: response.payment_id }))
       window.location.href = response.payment_url
     }
   }

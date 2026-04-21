@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
@@ -11,16 +10,17 @@ import {
 } from "@/components/ui/dialog"
 import { plans, type Plan } from "@/components/pricing/pricingPlansData"
 import { BuyAdsDialog } from "@/components/pricing/BuyAdsDialog"
+import { ClubPayDialog } from "@/components/pricing/ClubPayDialog"
 
 export function PricingPlansSection() {
-  const navigate = useNavigate()
   const [registerOpen, setRegisterOpen] = useState(false)
   const [comingSoonPlan, setComingSoonPlan] = useState<string | null>(null)
   const [buyAdsOpen, setBuyAdsOpen] = useState(false)
+  const [clubPayOpen, setClubPayOpen] = useState(false)
 
   function handlePlanClick(plan: Plan) {
     if (plan.id === "pro") {
-      navigate("/register")
+      setClubPayOpen(true)
     } else if (plan.comingSoon) {
       setComingSoonPlan(plan.name)
     } else {
@@ -76,18 +76,26 @@ export function PricingPlansSection() {
               ))}
             </ul>
 
-            {plan.id !== "basic" && (
-              <Button
-                onClick={() => handlePlanClick(plan)}
-                className={`mt-auto rounded-xl w-full ${
-                  plan.featured
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-[#1a1a1a] hover:bg-[#222] text-white border border-[#2a2a2a]"
-                }`}
+            {plan.id === "basic" && (
+              <button
+                onClick={() => setBuyAdsOpen(true)}
+                className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors mt-1"
               >
-                {plan.id === "pro" ? "Выбрать тариф" : "Узнать подробнее"}
-              </Button>
+                <Icon name="Plus" className="h-3.5 w-3.5" />
+                Докупить дополнительные объявления — от 199 ₽
+              </button>
             )}
+
+            <Button
+              onClick={() => handlePlanClick(plan)}
+              className={`mt-auto rounded-xl w-full ${
+                plan.featured
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "bg-[#1a1a1a] hover:bg-[#222] text-white border border-[#2a2a2a]"
+              }`}
+            >
+              {plan.id === "pro" ? "Выбрать тариф" : plan.comingSoon ? "Узнать подробнее" : "Начать бесплатно"}
+            </Button>
           </div>
         ))}
       </div>
@@ -146,6 +154,7 @@ export function PricingPlansSection() {
       </Dialog>
 
       <BuyAdsDialog open={buyAdsOpen} onClose={() => setBuyAdsOpen(false)} />
+      <ClubPayDialog open={clubPayOpen} onClose={() => setClubPayOpen(false)} />
     </section>
   )
 }
