@@ -1,6 +1,7 @@
 import { useState, useRef } from "react"
 import { Header } from "@/components/Header"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
 import { Footer } from "@/components/Footer"
@@ -84,13 +85,13 @@ export default function Referral() {
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <Button
+          <GlowButton
             onClick={() => setRegisterOpen(true)}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-base font-medium"
+            className="rounded-full px-8 py-3 text-base"
           >
             Стать партнёром
             <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
-          </Button>
+          </GlowButton>
           <Button
             onClick={scrollToCalc}
             variant="outline"

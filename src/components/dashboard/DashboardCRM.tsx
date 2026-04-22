@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import {
@@ -181,12 +182,12 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
               <Icon name="LayoutDashboard" className="h-4 w-4" />
             </button>
           </div>
-          <Button
+          <GlowButton
             onClick={() => setCreateOpen(true)}
-            className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
+            className="rounded-xl px-4 py-2 text-sm"
           >
             <Icon name="UserPlus" className="h-4 w-4 mr-2" /> Добавить клиента
-          </Button>
+          </GlowButton>
           <Button
             onClick={() => { loadLeads(); loadOverdue() }}
             variant="outline"

@@ -1,5 +1,6 @@
 import { useRef } from "react"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -74,9 +75,9 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
             <Label className="text-xs text-gray-400">Email</Label>
             <Input value={user.email} disabled className="bg-[#0a0a0a] border-[#1f1f1f] text-gray-600 cursor-not-allowed" />
           </div>
-          <Button type="submit" className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
+          <GlowButton type="submit" className="w-full rounded-xl py-2 text-sm">
             {saved ? <span className="flex items-center gap-2"><Icon name="CheckCircle" className="h-4 w-4" />Сохранено</span> : "Сохранить"}
-          </Button>
+          </GlowButton>
         </form>
       </div>
     </div>

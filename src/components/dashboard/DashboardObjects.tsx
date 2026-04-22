@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { AddObjectWizard, type ObjectData } from "@/components/AddObjectWizard"
@@ -73,9 +74,9 @@ export default function DashboardObjects({
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-2xl font-bold">Объекты</h1>
           {!isBasic && (
-            <Button onClick={() => setShowWizard(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm">
+            <GlowButton onClick={() => setShowWizard(true)} className="rounded-xl text-sm px-4 py-2">
               <Icon name="Plus" className="h-4 w-4 mr-2" /> Добавить объект
-            </Button>
+            </GlowButton>
           )}
         </div>
 

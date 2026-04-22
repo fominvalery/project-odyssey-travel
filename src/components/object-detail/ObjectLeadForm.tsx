@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 
 interface LeadFormState {
@@ -84,17 +85,17 @@ export default function ObjectLeadForm({
             <p className="text-xs text-red-400">{leadError}</p>
           )}
 
-          <Button
+          <GlowButton
             type="submit"
             disabled={sending}
-            className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
+            className="w-full rounded-xl py-2 text-sm disabled:opacity-60"
           >
             {sending ? (
               <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Отправка...</>
             ) : (
               <><Icon name="Send" className="h-4 w-4 mr-2" />Отправить заявку</>
             )}
-          </Button>
+          </GlowButton>
           <p className="text-[11px] text-gray-500 text-center">
             Нажимая «Отправить», вы соглашаетесь на обработку персональных данных
           </p>

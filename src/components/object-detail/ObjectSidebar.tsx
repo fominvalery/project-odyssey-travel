@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import { ObjectDetailData } from "./types"
 import { RegisterModal } from "@/components/RegisterModal"
@@ -63,9 +64,9 @@ export default function ObjectSidebar({
               {obj.owner.phone}
             </a>
           ) : (
-            <Button
+            <GlowButton
               onClick={handleShowPhone}
-              className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 mb-2"
+              className="w-full rounded-xl py-3 mb-2"
               disabled={!obj.owner.phone}
             >
               <Icon name="Phone" className="h-4 w-4 mr-2" />
@@ -74,7 +75,7 @@ export default function ObjectSidebar({
                 : !isAuthenticated
                 ? "Показать телефон"
                 : "Показать телефон"}
-            </Button>
+            </GlowButton>
           )}
 
           <button

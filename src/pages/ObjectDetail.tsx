@@ -4,6 +4,7 @@ import { useAuthContext } from "@/context/AuthContext"
 import { Header } from "@/components/Header"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
 import ObjectGallery from "@/components/object-detail/ObjectGallery"
@@ -98,9 +99,9 @@ export default function ObjectDetail() {
         <div className="py-32 text-center text-gray-400">
           <Icon name="SearchX" className="h-12 w-12 mx-auto mb-4 text-gray-600" />
           <p className="mb-6">{error || "Объект не найден"}</p>
-          <Button onClick={() => navigate("/marketplace")} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
+          <GlowButton onClick={() => navigate("/marketplace")} className="rounded-xl px-4 py-2 text-sm">
             <Icon name="ArrowLeft" className="h-4 w-4 mr-2" /> К каталогу
-          </Button>
+          </GlowButton>
         </div>
       </main>
     )

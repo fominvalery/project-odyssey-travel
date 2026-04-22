@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import {
   Dialog,
@@ -116,24 +117,22 @@ export default function ListingsBanner({ listingsUsed, listingsExtra, userEmail,
 
           <div className="flex items-center gap-2">
             {isLimitReached ? (
-              <Button
+              <GlowButton
                 onClick={() => setBuyOpen(true)}
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg"
+                className="rounded-lg text-xs px-3 py-1.5"
               >
                 <Icon name="Plus" className="h-3.5 w-3.5 mr-1.5" />
                 Докупить объявления
-              </Button>
+              </GlowButton>
             ) : (
               <>
-                <Button
+                <GlowButton
                   onClick={onAddListingClick}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg"
+                  className="rounded-lg text-xs px-3 py-1.5"
                 >
                   <Icon name="Plus" className="h-3.5 w-3.5 mr-1.5" />
                   Добавить объект
-                </Button>
+                </GlowButton>
                 <Button
                   onClick={() => setBuyOpen(true)}
                   size="sm"

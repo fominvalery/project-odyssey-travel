@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
@@ -198,13 +199,13 @@ export default function WithdrawalModal({ open, onClose, userId, earnedTotal }: 
               <Button type="button" variant="outline" onClick={handleClose} className="flex-1 border-[#2a2a2a]">
                 Отмена
               </Button>
-              <Button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              <GlowButton type="submit" disabled={loading} className="flex-1 rounded-lg py-2 text-sm">
                 {loading ? (
                   <><Icon name="Loader2" size={14} className="animate-spin mr-2" />Отправка…</>
                 ) : (
                   "Отправить заявку"
                 )}
-              </Button>
+              </GlowButton>
             </div>
           </form>
         )}
