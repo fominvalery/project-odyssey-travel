@@ -18,6 +18,9 @@ interface ReferralStats {
   referral_count: number
   referral_count_week: number
   line2_count: number
+  activated_count: number
+  paid_count: number
+  conversion: number
   level: {
     name: string
     level: number
@@ -154,17 +157,20 @@ export function DashboardReferral({ userId }: ReferralProps) {
         </div>
       </div>
 
-      {/* Статистика */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+      {/* Статистика — 6 карточек */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-6">
         {[
-          { icon: "UserPlus",  label: "Всего рефералов",   value: loading ? "…" : String(stats?.referral_count ?? 0) },
-          { icon: "Calendar",  label: "За последние 7 дней", value: loading ? "…" : String(stats?.referral_count_week ?? 0) },
-          { icon: "Layers",    label: "Рефералы 2-й линии", value: loading ? "…" : String(stats?.line2_count ?? 0) },
+          { icon: "MousePointerClick", label: "Переходов",    value: "0",                                              note: "" },
+          { icon: "Eye",               label: "За 7 дней",    value: loading ? "…" : String(stats?.referral_count_week ?? 0), note: "" },
+          { icon: "UserPlus",          label: "Регистраций",  value: loading ? "…" : String(stats?.referral_count ?? 0),      note: "" },
+          { icon: "UserCheck",         label: "Активировано", value: loading ? "…" : String(stats?.activated_count ?? 0),     note: "" },
+          { icon: "ShoppingCart",      label: "Оплатили",     value: loading ? "…" : String(stats?.paid_count ?? 0),          note: "" },
+          { icon: "TrendingUp",        label: "Конверсия",    value: loading ? "…" : `${stats?.conversion ?? 0}%`,            note: "" },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-4 text-center">
-            <Icon name={s.icon as "Eye"} className="h-5 w-5 text-blue-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{s.value}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+          <div key={s.label} className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-3 md:p-4 flex flex-col items-center justify-center text-center gap-1">
+            <Icon name={s.icon as "Eye"} className="h-5 w-5 text-orange-400 mb-1" />
+            <p className="text-xl md:text-2xl font-bold leading-none">{s.value}</p>
+            <p className="text-[10px] md:text-xs text-gray-500 leading-tight">{s.label}</p>
           </div>
         ))}
       </div>

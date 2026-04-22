@@ -90,6 +90,25 @@ def handle(event: dict, origin: str = '*') -> dict:
     """)
     line2_count = int(line2_row[0]) if line2_row else 0
 
+    # Рефералы у которых status != basic (активировали платный тариф)
+    activated_row = query_one(f"""
+        SELECT COUNT(*) FROM {S}referrals r
+        JOIN {S}users u ON u.id = r.referred_id
+        WHERE r.referrer_id = {escape(user_id)} AND u.status != 'basic'
+    """)
+    activated_count = int(activated_row[0]) if activated_row else 0
+
+    # Рефералы у которых есть оплаченные заказы
+    paid_row = query_one(f"""
+        SELECT COUNT(DISTINCT r.referred_id) FROM {S}referrals r
+        JOIN {S}orders o ON CAST(o.user_id AS TEXT) = CAST(r.referred_id AS TEXT)
+        WHERE r.referrer_id = {escape(user_id)} AND o.status = 'succeeded'
+    """)
+    paid_count = int(paid_row[0]) if paid_row else 0
+
+    # Конверсия (оплатили / зарегистрировались * 100)
+    conversion = round(paid_count / referral_count * 100) if referral_count > 0 else 0
+
     # Список рефералов с именами
     referred_rows = query(f"""
         SELECT u.id, u.name, u.email, u.status, r.created_at
@@ -116,6 +135,9 @@ def handle(event: dict, origin: str = '*') -> dict:
         "referral_count": referral_count,
         "referral_count_week": week_count,
         "line2_count": line2_count,
+        "activated_count": activated_count,
+        "paid_count": paid_count,
+        "conversion": conversion,
         "level": level,
         "referred_users": referred_users,
         "ref_code": str(user[0])[:8],
