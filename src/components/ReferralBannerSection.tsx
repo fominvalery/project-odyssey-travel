@@ -3,7 +3,7 @@ import { GlowButton } from "@/components/ui/glow-button"
 import { useNavigate } from "react-router-dom"
 
 const perks: { icon: string; text: string }[] = [
-  { icon: "BadgePercent", text: "До 30% с каждого реферала" },
+  { icon: "BadgePercent", text: "До 10% с каждого реферала" },
   { icon: "Infinity", text: "Бессрочные выплаты" },
   { icon: "Users", text: "Многоуровневая система" },
   { icon: "Wallet", text: "Вывод в любое время" },
