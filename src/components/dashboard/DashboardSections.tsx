@@ -1,4 +1,5 @@
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, lazy, Suspense } from "react"
+const WithdrawalModal = lazy(() => import("@/components/referral/WithdrawalModal"))
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -69,6 +70,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"referrals" | "commissions" | "bonuses" | "withdrawals">("referrals")
+  const [withdrawalOpen, setWithdrawalOpen] = useState(false)
 
   useEffect(() => {
     if (!userId) return
@@ -244,7 +246,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
             Для вывода необходимо заполнить реквизиты ИП, самозанятого или ООО.
           </p>
           <button
-            onClick={() => {}}
+            onClick={() => setWithdrawalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-sm font-medium hover:bg-[#222] transition-colors"
           >
             <Icon name="FileText" className="h-4 w-4 text-gray-400" />
@@ -360,6 +362,15 @@ export function DashboardReferral({ userId }: ReferralProps) {
           ))}
         </div>
       </div>
+
+      <Suspense fallback={null}>
+        <WithdrawalModal
+          open={withdrawalOpen}
+          onClose={() => setWithdrawalOpen(false)}
+          userId={userId}
+          earnedTotal={stats?.earned_total ?? 0}
+        />
+      </Suspense>
     </div>
   )
 }
