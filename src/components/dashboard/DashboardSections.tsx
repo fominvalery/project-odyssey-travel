@@ -81,7 +81,10 @@ export function DashboardReferral({ userId }: ReferralProps) {
       .finally(() => setLoading(false))
   }, [userId])
 
-  const refLink = `${window.location.origin}/?ref=${stats?.ref_code ?? userId?.slice(0, 8) ?? "xxxxxxxx"}`
+  const siteOrigin = window.location.hostname.includes("poehali.dev") || window.location.hostname.includes("localhost")
+    ? "https://kabinet-24.ru"
+    : window.location.origin
+  const refLink = `${siteOrigin}/?ref=${stats?.ref_code ?? userId?.slice(0, 8) ?? "xxxxxxxx"}`
 
   const copyLink = () => {
     navigator.clipboard.writeText(refLink)
@@ -225,10 +228,10 @@ export function DashboardReferral({ userId }: ReferralProps) {
           <p className="text-3xl font-bold mb-1">
             {loading ? "…" : `${(stats?.earned_total ?? 0).toLocaleString("ru-RU")} ₽`}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs mt-1">
             {level?.withdrawal
-              ? <span className="text-emerald-400">Вывод доступен с уровня {level.name}</span>
-              : <span className="text-red-400">Вывод доступен с уровня Бизнес</span>}
+              ? <span className="text-emerald-400">✓ Вывод доступен</span>
+              : <span className="text-gray-500">Вывод открывается с уровня <span className="text-amber-400">Бизнес</span></span>}
           </p>
         </div>
 
@@ -237,7 +240,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
           <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-4">
             <div className="flex items-center gap-1.5 mb-2">
               <Icon name="Layers" className="h-4 w-4 text-emerald-400" />
-              <span className="text-xs text-gray-400">Линия 1 ({level?.commission1 ?? 5}%)</span>
+              <span className="text-xs text-gray-400">Линия 1 ({loading ? "…" : `${level?.commission1 ?? 0}%`})</span>
             </div>
             <p className="text-xl font-bold">
               {loading ? "…" : `${(stats?.earned_line1 ?? 0).toLocaleString("ru-RU")} ₽`}
@@ -249,7 +252,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
           <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-4">
             <div className="flex items-center gap-1.5 mb-2">
               <Icon name="Layers" className="h-4 w-4 text-violet-400" />
-              <span className="text-xs text-gray-400">Линия 2 ({level?.commission2 ?? 0}%)</span>
+              <span className="text-xs text-gray-400">Линия 2 ({loading ? "…" : `${level?.commission2 ?? 0}%`})</span>
             </div>
             <p className="text-xl font-bold">
               {loading ? "…" : `${(stats?.earned_line2 ?? 0).toLocaleString("ru-RU")} ₽`}
