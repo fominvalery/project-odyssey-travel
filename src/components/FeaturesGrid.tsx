@@ -1,3 +1,4 @@
+import { useState } from "react"
 import Icon from "@/components/ui/icon"
 
 const features = [
@@ -45,7 +46,17 @@ const features = [
   },
 ]
 
+const SLIDE_SIZE = 2
+const totalSlides = Math.ceil(features.length / SLIDE_SIZE)
+
 export function FeaturesGrid() {
+  const [current, setCurrent] = useState(0)
+
+  const prev = () => setCurrent((c) => (c - 1 + totalSlides) % totalSlides)
+  const next = () => setCurrent((c) => (c + 1) % totalSlides)
+
+  const visible = features.slice(current * SLIDE_SIZE, current * SLIDE_SIZE + SLIDE_SIZE)
+
   return (
     <section className="max-w-6xl mx-auto px-4 py-16">
       <div className="text-center mb-12">
@@ -58,28 +69,62 @@ export function FeaturesGrid() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {features.map((f) => (
-          <div
-            key={f.title}
-            className="group rounded-2xl overflow-hidden border border-[#1f1f1f] bg-[#111111] hover:border-[#2a2a2a] transition-colors"
-          >
-            <div className="relative h-44 overflow-hidden">
-              <img
-                src={f.image}
-                alt={f.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/30 to-transparent" />
-            </div>
-            <div className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Icon name={f.icon} size={15} className={f.color} />
-                <h3 className="text-white font-semibold">{f.title}</h3>
+      <div className="relative">
+        {/* Стрелка влево */}
+        <button
+          onClick={prev}
+          className="absolute -left-5 md:-left-12 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-white hover:bg-[#252525] transition-colors"
+        >
+          <Icon name="ChevronLeft" size={20} />
+        </button>
+
+        {/* Карточки */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-h-[360px]">
+          {visible.map((f) => (
+            <div
+              key={f.title}
+              className="group rounded-2xl overflow-hidden border border-[#1f1f1f] bg-[#111111] hover:border-[#2a2a2a] transition-colors"
+            >
+              <div className="relative h-52 overflow-hidden">
+                <img
+                  src={f.image}
+                  alt={f.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/30 to-transparent" />
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed">{f.description}</p>
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon name={f.icon} size={15} className={f.color} />
+                  <h3 className="text-white font-semibold">{f.title}</h3>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed">{f.description}</p>
+              </div>
             </div>
-          </div>
+          ))}
+        </div>
+
+        {/* Стрелка вправо */}
+        <button
+          onClick={next}
+          className="absolute -right-5 md:-right-12 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-white hover:bg-[#252525] transition-colors"
+        >
+          <Icon name="ChevronRight" size={20} />
+        </button>
+      </div>
+
+      {/* Точки */}
+      <div className="flex items-center justify-center gap-2 mt-8">
+        {Array.from({ length: totalSlides }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`rounded-full transition-all duration-300 ${
+              i === current
+                ? "w-6 h-2.5 bg-blue-500"
+                : "w-2.5 h-2.5 bg-[#333] hover:bg-[#555]"
+            }`}
+          />
         ))}
       </div>
     </section>
