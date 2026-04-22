@@ -30,10 +30,8 @@ ROUTES = {
     'withdrawal-history': withdrawal_history.handle,
 }
 
-GET_ACTIONS.add('withdrawal-history')
-
 # Actions that allow GET method
-GET_ACTIONS = {'health', 'me', 'users-list', 'referral-stats'}
+GET_ACTIONS = {'health', 'me', 'users-list', 'referral-stats', 'withdrawal-history'}
 
 
 def handler(event: dict, context) -> dict:
