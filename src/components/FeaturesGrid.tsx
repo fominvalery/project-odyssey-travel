@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Icon from "@/components/ui/icon"
 
 const features = [
@@ -51,9 +51,21 @@ const totalSlides = Math.ceil(features.length / SLIDE_SIZE)
 
 export function FeaturesGrid() {
   const [current, setCurrent] = useState(0)
+  const touchStartX = useRef<number | null>(null)
 
   const prev = () => setCurrent((c) => (c - 1 + totalSlides) % totalSlides)
   const next = () => setCurrent((c) => (c + 1) % totalSlides)
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) { if (diff > 0) { next() } else { prev() } }
+    touchStartX.current = null
+  }
 
   const visible = features.slice(current * SLIDE_SIZE, current * SLIDE_SIZE + SLIDE_SIZE)
 
@@ -79,7 +91,11 @@ export function FeaturesGrid() {
         </button>
 
         {/* Карточки */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-h-[360px]">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-h-[360px]"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
           {visible.map((f) => (
             <div
               key={f.title}
