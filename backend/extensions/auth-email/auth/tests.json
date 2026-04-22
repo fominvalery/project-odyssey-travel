@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "Health check",
+      "method": "GET",
+      "path": "/?action=health",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Unknown action",
+      "method": "POST",
+      "path": "/?action=unknown",
+      "expectedStatus": 404
+    },
+    {
+      "name": "Update status without actor",
+      "method": "POST",
+      "path": "/?action=update-status",
+      "body": {"status": "broker"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Users list without actor",
+      "method": "GET",
+      "path": "/?action=users-list",
+      "expectedStatus": 400
+    }
+  ]
+}

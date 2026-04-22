@@ -15,6 +15,7 @@ import { useAuthContext } from "@/context/AuthContext"
 import { agencyApi } from "@/lib/agencyApi"
 import { toast } from "@/hooks/use-toast"
 import { useYookassa } from "@/components/extensions/yookassa/useYookassa"
+import { superadminApi } from "@/lib/superadminApi"
 import func2url from "../../../backend/func2url.json"
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
@@ -46,8 +47,20 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
     onClose()
   }
 
-  const activateBasic = () => {
+  const activateBasic = async () => {
     if (!user) return
+    if (user.isSuperadmin) {
+      try {
+        await superadminApi.updateStatus(user.id, "basic")
+      } catch (e) {
+        toast({
+          title: "Ошибка",
+          description: e instanceof Error ? e.message : "Не удалось переключить",
+          variant: "destructive",
+        })
+        return
+      }
+    }
     updateProfile({ status: "basic" })
     toast({ title: "Готово", description: "Базовый статус активирован" })
     handleClose()
@@ -56,6 +69,22 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
 
   const upgradeBroker = async () => {
     if (!user) return
+    if (user.isSuperadmin) {
+      try {
+        await superadminApi.updateStatus(user.id, "broker")
+        updateProfile({ status: "broker" })
+        toast({ title: "Готово", description: "Тариф Клуб активирован (супер-админ)" })
+        handleClose()
+        onCreated?.()
+      } catch (e) {
+        toast({
+          title: "Ошибка",
+          description: e instanceof Error ? e.message : "Не удалось переключить",
+          variant: "destructive",
+        })
+      }
+      return
+    }
     const returnUrl = `${window.location.origin}/dashboard`
     const res = await createPayment({
       amount: CLUB_PRICE,
@@ -149,7 +178,7 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
               </div>
             </button>
 
-            {user?.status !== "broker" && (
+            {(user?.status !== "broker" || user?.isSuperadmin) && (
             <button
               onClick={() => setMode("broker")}
               className="text-left p-4 rounded-xl border-2 border-transparent hover:border-primary bg-muted/50 transition-all group"
@@ -241,10 +270,17 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
                 Генерация презентаций
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-center">
-              <span className="text-muted-foreground">Стоимость: </span>
-              <span className="font-semibold text-blue-400">{CLUB_PRICE} ₽ / месяц</span>
-            </div>
+            {user?.isSuperadmin ? (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm text-center">
+                <Icon name="Shield" size={14} className="inline mr-1 text-amber-400" />
+                <span className="text-amber-300 font-medium">Супер-админ: бесплатная активация</span>
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-center">
+                <span className="text-muted-foreground">Стоимость: </span>
+                <span className="font-semibold text-blue-400">{CLUB_PRICE} ₽ / месяц</span>
+              </div>
+            )}
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setMode("choice")} className="flex-1" disabled={payLoading}>
                 Назад
@@ -252,6 +288,8 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
               <Button onClick={upgradeBroker} className="flex-1" disabled={payLoading}>
                 {payLoading ? (
                   <><Icon name="Loader2" size={16} className="animate-spin mr-2" />Загрузка...</>
+                ) : user?.isSuperadmin ? (
+                  <>Активировать</>
                 ) : (
                   <>Оплатить {CLUB_PRICE} ₽</>
                 )}

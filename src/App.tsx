@@ -11,6 +11,7 @@ import Marketplace from "./pages/Marketplace";
 import ObjectDetail from "./pages/ObjectDetail";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
+import SuperAdmin from "./pages/SuperAdmin";
 import Agency from "./pages/Agency";
 import AcceptInvite from "./pages/AcceptInvite";
 import Terms from "./pages/Terms";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/agency/:id" element={<Agency />} />
             <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route path="/admin-k24" element={<AdminPanel />} />
+            <Route path="/superadmin" element={<SuperAdmin />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/offer" element={<Offer />} />

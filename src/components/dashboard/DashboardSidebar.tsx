@@ -28,7 +28,7 @@ const fullNavItems = [
 interface Props {
   section: Section
   setSection: (s: Section) => void
-  user: { name: string; email: string; plan: string; avatar: string | null; status?: string }
+  user: { name: string; email: string; plan: string; avatar: string | null; status?: string; isSuperadmin?: boolean }
   initials: string
   onLogout: () => void
 }
@@ -90,6 +90,19 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             <Icon name="Headphones" className="h-4 w-4 shrink-0" />
             Поддержка
           </button>
+
+          {user.isSuperadmin && (
+            <>
+              <div className="my-1 border-t border-[#1f1f1f]" />
+              <button
+                onClick={() => navigate("/superadmin")}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left bg-gradient-to-r from-amber-500/10 to-red-500/10 border border-amber-500/30 text-amber-200 hover:from-amber-500/20 hover:to-red-500/20"
+              >
+                <Icon name="Shield" className="h-4 w-4 shrink-0" />
+                Супер-Админ
+              </button>
+            </>
+          )}
         </nav>
 
         <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
