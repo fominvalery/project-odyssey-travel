@@ -10,7 +10,7 @@ Routes (via ?action= query parameter):
   POST /auth?action=reset-password - Request/complete password reset
   GET  /auth?action=health         - Check DB schema
 """
-from handlers import register, login, logout, refresh, reset_password, health, verify_email, me, update_status, users_list, referral_stats, withdrawal_request
+from handlers import register, login, logout, refresh, reset_password, health, verify_email, me, update_status, users_list, referral_stats, withdrawal_request, withdrawal_history
 from utils.http import options_response, error, get_origin_from_event
 
 
@@ -27,7 +27,10 @@ ROUTES = {
     'users-list': users_list.handle,
     'referral-stats': referral_stats.handle,
     'withdrawal-request': withdrawal_request.handle,
+    'withdrawal-history': withdrawal_history.handle,
 }
+
+GET_ACTIONS.add('withdrawal-history')
 
 # Actions that allow GET method
 GET_ACTIONS = {'health', 'me', 'users-list', 'referral-stats'}

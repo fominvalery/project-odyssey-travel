@@ -15,6 +15,20 @@ import func2url from "../../../backend/func2url.json"
 
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 
+interface WithdrawalRequest {
+  id: number
+  entity_type: string
+  entity_label: string
+  full_name: string
+  inn: string
+  bank_name: string
+  account: string
+  amount: number | null
+  status: string
+  status_label: string
+  created_at: string | null
+}
+
 interface ReferralStats {
   referral_count: number
   referral_count_week: number
@@ -71,6 +85,8 @@ export function DashboardReferral({ userId }: ReferralProps) {
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"referrals" | "commissions" | "bonuses" | "withdrawals">("referrals")
   const [withdrawalOpen, setWithdrawalOpen] = useState(false)
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([])
+  const [withdrawalsLoading, setWithdrawalsLoading] = useState(false)
 
   useEffect(() => {
     if (!userId) return
@@ -83,6 +99,32 @@ export function DashboardReferral({ userId }: ReferralProps) {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [userId])
+
+  useEffect(() => {
+    if (activeTab !== "withdrawals" || !userId || withdrawals.length > 0) return
+    setWithdrawalsLoading(true)
+    fetch(`${AUTH_URL}?action=withdrawal-history&user_id=${encodeURIComponent(userId)}`)
+      .then(r => r.text())
+      .then(raw => {
+        const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+        if (data?.requests) setWithdrawals(data.requests)
+      })
+      .catch(() => {})
+      .finally(() => setWithdrawalsLoading(false))
+  }, [activeTab, userId])
+
+  const refreshWithdrawals = () => {
+    if (!userId) return
+    setWithdrawalsLoading(true)
+    fetch(`${AUTH_URL}?action=withdrawal-history&user_id=${encodeURIComponent(userId)}`)
+      .then(r => r.text())
+      .then(raw => {
+        const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+        if (data?.requests) setWithdrawals(data.requests)
+      })
+      .catch(() => {})
+      .finally(() => setWithdrawalsLoading(false))
+  }
 
   const siteOrigin = window.location.hostname.includes("poehali.dev") || window.location.hostname.includes("localhost")
     ? "https://kabinet-24.ru"
@@ -271,7 +313,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
             { id: "referrals" as const,   icon: "Users",      label: "Рефералы",  count: stats?.referral_count ?? 0 },
             { id: "commissions" as const, icon: "TrendingUp", label: "Комиссии",  count: 0 },
             { id: "bonuses" as const,     icon: "Gift",       label: "Бонусы",    count: 0 },
-            { id: "withdrawals" as const, icon: "Wallet",     label: "Выводы",    count: 0 },
+            { id: "withdrawals" as const, icon: "Wallet",     label: "Выводы",    count: withdrawals.length },
           ]).map((t) => (
             <button
               key={t.id}
@@ -334,9 +376,72 @@ export function DashboardReferral({ userId }: ReferralProps) {
           </div>
         )}
         {activeTab === "withdrawals" && (
-          <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-8 text-center text-gray-500 text-sm">
-            <Icon name="Wallet" className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            История выводов пока пуста
+          <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden">
+            {withdrawalsLoading ? (
+              <div className="p-8 text-center text-gray-500 text-sm">
+                <Icon name="Loader2" className="h-6 w-6 mx-auto mb-2 animate-spin opacity-50" />
+                Загрузка…
+              </div>
+            ) : withdrawals.length === 0 ? (
+              <div className="p-8 text-center text-gray-500 text-sm">
+                <Icon name="Wallet" className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                История выводов пока пуста
+                <div className="mt-3">
+                  <button
+                    onClick={() => setWithdrawalOpen(true)}
+                    className="text-blue-400 hover:text-blue-300 text-xs underline"
+                  >
+                    Подать первую заявку
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f1f1f]">
+                  <span className="text-xs text-gray-500">Всего заявок: {withdrawals.length}</span>
+                  <button
+                    onClick={() => setWithdrawalOpen(true)}
+                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                  >
+                    <Icon name="Plus" size={12} />
+                    Новая заявка
+                  </button>
+                </div>
+                <div className="divide-y divide-[#1f1f1f]">
+                  {withdrawals.map((w) => {
+                    const statusColors: Record<string, string> = {
+                      pending:  "bg-amber-500/15 text-amber-300 border-amber-500/30",
+                      approved: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+                      paid:     "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+                      rejected: "bg-red-500/15 text-red-300 border-red-500/30",
+                    }
+                    return (
+                      <div key={w.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-sm font-medium">{w.entity_label} · {w.full_name}</span>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Счёт: {w.account}
+                            {w.created_at && ` · ${new Date(w.created_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          {w.amount != null && (
+                            <span className="text-sm font-semibold text-white">
+                              {w.amount.toLocaleString("ru-RU")} ₽
+                            </span>
+                          )}
+                          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${statusColors[w.status] || statusColors.pending}`}>
+                            {w.status_label}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -366,7 +471,12 @@ export function DashboardReferral({ userId }: ReferralProps) {
       <Suspense fallback={null}>
         <WithdrawalModal
           open={withdrawalOpen}
-          onClose={() => setWithdrawalOpen(false)}
+          onClose={() => {
+            setWithdrawalOpen(false)
+            setWithdrawals([])
+            refreshWithdrawals()
+            setActiveTab("withdrawals")
+          }}
           userId={userId}
           earnedTotal={stats?.earned_total ?? 0}
         />

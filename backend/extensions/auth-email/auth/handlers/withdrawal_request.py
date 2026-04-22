@@ -2,7 +2,7 @@
 import json
 import os
 from datetime import datetime
-from utils.db import query_one, get_schema, escape
+from utils.db import query_one, query, execute_returning, get_schema, escape
 from utils.http import response, error
 from utils.email import send_email, _base_template
 
@@ -46,6 +46,21 @@ def handle(event: dict, origin: str = '*') -> dict:
     entity_label = entity_labels.get(entity_type, entity_type)
 
     now = datetime.now().strftime('%d.%m.%Y %H:%M')
+
+    # Сохраняем заявку в БД
+    amount_val = float(amount) if amount else None
+    request_id = execute_returning(f"""
+        INSERT INTO {S}withdrawal_requests
+            (user_id, entity_type, full_name, inn, bank_name, bik, account, amount, comment)
+        VALUES
+            ({escape(user_id)}, {escape(entity_type)}, {escape(full_name)}, {escape(inn)},
+             {escape(bank_name) if bank_name else 'NULL'},
+             {escape(bik) if bik else 'NULL'},
+             {escape(account)},
+             {amount_val if amount_val is not None else 'NULL'},
+             {escape(comment) if comment else 'NULL'})
+        RETURNING id
+    """)
 
     # HTML письмо супер-админу
     content = f"""
@@ -133,6 +148,7 @@ def handle(event: dict, origin: str = '*') -> dict:
 
     return response(200, {
         'ok': True,
+        'id': request_id,
         'sent': sent_admin,
         'message': 'Заявка отправлена. Мы свяжемся с вами в течение 1–3 рабочих дней.'
     }, origin)
