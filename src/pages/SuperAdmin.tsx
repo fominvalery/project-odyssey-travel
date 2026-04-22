@@ -156,61 +156,51 @@ export default function SuperAdmin() {
                         <th className="px-4 py-3 text-left font-medium">Контакты</th>
                         <th className="px-4 py-3 text-left font-medium">Статус</th>
                         <th className="px-4 py-3 text-left font-medium">Объявления</th>
-                        <th className="px-4 py-3 text-right font-medium">Действия</th>
                       </tr>
                     </thead>
                     <tbody>
                       {users.map((u) => (
                         <tr key={u.id} className="border-t border-[#1f1f1f] hover:bg-[#111]">
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <div className="font-medium flex items-center gap-1.5">
-                                  {u.name || "—"}
-                                  {u.is_superadmin && (
-                                    <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30 uppercase font-bold">
-                                      Админ
-                                    </span>
-                                  )}
-                                </div>
-                                {u.company && <div className="text-xs text-gray-500">{u.company}</div>}
-                              </div>
+                            <div className="font-medium flex items-center gap-1.5">
+                              {u.name || "—"}
+                              {u.is_superadmin && (
+                                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30 uppercase font-bold">
+                                  Админ
+                                </span>
+                              )}
                             </div>
+                            {u.company && <div className="text-xs text-gray-500">{u.company}</div>}
                           </td>
                           <td className="px-4 py-3">
                             <div className="text-xs text-gray-300">{u.email}</div>
                             {u.phone && <div className="text-xs text-gray-500">{u.phone}</div>}
                           </td>
                           <td className="px-4 py-3">
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
-                                STATUS_COLORS[u.status] || "bg-gray-500/15 text-gray-300 border-gray-500/30"
-                              }`}
-                            >
-                              {STATUS_LABELS[u.status as keyof typeof STATUS_LABELS] || u.status}
-                            </span>
+                            <div className="flex gap-1 flex-wrap">
+                              {(["basic", "broker", "agency"] as const).map((s) => (
+                                <button
+                                  key={s}
+                                  disabled={updatingId === u.id}
+                                  onClick={() => u.status !== s && changeStatus(u.id, s)}
+                                  className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${
+                                    u.status === s
+                                      ? STATUS_COLORS[s] + " cursor-default"
+                                      : "border-[#2a2a2a] text-gray-500 hover:text-white hover:border-gray-500 hover:bg-white/5"
+                                  } ${updatingId === u.id ? "opacity-50" : ""}`}
+                                >
+                                  {updatingId === u.id && u.status !== s ? (
+                                    <Icon name="Loader2" size={10} className="animate-spin inline" />
+                                  ) : (
+                                    STATUS_LABELS[s]
+                                  )}
+                                </button>
+                              ))}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-400">
                             {u.listings_used}
                             {u.listings_extra > 0 && <span className="text-emerald-400"> +{u.listings_extra}</span>}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1 justify-end">
-                              {(["basic", "broker", "agency"] as const).map((s) => (
-                                <button
-                                  key={s}
-                                  disabled={updatingId === u.id || u.status === s}
-                                  onClick={() => changeStatus(u.id, s)}
-                                  className={`text-xs px-2 py-1 rounded-md border transition-colors ${
-                                    u.status === s
-                                      ? "bg-blue-500/20 text-blue-300 border-blue-500/40 cursor-default"
-                                      : "border-[#1f1f1f] text-gray-400 hover:text-white hover:border-gray-500"
-                                  } ${updatingId === u.id ? "opacity-50" : ""}`}
-                                >
-                                  {STATUS_LABELS[s]}
-                                </button>
-                              ))}
-                            </div>
                           </td>
                         </tr>
                       ))}
