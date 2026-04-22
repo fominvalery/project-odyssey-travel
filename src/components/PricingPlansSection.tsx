@@ -37,7 +37,7 @@ export function PricingPlansSection() {
   }
 
   return (
-    <section className="px-4 md:px-8 pt-20 pb-4 max-w-6xl mx-auto">
+    <section className="px-4 md:px-8 pt-6 pb-4 max-w-6xl mx-auto">
       <div className="text-center mb-14">
         <p className="text-blue-500 text-sm font-semibold uppercase tracking-widest mb-3">Тарифы</p>
         <h2 className="text-3xl md:text-4xl font-bold text-white">От одного объекта — до сотен</h2>

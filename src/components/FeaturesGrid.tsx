@@ -70,7 +70,7 @@ export function FeaturesGrid() {
   const visible = features.slice(current * SLIDE_SIZE, current * SLIDE_SIZE + SLIDE_SIZE)
 
   return (
-    <section className="max-w-6xl mx-auto px-4 py-16">
+    <section className="max-w-6xl mx-auto px-4 pt-16 pb-6">
       <div className="text-center mb-12">
         <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-3">Возможности</p>
         <h2 className="text-3xl md:text-4xl font-bold text-white">
