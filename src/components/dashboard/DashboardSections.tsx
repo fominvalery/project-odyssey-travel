@@ -68,6 +68,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
   const [stats, setStats] = useState<ReferralStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [activeTab, setActiveTab] = useState<"referrals" | "commissions" | "bonuses" | "withdrawals">("referrals")
 
   useEffect(() => {
     if (!userId) return
@@ -183,39 +184,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
         ))}
       </div>
 
-      {/* Список рефералов */}
-      {!loading && (stats?.referred_users?.length ?? 0) > 0 && (
-        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 mb-6">
-          <h2 className="font-semibold mb-3 flex items-center gap-2 text-sm">
-            <Icon name="Users" className="h-4 w-4 text-blue-400" />
-            Мои рефералы ({stats!.referral_count})
-          </h2>
-          <div className="flex flex-col divide-y divide-[#1f1f1f]">
-            {stats!.referred_users.map((u) => (
-              <div key={u.id} className="flex items-center justify-between py-2.5 gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{u.name || u.email}</p>
-                  {u.name && <p className="text-xs text-gray-500 truncate">{u.email}</p>}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
-                    u.status === "broker" ? "bg-blue-500/15 text-blue-300 border-blue-500/30"
-                    : u.status === "agency" ? "bg-violet-500/15 text-violet-300 border-violet-500/30"
-                    : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                  }`}>
-                    {u.status === "broker" ? "Клуб" : u.status === "agency" ? "Агентство" : "Базовый"}
-                  </span>
-                  {u.joined_at && (
-                    <span className="text-xs text-gray-600">
-                      {new Date(u.joined_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Баланс и начисления */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
@@ -262,6 +231,112 @@ export function DashboardReferral({ userId }: ReferralProps) {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Вывод средств + Конвертация */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="ArrowDownToLine" className="h-5 w-5 text-orange-400" />
+            <span className="font-semibold">Вывод средств</span>
+          </div>
+          <p className="text-sm text-gray-400 mb-4">
+            Для вывода необходимо заполнить реквизиты ИП, самозанятого или ООО.
+          </p>
+          <button
+            onClick={() => {}}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-sm font-medium hover:bg-[#222] transition-colors"
+          >
+            <Icon name="FileText" className="h-4 w-4 text-gray-400" />
+            Заполнить реквизиты
+          </button>
+        </div>
+        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="ArrowLeftRight" className="h-5 w-5 text-orange-400" />
+            <span className="font-semibold">Конвертация в AI-кредиты</span>
+          </div>
+          <p className="text-sm text-gray-400">
+            Конвертируйте денежный баланс в AI-кредиты.
+          </p>
+        </div>
+      </div>
+
+      {/* Вкладки: Рефералы / Комиссии / Бонусы / Выводы */}
+      <div className="mb-6">
+        <div className="grid grid-cols-4 gap-1 rounded-2xl bg-[#111111] border border-[#1f1f1f] p-1 mb-4">
+          {([
+            { id: "referrals" as const,   icon: "Users",      label: "Рефералы",  count: stats?.referral_count ?? 0 },
+            { id: "commissions" as const, icon: "TrendingUp", label: "Комиссии",  count: 0 },
+            { id: "bonuses" as const,     icon: "Gift",       label: "Бонусы",    count: 0 },
+            { id: "withdrawals" as const, icon: "Wallet",     label: "Выводы",    count: 0 },
+          ]).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-medium transition-colors ${
+                activeTab === t.id ? "bg-[#1f1f1f] text-white" : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <Icon name={t.icon as "Users"} className="h-3.5 w-3.5" />
+              {t.label} ({loading ? "…" : t.count})
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "referrals" && (
+          <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden">
+            {!loading && (stats?.referred_users?.length ?? 0) === 0 ? (
+              <div className="p-8 text-center text-gray-500 text-sm">
+                <Icon name="Users" className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                Пока нет рефералов
+              </div>
+            ) : (
+              <div className="divide-y divide-[#1f1f1f]">
+                {stats?.referred_users.map((u) => (
+                  <div key={u.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{u.name || u.email}</p>
+                      {u.name && <p className="text-xs text-gray-500 truncate">{u.email}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                        u.status === "broker" ? "bg-blue-500/15 text-blue-300 border-blue-500/30"
+                        : u.status === "agency" ? "bg-violet-500/15 text-violet-300 border-violet-500/30"
+                        : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                      }`}>
+                        {u.status === "broker" ? "Клуб" : u.status === "agency" ? "Агентство" : "Базовый"}
+                      </span>
+                      {u.joined_at && (
+                        <span className="text-xs text-gray-600">
+                          {new Date(u.joined_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {activeTab === "commissions" && (
+          <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-8 text-center text-gray-500 text-sm">
+            <Icon name="TrendingUp" className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            История комиссий появится после первой оплаты реферала
+          </div>
+        )}
+        {activeTab === "bonuses" && (
+          <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-8 text-center text-gray-500 text-sm">
+            <Icon name="Gift" className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            Начисленные бонусы пока отсутствуют
+          </div>
+        )}
+        {activeTab === "withdrawals" && (
+          <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-8 text-center text-gray-500 text-sm">
+            <Icon name="Wallet" className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            История выводов пока пуста
+          </div>
+        )}
       </div>
 
       {/* Как это работает */}
