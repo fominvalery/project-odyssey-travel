@@ -10,7 +10,7 @@ Routes (via ?action= query parameter):
   POST /auth?action=reset-password - Request/complete password reset
   GET  /auth?action=health         - Check DB schema
 """
-from handlers import register, login, logout, refresh, reset_password, health, verify_email, me, update_status, users_list
+from handlers import register, login, logout, refresh, reset_password, health, verify_email, me, update_status, users_list, referral_stats
 from utils.http import options_response, error, get_origin_from_event
 
 
@@ -25,10 +25,11 @@ ROUTES = {
     'me': me.handle,
     'update-status': update_status.handle,
     'users-list': users_list.handle,
+    'referral-stats': referral_stats.handle,
 }
 
 # Actions that allow GET method
-GET_ACTIONS = {'health', 'me', 'users-list'}
+GET_ACTIONS = {'health', 'me', 'users-list', 'referral-stats'}
 
 
 def handler(event: dict, context) -> dict:

@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,49 +10,132 @@ import { STATUS_LABELS } from "@/hooks/useAuth"
 export { DashboardCRM } from "./DashboardCRM"
 
 // --- Referral ---
+import func2url from "../../../backend/func2url.json"
+
+const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
+
+interface ReferralStats {
+  referral_count: number
+  referral_count_week: number
+  line2_count: number
+  level: {
+    name: string
+    level: number
+    color: string
+    commission1: number
+    commission2: number
+    withdrawal: boolean
+  }
+  referred_users: { id: string; name: string; email: string; status: string; joined_at: string | null }[]
+  ref_code: string
+}
+
+const LEVEL_BORDER: Record<string, string> = {
+  gray:    "border-gray-500/30 from-gray-900/60",
+  blue:    "border-blue-500/30 from-blue-950/60",
+  emerald: "border-emerald-500/30 from-emerald-950/60",
+  violet:  "border-violet-500/30 from-violet-950/60",
+  amber:   "border-amber-500/30 from-amber-950/60",
+  rose:    "border-rose-500/30 from-rose-950/60",
+}
+const LEVEL_ICON_COLOR: Record<string, string> = {
+  gray: "text-gray-400 bg-gray-500/20", blue: "text-blue-400 bg-blue-500/20",
+  emerald: "text-emerald-400 bg-emerald-500/20", violet: "text-violet-400 bg-violet-500/20",
+  amber: "text-amber-400 bg-amber-500/20", rose: "text-rose-400 bg-rose-500/20",
+}
+
+const ALL_LEVELS = [
+  { name: "Друг",      refs: "1–2 реф.",   percent: "5%",  extra: "",       withdrawal: false },
+  { name: "Партнёр",   refs: "3–9 реф.",   percent: "7%",  extra: "",       withdrawal: false },
+  { name: "Бизнес",    refs: "10–29 реф.", percent: "7%",  extra: "",       withdrawal: true  },
+  { name: "Амбасадор", refs: "30–99 реф.", percent: "10%", extra: "",       withdrawal: true  },
+  { name: "Адвокат",   refs: "100+ реф.",  percent: "10%", extra: "+2% L2", withdrawal: true  },
+]
 
 interface ReferralProps {
   userId: string
 }
 
 export function DashboardReferral({ userId }: ReferralProps) {
+  const [stats, setStats] = useState<ReferralStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    if (!userId) return
+    fetch(`${AUTH_URL}?action=referral-stats&user_id=${encodeURIComponent(userId)}`)
+      .then(r => r.text())
+      .then(raw => {
+        const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+        if (data && !data.error) setStats(data)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [userId])
+
+  const refLink = `${window.location.origin}/?ref=${stats?.ref_code ?? userId?.slice(0, 8) ?? "xxxxxxxx"}`
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(refLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const level = stats?.level
+  const color = level?.color || "blue"
+  const borderClass = LEVEL_BORDER[color] || LEVEL_BORDER.blue
+  const iconClass = LEVEL_ICON_COLOR[color] || LEVEL_ICON_COLOR.blue
+
   return (
     <div className="p-6 md:p-8 max-w-4xl">
       <h1 className="text-2xl font-bold mb-1">Партнёрская программа</h1>
       <p className="text-gray-400 text-sm mb-6">Приглашайте друзей и получайте бонусы за каждую регистрацию и активацию.</p>
 
       {/* Текущий уровень */}
-      <div className="rounded-2xl border border-red-500/30 bg-gradient-to-r from-red-950/60 to-[#1a0a0a] p-5 mb-6 flex items-start gap-4">
-        <div className="w-11 h-11 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
-          <Icon name="Award" className="h-6 w-6 text-red-400" />
+      <div className={`rounded-2xl border ${borderClass} bg-gradient-to-r to-[#0d0d0d] p-5 mb-6 flex items-start gap-4`}>
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${iconClass}`}>
+          <Icon name="Award" className="h-6 w-6" />
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-3 flex-wrap mb-1">
-            <span className="font-bold text-white text-lg">Друг</span>
-            <span className="text-xs bg-blue-600 text-white px-2.5 py-0.5 rounded-full font-medium">Уровень 1</span>
-          </div>
-          <p className="text-sm text-gray-300">Комиссия: 5% от платежей рефералов</p>
-          <p className="text-xs text-gray-500 mt-0.5">Вывод: <span className="text-red-400">Недоступен</span></p>
+          {loading ? (
+            <div className="h-5 w-32 bg-white/10 rounded animate-pulse mb-2" />
+          ) : (
+            <div className="flex items-center gap-3 flex-wrap mb-1">
+              <span className="font-bold text-white text-lg">{level?.name || "—"}</span>
+              {level?.level ? (
+                <span className="text-xs bg-blue-600 text-white px-2.5 py-0.5 rounded-full font-medium">
+                  Уровень {level.level}
+                </span>
+              ) : null}
+            </div>
+          )}
+          <p className="text-sm text-gray-300">
+            Комиссия: {level?.commission1 || 5}% от платежей рефералов
+            {(level?.commission2 ?? 0) > 0 && ` + ${level!.commission2}% (2-я линия)`}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Вывод:{" "}
+            {level?.withdrawal
+              ? <span className="text-emerald-400">Доступен</span>
+              : <span className="text-red-400">Недоступен</span>}
+          </p>
         </div>
       </div>
 
       {/* Уровни */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        {[
-          { name: "Друг", refs: "1–2 реф.", percent: "5%", withdrawal: false, active: true },
-          { name: "Партнёр", refs: "3–9 реф.", percent: "7%", withdrawal: false, active: false },
-          { name: "Бизнес", refs: "10–29 реф.", percent: "7%", withdrawal: true, active: false },
-          { name: "Амбассадор", refs: "30–99 реф.", percent: "10%", withdrawal: true, active: false },
-          { name: "Адвокат", refs: "100+ реф.", percent: "10%", extra: "+2% L2", withdrawal: true, active: false },
-        ].map((lvl) => (
-          <div key={lvl.name} className={`rounded-xl p-4 text-center border ${lvl.active ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"}`}>
-            <p className={`text-xs font-semibold mb-1 ${lvl.active ? "text-blue-400" : "text-gray-400"}`}>{lvl.name}</p>
-            <p className="text-xs text-gray-500 mb-2">{lvl.refs}</p>
-            <p className={`text-xl font-bold ${lvl.active ? "text-white" : "text-gray-300"}`}>{lvl.percent}</p>
-            {lvl.extra && <p className="text-xs text-violet-400">{lvl.extra}</p>}
-            {lvl.withdrawal && <p className="text-xs text-emerald-400 mt-1">Вывод ✓</p>}
-          </div>
-        ))}
+        {ALL_LEVELS.map((lvl) => {
+          const isActive = level?.name === lvl.name
+          return (
+            <div key={lvl.name} className={`rounded-xl p-4 text-center border transition-all ${isActive ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"}`}>
+              <p className={`text-xs font-semibold mb-1 ${isActive ? "text-blue-400" : "text-gray-400"}`}>{lvl.name}</p>
+              <p className="text-xs text-gray-500 mb-2">{lvl.refs}</p>
+              <p className={`text-xl font-bold ${isActive ? "text-white" : "text-gray-300"}`}>{lvl.percent}</p>
+              {lvl.extra && <p className="text-xs text-violet-400">{lvl.extra}</p>}
+              {lvl.withdrawal && <p className="text-xs text-emerald-400 mt-1">Вывод ✓</p>}
+            </div>
+          )
+        })}
       </div>
 
       {/* Реферальная ссылка */}
@@ -60,49 +143,65 @@ export function DashboardReferral({ userId }: ReferralProps) {
         <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">Ваша реферальная ссылка</p>
         <div className="flex items-center gap-3">
           <div className="flex-1 bg-[#0a0a0a] border border-[#1f1f1f] rounded-xl px-4 py-2.5 text-sm text-gray-300 font-mono truncate">
-            {`${window.location.origin}/?ref=${userId?.slice(0, 8) ?? "xxxxxxxx"}`}
+            {refLink}
           </div>
           <button
-            onClick={() => navigator.clipboard.writeText(`${window.location.origin}/?ref=${userId?.slice(0, 8) ?? "xxxxxxxx"}`)}
-            className="w-10 h-10 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center hover:bg-blue-600 transition-colors shrink-0"
+            onClick={copyLink}
+            className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-colors shrink-0 ${copied ? "bg-emerald-600 border-emerald-500" : "bg-[#1a1a1a] border-[#2a2a2a] hover:bg-blue-600"}`}
           >
-            <Icon name="Copy" className="h-4 w-4 text-gray-400" />
+            <Icon name={copied ? "Check" : "Copy"} className="h-4 w-4 text-white" />
           </button>
         </div>
       </div>
 
       {/* Статистика */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
         {[
-          { icon: "MousePointerClick", label: "Переходов", value: "0" },
-          { icon: "Eye", label: "За 7 дней", value: "0" },
-          { icon: "UserPlus", label: "Регистраций", value: "0" },
-          { icon: "TrendingUp", label: "Конверсия", value: "0%" },
+          { icon: "UserPlus",  label: "Всего рефералов",   value: loading ? "…" : String(stats?.referral_count ?? 0) },
+          { icon: "Calendar",  label: "За последние 7 дней", value: loading ? "…" : String(stats?.referral_count_week ?? 0) },
+          { icon: "Layers",    label: "Рефералы 2-й линии", value: loading ? "…" : String(stats?.line2_count ?? 0) },
         ].map((s) => (
           <div key={s.label} className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-4 text-center">
             <Icon name={s.icon as "Eye"} className="h-5 w-5 text-blue-400 mx-auto mb-2" />
-            <p className="text-xl font-bold">{s.value}</p>
+            <p className="text-2xl font-bold">{s.value}</p>
             <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Баланс */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {[
-          { icon: "DollarSign", label: "Доступно к выводу", sub: "Всего заработано: 0 ₽", value: "0 ₽", highlight: true },
-          { icon: "Gift", label: "Бонусный баланс", sub: "Только для трат внутри платформы", value: "0" },
-          { icon: "Layers", label: "Линия 1 (5%)", sub: "0 начислений", value: "0 ₽" },
-          { icon: "Layers", label: "Линия 2 (2%)", sub: "0 начислений", value: "0 ₽" },
-        ].map((s) => (
-          <div key={s.label} className={`rounded-2xl p-4 border ${s.highlight ? "bg-blue-950/40 border-blue-500/20" : "bg-[#111111] border-[#1f1f1f]"}`}>
-            <Icon name={s.icon as "Gift"} className={`h-5 w-5 mb-2 ${s.highlight ? "text-blue-400" : "text-gray-500"}`} />
-            <p className="text-2xl font-bold">{s.value}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
-            <p className="text-xs text-gray-600 mt-0.5">{s.sub}</p>
+      {/* Список рефералов */}
+      {!loading && (stats?.referred_users?.length ?? 0) > 0 && (
+        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 mb-6">
+          <h2 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+            <Icon name="Users" className="h-4 w-4 text-blue-400" />
+            Мои рефералы ({stats!.referral_count})
+          </h2>
+          <div className="flex flex-col divide-y divide-[#1f1f1f]">
+            {stats!.referred_users.map((u) => (
+              <div key={u.id} className="flex items-center justify-between py-2.5 gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{u.name || u.email}</p>
+                  {u.name && <p className="text-xs text-gray-500 truncate">{u.email}</p>}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                    u.status === "broker" ? "bg-blue-500/15 text-blue-300 border-blue-500/30"
+                    : u.status === "agency" ? "bg-violet-500/15 text-violet-300 border-violet-500/30"
+                    : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                  }`}>
+                    {u.status === "broker" ? "Клуб" : u.status === "agency" ? "Агентство" : "Базовый"}
+                  </span>
+                  {u.joined_at && (
+                    <span className="text-xs text-gray-600">
+                      {new Date(u.joined_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Как это работает */}
       <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
@@ -112,11 +211,11 @@ export function DashboardReferral({ userId }: ReferralProps) {
         <div className="flex flex-col gap-3">
           {[
             "Поделитесь своей реферальной ссылкой с друзьями.",
-            "Друг регистрируется — получает 10 приветственных бонусов.",
+            "Друг регистрируется по вашей ссылке — связь записывается автоматически.",
             "Друг создаёт свой первый объект — вам начисляется 20 бонусов.",
-            "Получайте от 5% до 10% от платежей рефералов (в зависимости от уровня)",
-            "На уровне 5 «Адвокат бренда» — дополнительно 2% от платежей рефералов ваших рефералов (2-я линия)",
-            "Выводите деньги (с уровня 3) или конвертируйте в AI-кредиты",
+            "Получайте от 5% до 10% от платежей рефералов (в зависимости от уровня).",
+            "На уровне «Адвокат» — дополнительно 2% от платежей рефералов ваших рефералов (2-я линия).",
+            "Выводите деньги (с уровня Бизнес) или конвертируйте в AI-кредиты.",
           ].map((step, i) => (
             <div key={i} className="flex items-start gap-3 text-sm text-gray-300">
               <span className="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
