@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import func2url from "../../backend/func2url.json"
 import { ObjectData, WizardForm, STEPS, CATEGORIES } from "./wizard/wizardTypes"
-import { Step1Category, Step2Details, Step3Landing, Step4Presentation, Step5Publish } from "./wizard/WizardSteps"
+import { Step1Category, Step2Location, Step3Details, Step4Landing, Step5Presentation, Step6Publish } from "./wizard/WizardSteps"
 
 export type { ObjectData }
 
@@ -47,7 +47,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
 
   function handleNext() {
     if (step === 0 && !category) return
-    setStep(s => Math.min(s + 1, 4))
+    setStep(s => Math.min(s + 1, 5))
   }
 
   function handleBack() {
@@ -178,7 +178,10 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
           <Step1Category category={category} setCategory={setCategory} form={form} setForm={setForm} />
         )}
         {step === 1 && (
-          <Step2Details
+          <Step2Location form={form} setForm={setForm} />
+        )}
+        {step === 2 && (
+          <Step3Details
             form={form}
             setForm={setForm}
             category={category}
@@ -186,8 +189,8 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             onCategoryField={handleCategoryField}
           />
         )}
-        {step === 2 && (
-          <Step3Landing
+        {step === 3 && (
+          <Step4Landing
             form={form}
             setForm={setForm}
             category={category}
@@ -198,8 +201,8 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             onUploadingChange={setUploadingPhoto}
           />
         )}
-        {step === 3 && (
-          <Step4Presentation
+        {step === 4 && (
+          <Step5Presentation
             form={form}
             setForm={setForm}
             category={category}
@@ -209,8 +212,8 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             onPresentationReady={(url) => setPresentationUrl(url)}
           />
         )}
-        {step === 4 && (
-          <Step5Publish
+        {step === 5 && (
+          <Step6Publish
             form={form}
             category={category}
             publishToMarket={publishToMarket}
@@ -227,7 +230,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
           >
             <Icon name="ArrowLeft" className="h-4 w-4 mr-2" /> Назад
           </Button>
-          {step < 4 ? (
+          {step < 5 ? (
             <Button
               onClick={handleNext}
               disabled={step === 0 && !category}

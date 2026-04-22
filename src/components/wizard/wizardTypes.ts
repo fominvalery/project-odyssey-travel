@@ -34,7 +34,7 @@ export interface WizardForm {
   presentation_contact_company: string
 }
 
-export const STEPS = ["Основное", "Характеристики", "Описание", "Презентация", "Публикация"]
+export const STEPS = ["Основное", "Локация", "Характеристики", "Описание", "Презентация", "Публикация"]
 
 export const CATEGORIES = [
   { id: "investment", label: "Инвестиции", desc: "ROI, доходность, стратегия", icon: "TrendingUp" },

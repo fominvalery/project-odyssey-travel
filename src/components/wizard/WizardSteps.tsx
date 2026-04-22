@@ -42,9 +42,30 @@ export function Step1Category({ category, setCategory }: Step1Props) {
   )
 }
 
-// ── Шаг 2: Характеристики ───────────────────────────────────────────────────
+// ── Шаг 2: Локация ──────────────────────────────────────────────────────────
 
 interface Step2Props {
+  form: WizardForm
+  setForm: (f: WizardForm) => void
+}
+
+export function Step2Location({ form, setForm }: Step2Props) {
+  return (
+    <AddressMapPicker
+      city={form.city}
+      address={form.address}
+      lat={form.lat}
+      lon={form.lon}
+      onCityChange={v => setForm({ ...form, city: v })}
+      onAddressChange={v => setForm({ ...form, address: v })}
+      onCoordsChange={(lat, lon) => setForm({ ...form, lat, lon })}
+    />
+  )
+}
+
+// ── Шаг 3: Характеристики ────────────────────────────────────────────────────
+
+interface Step3Props {
   form: WizardForm
   setForm: (f: WizardForm) => void
   category: string
@@ -52,22 +73,11 @@ interface Step2Props {
   onCategoryField: (key: string, value: string) => void
 }
 
-export function Step2Details({
+export function Step3Details({
   form, setForm, category, categoryFields, onCategoryField,
-}: Step2Props) {
+}: Step3Props) {
   return (
     <div className="space-y-6">
-      {/* Адрес с картой */}
-      <AddressMapPicker
-        city={form.city}
-        address={form.address}
-        lat={form.lat}
-        lon={form.lon}
-        onCityChange={v => setForm({ ...form, city: v })}
-        onAddressChange={v => setForm({ ...form, address: v })}
-        onCoordsChange={(lat, lon) => setForm({ ...form, lat, lon })}
-      />
-
       {/* Цена и площадь */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -106,9 +116,9 @@ export function Step2Details({
   )
 }
 
-// ── Шаг 3: Описание ─────────────────────────────────────────────────────────
+// ── Шаг 4: Описание ─────────────────────────────────────────────────────────
 
-interface Step3Props {
+interface Step4LandingProps {
   form: WizardForm
   setForm: (f: WizardForm) => void
   category: string
@@ -119,7 +129,7 @@ interface Step3Props {
   onUploadingChange: (v: boolean) => void
 }
 
-export function Step3Landing({ form, setForm, category, categoryFields, photos, uploadingPhoto, onPhotosChange, onUploadingChange }: Step3Props) {
+export function Step4Landing({ form, setForm, category, categoryFields, photos, uploadingPhoto, onPhotosChange, onUploadingChange }: Step4LandingProps) {
   const [generating, setGenerating] = useState(false)
   const [aiError, setAiError] = useState("")
 
@@ -213,9 +223,9 @@ export function Step3Landing({ form, setForm, category, categoryFields, photos, 
   )
 }
 
-// ── Шаг 4: Презентация ───────────────────────────────────────────────────────
+// ── Шаг 5: Презентация ───────────────────────────────────────────────────────
 
-interface Step4Props {
+interface Step5PresentationProps {
   form: WizardForm
   setForm: (f: WizardForm) => void
   category: string
@@ -225,7 +235,7 @@ interface Step4Props {
   onPresentationReady?: (url: string) => void
 }
 
-export function Step4Presentation({ form, setForm, category, categoryFields, photos, objectId, onPresentationReady }: Step4Props) {
+export function Step5Presentation({ form, setForm, category, categoryFields, photos, objectId, onPresentationReady }: Step5PresentationProps) {
   const [contactName, setContactName] = useState(form.presentation_contact_name ?? "")
   const [contactPhone, setContactPhone] = useState(form.presentation_contact_phone ?? "")
   const [contactCompany, setContactCompany] = useState(form.presentation_contact_company ?? "")
@@ -413,16 +423,16 @@ export function Step4Presentation({ form, setForm, category, categoryFields, pho
   )
 }
 
-// ── Шаг 5: Публикация ────────────────────────────────────────────────────────
+// ── Шаг 6: Публикация ────────────────────────────────────────────────────────
 
-interface Step5Props {
+interface Step6Props {
   form: WizardForm
   category: string
   publishToMarket: boolean
   setPublishToMarket: (v: boolean) => void
 }
 
-export function Step5Publish({ form, category, publishToMarket, setPublishToMarket }: Step5Props) {
+export function Step6Publish({ form, category, publishToMarket, setPublishToMarket }: Step6Props) {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-6">
