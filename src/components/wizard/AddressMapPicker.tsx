@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet"
-import { Icon as LeafletIcon } from "leaflet"
+import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-const markerIcon = new LeafletIcon({
+// Фикс иконок leaflet при сборке через vite
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
+L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
 })
 
 interface Suggestion {
@@ -27,32 +26,76 @@ interface Props {
   lon?: number
 }
 
-function MapCenter({ lat, lon }: { lat: number; lon: number }) {
-  const map = useMap()
-  useEffect(() => {
-    map.setView([lat, lon], 16)
-  }, [lat, lon, map])
-  return null
-}
-
-function ClickMarker({ onMove }: { onMove: (lat: number, lon: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onMove(e.latlng.lat, e.latlng.lng)
-    },
-  })
-  return null
-}
+const DEFAULT_CENTER: [number, number] = [55.751244, 37.618423]
 
 export default function AddressMapPicker({
   city, address, onCityChange, onAddressChange, onCoordsChange, lat, lon,
 }: Props) {
+  const mapRef = useRef<L.Map | null>(null)
+  const markerRef = useRef<L.Marker | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [markerPos, setMarkerPos] = useState<[number, number] | null>(
-    lat && lon ? [lat, lon] : null
-  )
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Инициализация карты
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return
+
+    const center: [number, number] = lat && lon ? [lat, lon] : DEFAULT_CENTER
+    const map = L.map(containerRef.current, { zoomControl: true }).setView(center, lat && lon ? 16 : 11)
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map)
+
+    if (lat && lon) {
+      markerRef.current = L.marker([lat, lon]).addTo(map)
+    }
+
+    map.on("click", (e: L.LeafletMouseEvent) => {
+      const { lat: clat, lng: clon } = e.latlng
+      if (markerRef.current) {
+        markerRef.current.setLatLng([clat, clon])
+      } else {
+        markerRef.current = L.marker([clat, clon]).addTo(map)
+      }
+      onCoordsChange?.(clat, clon)
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${clat}&lon=${clon}`,
+        { headers: { "Accept-Language": "ru" } }
+      )
+        .then(r => r.json())
+        .then(d => {
+          const a = d.address
+          const street = [a.road, a.house_number].filter(Boolean).join(", ")
+          if (street) onAddressChange(street)
+          if (a.city || a.town || a.village) onCityChange(a.city || a.town || a.village)
+        })
+        .catch(() => {})
+    })
+
+    mapRef.current = map
+
+    return () => {
+      map.remove()
+      mapRef.current = null
+      markerRef.current = null
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Перемещение маркера при изменении координат снаружи
+  useEffect(() => {
+    if (!mapRef.current || !lat || !lon) return
+    const pos: [number, number] = [lat, lon]
+    if (markerRef.current) {
+      markerRef.current.setLatLng(pos)
+    } else {
+      markerRef.current = L.marker(pos).addTo(mapRef.current)
+    }
+    mapRef.current.setView(pos, 16)
+  }, [lat, lon])
 
   const searchAddress = useCallback(async (query: string) => {
     if (query.length < 4) { setSuggestions([]); return }
@@ -80,31 +123,12 @@ export default function AddressMapPicker({
   function handleSelect(s: Suggestion) {
     const parts = s.display_name.split(",")
     onAddressChange(parts.slice(0, 3).join(",").trim())
-    const newPos: [number, number] = [parseFloat(s.lat), parseFloat(s.lon)]
-    setMarkerPos(newPos)
-    onCoordsChange?.(newPos[0], newPos[1])
+    const newLat = parseFloat(s.lat)
+    const newLon = parseFloat(s.lon)
+    onCoordsChange?.(newLat, newLon)
     setSuggestions([])
     setShowSuggestions(false)
   }
-
-  function handleMapClick(lat: number, lon: number) {
-    setMarkerPos([lat, lon])
-    onCoordsChange?.(lat, lon)
-    fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
-      { headers: { "Accept-Language": "ru" } }
-    )
-      .then(r => r.json())
-      .then(d => {
-        const a = d.address
-        const street = [a.road, a.house_number].filter(Boolean).join(", ")
-        if (street) onAddressChange(street)
-        if (a.city || a.town || a.village) onCityChange(a.city || a.town || a.village)
-      })
-      .catch(() => {})
-  }
-
-  const defaultCenter: [number, number] = markerPos ?? [55.751244, 37.618423]
 
   return (
     <div className="space-y-4">
@@ -146,22 +170,11 @@ export default function AddressMapPicker({
       </div>
 
       {/* Карта */}
-      <div className="rounded-xl overflow-hidden border border-[#1f1f1f]" style={{ height: 280 }}>
-        <MapContainer
-          center={defaultCenter}
-          zoom={markerPos ? 16 : 11}
-          style={{ height: "100%", width: "100%" }}
-          zoomControl={true}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          />
-          {markerPos && <MapCenter lat={markerPos[0]} lon={markerPos[1]} />}
-          <ClickMarker onMove={handleMapClick} />
-          {markerPos && <Marker position={markerPos} icon={markerIcon} />}
-        </MapContainer>
-      </div>
+      <div
+        ref={containerRef}
+        className="rounded-xl overflow-hidden border border-[#1f1f1f]"
+        style={{ height: 280 }}
+      />
       <p className="text-xs text-gray-500">Нажмите на карту, чтобы уточнить местоположение</p>
     </div>
   )
