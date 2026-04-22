@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
 
@@ -16,12 +17,12 @@ export function CtaSection() {
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-4">
-        <Button
+        <GlowButton
           onClick={() => setRegisterOpen(true)}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-base font-medium"
+          className="rounded-full px-8 py-3 text-base"
         >
           Создать кабинет <Icon name="ArrowRight" className="ml-2 h-4 w-4" />
-        </Button>
+        </GlowButton>
         <Button
           onClick={() => navigate("/marketplace")}
           variant="outline"

@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
+import { GlowButton } from "@/components/ui/glow-button"
 import { useNavigate } from "react-router-dom"
 
 const perks: { icon: string; text: string }[] = [
@@ -45,12 +45,12 @@ export function ReferralBannerSection() {
             ))}
           </div>
 
-          <Button
+          <GlowButton
             onClick={() => navigate("/referral")}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl text-base"
+            className="rounded-xl px-8 py-3 text-base"
           >
             Подробнее
-          </Button>
+          </GlowButton>
         </div>
       </div>
     </section>

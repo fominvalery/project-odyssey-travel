@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -54,6 +54,57 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
+  }
+}
+
+@layer utilities {
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .btn-glow::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--glow-angle, 0deg),
+      transparent 0deg,
+      transparent 60deg,
+      #93c5fd 90deg,
+      #ffffff 120deg,
+      #93c5fd 150deg,
+      transparent 180deg,
+      transparent 360deg
+    );
+    animation: glow-rotate 2.5s linear infinite;
+    z-index: -1;
+  }
+
+  .btn-glow::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: inherit;
+    background: #2563eb;
+    z-index: -1;
+  }
+
+  @keyframes glow-rotate {
+    from {
+      --glow-angle: 0deg;
+    }
+    to {
+      --glow-angle: 360deg;
+    }
+  }
+
+  @property --glow-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
   }
 }

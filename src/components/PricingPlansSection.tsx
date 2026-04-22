@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
 import {
@@ -93,16 +94,21 @@ export function PricingPlansSection() {
               </button>
             )}
 
-            <Button
-              onClick={() => handlePlanClick(plan)}
-              className={`mt-auto rounded-xl w-full ${
-                plan.featured
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-[#1a1a1a] hover:bg-[#222] text-white border border-[#2a2a2a]"
-              }`}
-            >
-              {plan.id === "pro" ? "Выбрать тариф" : plan.comingSoon ? "Узнать подробнее" : "Начать бесплатно"}
-            </Button>
+            {plan.featured ? (
+              <GlowButton
+                onClick={() => handlePlanClick(plan)}
+                className="mt-auto rounded-xl w-full py-2 text-sm"
+              >
+                Выбрать тариф
+              </GlowButton>
+            ) : (
+              <Button
+                onClick={() => handlePlanClick(plan)}
+                className="mt-auto rounded-xl w-full bg-[#1a1a1a] hover:bg-[#222] text-white border border-[#2a2a2a]"
+              >
+                {plan.comingSoon ? "Узнать подробнее" : "Начать бесплатно"}
+              </Button>
+            )}
           </div>
         ))}
       </div>

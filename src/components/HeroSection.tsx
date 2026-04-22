@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { ArrowUpRight, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { GlowButton } from "@/components/ui/glow-button"
 import { RegisterModal } from "@/components/RegisterModal"
 
 export function HeroSection() {
@@ -23,12 +24,12 @@ export function HeroSection() {
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4">
-        <Button
+        <GlowButton
           onClick={() => setRegisterOpen(true)}
-          className="rounded-full bg-blue-600 px-6 hover:bg-blue-700 text-white"
+          className="rounded-full px-6 py-2 text-sm"
         >
           Зарегистрироваться бесплатно <ArrowUpRight className="ml-2 h-4 w-4" />
-        </Button>
+        </GlowButton>
         <Button variant="outline" className="rounded-full border-gray-700 bg-transparent text-white hover:bg-gray-800">
           <Play className="mr-2 h-4 w-4 fill-blue-500 text-blue-500" /> Смотреть обзор
         </Button>
