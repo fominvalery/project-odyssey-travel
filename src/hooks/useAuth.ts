@@ -146,10 +146,39 @@ export function useAuth() {
     setUser(merged)
   }
 
+  async function refreshProfile(): Promise<void> {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return
+    const local = JSON.parse(stored)
+    if (!local?.id) return
+    try {
+      const authUrl = (func2url as Record<string, string>)["auth-email-auth"]
+      const res = await fetch(`${authUrl}?action=me&user_id=${encodeURIComponent(local.id)}`)
+      if (!res.ok) return
+      const raw = await res.text()
+      const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+      const userData = data.user || data
+      const status = resolveStatus(userData.status || local.status, userData.plan || local.plan)
+      const updated: UserProfile = {
+        ...local,
+        status,
+        plan: planFromStatus(status),
+        listingsUsed: userData.listings_used ?? local.listingsUsed ?? 0,
+        listingsExtra: userData.listings_extra ?? local.listingsExtra ?? 0,
+        listingsPeriodStart: userData.listings_period_start || local.listingsPeriodStart,
+        avatar: userData.avatar_url || userData.avatar || local.avatar,
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+      setUser(updated)
+    } catch {
+      // ignore — оставляем локальные данные
+    }
+  }
+
   function logout() {
     localStorage.removeItem(STORAGE_KEY)
     setUser(null)
   }
 
-  return { user, register, login, logout, updateProfile }
+  return { user, register, login, logout, updateProfile, refreshProfile }
 }

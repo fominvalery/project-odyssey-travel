@@ -14,6 +14,11 @@ import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
 import { agencyApi } from "@/lib/agencyApi"
 import { toast } from "@/hooks/use-toast"
+import { useYookassa } from "@/components/extensions/yookassa/useYookassa"
+import func2url from "../../../backend/func2url.json"
+
+const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
+const CLUB_PRICE = 990
 
 interface Props {
   open: boolean
@@ -29,6 +34,7 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
   const [mode, setMode] = useState<Mode>("choice")
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ name: "", inn: "", description: "" })
+  const { createPayment, isLoading: payLoading } = useYookassa({ apiUrl: YOOKASSA_URL })
 
   const reset = () => {
     setMode("choice")
@@ -48,12 +54,32 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
     onCreated?.()
   }
 
-  const upgradeBroker = () => {
+  const upgradeBroker = async () => {
     if (!user) return
-    updateProfile({ status: "broker" })
-    toast({ title: "Готово", description: "Статус Клуб активирован" })
-    handleClose()
-    onCreated?.()
+    const returnUrl = `${window.location.origin}/dashboard`
+    const res = await createPayment({
+      amount: CLUB_PRICE,
+      userEmail: user.email || "",
+      userName: user.name || "",
+      description: "Тариф Клуб — 1 месяц",
+      returnUrl,
+      cartItems: [{ id: "club", name: "Тариф Клуб", quantity: 1, price: CLUB_PRICE }],
+      orderType: "subscription",
+      userId: user.id,
+    })
+    if (res?.payment_url) {
+      localStorage.setItem("yookassa_pending_order", JSON.stringify({
+        order_number: res.order_number,
+        order_id: res.order_id,
+        payment_id: res.payment_id,
+        order_type: "subscription",
+        qty: 0,
+        created_at: new Date().toISOString(),
+      }))
+      window.location.href = res.payment_url
+    } else {
+      toast({ title: "Ошибка", description: "Не удалось создать платёж", variant: "destructive" })
+    }
   }
 
   const createAgency = async () => {
@@ -213,12 +239,20 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
                 Генерация презентаций
               </div>
             </div>
+            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-center">
+              <span className="text-muted-foreground">Стоимость: </span>
+              <span className="font-semibold text-blue-400">{CLUB_PRICE} ₽ / месяц</span>
+            </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setMode("choice")} className="flex-1">
+              <Button variant="outline" onClick={() => setMode("choice")} className="flex-1" disabled={payLoading}>
                 Назад
               </Button>
-              <Button onClick={upgradeBroker} className="flex-1">
-                Активировать
+              <Button onClick={upgradeBroker} className="flex-1" disabled={payLoading}>
+                {payLoading ? (
+                  <><Icon name="Loader2" size={16} className="animate-spin mr-2" />Загрузка...</>
+                ) : (
+                  <>Оплатить {CLUB_PRICE} ₽</>
+                )}
               </Button>
             </div>
           </div>

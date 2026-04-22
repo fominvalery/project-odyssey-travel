@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>
   logout: () => void
   updateProfile: (updates: Partial<UserProfile>) => void
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)

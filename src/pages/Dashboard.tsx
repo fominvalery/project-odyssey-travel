@@ -37,7 +37,7 @@ function mapFromServer(o: Record<string, unknown>): ObjectData {
 }
 
 export default function Dashboard() {
-  const { user, updateProfile, logout } = useAuthContext()
+  const { user, updateProfile, logout, refreshProfile } = useAuthContext()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { toast } = useToast()
@@ -62,28 +62,37 @@ export default function Dashboard() {
     const paymentId = pending.payment_id
     if (!paymentId) return
 
-    // Проверяем статус платежа
-    fetch(`${YOOKASSA_URL}?action=check&payment_id=${paymentId}`)
-      .then(r => r.json())
-      .then(data => {
+    async function checkPayment() {
+      try {
+        const r = await fetch(`${YOOKASSA_URL}?action=check&payment_id=${paymentId}`)
+        const data = await r.json()
         if (data.status === "succeeded") {
           localStorage.removeItem("yookassa_pending_order")
-          // Обновляем listings_extra локально из ответа или перезагружаем профиль
           const qty = pending.qty || 0
-          if (qty > 0) {
-            updateProfile({ listingsExtra: (user.listingsExtra ?? 0) + qty })
+          const isSubscription = pending.order_type === "subscription"
+          if (isSubscription) {
+            await refreshProfile()
+            toast({ title: "Тариф Клуб активирован!", description: "Добро пожаловать в клуб" })
+            setSection("dashboard")
+          } else {
+            if (qty > 0) {
+              updateProfile({ listingsExtra: (user!.listingsExtra ?? 0) + qty })
+            }
+            toast({
+              title: "Оплата прошла успешно!",
+              description: qty > 0 ? `Добавлено ${qty} объявлений` : "Заказ оформлен",
+            })
+            setSection("objects")
           }
-          toast({
-            title: "Оплата прошла успешно!",
-            description: qty > 0 ? `Добавлено ${qty} объявлений` : "Заказ оформлен",
-          })
-          setSection("objects")
         } else if (data.status === "canceled") {
           localStorage.removeItem("yookassa_pending_order")
           toast({ title: "Оплата отменена", description: "Попробуйте снова", variant: "destructive" })
         }
-      })
-      .catch(() => {})
+      } catch {
+        // ignore
+      }
+    }
+    checkPayment()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
