@@ -8,6 +8,7 @@ import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
 import ObjectGallery from "@/components/object-detail/ObjectGallery"
+import ObjectMap from "@/components/object-detail/ObjectMap"
 import ObjectSidebar from "@/components/object-detail/ObjectSidebar"
 import ObjectLeadForm from "@/components/object-detail/ObjectLeadForm"
 import ObjectChatModal from "@/components/object-detail/ObjectChatModal"
@@ -123,6 +124,13 @@ export default function ObjectDetail() {
             activePhoto={activePhoto}
             setActivePhoto={setActivePhoto}
           />
+
+          {/* Карта под галереей */}
+          {(obj.address || obj.city) && (
+            <div className="lg:col-span-2">
+              <ObjectMap city={obj.city} address={obj.address} />
+            </div>
+          )}
 
           {/* Правая колонка — цена + контакты + форма заявки */}
           <aside className="lg:col-span-1 space-y-4">
