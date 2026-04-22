@@ -21,6 +21,8 @@ export interface WizardForm {
   title: string
   city: string
   address: string
+  lat?: number
+  lon?: number
   price: string
   area: string
   description: string

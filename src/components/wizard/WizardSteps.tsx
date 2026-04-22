@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
 import { CATEGORIES, getCategoryFields, WizardForm } from "./wizardTypes"
 import SortablePhotoGrid from "./SortablePhotoGrid"
+import AddressMapPicker from "./AddressMapPicker"
 import func2url from "../../../backend/func2url.json"
 
 // ── Шаг 1: Выбор категории ──────────────────────────────────────────────────
@@ -55,18 +56,20 @@ export function Step2Details({
   form, setForm, category, categoryFields, onCategoryField,
 }: Step2Props) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Адрес с картой */}
+      <AddressMapPicker
+        city={form.city}
+        address={form.address}
+        lat={form.lat}
+        lon={form.lon}
+        onCityChange={v => setForm({ ...form, city: v })}
+        onAddressChange={v => setForm({ ...form, address: v })}
+        onCoordsChange={(lat, lon) => setForm({ ...form, lat, lon })}
+      />
+
+      {/* Цена и площадь */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label className="text-xs text-gray-400 mb-1.5 block">Город</Label>
-          <Input placeholder="Москва" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}
-            className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600" />
-        </div>
-        <div>
-          <Label className="text-xs text-gray-400 mb-1.5 block">Адрес</Label>
-          <Input placeholder="ул. Тверская, 1" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })}
-            className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600" />
-        </div>
         <div>
           <Label className="text-xs text-gray-400 mb-1.5 block">Цена (₽)</Label>
           <Input placeholder="18 500 000" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
@@ -99,7 +102,6 @@ export function Step2Details({
           </div>
         </div>
       )}
-
     </div>
   )
 }
