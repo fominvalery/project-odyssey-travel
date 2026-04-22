@@ -149,26 +149,7 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
               </div>
             </button>
 
-            {user?.status === "broker" ? (
-              <div className="text-left p-4 rounded-xl border-2 border-blue-500/40 bg-blue-500/10 cursor-default">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white">
-                    <Icon name="UserCheck" size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold">Клуб</span>
-                      <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                        <Icon name="Check" size={10} />Активен
-                      </span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Апгрейд личного кабинета: больше объектов, CRM, аналитика
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
+            {user?.status !== "broker" && (
             <button
               onClick={() => setMode("broker")}
               className="text-left p-4 rounded-xl border-2 border-transparent hover:border-primary bg-muted/50 transition-all group"
