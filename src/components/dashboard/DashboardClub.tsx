@@ -42,13 +42,14 @@ interface Member {
 
 interface Props {
   userId: string
+  onMessage?: (partnerId: string, partnerName: string, partnerAvatar: string | null, partnerStatus: string) => void
 }
 
 function getInitials(name: string) {
   return name.split(" ").filter(Boolean).map(n => n[0]).join("").slice(0, 2).toUpperCase()
 }
 
-export default function DashboardClub({ userId }: Props) {
+export default function DashboardClub({ userId, onMessage }: Props) {
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -185,7 +186,7 @@ export default function DashboardClub({ userId }: Props) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(m => (
-            <MemberCard key={m.id} member={m} />
+            <MemberCard key={m.id} member={m} onMessage={onMessage} />
           ))}
         </div>
       )}
@@ -193,7 +194,7 @@ export default function DashboardClub({ userId }: Props) {
   )
 }
 
-function MemberCard({ member: m }: { member: Member }) {
+function MemberCard({ member: m, onMessage }: { member: Member; onMessage?: Props["onMessage"] }) {
   const initials = getInitials(m.name)
   const isAgency = m.status === "agency"
 
@@ -252,6 +253,17 @@ function MemberCard({ member: m }: { member: Member }) {
       {/* О себе */}
       {m.bio && (
         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{m.bio}</p>
+      )}
+
+      {/* Кнопка Написать */}
+      {onMessage && (
+        <button
+          onClick={() => onMessage(m.id, m.name || "Участник Клуба", m.avatar_url, m.status)}
+          className="mt-auto w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 text-violet-400 hover:text-violet-300 text-sm font-medium border border-violet-500/20 transition-colors"
+        >
+          <Icon name="MessageSquare" className="h-3.5 w-3.5" />
+          Написать
+        </button>
       )}
     </div>
   )

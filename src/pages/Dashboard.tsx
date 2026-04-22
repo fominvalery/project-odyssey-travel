@@ -9,6 +9,7 @@ import { DashboardCRM, DashboardReferral, DashboardProfile } from "@/components/
 import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
 import DashboardSupport from "@/components/dashboard/DashboardSupport"
 import DashboardClub from "@/components/dashboard/DashboardClub"
+import DashboardMessages from "@/components/dashboard/DashboardMessages"
 import AiChatBubble from "@/components/AiChatBubble"
 import NotificationBell from "@/components/dashboard/NotificationBell"
 import { useToast } from "@/hooks/use-toast"
@@ -16,7 +17,7 @@ import func2url from "../../backend/func2url.json"
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "profile" | "support"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "messages" | "profile" | "support"
 
 function mapFromServer(o: Record<string, unknown>): ObjectData {
   return {
@@ -62,6 +63,19 @@ export default function Dashboard() {
     website: user?.website ?? "",
   })
   const [saved, setSaved] = useState(false)
+  const [unreadMessages, setUnreadMessages] = useState(0)
+  const [openPartnerId, setOpenPartnerId] = useState<string | null>(null)
+  const [openPartnerName, setOpenPartnerName] = useState<string | null>(null)
+  const [openPartnerAvatar, setOpenPartnerAvatar] = useState<string | null>(null)
+  const [openPartnerStatus, setOpenPartnerStatus] = useState<string | null>(null)
+
+  function handleOpenMessage(partnerId: string, partnerName: string, partnerAvatar: string | null, partnerStatus: string) {
+    setOpenPartnerId(partnerId)
+    setOpenPartnerName(partnerName)
+    setOpenPartnerAvatar(partnerAvatar)
+    setOpenPartnerStatus(partnerStatus)
+    setSection("messages")
+  }
   const [objects, setObjects] = useState<ObjectData[]>([])
   const [loadingObjects, setLoadingObjects] = useState(false)
   const [showWizard, setShowWizard] = useState(false)
@@ -208,6 +222,7 @@ export default function Dashboard() {
         user={user}
         initials={initials}
         onLogout={() => { logout(); navigate("/") }}
+        unreadMessages={unreadMessages}
       />
 
       <main className="flex-1 overflow-auto pb-20 md:pb-0">
@@ -267,7 +282,21 @@ export default function Dashboard() {
           />
         )}
 
-        {section === "club" && <DashboardClub userId={user.id} />}
+        {section === "club" && (
+          <DashboardClub userId={user.id} onMessage={handleOpenMessage} />
+        )}
+
+        {section === "messages" && (
+          <DashboardMessages
+            userId={user.id}
+            openPartnerId={openPartnerId}
+            openPartnerName={openPartnerName}
+            openPartnerAvatar={openPartnerAvatar}
+            openPartnerStatus={openPartnerStatus}
+            onClearOpen={() => { setOpenPartnerId(null); setOpenPartnerName(null); setOpenPartnerAvatar(null); setOpenPartnerStatus(null) }}
+            onUnreadChange={setUnreadMessages}
+          />
+        )}
 
         {section === "support" && <DashboardSupport />}
       </main>

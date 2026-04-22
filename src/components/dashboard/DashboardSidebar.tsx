@@ -6,7 +6,7 @@ import { useMyOrgs } from "@/hooks/useMyOrgs"
 import AddStatusModal from "@/components/agency/AddStatusModal"
 import { STATUS_LABELS } from "@/hooks/useAuth"
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "profile" | "support"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "messages" | "profile" | "support"
 
 // Пункты меню для basic
 const basicNavItems = [
@@ -22,6 +22,7 @@ const fullNavItems = [
   { id: "crm",        label: "CRM",       icon: "Users" },
   { id: "analytics",  label: "Аналитика", icon: "BarChart2" },
   { id: "club",       label: "Клуб",      icon: "Zap" },
+  { id: "messages",   label: "Сообщения", icon: "MessageSquare" },
   { id: "referral",   label: "Рефералы",  icon: "Gift" },
   { id: "profile",    label: "Профиль",   icon: "User" },
 ] as const
@@ -32,9 +33,10 @@ interface Props {
   user: { name: string; email: string; plan: string; avatar: string | null; status?: string; isSuperadmin?: boolean }
   initials: string
   onLogout: () => void
+  unreadMessages?: number
 }
 
-export default function DashboardSidebar({ section, setSection, user, initials, onLogout }: Props) {
+export default function DashboardSidebar({ section, setSection, user, initials, onLogout, unreadMessages = 0 }: Props) {
   const navigate = useNavigate()
   const { orgs, reload: reloadOrgs } = useMyOrgs()
   const [statusModalOpen, setStatusModalOpen] = useState(false)
@@ -57,6 +59,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
         <nav className="flex flex-col gap-1 flex-1">
           {navItems.map((item) => {
             const isClub = item.id === "club"
+            const isMessages = item.id === "messages"
             const isActive = section === item.id
             return (
               <button
@@ -64,14 +67,19 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
                 onClick={() => setSection(item.id)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
                   isActive
-                    ? isClub ? "bg-violet-600 text-white" : "bg-blue-600 text-white"
+                    ? isClub || isMessages ? "bg-violet-600 text-white" : "bg-blue-600 text-white"
                     : isClub
                       ? "text-violet-400 hover:text-white hover:bg-violet-500/20 border border-violet-500/20"
                       : "text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
                 }`}
               >
                 <Icon name={item.icon} className="h-4 w-4 shrink-0" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {isMessages && unreadMessages > 0 && (
+                  <span className="bg-violet-500 text-white text-[10px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center">
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                )}
               </button>
             )
           })}
