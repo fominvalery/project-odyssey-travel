@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
+import { useAuthContext } from "@/context/AuthContext"
 import { Header } from "@/components/Header"
 import { Footer } from "@/components/Footer"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,7 @@ import func2url from "../../backend/func2url.json"
 
 export default function ObjectDetail() {
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuthContext()
   const navigate = useNavigate()
   const [obj, setObj] = useState<ObjectDetailData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -129,6 +131,7 @@ export default function ObjectDetail() {
               setShowContacts={setShowContacts}
               onShareClick={() => setShareOpen(true)}
               onChatClick={() => setChatOpen(true)}
+              isAuthenticated={!!user}
             />
 
             {shareOpen && (

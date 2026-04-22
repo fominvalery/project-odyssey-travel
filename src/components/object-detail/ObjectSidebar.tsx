@@ -1,6 +1,8 @@
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import { ObjectDetailData } from "./types"
+import { RegisterModal } from "@/components/RegisterModal"
 
 interface ObjectSidebarProps {
   obj: ObjectDetailData
@@ -8,6 +10,7 @@ interface ObjectSidebarProps {
   setShowContacts: (v: boolean) => void
   onShareClick: () => void
   onChatClick: () => void
+  isAuthenticated?: boolean
 }
 
 export default function ObjectSidebar({
@@ -16,7 +19,17 @@ export default function ObjectSidebar({
   setShowContacts,
   onShareClick,
   onChatClick,
+  isAuthenticated = false,
 }: ObjectSidebarProps) {
+  const [registerOpen, setRegisterOpen] = useState(false)
+
+  const handleShowPhone = () => {
+    if (!isAuthenticated) {
+      setRegisterOpen(true)
+      return
+    }
+    setShowContacts(true)
+  }
   return (
     <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-6">
       <p className="text-xs text-gray-500 mb-1">Стоимость</p>
@@ -41,7 +54,7 @@ export default function ObjectSidebar({
             </div>
           </div>
 
-          {showContacts && obj.owner.phone ? (
+          {showContacts && obj.owner.phone && isAuthenticated ? (
             <a
               href={`tel:${obj.owner.phone}`}
               className="flex items-center justify-center gap-2 w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-3 font-medium transition-colors mb-2"
@@ -51,12 +64,16 @@ export default function ObjectSidebar({
             </a>
           ) : (
             <Button
-              onClick={() => setShowContacts(true)}
+              onClick={handleShowPhone}
               className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 mb-2"
               disabled={!obj.owner.phone}
             >
               <Icon name="Phone" className="h-4 w-4 mr-2" />
-              {obj.owner.phone ? "Показать телефон" : "Контакты не указаны"}
+              {!obj.owner.phone
+                ? "Контакты не указаны"
+                : !isAuthenticated
+                ? "Показать телефон"
+                : "Показать телефон"}
             </Button>
           )}
 
@@ -89,6 +106,24 @@ export default function ObjectSidebar({
         <Icon name="Share2" className="h-4 w-4" />
         Поделиться
       </button>
+
+      {!isAuthenticated && obj.owner?.phone && (
+        <p className="text-xs text-gray-500 text-center mt-3">
+          <button onClick={() => setRegisterOpen(true)} className="text-blue-400 hover:underline">
+            Войдите
+          </button>
+          {" "}или{" "}
+          <button onClick={() => setRegisterOpen(true)} className="text-blue-400 hover:underline">
+            зарегистрируйтесь
+          </button>
+          {" "}чтобы увидеть контакты
+        </p>
+      )}
+
+      <RegisterModal
+        open={registerOpen}
+        onOpenChange={setRegisterOpen}
+      />
     </div>
   )
 }
