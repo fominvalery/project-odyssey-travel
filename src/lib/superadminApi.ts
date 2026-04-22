@@ -2,6 +2,12 @@ import func2url from "../../backend/func2url.json"
 
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 
+export interface ReferralLevel {
+  name: string
+  level: number
+  color: string
+}
+
 export interface AdminUser {
   id: string
   email: string
@@ -15,6 +21,8 @@ export interface AdminUser {
   listings_extra: number
   created_at: string | null
   last_login_at: string | null
+  referral_count: number
+  referral_level: ReferralLevel
 }
 
 export interface AdminUserPayload {

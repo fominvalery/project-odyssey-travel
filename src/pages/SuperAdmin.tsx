@@ -16,6 +16,15 @@ const STATUS_COLORS: Record<string, string> = {
   agency: "bg-violet-500/15 text-violet-300 border-violet-500/30",
 }
 
+const LEVEL_COLORS: Record<string, string> = {
+  gray:    "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  blue:    "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  emerald: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  violet:  "bg-violet-500/15 text-violet-300 border-violet-500/30",
+  amber:   "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  rose:    "bg-rose-500/15 text-rose-300 border-rose-500/30",
+}
+
 export default function SuperAdmin() {
   const { user } = useAuthContext()
   const navigate = useNavigate()
@@ -155,6 +164,7 @@ export default function SuperAdmin() {
                         <th className="px-4 py-3 text-left font-medium">Пользователь</th>
                         <th className="px-4 py-3 text-left font-medium">Контакты</th>
                         <th className="px-4 py-3 text-left font-medium">Статус</th>
+                        <th className="px-4 py-3 text-left font-medium">Уровень</th>
                         <th className="px-4 py-3 text-left font-medium">Объявления</th>
                       </tr>
                     </thead>
@@ -197,6 +207,24 @@ export default function SuperAdmin() {
                                 </button>
                               ))}
                             </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {u.referral_level ? (
+                              <div className="flex flex-col gap-0.5">
+                                <span
+                                  className={`text-xs px-2.5 py-1 rounded-full border font-medium w-fit ${
+                                    LEVEL_COLORS[u.referral_level.color] || LEVEL_COLORS.gray
+                                  }`}
+                                >
+                                  {u.referral_level.name}
+                                </span>
+                                {u.referral_count > 0 && (
+                                  <span className="text-[10px] text-gray-500 pl-1">{u.referral_count} реф.</span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-600">—</span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-400">
                             {u.listings_used}
