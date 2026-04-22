@@ -13,7 +13,7 @@ export function ReferralBannerSection() {
   const navigate = useNavigate()
 
   return (
-    <section className="py-20 px-4">
+    <section className="pt-6 pb-20 px-4">
       <div className="max-w-5xl mx-auto rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] border border-blue-500/20 p-10 md:p-14 text-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute -top-20 -left-20 w-80 h-80 bg-blue-600 rounded-full blur-3xl" />
