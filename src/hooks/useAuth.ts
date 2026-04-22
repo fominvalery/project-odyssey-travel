@@ -147,15 +147,47 @@ export function useAuth() {
     }
   }
 
-  function updateProfile(updates: Partial<UserProfile>) {
+  async function updateProfile(updates: Partial<UserProfile>) {
     if (!user) return
     const merged = { ...user, ...updates }
-    // Если меняется status — автоматически пересчитываем plan
     if (updates.status !== undefined) {
       merged.plan = planFromStatus(updates.status)
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
     setUser(merged)
+
+    // Сохраняем в БД если есть поля профиля
+    const profileFields = ['name','phone','company','firstName','lastName','middleName',
+      'city','specializations','bio','experience','telegram','vk','max','website']
+    const hasProfileUpdate = profileFields.some(f => f in updates)
+    if (!hasProfileUpdate || !user.id) return
+
+    try {
+      const authUrl = (func2url as Record<string, string>)["auth-email-auth"]
+      await fetch(`${authUrl}?action=update-profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: user.id,
+          name: merged.name,
+          phone: merged.phone,
+          company: merged.company,
+          first_name: merged.firstName ?? '',
+          last_name: merged.lastName ?? '',
+          middle_name: merged.middleName ?? '',
+          city: merged.city ?? '',
+          specializations: merged.specializations ?? [],
+          bio: merged.bio ?? '',
+          experience: merged.experience ?? '',
+          telegram_username: merged.telegram ?? '',
+          vk_username: merged.vk ?? '',
+          max_username: merged.max ?? '',
+          website: merged.website ?? '',
+        }),
+      })
+    } catch {
+      // ignore — данные уже сохранены локально
+    }
   }
 
   async function refreshProfile(): Promise<void> {
@@ -179,6 +211,17 @@ export function useAuth() {
         listingsExtra: userData.listings_extra ?? local.listingsExtra ?? 0,
         listingsPeriodStart: userData.listings_period_start || local.listingsPeriodStart,
         avatar: userData.avatar_url || userData.avatar || local.avatar,
+        firstName: userData.first_name ?? local.firstName ?? '',
+        lastName: userData.last_name ?? local.lastName ?? '',
+        middleName: userData.middle_name ?? local.middleName ?? '',
+        city: userData.city ?? local.city ?? '',
+        specializations: userData.specializations ?? local.specializations ?? [],
+        bio: userData.bio ?? local.bio ?? '',
+        experience: userData.experience ?? local.experience ?? '',
+        telegram: userData.telegram ?? local.telegram ?? '',
+        vk: userData.vk ?? local.vk ?? '',
+        max: userData.max ?? local.max ?? '',
+        website: userData.website ?? local.website ?? '',
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
       setUser(updated)

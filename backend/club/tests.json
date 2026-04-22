@@ -1,0 +1,10 @@
+{
+  "tests": [
+    {
+      "name": "Club list - missing user_id",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400
+    }
+  ]
+}

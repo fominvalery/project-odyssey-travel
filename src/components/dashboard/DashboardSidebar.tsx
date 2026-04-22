@@ -6,7 +6,7 @@ import { useMyOrgs } from "@/hooks/useMyOrgs"
 import AddStatusModal from "@/components/agency/AddStatusModal"
 import { STATUS_LABELS } from "@/hooks/useAuth"
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "profile" | "support"
 
 // Пункты меню для basic
 const basicNavItems = [
@@ -21,6 +21,7 @@ const fullNavItems = [
   { id: "objects",    label: "Объекты",   icon: "Building2" },
   { id: "crm",        label: "CRM",       icon: "Users" },
   { id: "analytics",  label: "Аналитика", icon: "BarChart2" },
+  { id: "club",       label: "Клуб",      icon: "Zap" },
   { id: "referral",   label: "Рефералы",  icon: "Gift" },
   { id: "profile",    label: "Профиль",   icon: "User" },
 ] as const
@@ -54,20 +55,26 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
         </button>
 
         <nav className="flex flex-col gap-1 flex-1">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setSection(item.id)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
-                section === item.id
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
-              }`}
-            >
-              <Icon name={item.icon} className="h-4 w-4 shrink-0" />
-              {item.label}
-            </button>
-          ))}
+          {navItems.map((item) => {
+            const isClub = item.id === "club"
+            const isActive = section === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => setSection(item.id)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
+                  isActive
+                    ? isClub ? "bg-violet-600 text-white" : "bg-blue-600 text-white"
+                    : isClub
+                      ? "text-violet-400 hover:text-white hover:bg-violet-500/20 border border-violet-500/20"
+                      : "text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
+                }`}
+              >
+                <Icon name={item.icon} className="h-4 w-4 shrink-0" />
+                {item.label}
+              </button>
+            )
+          })}
 
           <div className="my-1 border-t border-[#1f1f1f]" />
 

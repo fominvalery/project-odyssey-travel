@@ -1,17 +1,53 @@
-"""Me handler — get user profile by user_id."""
-from utils.db import query_one, get_schema, escape
+"""Update profile handler — сохраняет поля профиля пользователя."""
+import json
+from utils.db import query_one, execute, get_schema, escape
 from utils.http import response, error
 
 
 def handle(event: dict, origin: str = '*') -> dict:
-    """Вернуть профиль пользователя по user_id."""
-    params = event.get('queryStringParameters') or {}
-    user_id = str(params.get('user_id', '')).strip()
+    """Сохранить данные профиля пользователя (имя, телефон, специализации и т.д.)."""
+    try:
+        body = json.loads(event.get('body') or '{}')
+    except Exception:
+        return error(400, 'Некорректный JSON', origin)
 
+    user_id = str(body.get('user_id', '')).strip()
     if not user_id:
         return error(400, 'user_id обязателен', origin)
 
     S = get_schema()
+
+    user = query_one(f"SELECT id FROM {S}users WHERE id = {escape(user_id)}")
+    if not user:
+        return error(404, 'Пользователь не найден', origin)
+
+    allowed = {
+        'name', 'phone', 'company',
+        'first_name', 'last_name', 'middle_name', 'city',
+        'bio', 'experience', 'telegram_username', 'vk_username', 'max_username', 'website',
+    }
+
+    set_parts = []
+
+    for field in allowed:
+        val = body.get(field)
+        if val is not None:
+            set_parts.append(f"{field} = {escape(str(val))}")
+
+    # specializations — массив
+    specs = body.get('specializations')
+    if specs is not None and isinstance(specs, list):
+        specs_escaped = "ARRAY[" + ",".join(escape(s) for s in specs) + "]::text[]" if specs else "ARRAY[]::text[]"
+        set_parts.append(f"specializations = {specs_escaped}")
+
+    if not set_parts:
+        return error(400, 'Нет данных для обновления', origin)
+
+    set_parts.append("updated_at = NOW()")
+    set_sql = ", ".join(set_parts)
+
+    execute(f"UPDATE {S}users SET {set_sql} WHERE id = {escape(user_id)}")
+
     user = query_one(f"""
         SELECT id, email, name, phone, company, plan, status, avatar_url,
                is_superadmin, listings_used, listings_extra, listings_period_start,
@@ -20,9 +56,6 @@ def handle(event: dict, origin: str = '*') -> dict:
                telegram_username, vk_username, max_username, website
         FROM {S}users WHERE id = {escape(user_id)}
     """)
-
-    if not user:
-        return error(404, 'Пользователь не найден', origin)
 
     (uid, email, name, phone, company, plan, status, avatar_url, is_superadmin,
      listings_used, listings_extra, listings_period_start,

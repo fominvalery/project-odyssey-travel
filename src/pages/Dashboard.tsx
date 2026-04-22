@@ -8,6 +8,7 @@ import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import { DashboardCRM, DashboardReferral, DashboardProfile } from "@/components/dashboard/DashboardSections"
 import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
 import DashboardSupport from "@/components/dashboard/DashboardSupport"
+import DashboardClub from "@/components/dashboard/DashboardClub"
 import AiChatBubble from "@/components/AiChatBubble"
 import NotificationBell from "@/components/dashboard/NotificationBell"
 import { useToast } from "@/hooks/use-toast"
@@ -15,7 +16,7 @@ import func2url from "../../backend/func2url.json"
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "profile" | "support"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "profile" | "support"
 
 function mapFromServer(o: Record<string, unknown>): ObjectData {
   return {
@@ -265,6 +266,8 @@ export default function Dashboard() {
             onStatusChange={(status) => updateProfile({ status })}
           />
         )}
+
+        {section === "club" && <DashboardClub userId={user.id} />}
 
         {section === "support" && <DashboardSupport />}
       </main>
