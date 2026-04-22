@@ -35,11 +35,17 @@ export default function DashboardReferralStats({ stats, loading, onWithdrawClick
         <div className="rounded-2xl bg-gradient-to-br from-blue-950/60 to-[#0d0d0d] border border-blue-500/20 p-5">
           <div className="flex items-center gap-2 mb-3">
             <Icon name="DollarSign" className="h-5 w-5 text-blue-400" />
-            <span className="text-sm font-medium text-gray-300">Всего заработано</span>
+            <span className="text-sm font-medium text-gray-300">Баланс</span>
           </div>
           <p className="text-3xl font-bold mb-1">
-            {loading ? "…" : `${(stats?.earned_total ?? 0).toLocaleString("ru-RU")} ₽`}
+            {loading ? "…" : `${(stats?.balance ?? stats?.earned_total ?? 0).toLocaleString("ru-RU")} ₽`}
           </p>
+          {!loading && (stats?.paid_out ?? 0) > 0 && (
+            <p className="text-xs text-gray-500 mb-1">
+              Заработано: <span className="text-white">{(stats!.earned_total).toLocaleString("ru-RU")} ₽</span>
+              {" · "}Выплачено: <span className="text-emerald-400">{(stats!.paid_out).toLocaleString("ru-RU")} ₽</span>
+            </p>
+          )}
           <p className="text-xs mt-1">
             {level?.withdrawal
               ? <span className="text-emerald-400">✓ Вывод доступен</span>

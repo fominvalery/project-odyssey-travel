@@ -136,6 +136,14 @@ def handle(event: dict, origin: str = '*') -> dict:
     earned_line2 = round(line2_payments * pct2, 2)
     earned_total = round(earned_line1 + earned_line2, 2)
 
+    # Уже выплачено (сумма заявок со статусом paid)
+    paid_out_row = query_one(f"""
+        SELECT COALESCE(SUM(amount), 0) FROM {S}withdrawal_requests
+        WHERE user_id = {escape(user_id)} AND status = 'paid'
+    """)
+    paid_out = round(float(paid_out_row[0]) if paid_out_row else 0.0, 2)
+    balance = round(max(earned_total - paid_out, 0), 2)
+
     # Список рефералов с именами
     referred_rows = query(f"""
         SELECT u.id, u.name, u.email, u.status, r.created_at
@@ -166,6 +174,8 @@ def handle(event: dict, origin: str = '*') -> dict:
         "earned_line1": earned_line1,
         "earned_line2": earned_line2,
         "earned_total": earned_total,
+        "paid_out": paid_out,
+        "balance": balance,
         "line1_payments": line1_payments,
         "line2_payments": line2_payments,
         "level": level,

@@ -25,6 +25,37 @@ export interface AdminUser {
   referral_level: ReferralLevel
 }
 
+export interface AdminWithdrawal {
+  id: number
+  user_id: string
+  user_name: string
+  user_email: string
+  entity_type: string
+  entity_label: string
+  full_name: string
+  inn: string
+  bank_name: string
+  bik: string
+  account: string
+  amount: number | null
+  comment: string
+  status: string
+  status_label: string
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface AdminWithdrawalsResponse {
+  requests: AdminWithdrawal[]
+  total: number
+  stats: {
+    pending: number
+    approved: number
+    paid: number
+    total_paid: number
+  }
+}
+
 export interface AdminUserPayload {
   user: {
     id: string
@@ -74,5 +105,26 @@ export const superadminApi = {
     const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
     if (!res.ok) throw new Error(data?.error || "Ошибка загрузки")
     return data.users || []
+  },
+
+  async listWithdrawals(actorId: string, statusFilter = ""): Promise<AdminWithdrawalsResponse> {
+    const params = new URLSearchParams({ actor_id: actorId })
+    if (statusFilter) params.set("status", statusFilter)
+    const res = await fetch(`${AUTH_URL}?action=admin-withdrawals&${params.toString()}`)
+    const raw = await res.text()
+    const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+    if (!res.ok) throw new Error(data?.error || "Ошибка загрузки")
+    return data
+  },
+
+  async updateWithdrawalStatus(actorId: string, requestId: number, status: string): Promise<void> {
+    const res = await fetch(`${AUTH_URL}?action=admin-withdrawals&actor_id=${encodeURIComponent(actorId)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ request_id: requestId, status }),
+    })
+    const raw = await res.text()
+    const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+    if (!res.ok) throw new Error(data?.error || "Ошибка обновления")
   },
 }

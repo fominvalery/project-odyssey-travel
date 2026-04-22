@@ -10,7 +10,7 @@ Routes (via ?action= query parameter):
   POST /auth?action=reset-password - Request/complete password reset
   GET  /auth?action=health         - Check DB schema
 """
-from handlers import register, login, logout, refresh, reset_password, health, verify_email, me, update_status, users_list, referral_stats, withdrawal_request, withdrawal_history
+from handlers import register, login, logout, refresh, reset_password, health, verify_email, me, update_status, users_list, referral_stats, withdrawal_request, withdrawal_history, admin_withdrawals
 from utils.http import options_response, error, get_origin_from_event
 
 
@@ -28,10 +28,13 @@ ROUTES = {
     'referral-stats': referral_stats.handle,
     'withdrawal-request': withdrawal_request.handle,
     'withdrawal-history': withdrawal_history.handle,
+    'admin-withdrawals': admin_withdrawals.handle,
 }
 
 # Actions that allow GET method
-GET_ACTIONS = {'health', 'me', 'users-list', 'referral-stats', 'withdrawal-history'}
+GET_ACTIONS = {'health', 'me', 'users-list', 'referral-stats', 'withdrawal-history', 'admin-withdrawals'}
+# Actions that allow both GET and POST
+BOTH_ACTIONS = {'admin-withdrawals'}
 
 
 def handler(event: dict, context) -> dict:
@@ -46,7 +49,11 @@ def handler(event: dict, context) -> dict:
     params = event.get('queryStringParameters') or {}
     action = params.get('action', '')
 
-    # Some actions allow GET
+    # Actions that allow both GET and POST
+    if action in BOTH_ACTIONS and method in ('GET', 'POST'):
+        return ROUTES[action](event, origin)
+
+    # Some actions allow GET only
     if action in GET_ACTIONS and method == 'GET':
         return ROUTES[action](event, origin)
 

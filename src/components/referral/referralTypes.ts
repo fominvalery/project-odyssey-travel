@@ -31,6 +31,8 @@ export interface ReferralStats {
   earned_line1: number
   earned_line2: number
   earned_total: number
+  paid_out: number
+  balance: number
   line1_payments: number
   line2_payments: number
   level: ReferralLevel
