@@ -15,8 +15,8 @@ export default function DashboardReferralStats({ stats, loading, onWithdrawClick
       {/* Статистика — 6 карточек */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-6">
         {[
-          { icon: "MousePointerClick", label: "Переходов",    value: "0" },
-          { icon: "Eye",               label: "За 7 дней",    value: loading ? "…" : String(stats?.referral_count_week ?? 0) },
+          { icon: "MousePointerClick", label: "Переходов",    value: loading ? "…" : String(stats?.clicks_total ?? 0) },
+          { icon: "Eye",               label: "За 7 дней",    value: loading ? "…" : String(stats?.clicks_week ?? 0) },
           { icon: "UserPlus",          label: "Регистраций",  value: loading ? "…" : String(stats?.referral_count ?? 0) },
           { icon: "UserCheck",         label: "Активировано", value: loading ? "…" : String(stats?.activated_count ?? 0) },
           { icon: "ShoppingCart",      label: "Оплатили",     value: loading ? "…" : String(stats?.paid_count ?? 0) },

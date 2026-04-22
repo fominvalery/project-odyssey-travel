@@ -68,6 +68,15 @@ def handle(event: dict, origin: str = '*') -> dict:
         return error(404, 'Пользователь не найден', origin)
 
     level_override = user[1]
+    ref_code = str(user[0])[:8]
+
+    # Переходы по реферальной ссылке (всего + за 7 дней)
+    clicks_row = query_one(f"""
+        SELECT COUNT(*), COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days')
+        FROM {S}referral_clicks WHERE ref_code = {escape(ref_code)}
+    """)
+    clicks_total = int(clicks_row[0]) if clicks_row else 0
+    clicks_week = int(clicks_row[1]) if clicks_row else 0
 
     # Считаем рефералов 1-й линии
     referrals_row = query_one(f"""
@@ -212,7 +221,9 @@ def handle(event: dict, origin: str = '*') -> dict:
         "balance": balance,
         "line1_payments": line1_payments,
         "line2_payments": line2_payments,
+        "clicks_total": clicks_total,
+        "clicks_week": clicks_week,
         "level": level,
         "referred_users": referred_users,
-        "ref_code": str(user[0])[:8],
+        "ref_code": ref_code,
     }, origin)

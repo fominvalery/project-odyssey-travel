@@ -22,6 +22,8 @@ export interface ReferralLevel {
 }
 
 export interface ReferralStats {
+  clicks_total: number
+  clicks_week: number
   referral_count: number
   referral_count_week: number
   line2_count: number

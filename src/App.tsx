@@ -20,13 +20,25 @@ import Offer from "./pages/Offer";
 import AiRules from "./pages/AiRules";
 import Consent from "./pages/Consent";
 import NotFound from "./pages/NotFound";
+import func2url from "../backend/func2url.json";
 
 const queryClient = new QueryClient();
 
-// Сохраняем реферальный код при переходе по ссылке /?ref=XXXXXXXX
+// Сохраняем реферальный код и фиксируем клик при переходе по ссылке /?ref=XXXXXXXX
 if (typeof window !== "undefined") {
   const ref = new URLSearchParams(window.location.search).get("ref")
-  if (ref) localStorage.setItem("k24_ref_code", ref)
+  if (ref) {
+    localStorage.setItem("k24_ref_code", ref)
+    // Записываем клик на бэкенд (fire-and-forget)
+    const authUrl = (func2url as Record<string, string>)["auth-email-auth"]
+    if (authUrl) {
+      fetch(`${authUrl}?action=referral-click`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ref_code: ref.slice(0, 8) }),
+      }).catch(() => {})
+    }
+  }
 }
 
 const App = () => (
