@@ -1,0 +1,34 @@
+{
+  "tests": [
+    {
+      "name": "GET without user_id returns 400",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST create notification",
+      "method": "POST",
+      "path": "/",
+      "body": {"user_id": "00000000-0000-0000-0000-000000000002", "type": "info", "title": "Тест", "body": "Тестовое уведомление"},
+      "expectedStatus": 201,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET notifications for user",
+      "method": "GET",
+      "path": "/?user_id=00000000-0000-0000-0000-000000000002",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "PUT mark all read",
+      "method": "PUT",
+      "path": "/",
+      "body": {"user_id": "00000000-0000-0000-0000-000000000002", "all": true},
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

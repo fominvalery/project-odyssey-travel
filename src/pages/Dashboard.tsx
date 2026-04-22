@@ -9,6 +9,7 @@ import { DashboardCRM, DashboardReferral, DashboardProfile } from "@/components/
 import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
 import DashboardSupport from "@/components/dashboard/DashboardSupport"
 import AiChatBubble from "@/components/AiChatBubble"
+import NotificationBell from "@/components/dashboard/NotificationBell"
 import { useToast } from "@/hooks/use-toast"
 import func2url from "../../backend/func2url.json"
 
@@ -179,6 +180,10 @@ export default function Dashboard() {
       />
 
       <main className="flex-1 overflow-auto pb-20 md:pb-0">
+        {/* Топ-бар с колокольчиком */}
+        <div className="sticky top-0 z-40 flex justify-end px-6 py-3 border-b border-[#1a1a1a] bg-[#0a0a0a]/80 backdrop-blur-sm">
+          <NotificationBell userId={user.id} />
+        </div>
         {section === "dashboard" && (
           <DashboardHome user={user} objects={objects} />
         )}

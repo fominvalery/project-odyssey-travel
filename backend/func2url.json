@@ -1,4 +1,5 @@
 {
+  "notifications": "https://functions.poehali.dev/59063dd0-5097-4670-8e02-9ef4fc534d1d",
   "object-chat": "https://functions.poehali.dev/9a22a45f-ed3e-468d-af06-4f374b1a8323",
   "yookassa-yookassa": "https://functions.poehali.dev/a95de47b-3ec7-4a68-8af2-887608ba2879",
   "yookassa-yookassa-webhook": "https://functions.poehali.dev/2734856e-674c-44fa-a386-726ff519f596",
