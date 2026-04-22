@@ -27,6 +27,9 @@ interface RegisterModalProps {
 export function RegisterModal({ open, onOpenChange, planId = "basic" }: RegisterModalProps) {
   const { register, login: ctxLogin } = useAuthContext()
   const navigate = useNavigate()
+  const refCode = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("ref") || localStorage.getItem("k24_ref_code") || ""
+    : ""
   const plan = planLabels[planId] ?? planLabels.basic
 
   const [view, setView] = useState<View>("register")
@@ -76,6 +79,7 @@ export function RegisterModal({ open, onOpenChange, planId = "basic" }: Register
         email: form.email,
         password: form.password,
         name: form.name,
+        ...(refCode ? { ref_code: refCode } : {}),
       })
       if (status === 409) { setErrorMsg("Пользователь с таким email уже зарегистрирован"); return }
       if (!ok) { setErrorMsg(data?.error || "Ошибка регистрации"); return }

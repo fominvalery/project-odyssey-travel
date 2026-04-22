@@ -1,4 +1,4 @@
-"""Update user status handler (superadmin-only, no payment required)."""
+"""Update user status / referral_level handler (superadmin-only, no payment required)."""
 import json
 from utils.db import query_one, execute, get_schema, escape
 from utils.http import response, error
@@ -10,10 +10,11 @@ STATUS_TO_PLAN = {
     'agency': 'proplus',
 }
 ALLOWED_STATUSES = {'basic', 'broker', 'agency'}
+ALLOWED_LEVELS = {'Друг', 'Партнёр', 'Бизнес', 'Амбасадор', 'Адвокат', ''}
 
 
 def handle(event: dict, origin: str = '*') -> dict:
-    """Позволяет супер-админу менять свой статус (или любого пользователя) без оплаты."""
+    """Позволяет супер-админу менять статус и реферальный уровень любого пользователя без оплаты."""
     try:
         body = json.loads(event.get('body') or '{}')
     except Exception:
@@ -22,11 +23,10 @@ def handle(event: dict, origin: str = '*') -> dict:
     actor_id = str(body.get('actor_id', '')).strip()
     target_id = str(body.get('user_id', '')).strip() or actor_id
     new_status = str(body.get('status', '')).strip().lower()
+    new_level = body.get('referral_level')  # None если не передан
 
     if not actor_id:
         return error(400, 'actor_id обязателен', origin)
-    if new_status not in ALLOWED_STATUSES:
-        return error(400, 'Неверный статус', origin)
 
     S = get_schema()
 
@@ -36,12 +36,25 @@ def handle(event: dict, origin: str = '*') -> dict:
     if not bool(actor[0]):
         return error(403, 'Только супер-админ может менять статус без оплаты', origin)
 
-    new_plan = STATUS_TO_PLAN[new_status]
-    execute(f"""
-        UPDATE {S}users
-        SET status = {escape(new_status)}, plan = {escape(new_plan)}, updated_at = NOW()
-        WHERE id = {escape(target_id)}
-    """)
+    # Обновляем статус если передан
+    if new_status:
+        if new_status not in ALLOWED_STATUSES:
+            return error(400, 'Неверный статус', origin)
+        new_plan = STATUS_TO_PLAN[new_status]
+        execute(f"""
+            UPDATE {S}users
+            SET status = {escape(new_status)}, plan = {escape(new_plan)}, updated_at = NOW()
+            WHERE id = {escape(target_id)}
+        """)
+
+    # Обновляем реферальный уровень если передан
+    if new_level is not None:
+        level_val = str(new_level).strip() if new_level else ''
+        execute(f"""
+            UPDATE {S}users
+            SET referral_level = {escape(level_val) if level_val else 'NULL'}, updated_at = NOW()
+            WHERE id = {escape(target_id)}
+        """)
 
     user = query_one(f"""
         SELECT id, email, name, phone, company, plan, status, avatar_url,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthContext } from "@/context/AuthContext"
 import { superadminApi, AdminUser } from "@/lib/superadminApi"
@@ -25,6 +25,14 @@ const LEVEL_COLORS: Record<string, string> = {
   rose:    "bg-rose-500/15 text-rose-300 border-rose-500/30",
 }
 
+const LEVELS = [
+  { name: "Друг",     color: "blue",    desc: "1–2 реф. • 5%" },
+  { name: "Партнёр",  color: "emerald", desc: "3–9 реф. • 7%" },
+  { name: "Бизнес",   color: "violet",  desc: "10–29 реф. • 7%" },
+  { name: "Амбасадор",color: "amber",   desc: "30–99 реф. • 10%" },
+  { name: "Адвокат",  color: "rose",    desc: "100+ реф. • 10%+2%" },
+]
+
 export default function SuperAdmin() {
   const { user } = useAuthContext()
   const navigate = useNavigate()
@@ -33,6 +41,8 @@ export default function SuperAdmin() {
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [levelDropdown, setLevelDropdown] = useState<string | null>(null)
+  const levelDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!user) {
@@ -44,8 +54,17 @@ export default function SuperAdmin() {
       return
     }
     loadUsers()
-     
   }, [user?.id])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (levelDropdownRef.current && !levelDropdownRef.current.contains(e.target as Node)) {
+        setLevelDropdown(null)
+      }
+    }
+    if (levelDropdown) document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [levelDropdown])
 
   const loadUsers = async (q = "") => {
     if (!user?.id) return
@@ -79,6 +98,28 @@ export default function SuperAdmin() {
         description: e instanceof Error ? e.message : "Не удалось изменить",
         variant: "destructive",
       })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const changeLevel = async (targetId: string, levelName: string) => {
+    if (!user?.id) return
+    setLevelDropdown(null)
+    setUpdatingId(targetId)
+    try {
+      await superadminApi.updateLevel(user.id, targetId, levelName)
+      const lvl = LEVELS.find((l) => l.name === levelName)
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetId
+            ? { ...u, referral_level: { name: levelName, level: LEVELS.findIndex(l => l.name === levelName) + 1, color: lvl?.color || "gray" } }
+            : u
+        )
+      )
+      toast({ title: "Готово", description: `Уровень изменён на «${levelName}»` })
+    } catch (e) {
+      toast({ title: "Ошибка", description: e instanceof Error ? e.message : "Не удалось изменить", variant: "destructive" })
     } finally {
       setUpdatingId(null)
     }
@@ -209,22 +250,55 @@ export default function SuperAdmin() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            {u.referral_level ? (
-                              <div className="flex flex-col gap-0.5">
-                                <span
-                                  className={`text-xs px-2.5 py-1 rounded-full border font-medium w-fit ${
-                                    LEVEL_COLORS[u.referral_level.color] || LEVEL_COLORS.gray
-                                  }`}
-                                >
-                                  {u.referral_level.name}
-                                </span>
-                                {u.referral_count > 0 && (
-                                  <span className="text-[10px] text-gray-500 pl-1">{u.referral_count} реф.</span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-gray-600">—</span>
-                            )}
+                            <div className="relative" ref={levelDropdown === u.id ? levelDropdownRef : undefined}>
+                              <button
+                                disabled={updatingId === u.id}
+                                onClick={() => setLevelDropdown(levelDropdown === u.id ? null : u.id)}
+                                className={`text-xs px-2.5 py-1 rounded-full border font-medium flex items-center gap-1 transition-all hover:opacity-80 ${
+                                  u.referral_level?.level
+                                    ? LEVEL_COLORS[u.referral_level.color] || LEVEL_COLORS.gray
+                                    : LEVEL_COLORS.gray
+                                } ${updatingId === u.id ? "opacity-50" : ""}`}
+                              >
+                                {updatingId === u.id
+                                  ? <Icon name="Loader2" size={10} className="animate-spin" />
+                                  : u.referral_level?.level
+                                    ? u.referral_level.name
+                                    : "—"
+                                }
+                                <Icon name="ChevronDown" size={10} />
+                              </button>
+                              {u.referral_count > 0 && (
+                                <span className="text-[10px] text-gray-500 pl-1 block">{u.referral_count} реф.</span>
+                              )}
+                              {levelDropdown === u.id && (
+                                <div className="absolute z-50 top-full mt-1 left-0 w-44 bg-[#161616] border border-[#2a2a2a] rounded-xl shadow-xl overflow-hidden">
+                                  {LEVELS.map((lvl) => (
+                                    <button
+                                      key={lvl.name}
+                                      onClick={() => changeLevel(u.id, lvl.name)}
+                                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[#1f1f1f] transition-colors ${
+                                        u.referral_level?.name === lvl.name ? "bg-[#1a1a1a]" : ""
+                                      }`}
+                                    >
+                                      <div>
+                                        <span className={`font-medium ${
+                                          lvl.color === "blue" ? "text-blue-300"
+                                          : lvl.color === "emerald" ? "text-emerald-300"
+                                          : lvl.color === "violet" ? "text-violet-300"
+                                          : lvl.color === "amber" ? "text-amber-300"
+                                          : "text-rose-300"
+                                        }`}>{lvl.name}</span>
+                                        <span className="text-gray-500 ml-1.5">{lvl.desc}</span>
+                                      </div>
+                                      {u.referral_level?.name === lvl.name && (
+                                        <Icon name="Check" size={12} className="text-blue-400 shrink-0" />
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-400">
                             {u.listings_used}

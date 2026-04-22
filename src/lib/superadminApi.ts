@@ -43,6 +43,17 @@ export interface AdminUserPayload {
 }
 
 export const superadminApi = {
+  async updateLevel(actorId: string, userId: string, referralLevel: string): Promise<void> {
+    const res = await fetch(`${AUTH_URL}?action=update-status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ actor_id: actorId, user_id: userId, referral_level: referralLevel }),
+    })
+    const raw = await res.text()
+    const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+    if (!res.ok) throw new Error(data?.error || "Ошибка обновления уровня")
+  },
+
   async updateStatus(actorId: string, status: "basic" | "broker" | "agency", userId?: string): Promise<AdminUserPayload> {
     const res = await fetch(`${AUTH_URL}?action=update-status`, {
       method: "POST",

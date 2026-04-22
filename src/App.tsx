@@ -23,6 +23,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Сохраняем реферальный код при переходе по ссылке /?ref=XXXXXXXX
+if (typeof window !== "undefined") {
+  const ref = new URLSearchParams(window.location.search).get("ref")
+  if (ref) localStorage.setItem("k24_ref_code", ref)
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

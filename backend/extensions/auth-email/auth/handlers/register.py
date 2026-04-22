@@ -40,6 +40,7 @@ def handle(event: dict, origin: str = '*') -> dict:
     password = str(payload.get('password', ''))
     name = str(payload.get('name', '') or '').strip()[:255] or email.split('@')[0]
     phone = str(payload.get('phone', '') or '').strip()[:50]
+    ref_code = str(payload.get('ref_code', '') or '').strip()[:8]  # первые 8 символов UUID реферера
 
     if not email or not validate_email(email):
         return error(400, 'Некорректный email', origin)
@@ -93,6 +94,23 @@ def handle(event: dict, origin: str = '*') -> dict:
         VALUES ({escape(email)}, {escape(password_hash)}, {escape(name)}, {escape(phone)}, {escape(not email_enabled)}, {escape(now)}, {escape(now)})
         RETURNING id
     """)
+
+    # Записываем реферальную связь если передан ref_code
+    if ref_code and user_id:
+        referrer = query_one(f"""
+            SELECT id FROM {S}users
+            WHERE CAST(id AS TEXT) LIKE {escape(ref_code + '%')}
+            AND id != {escape(user_id)}
+            LIMIT 1
+        """)
+        if referrer:
+            referrer_id = referrer[0]
+            existing_ref = query_one(f"SELECT id FROM {S}referrals WHERE referred_id = {escape(user_id)}")
+            if not existing_ref:
+                execute(f"""
+                    INSERT INTO {S}referrals (referrer_id, referred_id, created_at)
+                    VALUES ({escape(referrer_id)}, {escape(user_id)}, NOW())
+                """)
 
     result = {
         'user_id': user_id,
