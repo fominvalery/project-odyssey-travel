@@ -298,14 +298,19 @@ export default function SuperAdmin() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="relative" ref={levelDropdown === u.id ? levelDropdownRef : undefined}>
-                              <button disabled={updatingId === u.id}
-                                onClick={() => setLevelDropdown(levelDropdown === u.id ? null : u.id)}
-                                className={`text-xs px-2.5 py-1 rounded-full border font-medium flex items-center gap-1 transition-all hover:opacity-80 ${
-                                  u.referral_level?.level ? LEVEL_COLORS[u.referral_level.color] || LEVEL_COLORS.gray : LEVEL_COLORS.gray
-                                } ${updatingId === u.id ? "opacity-50" : ""}`}>
-                                {updatingId === u.id ? <Icon name="Loader2" size={10} className="animate-spin" /> : u.referral_level?.level ? u.referral_level.name : "—"}
-                                <Icon name="ChevronDown" size={10} />
-                              </button>
+                              {(() => {
+                                const hasLevel = u.referral_level?.level > 0
+                                const lvlColor = hasLevel ? (LEVEL_COLORS[u.referral_level.color] || LEVEL_COLORS.gray) : LEVEL_COLORS.gray
+                                const lvlName = hasLevel ? u.referral_level.name : "Уровень"
+                                return (
+                                  <button disabled={updatingId === u.id}
+                                    onClick={() => setLevelDropdown(levelDropdown === u.id ? null : u.id)}
+                                    className={`text-xs px-2.5 py-1 rounded-full border font-medium flex items-center gap-1 transition-all hover:opacity-80 ${lvlColor} ${updatingId === u.id ? "opacity-50" : ""}`}>
+                                    {updatingId === u.id ? <Icon name="Loader2" size={10} className="animate-spin" /> : lvlName}
+                                    <Icon name="ChevronDown" size={10} />
+                                  </button>
+                                )
+                              })()}
                               {u.referral_count > 0 && <span className="text-[10px] text-gray-500 pl-1 block">{u.referral_count} реф.</span>}
                               {levelDropdown === u.id && (
                                 <div className="absolute z-50 top-full mt-1 left-0 w-44 bg-[#161616] border border-[#2a2a2a] rounded-xl shadow-xl overflow-hidden">
