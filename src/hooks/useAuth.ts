@@ -17,6 +17,14 @@ export interface UserProfile {
   avatar: string | null
   createdAt: string
   isSuperadmin?: boolean
+  // Карточка Клуба
+  city?: string
+  specialization?: string
+  bio?: string
+  experience?: string
+  telegram?: string
+  instagram?: string
+  website?: string
 }
 
 /** Карта: status → plan (единственный источник маппинга) */

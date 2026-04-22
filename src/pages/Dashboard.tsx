@@ -44,7 +44,18 @@ export default function Dashboard() {
   const { toast } = useToast()
   const isBasic = !user?.isSuperadmin && (!user?.status || user?.status === "basic")
   const [section, setSection] = useState<Section>(isBasic ? "objects" : "dashboard")
-  const [form, setForm] = useState({ name: user?.name ?? "", phone: user?.phone ?? "", company: user?.company ?? "" })
+  const [form, setForm] = useState({
+    name: user?.name ?? "",
+    phone: user?.phone ?? "",
+    company: user?.company ?? "",
+    city: user?.city ?? "",
+    specialization: user?.specialization ?? "",
+    bio: user?.bio ?? "",
+    experience: user?.experience ?? "",
+    telegram: user?.telegram ?? "",
+    instagram: user?.instagram ?? "",
+    website: user?.website ?? "",
+  })
   const [saved, setSaved] = useState(false)
   const [objects, setObjects] = useState<ObjectData[]>([])
   const [loadingObjects, setLoadingObjects] = useState(false)
@@ -124,7 +135,18 @@ export default function Dashboard() {
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    updateProfile(form)
+    updateProfile({
+      name: form.name,
+      phone: form.phone,
+      company: form.company,
+      city: form.city,
+      specialization: form.specialization,
+      bio: form.bio,
+      experience: form.experience,
+      telegram: form.telegram,
+      instagram: form.instagram,
+      website: form.website,
+    })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
