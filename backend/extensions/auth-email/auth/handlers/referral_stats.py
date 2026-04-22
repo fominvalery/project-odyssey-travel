@@ -98,11 +98,10 @@ def handle(event: dict, origin: str = '*') -> dict:
     """)
     activated_count = int(activated_row[0]) if activated_row else 0
 
-    # Рефералы у которых есть оплаченные заказы
+    # Рефералы, с которых получена комиссия (оплатили тариф)
     paid_row = query_one(f"""
-        SELECT COUNT(DISTINCT r.referred_id) FROM {S}referrals r
-        JOIN {S}orders o ON CAST(o.user_id AS TEXT) = CAST(r.referred_id AS TEXT)
-        WHERE r.referrer_id = {escape(user_id)} AND o.status = 'succeeded'
+        SELECT COUNT(DISTINCT referred_id) FROM {S}referral_bonuses
+        WHERE referrer_id = {escape(user_id)} AND bonus_type = 'commission_line1'
     """)
     paid_count = int(paid_row[0]) if paid_row else 0
 

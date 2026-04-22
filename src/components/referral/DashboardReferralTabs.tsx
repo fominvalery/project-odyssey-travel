@@ -113,8 +113,14 @@ export default function DashboardReferralTabs({
                   <div key={b.id} className="flex items-center justify-between px-4 py-3 gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                          <Icon name="Gift" size={12} className="text-emerald-400" />
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                          b.bonus_type === "first_object" ? "bg-blue-500/20" : "bg-emerald-500/20"
+                        }`}>
+                          <Icon
+                            name={b.bonus_type === "first_object" ? "Building2" : "TrendingUp"}
+                            size={12}
+                            className={b.bonus_type === "first_object" ? "text-blue-400" : "text-emerald-400"}
+                          />
                         </div>
                         <span className="text-sm font-medium truncate">
                           {b.referred_name || b.referred_email}
