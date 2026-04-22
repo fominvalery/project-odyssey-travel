@@ -21,6 +21,11 @@ interface ReferralStats {
   activated_count: number
   paid_count: number
   conversion: number
+  earned_line1: number
+  earned_line2: number
+  earned_total: number
+  line1_payments: number
+  line2_payments: number
   level: {
     name: string
     level: number
@@ -208,6 +213,53 @@ export function DashboardReferral({ userId }: ReferralProps) {
           </div>
         </div>
       )}
+
+      {/* Баланс и начисления */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        {/* Итого заработано */}
+        <div className="rounded-2xl bg-gradient-to-br from-blue-950/60 to-[#0d0d0d] border border-blue-500/20 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="DollarSign" className="h-5 w-5 text-blue-400" />
+            <span className="text-sm font-medium text-gray-300">Всего заработано</span>
+          </div>
+          <p className="text-3xl font-bold mb-1">
+            {loading ? "…" : `${(stats?.earned_total ?? 0).toLocaleString("ru-RU")} ₽`}
+          </p>
+          <p className="text-xs text-gray-500">
+            {level?.withdrawal
+              ? <span className="text-emerald-400">Вывод доступен с уровня {level.name}</span>
+              : <span className="text-red-400">Вывод доступен с уровня Бизнес</span>}
+          </p>
+        </div>
+
+        {/* Линии */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-4">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Icon name="Layers" className="h-4 w-4 text-emerald-400" />
+              <span className="text-xs text-gray-400">Линия 1 ({level?.commission1 ?? 5}%)</span>
+            </div>
+            <p className="text-xl font-bold">
+              {loading ? "…" : `${(stats?.earned_line1 ?? 0).toLocaleString("ru-RU")} ₽`}
+            </p>
+            <p className="text-[10px] text-gray-600 mt-0.5">
+              с оборота {loading ? "…" : `${(stats?.line1_payments ?? 0).toLocaleString("ru-RU")} ₽`}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-4">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Icon name="Layers" className="h-4 w-4 text-violet-400" />
+              <span className="text-xs text-gray-400">Линия 2 ({level?.commission2 ?? 0}%)</span>
+            </div>
+            <p className="text-xl font-bold">
+              {loading ? "…" : `${(stats?.earned_line2 ?? 0).toLocaleString("ru-RU")} ₽`}
+            </p>
+            <p className="text-[10px] text-gray-600 mt-0.5">
+              с оборота {loading ? "…" : `${(stats?.line2_payments ?? 0).toLocaleString("ru-RU")} ₽`}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Как это работает */}
       <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">

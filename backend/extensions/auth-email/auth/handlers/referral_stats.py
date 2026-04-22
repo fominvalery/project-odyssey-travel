@@ -109,6 +109,33 @@ def handle(event: dict, origin: str = '*') -> dict:
     # Конверсия (оплатили / зарегистрировались * 100)
     conversion = round(paid_count / referral_count * 100) if referral_count > 0 else 0
 
+    # Сумма платежей рефералов 1-й линии (succeeded заказы)
+    line1_sum_row = query_one(f"""
+        SELECT COALESCE(SUM(o.amount), 0)
+        FROM {S}referrals r
+        JOIN {S}orders o ON CAST(o.user_id AS TEXT) = CAST(r.referred_id AS TEXT)
+        WHERE r.referrer_id = {escape(user_id)} AND o.status = 'succeeded'
+    """)
+    line1_payments = float(line1_sum_row[0]) if line1_sum_row else 0.0
+
+    # Сумма платежей рефералов 2-й линии
+    line2_sum_row = query_one(f"""
+        SELECT COALESCE(SUM(o.amount), 0)
+        FROM {S}referrals r1
+        JOIN {S}referrals r2 ON r2.referrer_id = r1.referred_id
+        JOIN {S}orders o ON CAST(o.user_id AS TEXT) = CAST(r2.referred_id AS TEXT)
+        WHERE r1.referrer_id = {escape(user_id)} AND o.status = 'succeeded'
+    """)
+    line2_payments = float(line2_sum_row[0]) if line2_sum_row else 0.0
+
+    # Начисления комиссии (считаем после определения уровня)
+    level = get_level(referral_count, level_override)
+    pct1 = level["commission1"] / 100
+    pct2 = level["commission2"] / 100
+    earned_line1 = round(line1_payments * pct1, 2)
+    earned_line2 = round(line2_payments * pct2, 2)
+    earned_total = round(earned_line1 + earned_line2, 2)
+
     # Список рефералов с именами
     referred_rows = query(f"""
         SELECT u.id, u.name, u.email, u.status, r.created_at
@@ -129,8 +156,6 @@ def handle(event: dict, origin: str = '*') -> dict:
         for row in referred_rows
     ]
 
-    level = get_level(referral_count, level_override)
-
     return response(200, {
         "referral_count": referral_count,
         "referral_count_week": week_count,
@@ -138,6 +163,11 @@ def handle(event: dict, origin: str = '*') -> dict:
         "activated_count": activated_count,
         "paid_count": paid_count,
         "conversion": conversion,
+        "earned_line1": earned_line1,
+        "earned_line2": earned_line2,
+        "earned_total": earned_total,
+        "line1_payments": line1_payments,
+        "line2_payments": line2_payments,
         "level": level,
         "referred_users": referred_users,
         "ref_code": str(user[0])[:8],
