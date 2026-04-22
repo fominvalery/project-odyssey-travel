@@ -3,20 +3,36 @@ from utils.db import query, query_one, get_schema, escape
 from utils.http import response, error
 
 
-def get_referral_level(count: int) -> dict:
-    """Вернуть уровень реферальной программы по количеству рефералов."""
+LEVEL_BY_NAME = {
+    "Адвокат":   {"name": "Адвокат",   "level": 5, "color": "rose"},
+    "Амбасадор": {"name": "Амбасадор", "level": 4, "color": "amber"},
+    "Бизнес":    {"name": "Бизнес",    "level": 3, "color": "violet"},
+    "Партнёр":   {"name": "Партнёр",   "level": 2, "color": "emerald"},
+    "Друг":      {"name": "Друг",      "level": 1, "color": "blue"},
+}
+
+
+def get_referral_level(count: int, override: str | None = None) -> dict:
+    """Вернуть уровень реферальной программы.
+    
+    Приоритет: ручной override от супер-админа > автоматический по количеству рефералов.
+    Минимальный уровень — всегда «Друг».
+    """
+    # Если супер-админ задал уровень вручную — берём его
+    if override and override in LEVEL_BY_NAME:
+        return LEVEL_BY_NAME[override]
+
+    # Автоматически по количеству рефералов (минимум Друг)
     if count >= 100:
-        return {"name": "Адвокат", "level": 5, "color": "rose"}
+        return LEVEL_BY_NAME["Адвокат"]
     elif count >= 30:
-        return {"name": "Амбасадор", "level": 4, "color": "amber"}
+        return LEVEL_BY_NAME["Амбасадор"]
     elif count >= 10:
-        return {"name": "Бизнес", "level": 3, "color": "violet"}
+        return LEVEL_BY_NAME["Бизнес"]
     elif count >= 3:
-        return {"name": "Партнёр", "level": 2, "color": "emerald"}
-    elif count >= 1:
-        return {"name": "Друг", "level": 1, "color": "blue"}
+        return LEVEL_BY_NAME["Партнёр"]
     else:
-        return {"name": "—", "level": 0, "color": "gray"}
+        return LEVEL_BY_NAME["Друг"]  # базовый уровень для всех
 
 
 def handle(event: dict, origin: str = '*') -> dict:
@@ -61,9 +77,7 @@ def handle(event: dict, origin: str = '*') -> dict:
             referral_level_override, referral_count = row
 
         ref_count = int(referral_count or 0)
-        level = get_referral_level(ref_count)
-        if referral_level_override:
-            level["name"] = referral_level_override
+        level = get_referral_level(ref_count, referral_level_override)
 
         users.append({
             'id': str(uid),

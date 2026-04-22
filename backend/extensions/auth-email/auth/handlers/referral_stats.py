@@ -28,7 +28,7 @@ def get_level(count: int, override: str | None) -> dict:
             "withdrawal": level >= 3,
         }
 
-    # Иначе — считаем по количеству рефералов
+    # Иначе — считаем по количеству рефералов (минимум — Друг)
     for min_refs, name, level, color, pct1, pct2 in LEVEL_THRESHOLDS:
         if count >= min_refs:
             return {
@@ -40,11 +40,12 @@ def get_level(count: int, override: str | None) -> dict:
                 "withdrawal": level >= 3,
             }
 
+    # Базовый уровень для всех — Друг
     return {
-        "name": "—",
-        "level": 0,
-        "color": "gray",
-        "commission1": 0,
+        "name": "Друг",
+        "level": 1,
+        "color": "blue",
+        "commission1": 5,
         "commission2": 0,
         "withdrawal": False,
     }
