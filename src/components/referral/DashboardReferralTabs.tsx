@@ -17,10 +17,10 @@ export default function DashboardReferralTabs({
   stats, loading, activeTab, setActiveTab, withdrawals, withdrawalsLoading, onNewWithdrawal,
 }: Props) {
   const tabs = [
-    { id: "referrals" as const,   icon: "Users",      label: "Рефералы",  count: stats?.referral_count ?? 0 },
-    { id: "commissions" as const, icon: "TrendingUp", label: "Комиссии",  count: 0 },
-    { id: "bonuses" as const,     icon: "Gift",       label: "Бонусы",    count: 0 },
-    { id: "withdrawals" as const, icon: "Wallet",     label: "Выводы",    count: withdrawals.length },
+    { id: "referrals" as const,   icon: "Users",      label: "Рефералы",  count: stats?.referral_count ?? 0, highlight: false },
+    { id: "commissions" as const, icon: "TrendingUp", label: "Комиссии",  count: 0,                               highlight: false },
+    { id: "bonuses" as const,     icon: "Gift",       label: "Бонусы",    count: stats?.bonus_count ?? 0,         highlight: (stats?.bonus_count ?? 0) > 0 },
+    { id: "withdrawals" as const, icon: "Wallet",     label: "Выводы",    count: withdrawals.length,              highlight: false },
   ]
 
   return (
@@ -35,7 +35,11 @@ export default function DashboardReferralTabs({
             }`}
           >
             <Icon name={t.icon as "Users"} className="h-3.5 w-3.5" />
-            {t.label} ({loading ? "…" : t.count})
+            {t.label}
+            {" "}
+            <span className={`${t.highlight && !loading && t.count > 0 ? "text-emerald-400 font-bold" : ""}`}>
+              ({loading ? "…" : t.count})
+            </span>
           </button>
         ))}
       </div>
@@ -84,9 +88,53 @@ export default function DashboardReferralTabs({
       )}
 
       {activeTab === "bonuses" && (
-        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-8 text-center text-gray-500 text-sm">
-          <Icon name="Gift" className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          Начисленные бонусы пока отсутствуют
+        <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden">
+          {loading ? (
+            <div className="p-8 text-center text-gray-500 text-sm">
+              <Icon name="Loader2" className="h-6 w-6 mx-auto mb-2 animate-spin opacity-50" />
+              Загрузка…
+            </div>
+          ) : !stats?.bonuses?.length ? (
+            <div className="p-8 text-center text-gray-500 text-sm">
+              <Icon name="Gift" className="h-8 w-8 mx-auto mb-3 opacity-30" />
+              <p className="font-medium text-gray-400 mb-1">Бонусов пока нет</p>
+              <p className="text-xs">Вы получите 20 ₽ когда реферал создаст первый объект</p>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f1f1f]">
+                <span className="text-xs text-gray-500">Начислено бонусов</span>
+                <span className="text-sm font-semibold text-emerald-400">
+                  +{(stats.bonus_total).toLocaleString("ru-RU")} ₽
+                </span>
+              </div>
+              <div className="divide-y divide-[#1f1f1f]">
+                {stats.bonuses.map((b) => (
+                  <div key={b.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                          <Icon name="Gift" size={12} className="text-emerald-400" />
+                        </div>
+                        <span className="text-sm font-medium truncate">
+                          {b.referred_name || b.referred_email}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 pl-8">{b.description}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      {b.created_at && (
+                        <span className="text-xs text-gray-600">
+                          {new Date(b.created_at).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+                        </span>
+                      )}
+                      <span className="text-sm font-bold text-emerald-400">+{b.amount} ₽</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

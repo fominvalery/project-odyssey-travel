@@ -31,6 +31,9 @@ export interface ReferralStats {
   earned_line1: number
   earned_line2: number
   earned_total: number
+  bonus_total: number
+  bonus_count: number
+  bonuses: { id: number; bonus_type: string; amount: number; description: string; created_at: string | null; referred_name: string; referred_email: string }[]
   paid_out: number
   balance: number
   line1_payments: number

@@ -91,11 +91,10 @@ def handle(event: dict, origin: str = '*') -> dict:
     """)
     line2_count = int(line2_row[0]) if line2_row else 0
 
-    # Рефералы у которых status != basic (активировали платный тариф)
+    # Рефералы у которых создан хотя бы 1 объект (активированы = вступили в работу)
     activated_row = query_one(f"""
-        SELECT COUNT(*) FROM {S}referrals r
-        JOIN {S}users u ON u.id = r.referred_id
-        WHERE r.referrer_id = {escape(user_id)} AND u.status != 'basic'
+        SELECT COUNT(DISTINCT rb.referred_id) FROM {S}referral_bonuses rb
+        WHERE rb.referrer_id = {escape(user_id)} AND rb.bonus_type = 'first_object'
     """)
     activated_count = int(activated_row[0]) if activated_row else 0
 
@@ -137,13 +136,45 @@ def handle(event: dict, origin: str = '*') -> dict:
     earned_line2 = round(line2_payments * pct2, 2)
     earned_total = round(earned_line1 + earned_line2, 2)
 
+    # Бонусы за первые объекты рефералов
+    bonuses_row = query_one(f"""
+        SELECT COALESCE(SUM(amount), 0), COUNT(*) FROM {S}referral_bonuses
+        WHERE referrer_id = {escape(user_id)}
+    """)
+    bonus_total = round(float(bonuses_row[0]) if bonuses_row else 0.0, 2)
+    bonus_count = int(bonuses_row[1]) if bonuses_row else 0
+
+    # Список начисленных бонусов
+    bonus_rows = query(f"""
+        SELECT rb.id, rb.bonus_type, rb.amount, rb.description, rb.created_at,
+               u.name, u.email
+        FROM {S}referral_bonuses rb
+        JOIN {S}users u ON u.id = rb.referred_id
+        WHERE rb.referrer_id = {escape(user_id)}
+        ORDER BY rb.created_at DESC
+        LIMIT 50
+    """)
+    bonuses = [
+        {
+            "id": row[0],
+            "bonus_type": row[1],
+            "amount": float(row[2]),
+            "description": row[3] or "",
+            "created_at": row[4].isoformat() if row[4] else None,
+            "referred_name": row[5] or "",
+            "referred_email": row[6] or "",
+        }
+        for row in bonus_rows
+    ]
+
     # Уже выплачено (сумма заявок со статусом paid)
     paid_out_row = query_one(f"""
         SELECT COALESCE(SUM(amount), 0) FROM {S}withdrawal_requests
         WHERE user_id = {escape(user_id)} AND status = 'paid'
     """)
     paid_out = round(float(paid_out_row[0]) if paid_out_row else 0.0, 2)
-    balance = round(max(earned_total - paid_out, 0), 2)
+    # Баланс = комиссии + бонусы − выплачено
+    balance = round(max(earned_total + bonus_total - paid_out, 0), 2)
 
     # Список рефералов с именами
     referred_rows = query(f"""
@@ -175,6 +206,9 @@ def handle(event: dict, origin: str = '*') -> dict:
         "earned_line1": earned_line1,
         "earned_line2": earned_line2,
         "earned_total": earned_total,
+        "bonus_total": bonus_total,
+        "bonus_count": bonus_count,
+        "bonuses": bonuses,
         "paid_out": paid_out,
         "balance": balance,
         "line1_payments": line1_payments,

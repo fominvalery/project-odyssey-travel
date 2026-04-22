@@ -40,6 +40,11 @@ export default function DashboardReferralStats({ stats, loading, onWithdrawClick
           <p className="text-3xl font-bold mb-1">
             {loading ? "…" : `${(stats?.balance ?? stats?.earned_total ?? 0).toLocaleString("ru-RU")} ₽`}
           </p>
+          {!loading && (stats?.bonus_total ?? 0) > 0 && (
+            <p className="text-xs text-emerald-400/80 mb-0.5">
+              +{(stats!.bonus_total).toLocaleString("ru-RU")} ₽ бонусами за активацию рефералов
+            </p>
+          )}
           {!loading && (stats?.paid_out ?? 0) > 0 && (
             <p className="text-xs text-gray-500 mb-1">
               Заработано: <span className="text-white">{(stats!.earned_total).toLocaleString("ru-RU")} ₽</span>
