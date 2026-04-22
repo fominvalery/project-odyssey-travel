@@ -45,15 +45,19 @@ export default function Dashboard() {
   const isBasic = !user?.isSuperadmin && (!user?.status || user?.status === "basic")
   const [section, setSection] = useState<Section>(isBasic ? "objects" : "dashboard")
   const [form, setForm] = useState({
+    firstName: user?.firstName ?? "",
+    lastName: user?.lastName ?? "",
+    middleName: user?.middleName ?? "",
     name: user?.name ?? "",
     phone: user?.phone ?? "",
     company: user?.company ?? "",
     city: user?.city ?? "",
-    specialization: user?.specialization ?? "",
+    specializations: user?.specializations ?? ([] as string[]),
     bio: user?.bio ?? "",
     experience: user?.experience ?? "",
     telegram: user?.telegram ?? "",
-    instagram: user?.instagram ?? "",
+    vk: user?.vk ?? "",
+    max: user?.max ?? "",
     website: user?.website ?? "",
   })
   const [saved, setSaved] = useState(false)
@@ -136,15 +140,19 @@ export default function Dashboard() {
   function handleSave(e: React.FormEvent) {
     e.preventDefault()
     updateProfile({
-      name: form.name,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      middleName: form.middleName,
+      name: form.name || [form.lastName, form.firstName, form.middleName].filter(Boolean).join(" "),
       phone: form.phone,
       company: form.company,
       city: form.city,
-      specialization: form.specialization,
+      specializations: form.specializations,
       bio: form.bio,
       experience: form.experience,
       telegram: form.telegram,
-      instagram: form.instagram,
+      vk: form.vk,
+      max: form.max,
       website: form.website,
     })
     setSaved(true)

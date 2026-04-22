@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { GlowButton } from "@/components/ui/glow-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,15 +9,19 @@ import { STATUS_LABELS } from "@/hooks/useAuth"
 type UserStatus = "basic" | "broker" | "agency"
 
 export interface ProfileForm {
+  firstName: string
+  lastName: string
+  middleName: string
   name: string
   phone: string
   company: string
   city: string
-  specialization: string
+  specializations: string[]
   bio: string
   experience: string
   telegram: string
-  instagram: string
+  vk: string
+  max: string
   website: string
 }
 
@@ -47,9 +51,82 @@ const SPECIALIZATIONS = [
 
 const isBroker = (status: UserStatus) => status === "broker" || status === "agency"
 
+function SpecializationPicker({
+  value,
+  onChange,
+}: {
+  value: string[]
+  onChange: (v: string[]) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  function toggle(s: string) {
+    if (value.includes(s)) {
+      onChange(value.filter(v => v !== s))
+    } else {
+      onChange([...value, s])
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between rounded-xl bg-[#0f0f0f] border border-[#262626] text-sm px-3 py-2 text-left focus:outline-none focus:ring-1 focus:ring-violet-500 hover:border-[#383838] transition-colors"
+      >
+        <span className={value.length === 0 ? "text-gray-600" : "text-white"}>
+          {value.length === 0 ? "Выберите специализации" : `Выбрано: ${value.length}`}
+        </span>
+        <Icon name={open ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-gray-500 shrink-0" />
+      </button>
+
+      {open && (
+        <div className="rounded-xl bg-[#0f0f0f] border border-[#262626] overflow-hidden">
+          {SPECIALIZATIONS.map(s => {
+            const checked = value.includes(s)
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => toggle(s)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left hover:bg-[#1a1a1a] transition-colors border-b border-[#1a1a1a] last:border-0 ${
+                  checked ? "text-white" : "text-gray-400"
+                }`}
+              >
+                <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${
+                  checked ? "bg-violet-600 border-violet-500" : "border-[#3a3a3a]"
+                }`}>
+                  {checked && <Icon name="Check" className="h-2.5 w-2.5 text-white" />}
+                </div>
+                {s}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {value.map(s => (
+            <span key={s} className="inline-flex items-center gap-1 text-xs bg-violet-500/15 text-violet-300 border border-violet-500/25 px-2 py-0.5 rounded-lg">
+              {s}
+              <button type="button" onClick={() => toggle(s)} className="hover:text-white transition-colors">
+                <Icon name="X" className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function DashboardProfile({ user, initials, form, setForm, saved, onSave, onAvatarChange }: ProfileProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const club = isBroker(user.status)
+
+  const displayName = [form.lastName, form.firstName, form.middleName].filter(Boolean).join(" ") || user.name
 
   return (
     <div className="p-6 md:p-8 max-w-3xl">
@@ -71,7 +148,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarChange} />
         </div>
         <div>
-          <p className="font-bold text-base">{user.name}</p>
+          <p className="font-bold text-base">{displayName}</p>
           <p className="text-sm text-gray-500">{user.email}</p>
           {form.city && <p className="text-xs text-gray-500 mt-0.5">{form.city}</p>}
           <span className={`mt-2 inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full border ${
@@ -90,10 +167,34 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
         <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-6">
           <h2 className="font-semibold mb-5 text-sm uppercase tracking-widest text-gray-400">Основные данные</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-400">Имя <span className="text-red-400">*</span></Label>
+              <Input
+                required
+                value={form.firstName}
+                onChange={(e) => setForm({ ...form, firstName: e.target.value, name: [form.lastName, e.target.value, form.middleName].filter(Boolean).join(" ") })}
+                placeholder="Иван"
+                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-400">Фамилия <span className="text-red-400">*</span></Label>
+              <Input
+                required
+                value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value, name: [e.target.value, form.firstName, form.middleName].filter(Boolean).join(" ") })}
+                placeholder="Иванов"
+                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
+              />
+            </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs text-gray-400">ФИО</Label>
-              <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
+              <Label className="text-xs text-gray-400">Отчество <span className="text-gray-600">(по желанию)</span></Label>
+              <Input
+                value={form.middleName}
+                onChange={(e) => setForm({ ...form, middleName: e.target.value, name: [form.lastName, form.firstName, e.target.value].filter(Boolean).join(" ") })}
+                placeholder="Иванович"
+                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-400">Телефон</Label>
@@ -123,7 +224,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
         {/* Карточка участника Клуба */}
         {club && (
           <div className="rounded-2xl bg-[#111111] border border-violet-500/20 p-6">
-            <div className="flex items-center gap-2 mb-5">
+            <div className="flex items-center gap-2 mb-1">
               <div className="w-6 h-6 rounded-lg bg-violet-500/20 flex items-center justify-center">
                 <Icon name="Zap" className="h-3.5 w-3.5 text-violet-400" />
               </div>
@@ -134,16 +235,10 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="text-xs text-gray-400">Специализация</Label>
-                <select
-                  value={form.specialization}
-                  onChange={(e) => setForm({ ...form, specialization: e.target.value })}
-                  className="w-full rounded-xl bg-[#0f0f0f] border border-[#262626] text-white text-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500"
-                >
-                  <option value="">Выберите специализацию</option>
-                  {SPECIALIZATIONS.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                <SpecializationPicker
+                  value={form.specializations}
+                  onChange={(v) => setForm({ ...form, specializations: v })}
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -191,16 +286,25 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
 
               <div className="space-y-1.5">
                 <Label className="text-xs text-gray-400 flex items-center gap-1.5">
-                  <Icon name="Instagram" className="h-3 w-3" /> Instagram
+                  <Icon name="Users" className="h-3 w-3" /> ВКонтакте
                 </Label>
-                <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-                  placeholder="@username"
+                <Input value={form.vk} onChange={(e) => setForm({ ...form, vk: e.target.value })}
+                  placeholder="vk.com/username"
+                  className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500" />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs text-gray-400 flex items-center gap-1.5">
+                  <Icon name="MessageCircle" className="h-3 w-3" /> MAX
+                </Label>
+                <Input value={form.max} onChange={(e) => setForm({ ...form, max: e.target.value })}
+                  placeholder="Ссылка или username в MAX"
                   className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500" />
               </div>
             </div>
 
             {/* Превью карточки */}
-            {(form.specialization || form.bio || form.experience) && (
+            {(form.specializations.length > 0 || form.bio || form.experience) && (
               <div className="mt-6 rounded-xl border border-[#2a2a2a] bg-[#0d0d0d] p-4">
                 <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-3">Предпросмотр карточки</p>
                 <div className="flex items-start gap-3">
@@ -209,13 +313,19 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                     <AvatarFallback className="bg-violet-600 text-white text-xs font-bold">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">{form.name || user.name}</p>
-                    <p className="text-xs text-gray-400">{form.specialization || "Специализация не указана"}</p>
-                    {form.city && <p className="text-xs text-gray-500">{form.city}{form.experience ? ` · ${form.experience}` : ""}</p>}
+                    <p className="text-sm font-semibold text-white">{displayName}</p>
+                    {form.specializations.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {form.specializations.map(s => (
+                          <span key={s} className="text-[10px] bg-violet-500/10 text-violet-400 px-1.5 py-0.5 rounded">{s}</span>
+                        ))}
+                      </div>
+                    )}
+                    {form.city && <p className="text-xs text-gray-500 mt-0.5">{form.city}{form.experience ? ` · ${form.experience}` : ""}</p>}
                     {form.bio && <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{form.bio}</p>}
                     <div className="flex gap-3 mt-2">
                       {form.telegram && <span className="text-xs text-violet-400">{form.telegram}</span>}
-                      {form.instagram && <span className="text-xs text-pink-400">{form.instagram}</span>}
+                      {form.vk && <span className="text-xs text-blue-400">{form.vk}</span>}
                     </div>
                   </div>
                 </div>

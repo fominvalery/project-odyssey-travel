@@ -18,12 +18,16 @@ export interface UserProfile {
   createdAt: string
   isSuperadmin?: boolean
   // Карточка Клуба
+  firstName?: string
+  lastName?: string
+  middleName?: string
   city?: string
-  specialization?: string
+  specializations?: string[]
   bio?: string
   experience?: string
   telegram?: string
-  instagram?: string
+  vk?: string
+  max?: string
   website?: string
 }
 
