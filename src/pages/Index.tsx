@@ -2,6 +2,7 @@ import { Header } from "@/components/Header"
 import { HeroSection } from "@/components/HeroSection"
 import { FeaturesGrid } from "@/components/FeaturesGrid"
 import { PricingPlansSection } from "@/components/PricingPlansSection"
+import { ReferralBannerSection } from "@/components/ReferralBannerSection"
 import { CtaSection } from "@/components/CtaSection"
 import { Footer } from "@/components/Footer"
 
@@ -12,6 +13,7 @@ export default function Index() {
       <HeroSection />
       <FeaturesGrid />
       <PricingPlansSection />
+      <ReferralBannerSection />
       <CtaSection />
       <Footer />
     </main>
