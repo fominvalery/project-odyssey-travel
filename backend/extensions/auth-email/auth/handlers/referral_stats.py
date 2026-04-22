@@ -4,27 +4,44 @@ from utils.http import response, error
 
 
 LEVEL_THRESHOLDS = [
-    (100, "Адвокат",  5, "rose",    10, 2),
-    (30,  "Амбасадор", 4, "amber",  10, 0),
-    (10,  "Бизнес",   3, "violet",  7,  0),
-    (3,   "Партнёр",  2, "emerald", 7,  0),
-    (1,   "Друг",     1, "blue",    5,  0),
+    (100, "Адвокат",   5, "rose",    10, 2),
+    (30,  "Амбасадор", 4, "amber",   10, 0),
+    (10,  "Бизнес",    3, "violet",   7, 0),
+    (3,   "Партнёр",   2, "emerald",  7, 0),
+    (1,   "Друг",      1, "blue",     5, 0),
 ]
+
+# Маппинг имени уровня → параметры (для ручного override супер-админом)
+LEVEL_BY_NAME = {name: (level, color, pct1, pct2) for _, name, level, color, pct1, pct2 in LEVEL_THRESHOLDS}
 
 
 def get_level(count: int, override: str | None) -> dict:
+    # Если супер-админ вручную задал уровень — берём его параметры, игнорируя count
+    if override and override in LEVEL_BY_NAME:
+        level, color, pct1, pct2 = LEVEL_BY_NAME[override]
+        return {
+            "name": override,
+            "level": level,
+            "color": color,
+            "commission1": pct1,
+            "commission2": pct2,
+            "withdrawal": level >= 3,
+        }
+
+    # Иначе — считаем по количеству рефералов
     for min_refs, name, level, color, pct1, pct2 in LEVEL_THRESHOLDS:
         if count >= min_refs:
             return {
-                "name": override or name,
+                "name": name,
                 "level": level,
                 "color": color,
                 "commission1": pct1,
                 "commission2": pct2,
                 "withdrawal": level >= 3,
             }
+
     return {
-        "name": override or "—",
+        "name": "—",
         "level": 0,
         "color": "gray",
         "commission1": 0,
