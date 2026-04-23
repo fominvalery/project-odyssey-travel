@@ -1,6 +1,6 @@
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-export const MARKET_CATEGORIES = ["Все", "Жилая", "Новостройки", "Коммерческая", "Инвестиционная", "Курортная", "С торгов"]
+export const MARKET_CATEGORIES = ["Все", "Коммерческая", "Инвестиционная", "Новостройки", "Курортная", "С торгов", "Жилая"]
 
 export const CAT_BADGE_COLOR: Record<string, string> = {
   "Жилая": "bg-sky-600",
