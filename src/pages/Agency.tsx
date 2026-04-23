@@ -70,7 +70,6 @@ const MENU_ITEMS: MenuItem[] = [
   { id: "departments", label: "Отделы",      icon: "Layers",      minRole: "director", group: "agency" },
   { id: "deals",       label: "Сделки",      icon: "TrendingUp",  minRole: "broker",   group: "agency" },
   { id: "invites",     label: "Приглашения", icon: "UserPlus",    minRole: "rop",      group: "agency" },
-  { id: "reviews",     label: "Отзывы",      icon: "Star",        minRole: "broker",   group: "agency" },
 ]
 
 export default function Agency() {
