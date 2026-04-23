@@ -31,7 +31,7 @@ import DepartmentModal from "@/components/agency/DepartmentModal"
 import { DashboardCRM } from "@/components/dashboard/DashboardCRM"
 import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import DashboardClub from "@/components/dashboard/DashboardClub"
-import DashboardProfile from "@/components/dashboard/DashboardProfile"
+import { DashboardProfile } from "@/components/dashboard/DashboardProfile"
 import { AddObjectWizard, type ObjectData } from "@/components/AddObjectWizard"
 import type { ProfileForm } from "@/components/dashboard/DashboardProfile"
 import {
