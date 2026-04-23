@@ -76,11 +76,10 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
                       />
                     )}
                     {/* Оверлей */}
-                    <div className={`absolute inset-0 transition-all ${
-                      isActive
-                        ? "bg-blue-950/70"
-                        : "bg-black/72"
-                    }`} />
+                    <div
+                      className="absolute inset-0 transition-all"
+                      style={{ background: isActive ? "rgba(23,37,84,0.72)" : "rgba(0,0,0,0.62)" }}
+                    />
                     {/* Контент */}
                     <div className="relative z-10 p-5">
                       <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center backdrop-blur-sm ${
