@@ -21,7 +21,7 @@ const fullNavItems = [
   { id: "objects",    label: "Объекты",   icon: "Building2" },
   { id: "crm",        label: "CRM",       icon: "Users" },
   { id: "analytics",  label: "Аналитика", icon: "BarChart2" },
-  { id: "club",       label: "Клуб",      icon: "Zap" },
+  { id: "club",       label: "Сеть",      icon: "Zap" },
   { id: "messages",   label: "Сообщения", icon: "MessageSquare" },
   { id: "referral",   label: "Рефералы",  icon: "Gift" },
   { id: "profile",    label: "Профиль",   icon: "User" },

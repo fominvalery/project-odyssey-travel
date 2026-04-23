@@ -105,7 +105,7 @@ export default function DashboardClub({ userId, onMessage }: Props) {
         <div className="w-8 h-8 rounded-xl bg-violet-500/20 flex items-center justify-center">
           <Icon name="Zap" className="h-4 w-4 text-violet-400" />
         </div>
-        <h1 className="text-2xl font-bold">Клуб</h1>
+        <h1 className="text-2xl font-bold">Сеть</h1>
       </div>
       <p className="text-sm text-gray-500 mb-7">Участники сети — брокеры и агентства для партнёрства и совместных сделок</p>
 
