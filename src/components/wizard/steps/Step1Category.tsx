@@ -62,33 +62,35 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
                   <button
                     key={cat.id}
                     onClick={() => { setCategory(cat.id); setSubtype("") }}
-                    className={`relative rounded-2xl border overflow-hidden text-center transition-all hover:border-blue-500/50 ${
-                      isActive ? "border-blue-500" : "border-[#1f1f1f]"
+                    className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
+                      isActive
+                        ? "border-blue-500 shadow-lg shadow-blue-500/20"
+                        : "border-[#2a2a2a] hover:border-white/30"
                     }`}
-                    style={{ minHeight: 130 }}
+                    style={{ minHeight: 160 }}
                   >
-                      {/* Фоновое фото */}
+                    {/* Фоновое фото */}
                     {bg && (
                       <img
                         src={bg}
                         alt=""
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     )}
                     {/* Оверлей */}
                     <div
-                      className="absolute inset-0 transition-all"
-                      style={{ background: isActive ? "rgba(23,37,84,0.72)" : "rgba(0,0,0,0.62)" }}
+                      className="absolute inset-0 transition-all duration-300"
+                      style={{ background: isActive ? "rgba(23,37,84,0.68)" : "rgba(0,0,0,0.58)" }}
                     />
                     {/* Контент */}
-                    <div className="relative z-10 p-5">
-                      <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center backdrop-blur-sm ${
-                        isActive ? "bg-blue-500/30 border border-blue-400/40" : "bg-white/10 border border-white/10"
+                    <div className="relative z-10 p-6 flex flex-col items-center justify-center h-full">
+                      <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center backdrop-blur-sm transition-all ${
+                        isActive ? "bg-blue-500/40 border border-blue-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
                       }`}>
-                        <Icon name={cat.icon as "Home"} fallback="Building2" className={`h-5 w-5 ${isActive ? "text-blue-300" : "text-gray-300"}`} />
+                        <Icon name={cat.icon as "Home"} fallback="Building2" className={`h-6 w-6 ${isActive ? "text-blue-200" : "text-white/80"}`} />
                       </div>
-                      <p className="font-semibold text-white text-sm mb-0.5">{cat.label}</p>
-                      <p className={`text-[11px] leading-tight ${isActive ? "text-blue-200/70" : "text-gray-400"}`}>{cat.desc}</p>
+                      <p className="font-bold text-white text-base mb-1 drop-shadow">{cat.label}</p>
+                      <p className={`text-xs leading-snug drop-shadow ${isActive ? "text-blue-200/80" : "text-white/50"}`}>{cat.desc}</p>
                     </div>
                   </button>
                 )
