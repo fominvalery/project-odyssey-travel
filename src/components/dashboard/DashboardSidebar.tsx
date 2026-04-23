@@ -106,18 +106,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             Поддержка
           </button>
 
-          {user.isSuperadmin && (
-            <>
-              <div className="my-1 border-t border-[#1f1f1f]" />
-              <button
-                onClick={() => navigate("/superadmin")}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left bg-gradient-to-r from-amber-500/10 to-red-500/10 border border-amber-500/30 text-amber-200 hover:from-amber-500/20 hover:to-red-500/20"
-              >
-                <Icon name="Shield" className="h-4 w-4 shrink-0" />
-                Супер-Админ
-              </button>
-            </>
-          )}
+
         </nav>
 
         <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
@@ -164,6 +153,15 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
               <p className="text-xs text-gray-500 truncate">{STATUS_LABELS[user.status as keyof typeof STATUS_LABELS] ?? user.status}</p>
             </div>
           </div>
+          {user.isSuperadmin && (
+            <button
+              onClick={() => navigate("/superadmin")}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-600 hover:text-gray-400 hover:bg-[#1a1a1a] transition-colors w-full mb-1"
+            >
+              <Icon name="Shield" className="h-4 w-4" />
+              Супер-Админ
+            </button>
+          )}
           <button
             onClick={onLogout}
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full"
