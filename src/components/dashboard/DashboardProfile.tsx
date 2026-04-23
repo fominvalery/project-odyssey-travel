@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { STATUS_LABELS } from "@/hooks/useAuth"
+import AvatarCropModal from "./AvatarCropModal"
 
 type UserStatus = "basic" | "broker" | "agency"
 
@@ -33,6 +34,7 @@ interface ProfileProps {
   saved: boolean
   onSave: (e: React.FormEvent) => void
   onAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onAvatarCropped: (dataUrl: string) => void
   onStatusChange: (status: UserStatus) => void
 }
 
@@ -122,15 +124,39 @@ function SpecializationPicker({
   )
 }
 
-export function DashboardProfile({ user, initials, form, setForm, saved, onSave, onAvatarChange }: ProfileProps) {
+export function DashboardProfile({ user, initials, form, setForm, saved, onSave, onAvatarChange, onAvatarCropped }: ProfileProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const club = isBroker(user.status)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
 
   const displayName = [form.lastName, form.firstName, form.middleName].filter(Boolean).join(" ") || user.name
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => setCropSrc(ev.target?.result as string)
+    reader.readAsDataURL(file)
+    e.target.value = ""
+  }
+
+  function handleCropSave(croppedDataUrl: string) {
+    setCropSrc(null)
+    onAvatarCropped(croppedDataUrl)
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-3xl">
       <h1 className="text-2xl font-bold mb-6">Профиль</h1>
+
+      {/* Модалка кропа */}
+      {cropSrc && (
+        <AvatarCropModal
+          imageSrc={cropSrc}
+          onClose={() => setCropSrc(null)}
+          onSave={handleCropSave}
+        />
+      )}
 
       {/* Аватар + имя */}
       <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 flex items-center gap-5 mb-5">
@@ -145,7 +171,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
           >
             <Icon name="Camera" className="h-3 w-3 text-white" />
           </button>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarChange} />
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
         </div>
         <div>
           <p className="font-bold text-base">{displayName}</p>

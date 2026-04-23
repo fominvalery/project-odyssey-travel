@@ -282,6 +282,7 @@ export default function Dashboard() {
             saved={saved}
             onSave={handleSave}
             onAvatarChange={handleAvatarChange}
+            onAvatarCropped={(dataUrl) => updateProfile({ avatar: dataUrl })}
             onStatusChange={(status) => updateProfile({ status })}
           />
         )}
