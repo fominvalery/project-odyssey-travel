@@ -13,6 +13,7 @@ const BADGE_BY_TYPE: Record<string, { label: string; color: string; icon: string
   "Торги":        { label: "Торги",        color: "bg-green-600",   icon: "Gavel" },
   "Новостройки":  { label: "Новостройки",  color: "bg-blue-600",    icon: "Construction" },
   "Жилая":        { label: "Жилая",        color: "bg-sky-600",     icon: "Home" },
+  "Курортная":    { label: "Курортная",    color: "bg-cyan-600",    icon: "Sun" },
 }
 
 const STATUS_STYLE: Record<string, string> = {

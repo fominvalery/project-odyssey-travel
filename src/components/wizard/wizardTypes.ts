@@ -44,8 +44,9 @@ export interface CategoryItem {
   label: string
   desc: string
   icon: string
-  group: "residential" | "commercial_group" | "other"
+  group: "residential" | "commercial_group" | "resort_group" | "other"
   subtypes?: string[]
+  subgroups?: { label: string; items: string[] }[]
 }
 
 export const CATEGORIES: CategoryItem[] = [
@@ -82,8 +83,32 @@ export const CATEGORIES: CategoryItem[] = [
     label: "Инвестиции",
     desc: "ROI, доходность, стратегия",
     icon: "TrendingUp",
-    group: "other",
+    group: "commercial_group",
     subtypes: ["Арендный бизнес", "ГАБ (готовый арендный бизнес)", "Редевелопмент", "Земля под застройку"],
+  },
+  // Курортная — НОВЫЙ РАЗДЕЛ
+  {
+    id: "resort",
+    label: "Курортная",
+    desc: "Отели, SPA, турбизнес, инвест-проекты",
+    icon: "Palmtree",
+    group: "resort_group",
+    subtypes: [
+      // Размещение
+      "Апарт-отель", "Апарт-комплекс", "Гостиница", "Отель", "Мини-отель", "Хостел", "Гостевой дом",
+      // Оздоровление
+      "Санаторий", "Пансионат", "SPA-отель", "Wellness-отель",
+      // Загородный отдых
+      "База отдыха", "Турбаза", "Эко-отель", "Курортный комплекс", "Виллы и коттеджи под аренду",
+      // Инвестиции
+      "Объект под управление", "Земельный участок под курортный проект", "Инвестиционный проект под строительство", "Готовый арендный бизнес в курортной локации",
+    ],
+    subgroups: [
+      { label: "Размещение", items: ["Апарт-отель", "Апарт-комплекс", "Гостиница", "Отель", "Мини-отель", "Хостел", "Гостевой дом"] },
+      { label: "Оздоровление и отдых", items: ["Санаторий", "Пансионат", "SPA-отель", "Wellness-отель"] },
+      { label: "Загородный и природный отдых", items: ["База отдыха", "Турбаза", "Эко-отель", "Курортный комплекс", "Виллы и коттеджи под аренду"] },
+      { label: "Инвестиции и проекты", items: ["Объект под управление", "Земельный участок под курортный проект", "Инвестиционный проект под строительство", "Готовый арендный бизнес в курортной локации"] },
+    ],
   },
   // Торги
   {
@@ -99,10 +124,11 @@ export const CATEGORIES: CategoryItem[] = [
 export const CATEGORY_GROUPS = [
   { label: "Жилая недвижимость", ids: ["residential", "newbuild"] },
   { label: "Коммерческая недвижимость", ids: ["commercial", "investment"] },
+  { label: "Курортная недвижимость", ids: ["resort"] },
   { label: "Специальные форматы", ids: ["auction"] },
 ]
 
-// Поля по категориям
+// ── Поля для Жилой ──────────────────────────────────────────────────────────
 const RESIDENTIAL_FIELDS = [
   { key: "rooms", label: "Количество комнат", placeholder: "3" },
   { key: "floor", label: "Этаж", placeholder: "5" },
@@ -114,6 +140,7 @@ const RESIDENTIAL_FIELDS = [
   { key: "parking", label: "Парковка", placeholder: "Подземная / Наземная / Нет" },
 ]
 
+// ── Поля для Инвестиций ──────────────────────────────────────────────────────
 const INVESTMENT_FIELDS = [
   { key: "roi", label: "ROI (%)", placeholder: "12" },
   { key: "yield", label: "Доходность (%/год)", placeholder: "8.5" },
@@ -123,6 +150,7 @@ const INVESTMENT_FIELDS = [
   { key: "encumbrance", label: "Обременение / Арендатор", placeholder: "Якорный арендатор, договор до 2028" },
 ]
 
+// ── Поля для Коммерции ───────────────────────────────────────────────────────
 const COMMERCIAL_FIELDS_OFFICE = [
   { key: "class", label: "Класс объекта", placeholder: "A / B+ / B / C" },
   { key: "floor", label: "Этаж", placeholder: "3" },
@@ -191,6 +219,109 @@ const NEWBUILD_FIELDS = [
   { key: "mortgage", label: "Ипотека", placeholder: "Семейная 6% / Военная" },
 ]
 
+// ── Поля для Курортной недвижимости ─────────────────────────────────────────
+
+// Базовые поля — для всех курортных объектов
+const RESORT_BASE_FIELDS = [
+  { key: "floors_total", label: "Этажность", placeholder: "3" },
+  { key: "units", label: "Номеров / юнитов", placeholder: "24" },
+  { key: "usage_format", label: "Формат использования", placeholder: "Продажа / Аренда / Инвестиция" },
+  { key: "season", label: "Сезонность", placeholder: "Круглогодично / Летний / Зимний" },
+  { key: "condition", label: "Состояние объекта", placeholder: "Действующий / Требует ремонта / Строится" },
+  { key: "status_deal", label: "Статус сделки", placeholder: "Свободен / Под договором" },
+]
+
+// Действующие объекты (отели, гостиницы и т.д.)
+const RESORT_HOTEL_FIELDS = [
+  { key: "floors_total", label: "Этажность", placeholder: "4" },
+  { key: "units", label: "Номерной фонд (ед.)", placeholder: "30" },
+  { key: "usage_format", label: "Формат использования", placeholder: "Продажа / Аренда / Управление" },
+  { key: "season", label: "Сезонность", placeholder: "Круглогодично / Лето" },
+  { key: "occupancy", label: "Средняя загрузка (%)", placeholder: "72" },
+  { key: "avg_check", label: "Средний чек (₽/ночь)", placeholder: "5 500" },
+  { key: "annual_revenue", label: "Годовая выручка (₽)", placeholder: "14 000 000" },
+  { key: "yield", label: "Доходность (%/год)", placeholder: "12" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "8" },
+  { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Нет / Название УК" },
+  { key: "management_format", label: "Формат управления", placeholder: "Собственное / Франшиза / УК" },
+  { key: "sales_channels", label: "Каналы продаж", placeholder: "Booking, Airbnb, прямые продажи" },
+  { key: "pool", label: "Бассейн", placeholder: "Есть / Нет" },
+  { key: "spa", label: "SPA", placeholder: "Есть / Нет" },
+  { key: "restaurant", label: "Ресторан", placeholder: "Есть / Нет" },
+  { key: "beach", label: "Пляж", placeholder: "Собственный / Городской / Нет" },
+  { key: "parking", label: "Парковка", placeholder: "Есть / Нет / мест" },
+  { key: "conference", label: "Конференц-зал", placeholder: "Есть / Нет" },
+  { key: "licenses", label: "Лицензии и разрешения", placeholder: "Классификация, пожарная и т.д." },
+]
+
+// SPA, Wellness, Санатории
+const RESORT_SPA_FIELDS = [
+  { key: "floors_total", label: "Этажность", placeholder: "3" },
+  { key: "units", label: "Номеров / мест", placeholder: "50" },
+  { key: "usage_format", label: "Формат использования", placeholder: "Продажа / Управление" },
+  { key: "season", label: "Сезонность", placeholder: "Круглогодично" },
+  { key: "occupancy", label: "Средняя загрузка (%)", placeholder: "65" },
+  { key: "avg_check", label: "Средний чек (₽/ночь)", placeholder: "8 000" },
+  { key: "annual_revenue", label: "Годовая выручка (₽)", placeholder: "20 000 000" },
+  { key: "yield", label: "Доходность (%/год)", placeholder: "10" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "10" },
+  { key: "pool", label: "Бассейн", placeholder: "Есть / Нет" },
+  { key: "spa", label: "SPA / Термы", placeholder: "Полный комплекс / Частично" },
+  { key: "restaurant", label: "Ресторан / Столовая", placeholder: "Есть / Нет" },
+  { key: "medical", label: "Медицинская лицензия", placeholder: "Есть / Нет" },
+  { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Нет" },
+  { key: "licenses", label: "Лицензии", placeholder: "Мед. лицензия, классификация" },
+]
+
+// Базы отдыха, турбазы, эко-отели
+const RESORT_NATURE_FIELDS = [
+  { key: "land_area", label: "Площадь участка (Га)", placeholder: "2.5" },
+  { key: "units", label: "Домиков / мест", placeholder: "15" },
+  { key: "usage_format", label: "Формат использования", placeholder: "Продажа / Аренда" },
+  { key: "season", label: "Сезонность", placeholder: "Летний / Круглогодично" },
+  { key: "occupancy", label: "Средняя загрузка (%)", placeholder: "55" },
+  { key: "avg_check", label: "Средний чек (₽/сутки)", placeholder: "3 500" },
+  { key: "annual_revenue", label: "Годовая выручка (₽)", placeholder: "7 000 000" },
+  { key: "yield", label: "Доходность (%/год)", placeholder: "9" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "9" },
+  { key: "pool", label: "Бассейн / Водоём", placeholder: "Есть / Нет" },
+  { key: "beach", label: "Пляж", placeholder: "Собственный / Рядом" },
+  { key: "parking", label: "Парковка", placeholder: "Есть / мест" },
+  { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Нет" },
+]
+
+// Виллы и коттеджи под аренду
+const RESORT_VILLA_FIELDS = [
+  { key: "units", label: "Количество объектов", placeholder: "5 коттеджей" },
+  { key: "usage_format", label: "Формат", placeholder: "Посуточная / Сезонная аренда" },
+  { key: "season", label: "Сезонность", placeholder: "Летний / Круглогодично" },
+  { key: "occupancy", label: "Средняя загрузка (%)", placeholder: "60" },
+  { key: "avg_check", label: "Средний чек (₽/сутки)", placeholder: "12 000" },
+  { key: "annual_revenue", label: "Годовая выручка (₽)", placeholder: "8 000 000" },
+  { key: "yield", label: "Доходность (%/год)", placeholder: "10" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "10" },
+  { key: "pool", label: "Бассейн", placeholder: "В каждом / Общий / Нет" },
+  { key: "beach", label: "Пляж", placeholder: "Рядом / 10 мин до моря" },
+  { key: "management_company", label: "Управление", placeholder: "Есть УК / Самостоятельно" },
+  { key: "sales_channels", label: "Каналы продаж", placeholder: "Airbnb, Авито, прямые бронирования" },
+]
+
+// Инвестиционные и земельные проекты
+const RESORT_INVEST_FIELDS = [
+  { key: "land_area", label: "Площадь участка (Га)", placeholder: "5" },
+  { key: "land_use", label: "Вид разрешённого использования", placeholder: "Туризм / Рекреация / ИЖС" },
+  { key: "project_stage", label: "Стадия проекта", placeholder: "Концепция / Проект / Строительство" },
+  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Есть / Нет / В работе" },
+  { key: "urban_restrictions", label: "Градостроительные ограничения", placeholder: "ЗОУИТ, охранные зоны и т.д." },
+  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "10 000" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "50 000 000" },
+  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "18" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "6" },
+  { key: "revenue_model", label: "Модель дохода", placeholder: "Гостиница / Апарт-отель / ГАБ" },
+  { key: "forecast_occupancy", label: "Прогноз загрузки (%)", placeholder: "70" },
+  { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Планируется" },
+]
+
 export function getCategoryFields(catId: string, subtype?: string) {
   if (catId === "residential") return RESIDENTIAL_FIELDS
   if (catId === "investment") return INVESTMENT_FIELDS
@@ -204,6 +335,19 @@ export function getCategoryFields(catId: string, subtype?: string) {
     if (subtype.includes("Производство") || subtype.includes("Промзона")) return COMMERCIAL_FIELDS_INDUSTRIAL
     return COMMERCIAL_FIELDS_DEFAULT
   }
+  if (catId === "resort") {
+    if (!subtype) return RESORT_BASE_FIELDS
+    // Земля и инвест-проекты
+    if (subtype.includes("Земельный") || subtype.includes("Инвестиционный проект") || subtype.includes("строительство")) return RESORT_INVEST_FIELDS
+    // SPA, Wellness, Санатории, Пансионаты
+    if (subtype.includes("SPA") || subtype.includes("Wellness") || subtype.includes("Санаторий") || subtype.includes("Пансионат")) return RESORT_SPA_FIELDS
+    // Базы отдыха, Турбазы, Эко-отели, Курортные комплексы
+    if (subtype.includes("База") || subtype.includes("Турбаза") || subtype.includes("Эко") || subtype.includes("Курортный")) return RESORT_NATURE_FIELDS
+    // Виллы и коттеджи
+    if (subtype.includes("Виллы") || subtype.includes("коттеджи")) return RESORT_VILLA_FIELDS
+    // Отели, Гостиницы, Апарт-отели и т.д.
+    return RESORT_HOTEL_FIELDS
+  }
   return []
 }
 
@@ -214,6 +358,7 @@ export const CAT_MAP: Record<string, string> = {
   auction: "С торгов",
   newbuild: "Новостройки",
   residential: "Жилая",
+  resort: "Курортная",
 }
 
 export const CAT_ID_MAP: Record<string, string> = {
@@ -222,4 +367,5 @@ export const CAT_ID_MAP: Record<string, string> = {
   "С торгов": "auction",
   "Новостройки": "newbuild",
   "Жилая": "residential",
+  "Курортная": "resort",
 }

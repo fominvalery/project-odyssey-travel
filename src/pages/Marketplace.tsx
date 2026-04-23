@@ -11,7 +11,7 @@ import { getCategoryFields, CAT_ID_MAP, CATEGORIES as WIZ_CATEGORIES } from "@/c
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-const MARKET_CATEGORIES = ["Все", "Жилая", "Новостройки", "Коммерческая", "Инвестиционная", "С торгов"]
+const MARKET_CATEGORIES = ["Все", "Жилая", "Новостройки", "Коммерческая", "Инвестиционная", "Курортная", "С торгов"]
 
 const CAT_BADGE_COLOR: Record<string, string> = {
   "Жилая": "bg-sky-600",
@@ -19,6 +19,7 @@ const CAT_BADGE_COLOR: Record<string, string> = {
   "Коммерческая": "bg-violet-600",
   "Инвестиционная": "bg-amber-600",
   "С торгов": "bg-green-600",
+  "Курортная": "bg-cyan-600",
 }
 
 const OBJECTS = [
@@ -113,6 +114,58 @@ const OBJECTS = [
     badge: "Жилая",
     badgeColor: "bg-sky-600",
   },
+  {
+    id: 8,
+    title: "Бутик-отель на первой линии моря, Сочи",
+    type: "Курортная",
+    subtype: "Отель",
+    city: "Сочи, Адлер",
+    price: "185 000 000 ₽",
+    area: "1 800 м²",
+    yield: "14.2%",
+    img: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&q=80",
+    badge: "Горячее",
+    badgeColor: "bg-orange-500",
+  },
+  {
+    id: 9,
+    title: "Wellness-отель с термами и SPA, Алтай",
+    type: "Курортная",
+    subtype: "Wellness-отель",
+    city: "Республика Алтай, Белокуриха",
+    price: "320 000 000 ₽",
+    area: "4 200 м²",
+    yield: "11.8%",
+    img: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80",
+    badge: "Курортная",
+    badgeColor: "bg-cyan-600",
+  },
+  {
+    id: 10,
+    title: "Эко-турбаза на берегу озера, 15 домиков",
+    type: "Курортная",
+    subtype: "Эко-отель",
+    city: "Карелия, Сортавала",
+    price: "42 000 000 ₽",
+    area: "3 500 м²",
+    yield: "9.5%",
+    img: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=600&q=80",
+    badge: "Курортная",
+    badgeColor: "bg-cyan-600",
+  },
+  {
+    id: 11,
+    title: "Инвест-проект: апарт-отель у горнолыжного курорта",
+    type: "Курортная",
+    subtype: "Инвестиционный проект под строительство",
+    city: "Красная Поляна, Роза Хутор",
+    price: "от 8 500 000 ₽",
+    area: "от 35 м²",
+    yield: "18%",
+    img: "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?w=600&q=80",
+    badge: "Инвест-проект",
+    badgeColor: "bg-teal-600",
+  },
 ]
 
 const CAT_MAP: Record<string, string> = {
@@ -121,6 +174,7 @@ const CAT_MAP: Record<string, string> = {
   auction: "С торгов",
   newbuild: "Новостройки",
   residential: "Жилая",
+  resort: "Курортная",
 }
 
 export default function Marketplace() {
@@ -407,77 +461,140 @@ export default function Marketplace() {
           <div className="text-center py-20 text-gray-500">Объекты не найдены</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((obj) => (
-              <div
-                key={obj.id}
-                className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden hover:border-blue-500/40 transition-colors group"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={obj.img}
-                    alt={obj.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {obj.badge && (
-                    <span className={`absolute top-3 left-3 ${obj.badgeColor} text-white text-xs font-semibold px-2.5 py-1 rounded-full`}>
-                      {obj.badge}
-                    </span>
-                  )}
-                </div>
-
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-xs text-gray-500">{obj.type}</p>
-                    {(obj as Record<string, unknown>).subtype && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400">
-                        {(obj as Record<string, unknown>).subtype as string}
+            {filtered.map((obj) => {
+              const isResort = obj.type === "Курортная"
+              const ef = (obj as Record<string, unknown>).extra_fields as Record<string, string> | undefined
+              const occupancy = ef?.occupancy ?? ""
+              const avgCheck = ef?.avg_check ?? ""
+              const units = ef?.units ?? ""
+              return (
+                <div
+                  key={obj.id}
+                  className={`rounded-2xl overflow-hidden transition-colors group ${
+                    isResort
+                      ? "bg-gradient-to-b from-[#0d1a1c] to-[#111] border border-cyan-900/40 hover:border-cyan-500/50"
+                      : "bg-[#111111] border border-[#1f1f1f] hover:border-blue-500/40"
+                  }`}
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={obj.img}
+                      alt={obj.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    {obj.badge && (
+                      <span className={`absolute top-3 left-3 ${obj.badgeColor} text-white text-xs font-semibold px-2.5 py-1 rounded-full`}>
+                        {obj.badge}
+                      </span>
+                    )}
+                    {isResort && obj.yield !== "—" && (
+                      <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-cyan-400 text-xs font-bold px-2.5 py-1 rounded-full border border-cyan-500/30">
+                        {obj.yield} доход
                       </span>
                     )}
                   </div>
-                  <h3 className="text-white font-semibold text-sm mb-2 leading-snug">{obj.title}</h3>
-                  <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-4">
-                    <Icon name="MapPin" className="h-3.5 w-3.5 text-violet-400" />
-                    {obj.city}
-                  </div>
 
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className="text-lg font-bold text-white">{obj.price}</p>
-                      <p className="text-xs text-gray-500">{obj.area}</p>
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className={`text-xs ${isResort ? "text-cyan-500/70" : "text-gray-500"}`}>{obj.type}</p>
+                      {(obj as Record<string, unknown>).subtype && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                          isResort
+                            ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400/70"
+                            : "bg-[#1a1a1a] border-[#2a2a2a] text-gray-400"
+                        }`}>
+                          {(obj as Record<string, unknown>).subtype as string}
+                        </span>
+                      )}
                     </div>
-                    {obj.yield !== "—" && (
-                      <div className="text-right">
-                        <p className="text-green-400 font-semibold text-sm">{obj.yield}</p>
-                        <p className="text-xs text-gray-500">доходность</p>
+                    <h3 className="text-white font-semibold text-sm mb-2 leading-snug">{obj.title}</h3>
+                    <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-4">
+                      <Icon name="MapPin" className={`h-3.5 w-3.5 ${isResort ? "text-cyan-500" : "text-violet-400"}`} />
+                      {obj.city}
+                    </div>
+
+                    {/* Для курортных — показатели */}
+                    {isResort && (occupancy || avgCheck || units) ? (
+                      <div className="flex gap-3 mb-4 p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/15">
+                        {units && (
+                          <div className="text-center flex-1">
+                            <p className="text-white font-semibold text-sm">{units}</p>
+                            <p className="text-[10px] text-cyan-400/60">номеров</p>
+                          </div>
+                        )}
+                        {occupancy && (
+                          <div className="text-center flex-1 border-l border-cyan-500/20">
+                            <p className="text-white font-semibold text-sm">{occupancy}%</p>
+                            <p className="text-[10px] text-cyan-400/60">загрузка</p>
+                          </div>
+                        )}
+                        {avgCheck && (
+                          <div className="text-center flex-1 border-l border-cyan-500/20">
+                            <p className="text-white font-semibold text-sm">{Number(avgCheck).toLocaleString("ru")}₽</p>
+                            <p className="text-[10px] text-cyan-400/60">ср. чек</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-lg font-bold text-white">{obj.price}</p>
+                          <p className="text-xs text-gray-500">{obj.area}</p>
+                        </div>
+                        {obj.yield !== "—" && (
+                          <div className="text-right">
+                            <p className="text-green-400 font-semibold text-sm">{obj.yield}</p>
+                            <p className="text-xs text-gray-500">доходность</p>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
 
-                  <div className="flex gap-2">
-                    {UUID_RE.test(String(obj.id)) ? (
-                      <Link to={`/object/${obj.id}`} className="flex-1">
-                        <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                          Подробнее
+                    {isResort && (
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-base font-bold text-white">{obj.price}</p>
+                          <p className="text-xs text-gray-500">{obj.area}</p>
+                        </div>
+                        {obj.yield !== "—" && !occupancy && (
+                          <div className="text-right">
+                            <p className="text-cyan-400 font-semibold text-sm">{obj.yield}</p>
+                            <p className="text-xs text-gray-500">доходность</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      {UUID_RE.test(String(obj.id)) ? (
+                        <Link to={`/object/${obj.id}`} className="flex-1">
+                          <Button className={`w-full rounded-xl text-white text-sm ${isResort ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-600 hover:bg-blue-700"}`}>
+                            Подробнее
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button disabled className="flex-1 rounded-xl bg-[#1a1a1a] text-gray-500 text-sm cursor-not-allowed">
+                          Демо-объект
                         </Button>
-                      </Link>
-                    ) : (
-                      <Button disabled className="flex-1 rounded-xl bg-[#1a1a1a] text-gray-500 text-sm cursor-not-allowed">
-                        Демо-объект
-                      </Button>
-                    )}
-                    {UUID_RE.test(String(obj.id)) && (
-                      <button
-                        onClick={() => setShareTarget({ id: String(obj.id), title: obj.title })}
-                        aria-label="Поделиться"
-                        className="shrink-0 w-10 h-10 rounded-xl border border-[#262626] bg-[#1a1a1a] text-gray-300 hover:text-white hover:border-blue-500/40 flex items-center justify-center transition-colors"
-                      >
-                        <Icon name="Share2" className="h-4 w-4" />
-                      </button>
-                    )}
+                      )}
+                      {UUID_RE.test(String(obj.id)) && (
+                        <button
+                          onClick={() => setShareTarget({ id: String(obj.id), title: obj.title })}
+                          aria-label="Поделиться"
+                          className={`shrink-0 w-10 h-10 rounded-xl border bg-[#1a1a1a] flex items-center justify-center transition-colors ${
+                            isResort
+                              ? "border-cyan-500/20 text-cyan-400 hover:border-cyan-500/40"
+                              : "border-[#262626] text-gray-300 hover:text-white hover:border-blue-500/40"
+                          }`}
+                        >
+                          <Icon name="Share2" className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>

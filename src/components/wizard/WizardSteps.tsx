@@ -18,41 +18,144 @@ interface Step1Props {
   setForm: (f: WizardForm) => void
 }
 
+// Иконки для подтипов курортной
+const RESORT_SUBTYPE_ICONS: Record<string, string> = {
+  "Апарт-отель": "Hotel",
+  "Апарт-комплекс": "Building2",
+  "Гостиница": "Hotel",
+  "Отель": "Hotel",
+  "Мини-отель": "Home",
+  "Хостел": "Users",
+  "Гостевой дом": "House",
+  "Санаторий": "HeartPulse",
+  "Пансионат": "Waves",
+  "SPA-отель": "Sparkles",
+  "Wellness-отель": "Leaf",
+  "База отдыха": "Trees",
+  "Турбаза": "Tent",
+  "Эко-отель": "Leaf",
+  "Курортный комплекс": "Sun",
+  "Виллы и коттеджи под аренду": "Home",
+  "Объект под управление": "BriefcaseBusiness",
+  "Земельный участок под курортный проект": "Map",
+  "Инвестиционный проект под строительство": "Construction",
+  "Готовый арендный бизнес в курортной локации": "TrendingUp",
+}
+
 export function Step1Category({ category, setCategory, subtype, setSubtype }: Step1Props) {
   const selectedCat = CATEGORIES.find(c => c.id === category)
+  const isResort = category === "resort"
 
   return (
     <div className="space-y-6">
       {CATEGORY_GROUPS.map(group => {
         const groupCats = CATEGORIES.filter(c => group.ids.includes(c.id))
+        const isResortGroup = group.label === "Курортная недвижимость"
+
         return (
           <div key={group.label}>
             <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">{group.label}</p>
-            <div className="grid grid-cols-2 gap-3">
-              {groupCats.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => { setCategory(cat.id); setSubtype("") }}
-                  className={`rounded-2xl border p-5 text-center transition-all hover:border-blue-500/50 ${
-                    category === cat.id ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center ${
-                    category === cat.id ? "bg-blue-500/20" : "bg-[#1a1a1a]"
-                  }`}>
-                    <Icon name={cat.icon as "Home"} className={`h-5 w-5 ${category === cat.id ? "text-blue-400" : "text-gray-400"}`} />
-                  </div>
-                  <p className="font-semibold text-white text-sm mb-0.5">{cat.label}</p>
-                  <p className="text-[11px] text-gray-500 leading-tight">{cat.desc}</p>
-                </button>
-              ))}
-            </div>
+
+            {/* Специальная карточка для Курортной */}
+            {isResortGroup ? (
+              <div className="grid grid-cols-1 gap-3">
+                {groupCats.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setCategory(cat.id); setSubtype("") }}
+                    className={`rounded-2xl border p-5 text-left transition-all ${
+                      category === cat.id
+                        ? "border-cyan-500 bg-gradient-to-r from-cyan-900/30 to-teal-900/20"
+                        : "border-[#1f1f1f] bg-[#111] hover:border-cyan-500/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                        category === cat.id ? "bg-cyan-500/20" : "bg-[#1a1a1a]"
+                      }`}>
+                        <Icon name="Palmtree" fallback="Sun" className={`h-6 w-6 ${category === cat.id ? "text-cyan-400" : "text-gray-400"}`} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="font-bold text-white">{cat.label}</p>
+                          {category === cat.id && (
+                            <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-full px-2 py-0.5">Выбрано</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400">{cat.desc}</p>
+                      </div>
+                    </div>
+                    {category === cat.id && (
+                      <div className="mt-3 pt-3 border-t border-cyan-500/20 flex flex-wrap gap-1.5">
+                        {["Отель", "SPA-отель", "База отдыха", "Санаторий", "Вилла", "Инвест-проект"].map(tag => (
+                          <span key={tag} className="text-[10px] text-cyan-400/70 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-2 py-0.5">{tag}</span>
+                        ))}
+                        <span className="text-[10px] text-gray-500 px-1 py-0.5">+14 типов...</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {groupCats.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setCategory(cat.id); setSubtype("") }}
+                    className={`rounded-2xl border p-5 text-center transition-all hover:border-blue-500/50 ${
+                      category === cat.id ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center ${
+                      category === cat.id ? "bg-blue-500/20" : "bg-[#1a1a1a]"
+                    }`}>
+                      <Icon name={cat.icon as "Home"} className={`h-5 w-5 ${category === cat.id ? "text-blue-400" : "text-gray-400"}`} />
+                    </div>
+                    <p className="font-semibold text-white text-sm mb-0.5">{cat.label}</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">{cat.desc}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )
       })}
 
-      {/* Выбор подтипа */}
-      {selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (
+      {/* Выбор подтипа для Курортной — с подгруппами */}
+      {isResort && selectedCat?.subgroups && (
+        <div className="space-y-4">
+          {selectedCat.subgroups.map(sg => (
+            <div key={sg.label}>
+              <p className="text-[11px] text-cyan-400/70 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <span className="w-3 h-px bg-cyan-500/40 inline-block"></span>
+                {sg.label}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {sg.items.map(st => (
+                  <button
+                    key={st}
+                    onClick={() => setSubtype(st)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                      subtype === st
+                        ? "border-cyan-500 bg-cyan-500/15 text-cyan-300"
+                        : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-cyan-500/40 hover:text-white"
+                    }`}
+                  >
+                    <Icon name={(RESORT_SUBTYPE_ICONS[st] ?? "Building2") as "Building2"} fallback="Building2" className="h-3 w-3 shrink-0" />
+                    {st}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          {!subtype && (
+            <p className="text-[11px] text-gray-600">Выберите тип курортного объекта — характеристики подберутся автоматически</p>
+          )}
+        </div>
+      )}
+
+      {/* Выбор подтипа для НЕ курортных категорий */}
+      {!isResort && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (
         <div>
           <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">
             Тип объекта — {selectedCat.label}
@@ -113,17 +216,30 @@ interface Step3Props {
   onCategoryField: (key: string, value: string) => void
 }
 
+// Ключевые финансовые поля курортной для выделения
+const RESORT_FINANCE_KEYS = new Set(["occupancy", "avg_check", "annual_revenue", "yield", "payback", "entry_price", "revenue_model", "forecast_occupancy"])
+const RESORT_INFRA_KEYS = new Set(["pool", "spa", "restaurant", "beach", "parking", "conference"])
+
 export function Step3Details({
   form, setForm, category, subtype, categoryFields, onCategoryField,
 }: Step3Props) {
   const catLabel = CATEGORIES.find(c => c.id === category)?.label ?? ""
   const fields = getCategoryFields(category, subtype)
+  const isResort = category === "resort"
+
+  const financeFields = isResort ? fields.filter(f => RESORT_FINANCE_KEYS.has(f.key)) : []
+  const infraFields = isResort ? fields.filter(f => RESORT_INFRA_KEYS.has(f.key)) : []
+  const mainFields = isResort ? fields.filter(f => !RESORT_FINANCE_KEYS.has(f.key) && !RESORT_INFRA_KEYS.has(f.key)) : fields
 
   return (
     <div className="space-y-6">
       {/* Подтип — напоминание */}
       {subtype && (
-        <div className="flex items-center gap-2 text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-xl px-4 py-2.5">
+        <div className={`flex items-center gap-2 text-xs rounded-xl px-4 py-2.5 ${
+          isResort
+            ? "text-cyan-300 bg-cyan-500/10 border border-cyan-500/20"
+            : "text-violet-300 bg-violet-500/10 border border-violet-500/20"
+        }`}>
           <Icon name="Tag" className="h-3.5 w-3.5 shrink-0" />
           <span>Тип: <span className="font-semibold">{subtype}</span> — характеристики подобраны автоматически</span>
         </div>
@@ -132,24 +248,25 @@ export function Step3Details({
       {/* Цена и площадь */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label className="text-xs text-gray-400 mb-1.5 block">Цена (₽)</Label>
-          <Input placeholder="18 500 000" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
+          <Label className="text-xs text-gray-400 mb-1.5 block">{isResort ? "Цена входа / Стоимость (₽)" : "Цена (₽)"}</Label>
+          <Input placeholder={isResort ? "120 000 000" : "18 500 000"} value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
             className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600" />
         </div>
         <div>
           <Label className="text-xs text-gray-400 mb-1.5 block">Площадь (м²)</Label>
-          <Input placeholder="142" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })}
+          <Input placeholder={isResort ? "2 400" : "142"} value={form.area} onChange={e => setForm({ ...form, area: e.target.value })}
             className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600" />
         </div>
       </div>
 
-      {category && fields.length > 0 && (
-        <div className="border-t border-[#1f1f1f] pt-4">
-          <p className="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-4">
-            {catLabel}{subtype ? ` · ${subtype}` : ""} — характеристики
+      {/* Основные характеристики */}
+      {mainFields.length > 0 && (
+        <div className={`border-t pt-4 ${isResort ? "border-cyan-500/20" : "border-[#1f1f1f]"}`}>
+          <p className={`text-xs font-semibold uppercase tracking-widest mb-4 ${isResort ? "text-cyan-400" : "text-blue-400"}`}>
+            {catLabel}{subtype ? ` · ${subtype}` : ""} — параметры объекта
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {fields.map(field => (
+            {mainFields.map(field => (
               <div key={field.key}>
                 <Label className="text-xs text-gray-400 mb-1.5 block">{field.label}</Label>
                 <Input
@@ -157,6 +274,52 @@ export function Step3Details({
                   value={categoryFields[field.key] ?? ""}
                   onChange={e => onCategoryField(field.key, e.target.value)}
                   className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Финансовые показатели — курортная */}
+      {isResort && financeFields.length > 0 && (
+        <div className="rounded-2xl bg-gradient-to-br from-cyan-950/40 to-teal-950/30 border border-cyan-500/20 p-4">
+          <p className="text-xs text-cyan-400 font-semibold uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Icon name="TrendingUp" className="h-3.5 w-3.5" />
+            Финансовые показатели
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {financeFields.map(field => (
+              <div key={field.key}>
+                <Label className="text-xs text-gray-400 mb-1.5 block">{field.label}</Label>
+                <Input
+                  placeholder={field.placeholder}
+                  value={categoryFields[field.key] ?? ""}
+                  onChange={e => onCategoryField(field.key, e.target.value)}
+                  className="bg-[#0a1a1a] border-cyan-500/20 text-white placeholder:text-gray-600 focus-visible:ring-cyan-500"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Инфраструктура — курортная */}
+      {isResort && infraFields.length > 0 && (
+        <div className="rounded-2xl bg-[#0f1a14] border border-emerald-500/20 p-4">
+          <p className="text-xs text-emerald-400 font-semibold uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Icon name="Sparkles" className="h-3.5 w-3.5" />
+            Инфраструктура и услуги
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {infraFields.map(field => (
+              <div key={field.key}>
+                <Label className="text-xs text-gray-400 mb-1.5 block">{field.label}</Label>
+                <Input
+                  placeholder={field.placeholder}
+                  value={categoryFields[field.key] ?? ""}
+                  onChange={e => onCategoryField(field.key, e.target.value)}
+                  className="bg-[#0a140e] border-emerald-500/20 text-white placeholder:text-gray-600 focus-visible:ring-emerald-500"
                 />
               </div>
             ))}
