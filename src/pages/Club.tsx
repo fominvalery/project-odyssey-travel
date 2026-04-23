@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom"
 import { Header } from "@/components/Header"
 import { Footer } from "@/components/Footer"
 import Icon from "@/components/ui/icon"
+import { GlowButton } from "@/components/ui/glow-button"
 import { RegisterModal } from "@/components/RegisterModal"
 import { useState } from "react"
 
@@ -122,20 +123,20 @@ export default function Club() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
+            <GlowButton
               onClick={() => setRegisterOpen(true)}
-              className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition-all ring-1 ring-blue-500/60 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
+              className="px-8 py-3.5 rounded-xl text-base"
             >
               Вступить в Клуб
-            </button>
-            <button
+            </GlowButton>
+            <GlowButton
               onClick={() => {
                 document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })
               }}
-              className="px-8 py-3.5 rounded-xl border border-[#3a3a3a] text-gray-300 hover:text-white hover:border-[#555] font-semibold text-base transition-all ring-1 ring-white/10 hover:ring-white/20"
+              className="px-8 py-3.5 rounded-xl text-base !bg-[#111] hover:!bg-[#1a1a1a] [&::after]:!bg-[#111]"
             >
               Как это работает
-            </button>
+            </GlowButton>
           </div>
         </div>
       </section>
