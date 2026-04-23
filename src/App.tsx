@@ -19,6 +19,7 @@ import Privacy from "./pages/Privacy";
 import Offer from "./pages/Offer";
 import AiRules from "./pages/AiRules";
 import Consent from "./pages/Consent";
+import Club from "./pages/Club";
 import NotFound from "./pages/NotFound";
 import func2url from "../backend/func2url.json";
 
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/offer" element={<Offer />} />
             <Route path="/ai-rules" element={<AiRules />} />
             <Route path="/consent" element={<Consent />} />
+            <Route path="/club" element={<Club />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
