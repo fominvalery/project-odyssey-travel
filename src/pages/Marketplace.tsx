@@ -118,7 +118,7 @@ export default function Marketplace() {
       <section className="px-4 md:px-8 pt-8 pb-16 max-w-7xl mx-auto">
         <div className="text-center mb-6">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">Каталог недвижимости</h1>
-          <p className="text-gray-400 text-lg">Жилая, коммерческая, инвестиционная недвижимость, новостройки и торги</p>
+          <p className="text-gray-400 text-lg">Коммерческая, инвестиционная недвижимость, новостройки, курортная и жилая</p>
         </div>
 
         <MarketplaceFilters
