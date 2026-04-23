@@ -1,9 +1,69 @@
 import json
 import os
 import secrets
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 import psycopg2
 import psycopg2.extras
+
+
+def _send_invite_email(to_email: str, full_name: str, org_name: str,
+                       inviter_name: str, role_title: str,
+                       invite_url: str, expires_at: str) -> bool:
+    """Отправить письмо с приглашением в АН."""
+    smtp_user = os.environ.get('SMTP_USER', '')
+    smtp_password = os.environ.get('SMTP_PASSWORD', '')
+    if not smtp_user or not smtp_password:
+        return False
+
+    subject = f"Вас приглашают в агентство «{org_name}»"
+
+    html = f"""
+<!DOCTYPE html>
+<html>
+<body style="background:#0a0a0a;color:#fff;font-family:Arial,sans-serif;padding:40px 20px;">
+  <div style="max-width:480px;margin:0 auto;background:#111;border:1px solid #1f1f1f;border-radius:16px;padding:32px;">
+    <h2 style="color:#fff;margin:0 0 8px;">Приглашение в агентство</h2>
+    <p style="color:#9ca3af;margin:0 0 24px;font-size:14px;">
+      {inviter_name} приглашает вас присоединиться к команде
+    </p>
+    <div style="background:#1a1a1a;border-radius:12px;padding:20px;margin-bottom:24px;">
+      <p style="color:#6b7280;font-size:12px;margin:0 0 4px;">Агентство</p>
+      <p style="color:#fff;font-size:18px;font-weight:bold;margin:0 0 12px;">{org_name}</p>
+      <p style="color:#6b7280;font-size:12px;margin:0 0 4px;">Ваша роль</p>
+      <p style="color:#8b5cf6;font-size:14px;font-weight:600;margin:0;">{role_title}</p>
+    </div>
+    <a href="https://kabinet-24.ru{invite_url}"
+       style="display:block;background:#2563eb;color:#fff;text-align:center;padding:14px 24px;
+              border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;margin-bottom:16px;">
+      Принять приглашение
+    </a>
+    <p style="color:#4b5563;font-size:12px;text-align:center;margin:0;">
+      Ссылка действительна 7 дней · {expires_at[:10]}
+    </p>
+  </div>
+</body>
+</html>"""
+
+    text = f"Вас приглашают в агентство «{org_name}» на роль {role_title}.\nПерейдите по ссылке: https://kabinet-24.ru{invite_url}"
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = smtp_user
+    msg['To'] = to_email
+    msg.attach(MIMEText(text, 'plain', 'utf-8'))
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(smtp_user, to_email, msg.as_string())
+        return True
+    except Exception:
+        return False
 
 ROLE_LEVEL = {
     'founder': 110,
@@ -488,11 +548,35 @@ def create_invite(user_id, org_id, body):
             cur.execute("UPDATE org_invites SET status='accepted' WHERE id=%s", (invite_id,))
             auto_joined = True
 
+        # Получаем имя приглашающего
+        cur.execute("SELECT name FROM users WHERE id=%s", (user_id,))
+        inviter_row = cur.fetchone()
+        inviter_name = inviter_row['name'] if inviter_row else 'Руководитель'
+
+        # Получаем название организации
+        cur.execute("SELECT name FROM organizations WHERE id=%s", (org_id,))
+        org_row = cur.fetchone()
+        org_name = org_row['name'] if org_row else 'Агентство'
+
         conn.commit()
+
+        # Отправляем email (не критично — не блокирует ответ)
+        invite_url = f"/invite/{token}"
+        if not auto_joined:
+            _send_invite_email(
+                to_email=email,
+                full_name=full_name,
+                org_name=org_name,
+                inviter_name=inviter_name,
+                role_title=ROLE_TITLES.get(role_code, role_code),
+                invite_url=invite_url,
+                expires_at=expires.isoformat(),
+            )
+
         return _cors({
             'invite_id': str(invite_id),
             'token': token,
-            'invite_url': f"/invite/{token}",
+            'invite_url': invite_url,
             'expires_at': expires.isoformat(),
             'auto_joined': auto_joined,
         }, 201)
