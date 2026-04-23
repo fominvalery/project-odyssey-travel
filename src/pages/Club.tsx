@@ -94,20 +94,24 @@ export default function Club() {
       <Header />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden px-4 pt-20 pb-24 text-center">
-        {/* Фоновый градиент */}
+      <section className="relative overflow-hidden px-4 pt-14 pb-16 text-center">
+        {/* Фоновая картинка */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-violet-600/10 rounded-full blur-3xl" />
-          <div className="absolute top-20 left-1/4 w-[300px] h-[300px] bg-blue-600/8 rounded-full blur-3xl" />
+          <img
+            src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/1ea4abe3-37e5-4db8-9984-0a8f76563081.jpg"
+            alt=""
+            className="w-full h-full object-cover opacity-15"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/40 via-transparent to-[#0a0a0a]" />
         </div>
 
         <div className="relative max-w-4xl mx-auto">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded-full px-4 py-1.5 mb-8">
-            <Icon name="Zap" className="h-3.5 w-3.5" />
+          <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-violet-300 bg-violet-500/15 border border-violet-500/30 rounded-full px-5 py-2 mb-5">
+            <Icon name="Zap" className="h-4 w-4" />
             Закрытый клуб профессионалов
           </span>
 
-          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-5">
             Закрытое сообщество<br />
             <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
               брокеров и специалистов
@@ -115,7 +119,7 @@ export default function Club() {
             рынка недвижимости
           </h1>
 
-          <p className="text-xl md:text-2xl text-gray-400 leading-relaxed mb-10 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-400 leading-relaxed mb-8 max-w-xl mx-auto">
             Где сделки рождаются из доверия.<br />
             Где брокеры — закрывают сделки.<br />
             Где твои коллеги — лучшие партнёры.
@@ -124,7 +128,7 @@ export default function Club() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => setRegisterOpen(true)}
-              className="px-8 py-4 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-violet-500/30"
+              className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition-all ring-1 ring-blue-500/60 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
             >
               Вступить в Клуб
             </button>
@@ -132,7 +136,7 @@ export default function Club() {
               onClick={() => {
                 document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })
               }}
-              className="px-8 py-4 rounded-2xl border border-[#2a2a2a] text-gray-300 hover:text-white hover:border-[#3a3a3a] font-semibold text-lg transition-all"
+              className="px-8 py-3.5 rounded-xl border border-[#3a3a3a] text-gray-300 hover:text-white hover:border-[#555] font-semibold text-base transition-all ring-1 ring-white/10 hover:ring-white/20"
             >
               Как это работает
             </button>
