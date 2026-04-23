@@ -76,7 +76,7 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
   const [filterStage, setFilterStage] = useState<FunnelStage | "Все">("Все")
   const [search, setSearch] = useState("")
   const [overdueIds, setOverdueIds] = useState<Set<string>>(new Set())
-  const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [viewMode, setViewMode] = useState<ViewMode>("kanban")
   const [createOpen, setCreateOpen] = useState(false)
 
   const loadLeads = useCallback(async () => {
@@ -161,7 +161,7 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
       {/* Шапка */}
       <div className="flex items-center justify-between mb-4 max-w-4xl">
         <div>
-          <h1 className="text-2xl font-bold">CRM — Заявки</h1>
+          <h1 className="text-2xl font-bold">CRM</h1>
           <p className="text-sm text-gray-500 mt-0.5">{leads.length} входящих контактов из маркетплейса</p>
         </div>
         <div className="flex items-center gap-2">
