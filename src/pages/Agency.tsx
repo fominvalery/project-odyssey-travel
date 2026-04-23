@@ -31,6 +31,7 @@ import DepartmentModal from "@/components/agency/DepartmentModal"
 import { DashboardCRM } from "@/components/dashboard/DashboardCRM"
 import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import DashboardClub from "@/components/dashboard/DashboardClub"
+import DashboardMessages from "@/components/dashboard/DashboardMessages"
 import { DashboardProfile } from "@/components/dashboard/DashboardProfile"
 import { AddObjectWizard, type ObjectData } from "@/components/AddObjectWizard"
 import type { ProfileForm } from "@/components/dashboard/DashboardProfile"
@@ -48,7 +49,7 @@ function canSee(role: RoleCode, minRole: RoleCode): boolean {
 }
 
 type AgencySection =
-  | "objects" | "crm" | "analytics" | "network" | "profile"
+  | "objects" | "crm" | "analytics" | "network" | "messages" | "profile"
   | "card" | "employees" | "departments" | "deals" | "invites" | "reviews"
 
 interface MenuItem {
@@ -64,6 +65,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: "crm",         label: "CRM",         icon: "Users",       minRole: "broker",   group: "work" },
   { id: "analytics",   label: "Аналитика",   icon: "BarChart2",   minRole: "rop",      group: "work" },
   { id: "network",     label: "Сеть",        icon: "Zap",         minRole: "broker",   group: "work" },
+  { id: "messages",    label: "Сообщения",   icon: "MessageSquare", minRole: "broker", group: "work" },
   { id: "profile",     label: "Профиль",     icon: "User",        minRole: "broker",   group: "work" },
   { id: "card",        label: "Карточка АН", icon: "Building2",   minRole: "broker",   group: "agency" },
   { id: "employees",   label: "Команда",     icon: "Users",       minRole: "rop",      group: "agency" },
@@ -325,7 +327,19 @@ export default function Agency() {
           )}
 
           {section === "network" && user && (
-            <DashboardClub userId={user.id} onMessage={() => {}} />
+            <DashboardClub userId={user.id} onMessage={() => setSection("messages")} />
+          )}
+
+          {section === "messages" && user && (
+            <DashboardMessages
+              userId={user.id}
+              openPartnerId={null}
+              openPartnerName={null}
+              openPartnerAvatar={null}
+              openPartnerStatus={null}
+              onClearOpen={() => {}}
+              onUnreadChange={() => {}}
+            />
           )}
 
           {section === "profile" && user && (
