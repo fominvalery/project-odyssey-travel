@@ -231,6 +231,43 @@ export const agencyApi = {
 
   orgAnalytics: (userId: string, orgId: string) =>
     call<OrgAnalytics>({ action: "org_analytics", userId, orgId, method: "GET" }),
+
+  getOrgFull: (userId: string, orgId: string) =>
+    call<OrgFull>({ action: "get_org_full", userId, orgId, method: "GET" }),
+
+  updateOrgFull: (
+    userId: string,
+    orgId: string,
+    patch: Partial<OrgFullPatch>,
+  ) => call<{ ok: true }>({ action: "update_org", userId, orgId, body: patch }),
+
+  listDeals: (userId: string, orgId: string, status?: string) =>
+    call<Deal[]>({
+      action: "list_deals",
+      userId,
+      orgId,
+      method: "GET",
+      query: status ? { status } : undefined,
+    }),
+
+  createDeal: (userId: string, orgId: string, payload: Partial<Deal>) =>
+    call<{ id: string }>({ action: "create_deal", userId, orgId, body: payload as Record<string, unknown> }),
+
+  updateDeal: (userId: string, orgId: string, payload: Partial<Deal> & { deal_id: string }) =>
+    call<{ ok: true }>({ action: "update_deal", userId, orgId, body: payload as Record<string, unknown> }),
+
+  listReviews: (orgId: string) =>
+    call<{ reviews: Review[]; avg_rating: number; count: number }>({
+      action: "list_reviews",
+      method: "GET",
+      query: { org_id: orgId },
+    }),
+
+  createReview: (userId: string, orgId: string, payload: Partial<Review>) =>
+    call<{ id: string }>({ action: "create_review", userId, orgId, body: payload as Record<string, unknown> }),
+
+  publicAgency: (orgId: string) =>
+    call<OrgPublic>({ action: "public_agency", method: "GET", query: { org_id: orgId } }),
 }
 
 export interface DeptObjectStat {
@@ -272,4 +309,82 @@ export interface OrgAnalytics {
   dept_leads: DeptLeadStat[]
   top_by_objects: EmployeeStat[]
   top_by_leads: EmployeeStat[]
+}
+
+export interface OrgFull {
+  id: string
+  name: string
+  inn: string | null
+  logo_url: string | null
+  description: string
+  admin_id: string
+  created_at: string
+  city: string
+  website: string
+  telegram_username: string
+  vk_username: string
+  specializations: string[]
+  bio: string
+  experience: string
+  license_number: string
+  founded_year: number | null
+  is_public: boolean
+  agents_count: number
+  deals_count: number
+  rating: number
+  review_count: number
+  my_role: RoleCode
+  my_role_title: string
+}
+
+export type OrgFullPatch = Partial<Omit<OrgFull, "id" | "admin_id" | "created_at" | "my_role" | "my_role_title" | "agents_count" | "deals_count" | "rating" | "review_count">>
+
+export interface Deal {
+  id: string
+  title: string
+  deal_type: string
+  amount: number | null
+  commission_total: number | null
+  commission_agent_pct: number
+  commission_agency_pct: number
+  commission_agent: number | null
+  commission_agency: number | null
+  status: string
+  client_name: string
+  client_phone: string
+  notes: string
+  closed_at: string | null
+  created_at: string
+  agent_id: string
+  agent_name: string
+  agent_avatar: string | null
+}
+
+export interface Review {
+  id: string
+  author_name: string
+  rating: number
+  text: string
+  deal_type: string
+  created_at: string
+}
+
+export interface OrgPublic {
+  id: string
+  name: string
+  logo_url: string | null
+  description: string
+  city: string
+  website: string
+  telegram_username: string
+  vk_username: string
+  specializations: string[]
+  bio: string
+  experience: string
+  founded_year: number | null
+  is_public: boolean
+  members: Array<{ id: string; name: string; avatar_url: string | null; role_code: RoleCode; role_title: string }>
+  agents_count: number
+  rating: number
+  review_count: number
 }

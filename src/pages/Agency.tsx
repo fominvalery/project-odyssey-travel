@@ -25,6 +25,10 @@ import {
   AgencyAboutTab,
 } from "@/components/agency/AgencyInvitesTab"
 import AgencyAnalyticsTab from "@/components/agency/AgencyAnalyticsTab"
+import AgencyCardTab from "@/components/agency/AgencyCardTab"
+import AgencyDealsTab from "@/components/agency/AgencyDealsTab"
+import AgencyReviewsTab from "@/components/agency/AgencyReviewsTab"
+import { OrgFull } from "@/lib/agencyApi"
 import {
   Dialog,
   DialogContent,
@@ -40,6 +44,7 @@ export default function Agency() {
   const navigate = useNavigate()
   const { user } = useAuthContext()
   const [org, setOrg] = useState<(OrgSummary & { my_role: RoleCode }) | null>(null)
+  const [orgFull, setOrgFull] = useState<OrgFull | null>(null)
   const [employees, setEmployees] = useState<Employee[]>([])
   const [invites, setInvites] = useState<InviteRow[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
@@ -67,17 +72,15 @@ export default function Agency() {
     setLoading(true)
     setError(null)
     try {
-      const [o, emp, inv, deps] = await Promise.all([
+      const [o, emp, inv, deps, full] = await Promise.all([
         agencyApi.getOrg(user.id, orgId),
         agencyApi.listEmployees(user.id, orgId),
-        agencyApi
-          .listInvites(user.id, orgId)
-          .catch(() => [] as InviteRow[]),
-        agencyApi
-          .listDepartments(user.id, orgId)
-          .catch(() => [] as Department[]),
+        agencyApi.listInvites(user.id, orgId).catch(() => [] as InviteRow[]),
+        agencyApi.listDepartments(user.id, orgId).catch(() => [] as Department[]),
+        agencyApi.getOrgFull(user.id, orgId).catch(() => null),
       ])
       setOrg(o as OrgSummary & { my_role: RoleCode })
+      setOrgFull(full)
       setEmployees(emp)
       setInvites(inv)
       setDepartments(deps)
@@ -180,14 +183,30 @@ export default function Agency() {
       />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 pb-6 pt-6">
-        <Tabs defaultValue="analytics">
-          <TabsList className="bg-white/5 border border-white/10">
+        <Tabs defaultValue="card">
+          <TabsList className="bg-white/5 border border-white/10 flex-wrap h-auto gap-1">
+            <TabsTrigger value="card">Карточка АН</TabsTrigger>
             <TabsTrigger value="analytics">Аналитика</TabsTrigger>
             <TabsTrigger value="employees">Сотрудники</TabsTrigger>
             <TabsTrigger value="departments">Отделы</TabsTrigger>
+            <TabsTrigger value="deals">Сделки</TabsTrigger>
             <TabsTrigger value="invites">Приглашения</TabsTrigger>
-            <TabsTrigger value="about">Об агентстве</TabsTrigger>
+            <TabsTrigger value="reviews">Отзывы</TabsTrigger>
+            <TabsTrigger value="about">О нас</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="card" className="mt-4">
+            {orgFull && user && orgId ? (
+              <AgencyCardTab
+                org={orgFull}
+                userId={user.id}
+                orgId={orgId}
+                onSaved={setOrgFull}
+              />
+            ) : (
+              <div className="text-gray-500 text-sm">Загрузка...</div>
+            )}
+          </TabsContent>
 
           <TabsContent value="analytics" className="mt-4">
             {orgId && <AgencyAnalyticsTab orgId={orgId} />}
@@ -223,8 +242,29 @@ export default function Agency() {
             />
           </TabsContent>
 
+          <TabsContent value="deals" className="mt-4">
+            {user && orgId && org && (
+              <AgencyDealsTab
+                userId={user.id}
+                orgId={orgId}
+                myRole={org.my_role}
+                employees={employees}
+              />
+            )}
+          </TabsContent>
+
           <TabsContent value="invites" className="mt-4">
             <AgencyInvitesTab invites={invites} />
+          </TabsContent>
+
+          <TabsContent value="reviews" className="mt-4">
+            {orgId && (
+              <AgencyReviewsTab
+                orgId={orgId}
+                userId={user?.id ?? null}
+                userName={user?.name ?? ""}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="about" className="mt-4">

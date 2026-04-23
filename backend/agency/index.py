@@ -153,16 +153,69 @@ def update_org(user_id, org_id, body):
         if not m or m[1] not in ADMIN_ROLES:
             return _cors({'error': 'Нужна роль учредителя или директора'}, 403)
         fields, params = [], []
-        for k in ('name', 'inn', 'logo_url', 'description'):
+        allowed_fields = (
+            'name', 'inn', 'logo_url', 'description',
+            'city', 'website', 'telegram_username', 'vk_username',
+            'bio', 'experience', 'license_number', 'founded_year', 'is_public',
+        )
+        for k in allowed_fields:
             if k in body:
                 fields.append(f"{k}=%s")
                 params.append(body[k])
+        # specializations — массив
+        if 'specializations' in body and isinstance(body['specializations'], list):
+            fields.append("specializations=%s")
+            params.append(body['specializations'])
         if not fields:
             return _cors({'error': 'Нечего обновлять'}, 400)
+        fields.append("updated_at=NOW()")
         params.append(org_id)
         cur.execute(f"UPDATE organizations SET {', '.join(fields)} WHERE id=%s", params)
         conn.commit()
         return _cors({'ok': True})
+
+
+def get_org_full(user_id, org_id):
+    """Детальная карточка АН со всеми полями (как в Клубе + АН)."""
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        cur.execute(
+            "SELECT id, name, inn, logo_url, description, admin_id, created_at, "
+            "city, website, telegram_username, vk_username, specializations, "
+            "bio, experience, license_number, founded_year, is_public, "
+            "agents_count, deals_count, rating "
+            "FROM organizations WHERE id=%s",
+            (org_id,),
+        )
+        org = cur.fetchone()
+        if not org:
+            return _cors({'error': 'Не найдено'}, 404)
+        # Реальный счётчик агентов
+        cur.execute(
+            "SELECT COUNT(*) AS cnt FROM org_memberships WHERE organization_id=%s AND status='active'",
+            (org_id,),
+        )
+        org['agents_count'] = cur.fetchone()['cnt']
+        # Счётчик сделок
+        cur.execute(
+            "SELECT COUNT(*) AS cnt FROM agency_deals WHERE organization_id=%s AND status='closed'",
+            (org_id,),
+        )
+        org['deals_count'] = cur.fetchone()['cnt']
+        # Рейтинг
+        cur.execute(
+            "SELECT ROUND(AVG(rating)::numeric, 2) AS avg_rating, COUNT(*) AS review_count "
+            "FROM agency_reviews WHERE organization_id=%s",
+            (org_id,),
+        )
+        rev = cur.fetchone()
+        org['rating'] = float(rev['avg_rating'] or 0)
+        org['review_count'] = int(rev['review_count'] or 0)
+        org['my_role'] = m['role_code']
+        org['my_role_title'] = ROLE_TITLES.get(m['role_code'], m['role_code'])
+        return _cors(org)
 
 
 # ── Employees ──────────────────────────────────────────────────────────
@@ -618,6 +671,184 @@ def org_analytics(user_id, org_id):
         })
 
 
+# ── Deals ──────────────────────────────────────────────────────────────
+
+def list_deals(user_id, org_id, qs=None):
+    """Список сделок агентства."""
+    qs = qs or {}
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        role = m['role_code']
+        sql = (
+            "SELECT d.id, d.title, d.deal_type, d.amount, d.commission_total, "
+            "d.commission_agent_pct, d.commission_agency_pct, "
+            "d.commission_agent, d.commission_agency, "
+            "d.status, d.client_name, d.client_phone, d.notes, "
+            "d.closed_at, d.created_at, d.agent_id, "
+            "u.name AS agent_name, u.avatar_url AS agent_avatar "
+            "FROM agency_deals d "
+            "JOIN users u ON u.id=d.agent_id "
+            "WHERE d.organization_id=%s"
+        )
+        params = [org_id]
+        if ROLE_LEVEL.get(role, 0) < ROLE_LEVEL['rop']:
+            sql += " AND d.agent_id=%s"
+            params.append(user_id)
+        status_filter = qs.get('status')
+        if status_filter:
+            sql += " AND d.status=%s"
+            params.append(status_filter)
+        sql += " ORDER BY d.created_at DESC LIMIT 100"
+        cur.execute(sql, params)
+        return _cors(cur.fetchall())
+
+
+def create_deal(user_id, org_id, body):
+    """Создать сделку."""
+    title = (body.get('title') or '').strip()
+    if not title:
+        return _cors({'error': 'Название сделки обязательно'}, 400)
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        agent_id = body.get('agent_id') or user_id
+        amount = body.get('amount')
+        comm_total = body.get('commission_total')
+        agent_pct = float(body.get('commission_agent_pct', 50))
+        agency_pct = 100 - agent_pct
+        comm_agent = round(float(comm_total) * agent_pct / 100, 2) if comm_total else None
+        comm_agency = round(float(comm_total) * agency_pct / 100, 2) if comm_total else None
+        cur.execute(
+            "INSERT INTO agency_deals(organization_id, agent_id, object_id, title, deal_type, "
+            "amount, commission_total, commission_agent_pct, commission_agency_pct, "
+            "commission_agent, commission_agency, status, client_name, client_phone, notes) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+            (org_id, agent_id, body.get('object_id') or None, title,
+             body.get('deal_type', 'sale'), amount, comm_total,
+             agent_pct, agency_pct, comm_agent, comm_agency,
+             body.get('status', 'active'),
+             body.get('client_name', ''), body.get('client_phone', ''),
+             body.get('notes', '')),
+        )
+        deal_id = cur.fetchone()['id']
+        conn.commit()
+        return _cors({'id': str(deal_id)}, 201)
+
+
+def update_deal(user_id, org_id, body):
+    """Обновить сделку (статус, сумму и т.д.)."""
+    deal_id = body.get('deal_id')
+    if not deal_id:
+        return _cors({'error': 'deal_id обязателен'}, 400)
+    with _conn() as conn, conn.cursor() as cur:
+        m = _membership(cur, user_id, org_id)
+        if not m:
+            return _cors({'error': 'Нет доступа'}, 403)
+        fields, params = [], []
+        updatable = ('title', 'deal_type', 'amount', 'commission_total',
+                     'commission_agent_pct', 'status', 'client_name', 'client_phone', 'notes')
+        for k in updatable:
+            if k in body:
+                fields.append(f"{k}=%s")
+                params.append(body[k])
+        if body.get('status') == 'closed':
+            fields.append("closed_at=NOW()")
+        if not fields:
+            return _cors({'error': 'Нечего обновлять'}, 400)
+        fields.append("updated_at=NOW()")
+        params.extend([deal_id, org_id])
+        cur.execute(
+            f"UPDATE agency_deals SET {', '.join(fields)} WHERE id=%s AND organization_id=%s",
+            params,
+        )
+        conn.commit()
+        return _cors({'ok': True})
+
+
+# ── Reviews ─────────────────────────────────────────────────────────────
+
+def list_reviews(org_id):
+    """Публичный список отзывов об АН."""
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "SELECT id, author_name, rating, text, deal_type, created_at "
+            "FROM agency_reviews WHERE organization_id=%s ORDER BY created_at DESC LIMIT 50",
+            (org_id,),
+        )
+        rows = cur.fetchall()
+        cur.execute(
+            "SELECT ROUND(AVG(rating)::numeric,2) AS avg, COUNT(*) AS cnt "
+            "FROM agency_reviews WHERE organization_id=%s",
+            (org_id,),
+        )
+        stat = cur.fetchone()
+        return _cors({'reviews': rows, 'avg_rating': float(stat['avg'] or 0), 'count': int(stat['cnt'] or 0)})
+
+
+def create_review(user_id, org_id, body):
+    """Оставить отзыв об АН."""
+    rating = int(body.get('rating', 0))
+    if rating < 1 or rating > 5:
+        return _cors({'error': 'Оценка от 1 до 5'}, 400)
+    author_name = (body.get('author_name') or '').strip()
+    if not author_name and user_id:
+        with _conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT name FROM users WHERE id=%s", (user_id,))
+            row = cur.fetchone()
+            author_name = row[0] if row else 'Аноним'
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "INSERT INTO agency_reviews(organization_id, author_id, author_name, rating, text, deal_type) "
+            "VALUES (%s,%s,%s,%s,%s,%s) RETURNING id",
+            (org_id, user_id or None, author_name, rating,
+             body.get('text', ''), body.get('deal_type', '')),
+        )
+        review_id = cur.fetchone()['id']
+        conn.commit()
+        return _cors({'id': str(review_id)}, 201)
+
+
+# ── Public agency profile ────────────────────────────────────────────────
+
+def public_agency(org_id):
+    """Публичная страница АН для Сети."""
+    with _conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "SELECT id, name, logo_url, description, city, website, "
+            "telegram_username, vk_username, specializations, bio, experience, "
+            "founded_year, is_public, created_at "
+            "FROM organizations WHERE id=%s AND is_public=true",
+            (org_id,),
+        )
+        org = cur.fetchone()
+        if not org:
+            return _cors({'error': 'АН не найдено'}, 404)
+        cur.execute(
+            "SELECT u.id, u.name, u.avatar_url, m.role_code "
+            "FROM org_memberships m JOIN users u ON u.id=m.user_id "
+            "WHERE m.organization_id=%s AND m.status='active' "
+            "ORDER BY m.joined_at LIMIT 20",
+            (org_id,),
+        )
+        members = cur.fetchall()
+        for mb in members:
+            mb['role_title'] = ROLE_TITLES.get(mb['role_code'], mb['role_code'])
+        cur.execute(
+            "SELECT ROUND(AVG(rating)::numeric,2) AS avg, COUNT(*) AS cnt "
+            "FROM agency_reviews WHERE organization_id=%s",
+            (org_id,),
+        )
+        rev = cur.fetchone()
+        org['members'] = list(members)
+        org['agents_count'] = len(members)
+        org['rating'] = float(rev['avg'] or 0)
+        org['review_count'] = int(rev['cnt'] or 0)
+        return _cors(org)
+
+
 # ── Router ─────────────────────────────────────────────────────────────
 
 def handler(event, context) -> dict:
@@ -653,6 +884,14 @@ def handler(event, context) -> dict:
             if not token:
                 return _cors({'error': 'token обязателен'}, 400)
             return lookup_invite(token)
+        if action == 'public_agency':
+            if not org_id:
+                return _cors({'error': 'org_id обязателен'}, 400)
+            return public_agency(org_id)
+        if action == 'list_reviews':
+            if not org_id:
+                return _cors({'error': 'org_id обязателен'}, 400)
+            return list_reviews(org_id)
 
         if not user_id:
             return _cors({'error': 'Не авторизован'}, 401)
@@ -663,6 +902,8 @@ def handler(event, context) -> dict:
             return create_org(user_id, body)
         if action == 'get_org':
             return get_org(user_id, org_id)
+        if action == 'get_org_full':
+            return get_org_full(user_id, org_id)
         if action == 'update_org':
             return update_org(user_id, org_id, body)
         if action == 'list_employees':
@@ -685,6 +926,14 @@ def handler(event, context) -> dict:
             return accept_invite(user_id, body)
         if action == 'org_analytics':
             return org_analytics(user_id, org_id)
+        if action == 'list_deals':
+            return list_deals(user_id, org_id, qs)
+        if action == 'create_deal':
+            return create_deal(user_id, org_id, body)
+        if action == 'update_deal':
+            return update_deal(user_id, org_id, body)
+        if action == 'create_review':
+            return create_review(user_id, org_id, body)
 
         return _cors({'error': f'Неизвестное действие: {action}'}, 400)
 
