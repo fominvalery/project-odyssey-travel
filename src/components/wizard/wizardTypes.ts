@@ -122,9 +122,9 @@ export const CATEGORIES: CategoryItem[] = [
 ]
 
 export const CATEGORY_GROUPS = [
-  { label: "Жилая недвижимость", ids: ["residential", "newbuild"] },
   { label: "Коммерческая недвижимость", ids: ["commercial", "investment"] },
   { label: "Специальные форматы", ids: ["resort", "auction"] },
+  { label: "Жилая недвижимость", ids: ["residential", "newbuild"] },
 ]
 
 // ── Поля для Жилой ──────────────────────────────────────────────────────────
