@@ -20,6 +20,8 @@ type ViewMode = "list" | "kanban"
 
 interface DashboardCRMProps {
   userId: string
+  orgId?: string
+  deptId?: string
 }
 
 // ── Канбан-колонка ─────────────────────────────────────────────────────────────
@@ -70,7 +72,7 @@ function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onSta
 
 // ── Основной компонент ─────────────────────────────────────────────────────────
 
-export function DashboardCRM({ userId }: DashboardCRMProps) {
+export function DashboardCRM({ userId, orgId, deptId }: DashboardCRMProps) {
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(false)
   const [filterStage, setFilterStage] = useState<FunnelStage | "Все">("Все")
@@ -83,7 +85,14 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
     if (!userId) return
     setLoading(true)
     try {
-      const r = await fetch(`${func2url.leads}?owner_id=${encodeURIComponent(userId)}`)
+      let url: string
+      if (orgId) {
+        url = `${func2url.leads}?org_id=${encodeURIComponent(orgId)}`
+        if (deptId) url += `&department_id=${encodeURIComponent(deptId)}`
+      } else {
+        url = `${func2url.leads}?owner_id=${encodeURIComponent(userId)}`
+      }
+      const r = await fetch(url)
       const data = await r.json()
       setLeads(Array.isArray(data.leads) ? (data.leads as Lead[]) : [])
     } catch {
@@ -91,7 +100,7 @@ export function DashboardCRM({ userId }: DashboardCRMProps) {
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [userId, orgId, deptId])
 
   const loadOverdue = useCallback(async () => {
     if (!userId) return
