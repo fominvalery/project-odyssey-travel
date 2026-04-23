@@ -92,7 +92,7 @@ export const CATEGORIES: CategoryItem[] = [
     label: "Курортная",
     desc: "Отели, SPA, турбизнес, инвест-проекты",
     icon: "Palmtree",
-    group: "resort_group",
+    group: "other",
     subtypes: [
       // Размещение
       "Апарт-отель", "Апарт-комплекс", "Гостиница", "Отель", "Мини-отель", "Хостел", "Гостевой дом",
@@ -124,8 +124,7 @@ export const CATEGORIES: CategoryItem[] = [
 export const CATEGORY_GROUPS = [
   { label: "Жилая недвижимость", ids: ["residential", "newbuild"] },
   { label: "Коммерческая недвижимость", ids: ["commercial", "investment"] },
-  { label: "Курортная недвижимость", ids: ["resort"] },
-  { label: "Специальные форматы", ids: ["auction"] },
+  { label: "Специальные форматы", ids: ["resort", "auction"] },
 ]
 
 // ── Поля для Жилой ──────────────────────────────────────────────────────────

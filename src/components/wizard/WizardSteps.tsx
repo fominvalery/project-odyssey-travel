@@ -50,73 +50,28 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
     <div className="space-y-6">
       {CATEGORY_GROUPS.map(group => {
         const groupCats = CATEGORIES.filter(c => group.ids.includes(c.id))
-        const isResortGroup = group.label === "Курортная недвижимость"
-
         return (
           <div key={group.label}>
             <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">{group.label}</p>
-
-            {/* Специальная карточка для Курортной */}
-            {isResortGroup ? (
-              <div className="grid grid-cols-1 gap-3">
-                {groupCats.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setCategory(cat.id); setSubtype("") }}
-                    className={`rounded-2xl border p-5 text-left transition-all ${
-                      category === cat.id
-                        ? "border-cyan-500 bg-gradient-to-r from-cyan-900/30 to-teal-900/20"
-                        : "border-[#1f1f1f] bg-[#111] hover:border-cyan-500/40"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                        category === cat.id ? "bg-cyan-500/20" : "bg-[#1a1a1a]"
-                      }`}>
-                        <Icon name="Palmtree" fallback="Sun" className={`h-6 w-6 ${category === cat.id ? "text-cyan-400" : "text-gray-400"}`} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="font-bold text-white">{cat.label}</p>
-                          {category === cat.id && (
-                            <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-full px-2 py-0.5">Выбрано</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-400">{cat.desc}</p>
-                      </div>
-                    </div>
-                    {category === cat.id && (
-                      <div className="mt-3 pt-3 border-t border-cyan-500/20 flex flex-wrap gap-1.5">
-                        {["Отель", "SPA-отель", "База отдыха", "Санаторий", "Вилла", "Инвест-проект"].map(tag => (
-                          <span key={tag} className="text-[10px] text-cyan-400/70 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-2 py-0.5">{tag}</span>
-                        ))}
-                        <span className="text-[10px] text-gray-500 px-1 py-0.5">+14 типов...</span>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {groupCats.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setCategory(cat.id); setSubtype("") }}
-                    className={`rounded-2xl border p-5 text-center transition-all hover:border-blue-500/50 ${
-                      category === cat.id ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center ${
-                      category === cat.id ? "bg-blue-500/20" : "bg-[#1a1a1a]"
-                    }`}>
-                      <Icon name={cat.icon as "Home"} className={`h-5 w-5 ${category === cat.id ? "text-blue-400" : "text-gray-400"}`} />
-                    </div>
-                    <p className="font-semibold text-white text-sm mb-0.5">{cat.label}</p>
-                    <p className="text-[11px] text-gray-500 leading-tight">{cat.desc}</p>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-3">
+              {groupCats.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => { setCategory(cat.id); setSubtype("") }}
+                  className={`rounded-2xl border p-5 text-center transition-all hover:border-blue-500/50 ${
+                    category === cat.id ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center ${
+                    category === cat.id ? "bg-blue-500/20" : "bg-[#1a1a1a]"
+                  }`}>
+                    <Icon name={cat.icon as "Home"} fallback="Building2" className={`h-5 w-5 ${category === cat.id ? "text-blue-400" : "text-gray-400"}`} />
+                  </div>
+                  <p className="font-semibold text-white text-sm mb-0.5">{cat.label}</p>
+                  <p className="text-[11px] text-gray-500 leading-tight">{cat.desc}</p>
+                </button>
+              ))}
+            </div>
           </div>
         )
       })}
