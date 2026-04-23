@@ -75,7 +75,7 @@ export const CATEGORIES: CategoryItem[] = [
     desc: "Офисы, склады, ритейл",
     icon: "Building2",
     group: "commercial_group",
-    subtypes: ["Офис / БЦ", "Стрит-ритейл", "ОЗС (открытый склад)", "Склад / Логистика", "Производство / Промзона", "Гостиница / Апарт-отель", "Земельный участок (ком.)", "ПСН (свободное назначение)"],
+    subtypes: ["Офис / БЦ", "Стрит-ритейл", "ОЗС (отдельно стоящее здание)", "Склад / Логистика", "Производство / Промзона", "Гостиница / Апарт-отель", "Земельный участок (ком.)", "ПСН (свободное назначение)"],
   },
   // Инвестиции
   {
@@ -330,7 +330,8 @@ export function getCategoryFields(catId: string, subtype?: string) {
     if (!subtype) return COMMERCIAL_FIELDS_DEFAULT
     if (subtype.includes("Офис") || subtype.includes("БЦ")) return COMMERCIAL_FIELDS_OFFICE
     if (subtype.includes("Стрит") || subtype.includes("ритейл") || subtype.includes("ПСН")) return COMMERCIAL_FIELDS_RETAIL
-    if (subtype.includes("Склад") || subtype.includes("Логистика") || subtype.includes("ОЗС")) return COMMERCIAL_FIELDS_WAREHOUSE
+    if (subtype.includes("ОЗС")) return COMMERCIAL_FIELDS_OFFICE
+    if (subtype.includes("Склад") || subtype.includes("Логистика")) return COMMERCIAL_FIELDS_WAREHOUSE
     if (subtype.includes("Производство") || subtype.includes("Промзона")) return COMMERCIAL_FIELDS_INDUSTRIAL
     return COMMERCIAL_FIELDS_DEFAULT
   }
