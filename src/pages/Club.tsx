@@ -112,11 +112,7 @@ export default function Club() {
           </span>
 
           <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-5">
-            Закрытое сообщество<br />
-            <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
-              брокеров и специалистов
-            </span><br />
-            рынка недвижимости
+            Кабинет-24 — Клуб
           </h1>
 
           <p className="text-lg md:text-xl text-gray-400 leading-relaxed mb-8 max-w-xl mx-auto">
