@@ -282,7 +282,21 @@ export default function Dashboard() {
             saved={saved}
             onSave={handleSave}
             onAvatarChange={handleAvatarChange}
-            onAvatarCropped={(dataUrl) => updateProfile({ avatar: dataUrl })}
+            onAvatarCropped={async (dataUrl) => {
+              updateProfile({ avatar: dataUrl })
+              try {
+                const uploadRes = await fetch(func2url["upload-photo"], {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ image_base64: dataUrl, folder: "avatars" }),
+                }).then(r => r.json())
+                if (uploadRes.url) {
+                  updateProfile({ avatar: uploadRes.url })
+                }
+              } catch {
+                // оставляем base64 локально
+              }
+            }}
             onStatusChange={(status) => updateProfile({ status })}
           />
         )}

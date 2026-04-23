@@ -158,32 +158,36 @@ export function useAuth() {
 
     // Сохраняем в БД если есть поля профиля
     const profileFields = ['name','phone','company','firstName','lastName','middleName',
-      'city','specializations','bio','experience','telegram','vk','max','website']
+      'city','specializations','bio','experience','telegram','vk','max','website','avatar']
     const hasProfileUpdate = profileFields.some(f => f in updates)
     if (!hasProfileUpdate || !user.id) return
 
     try {
       const authUrl = (func2url as Record<string, string>)["auth-email-auth"]
+      const body: Record<string, unknown> = {
+        user_id: user.id,
+        name: merged.name,
+        phone: merged.phone,
+        company: merged.company,
+        first_name: merged.firstName ?? '',
+        last_name: merged.lastName ?? '',
+        middle_name: merged.middleName ?? '',
+        city: merged.city ?? '',
+        specializations: merged.specializations ?? [],
+        bio: merged.bio ?? '',
+        experience: merged.experience ?? '',
+        telegram_username: merged.telegram ?? '',
+        vk_username: merged.vk ?? '',
+        max_username: merged.max ?? '',
+        website: merged.website ?? '',
+      }
+      if ('avatar' in updates && merged.avatar) {
+        body.avatar_url = merged.avatar
+      }
       await fetch(`${authUrl}?action=update-profile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: user.id,
-          name: merged.name,
-          phone: merged.phone,
-          company: merged.company,
-          first_name: merged.firstName ?? '',
-          last_name: merged.lastName ?? '',
-          middle_name: merged.middleName ?? '',
-          city: merged.city ?? '',
-          specializations: merged.specializations ?? [],
-          bio: merged.bio ?? '',
-          experience: merged.experience ?? '',
-          telegram_username: merged.telegram ?? '',
-          vk_username: merged.vk ?? '',
-          max_username: merged.max ?? '',
-          website: merged.website ?? '',
-        }),
+        body: JSON.stringify(body),
       })
     } catch {
       // ignore — данные уже сохранены локально

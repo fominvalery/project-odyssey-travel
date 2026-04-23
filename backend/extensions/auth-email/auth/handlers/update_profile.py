@@ -25,6 +25,7 @@ def handle(event: dict, origin: str = '*') -> dict:
         'name', 'phone', 'company',
         'first_name', 'last_name', 'middle_name', 'city',
         'bio', 'experience', 'telegram_username', 'vk_username', 'max_username', 'website',
+        'avatar_url',
     }
 
     set_parts = []
