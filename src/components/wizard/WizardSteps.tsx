@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
-import { CATEGORIES, getCategoryFields, WizardForm } from "./wizardTypes"
+import { CATEGORIES, CATEGORY_GROUPS, getCategoryFields, WizardForm } from "./wizardTypes"
 import SortablePhotoGrid from "./SortablePhotoGrid"
 import AddressMapPicker from "./AddressMapPicker"
 import func2url from "../../../backend/func2url.json"
@@ -12,32 +12,71 @@ import func2url from "../../../backend/func2url.json"
 interface Step1Props {
   category: string
   setCategory: (v: string) => void
+  subtype: string
+  setSubtype: (v: string) => void
   form: WizardForm
   setForm: (f: WizardForm) => void
 }
 
-export function Step1Category({ category, setCategory }: Step1Props) {
+export function Step1Category({ category, setCategory, subtype, setSubtype }: Step1Props) {
+  const selectedCat = CATEGORIES.find(c => c.id === category)
+
   return (
-    <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setCategory(cat.id)}
-            className={`rounded-2xl border p-8 text-center transition-all hover:border-blue-500/50 ${
-              category === cat.id ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"
-            }`}
-          >
-            <div className={`w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center ${
-              category === cat.id ? "bg-blue-500/20" : "bg-[#1a1a1a]"
-            }`}>
-              <Icon name={cat.icon as "TrendingUp"} className={`h-6 w-6 ${category === cat.id ? "text-blue-400" : "text-gray-400"}`} />
+    <div className="space-y-6">
+      {CATEGORY_GROUPS.map(group => {
+        const groupCats = CATEGORIES.filter(c => group.ids.includes(c.id))
+        return (
+          <div key={group.label}>
+            <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">{group.label}</p>
+            <div className="grid grid-cols-2 gap-3">
+              {groupCats.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => { setCategory(cat.id); setSubtype("") }}
+                  className={`rounded-2xl border p-5 text-center transition-all hover:border-blue-500/50 ${
+                    category === cat.id ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center ${
+                    category === cat.id ? "bg-blue-500/20" : "bg-[#1a1a1a]"
+                  }`}>
+                    <Icon name={cat.icon as "Home"} className={`h-5 w-5 ${category === cat.id ? "text-blue-400" : "text-gray-400"}`} />
+                  </div>
+                  <p className="font-semibold text-white text-sm mb-0.5">{cat.label}</p>
+                  <p className="text-[11px] text-gray-500 leading-tight">{cat.desc}</p>
+                </button>
+              ))}
             </div>
-            <p className="font-semibold text-white mb-1">{cat.label}</p>
-            <p className="text-xs text-gray-500">{cat.desc}</p>
-          </button>
-        ))}
-      </div>
+          </div>
+        )
+      })}
+
+      {/* Выбор подтипа */}
+      {selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (
+        <div>
+          <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">
+            Тип объекта — {selectedCat.label}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {selectedCat.subtypes.map(st => (
+              <button
+                key={st}
+                onClick={() => setSubtype(st)}
+                className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                  subtype === st
+                    ? "border-violet-500 bg-violet-500/15 text-violet-300"
+                    : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-[#3a3a3a] hover:text-white"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+          {!subtype && (
+            <p className="text-[11px] text-gray-600 mt-2">Выберите тип — это поможет подобрать правильные характеристики</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -69,15 +108,27 @@ interface Step3Props {
   form: WizardForm
   setForm: (f: WizardForm) => void
   category: string
+  subtype: string
   categoryFields: Record<string, string>
   onCategoryField: (key: string, value: string) => void
 }
 
 export function Step3Details({
-  form, setForm, category, categoryFields, onCategoryField,
+  form, setForm, category, subtype, categoryFields, onCategoryField,
 }: Step3Props) {
+  const catLabel = CATEGORIES.find(c => c.id === category)?.label ?? ""
+  const fields = getCategoryFields(category, subtype)
+
   return (
     <div className="space-y-6">
+      {/* Подтип — напоминание */}
+      {subtype && (
+        <div className="flex items-center gap-2 text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-xl px-4 py-2.5">
+          <Icon name="Tag" className="h-3.5 w-3.5 shrink-0" />
+          <span>Тип: <span className="font-semibold">{subtype}</span> — характеристики подобраны автоматически</span>
+        </div>
+      )}
+
       {/* Цена и площадь */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -92,13 +143,13 @@ export function Step3Details({
         </div>
       </div>
 
-      {category && (
+      {category && fields.length > 0 && (
         <div className="border-t border-[#1f1f1f] pt-4">
           <p className="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-4">
-            {CATEGORIES.find(c => c.id === category)?.label} — дополнительные поля
+            {catLabel}{subtype ? ` · ${subtype}` : ""} — характеристики
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {getCategoryFields(category).map(field => (
+            {fields.map(field => (
               <div key={field.key}>
                 <Label className="text-xs text-gray-400 mb-1.5 block">{field.label}</Label>
                 <Input

@@ -112,20 +112,23 @@ export default function DashboardObjects({
 
         {/* Фильтры по категории */}
         <div className="flex flex-wrap gap-2 mb-3">
-          {["Все", "Инвестиции", "Коммерция", "Торги", "Новостройки"].map(cat => (
+          {[
+            { label: "Все",         icon: "" },
+            { label: "Жилая",       icon: "Home" },
+            { label: "Новостройки", icon: "Construction" },
+            { label: "Коммерция",   icon: "Building2" },
+            { label: "Инвестиции",  icon: "TrendingUp" },
+            { label: "Торги",       icon: "Gavel" },
+          ].map(({ label, icon }) => (
             <button
-              key={cat}
-              onClick={() => setCatFilter(cat)}
+              key={label}
+              onClick={() => setCatFilter(label)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                catFilter === cat ? "bg-blue-600 text-white" : "bg-[#1a1a1a] text-gray-400 hover:text-white"
+                catFilter === label ? "bg-blue-600 text-white" : "bg-[#1a1a1a] text-gray-400 hover:text-white"
               }`}
             >
-              {cat !== "Все" && <Icon name={
-                cat === "Инвестиции" ? "TrendingUp" :
-                cat === "Коммерция" ? "Building2" :
-                cat === "Торги" ? "Gavel" : "Construction"
-              } className="h-3 w-3" />}
-              {cat}
+              {icon && <Icon name={icon as "Home"} className="h-3 w-3" />}
+              {label}
             </button>
           ))}
         </div>

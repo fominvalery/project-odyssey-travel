@@ -8,10 +8,11 @@ interface ObjectCardProps {
 }
 
 const BADGE_BY_TYPE: Record<string, { label: string; color: string; icon: string }> = {
-  "Инвестиции":   { label: "Инвестиции",   color: "bg-emerald-600", icon: "TrendingUp" },
-  "Коммерция":    { label: "Коммерция",    color: "bg-blue-600",    icon: "Building2" },
-  "Торги":        { label: "Торги",        color: "bg-amber-600",   icon: "Gavel" },
-  "Новостройки":  { label: "Новостройки",  color: "bg-violet-600",  icon: "Construction" },
+  "Инвестиции":   { label: "Инвестиции",   color: "bg-amber-600",   icon: "TrendingUp" },
+  "Коммерция":    { label: "Коммерция",    color: "bg-violet-600",  icon: "Building2" },
+  "Торги":        { label: "Торги",        color: "bg-green-600",   icon: "Gavel" },
+  "Новостройки":  { label: "Новостройки",  color: "bg-blue-600",    icon: "Construction" },
+  "Жилая":        { label: "Жилая",        color: "bg-sky-600",     icon: "Home" },
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -64,7 +65,12 @@ export default function ObjectCard({ obj, onEdit, onDelete }: ObjectCardProps) {
 
       {/* Контент */}
       <div className="p-5 flex-1 flex flex-col">
-        <h3 className="font-semibold text-white text-sm mb-2 leading-snug line-clamp-2">{obj.title}</h3>
+        <h3 className="font-semibold text-white text-sm mb-1 leading-snug line-clamp-2">{obj.title}</h3>
+        {obj.subtype && (
+          <span className="inline-block text-[10px] text-gray-500 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full px-2 py-0.5 mb-2 w-fit">
+            {obj.subtype}
+          </span>
+        )}
         <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-3">
           <Icon name="MapPin" className="h-3.5 w-3.5 text-violet-400" />
           {obj.city || "Город не указан"}

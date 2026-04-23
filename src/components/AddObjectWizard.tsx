@@ -18,6 +18,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
   const isEditing = Boolean(initial)
   const [step, setStep] = useState(0)
   const [category, setCategory] = useState(initial?.category ?? "")
+  const [subtype, setSubtype] = useState(initial?.extra_fields?.subtype ?? initial?.subtype ?? "")
   const [publishToMarket, setPublishToMarket] = useState(initial?.published ?? true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<WizardForm>({
@@ -57,10 +58,12 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
 
   async function handlePublish() {
     const cat = CATEGORIES.find(c => c.id === category)
+    const enrichedFields = subtype ? { ...categoryFields, subtype } : categoryFields
     const payload = {
       user_id: userId ?? "",
       category,
       type: cat?.label ?? category,
+      subtype,
       title: form.title || "Новый объект",
       city: form.city,
       address: form.address,
@@ -68,7 +71,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
       area: form.area,
       yield_percent: categoryFields["yield"] ?? "",
       description: form.description,
-      extra_fields: categoryFields,
+      extra_fields: enrichedFields,
       status: initial?.status ?? "Активен",
       published: publishToMarket,
       photos,
@@ -88,6 +91,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
       const saved: ObjectData = server ? {
         id: String(server.id),
         type: String(server.type ?? payload.type),
+        subtype: String(server.subtype ?? subtype ?? ""),
         title: String(server.title ?? payload.title),
         city: String(server.city ?? ""),
         address: String(server.address ?? ""),
@@ -104,6 +108,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
       } : {
         id: initial?.id ?? Date.now(),
         type: payload.type,
+        subtype: payload.subtype,
         title: payload.title,
         city: payload.city,
         address: payload.address,
@@ -115,7 +120,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
         category: payload.category,
         published: payload.published,
         photos: payload.photos,
-        extra_fields: categoryFields,
+        extra_fields: enrichedFields,
       }
       onSave(saved)
     } catch {
@@ -175,7 +180,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
 
         {/* Шаги */}
         {step === 0 && (
-          <Step1Category category={category} setCategory={setCategory} form={form} setForm={setForm} />
+          <Step1Category category={category} setCategory={setCategory} subtype={subtype} setSubtype={setSubtype} form={form} setForm={setForm} />
         )}
         {step === 1 && (
           <Step2Location form={form} setForm={setForm} />
@@ -185,6 +190,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             form={form}
             setForm={setForm}
             category={category}
+            subtype={subtype}
             categoryFields={categoryFields}
             onCategoryField={handleCategoryField}
           />

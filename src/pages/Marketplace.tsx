@@ -7,18 +7,18 @@ import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
 import { Footer } from "@/components/Footer"
 import func2url from "../../backend/func2url.json"
-import { getCategoryFields } from "@/components/wizard/wizardTypes"
+import { getCategoryFields, CAT_ID_MAP, CATEGORIES as WIZ_CATEGORIES } from "@/components/wizard/wizardTypes"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-const CATEGORIES = ["Все", "Коммерческая", "Инвестиционная", "С торгов", "Новостройки"]
+const MARKET_CATEGORIES = ["Все", "Жилая", "Новостройки", "Коммерческая", "Инвестиционная", "С торгов"]
 
-// Маппинг категорий маркетплейса -> id категории визарда
-const CAT_ID_MAP: Record<string, string> = {
-  "Коммерческая": "commercial",
-  "Инвестиционная": "investment",
-  "С торгов": "auction",
-  "Новостройки": "newbuild",
+const CAT_BADGE_COLOR: Record<string, string> = {
+  "Жилая": "bg-sky-600",
+  "Новостройки": "bg-blue-600",
+  "Коммерческая": "bg-violet-600",
+  "Инвестиционная": "bg-amber-600",
+  "С торгов": "bg-green-600",
 }
 
 const OBJECTS = [
@@ -26,6 +26,7 @@ const OBJECTS = [
     id: 1,
     title: "Торговое помещение на первой линии",
     type: "Коммерческая",
+    subtype: "Стрит-ритейл",
     city: "Москва, ЦАО",
     price: "18 500 000 ₽",
     area: "142 м²",
@@ -38,6 +39,7 @@ const OBJECTS = [
     id: 2,
     title: "Офисный блок в бизнес-центре класса B+",
     type: "Коммерческая",
+    subtype: "Офис / БЦ",
     city: "Москва, СЗАО",
     price: "42 000 000 ₽",
     area: "310 м²",
@@ -50,18 +52,20 @@ const OBJECTS = [
     id: 3,
     title: "Производственно-складской комплекс",
     type: "Инвестиционная",
+    subtype: "ГАБ (готовый арендный бизнес)",
     city: "Московская обл., Химки",
     price: "87 000 000 ₽",
     area: "1 200 м²",
     yield: "11.3%",
     img: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&q=80",
     badge: "Инвестиции",
-    badgeColor: "bg-violet-600",
+    badgeColor: "bg-amber-600",
   },
   {
     id: 4,
     title: "Помещение под общепит / стрит-ритейл",
     type: "С торгов",
+    subtype: "Банкротство",
     city: "Санкт-Петербург, Центр",
     price: "6 200 000 ₽",
     area: "78 м²",
@@ -74,6 +78,7 @@ const OBJECTS = [
     id: 5,
     title: "Апарт-комплекс на этапе котлована",
     type: "Новостройки",
+    subtype: "Апартаменты",
     city: "Москва, ЮАО",
     price: "от 7 400 000 ₽",
     area: "от 38 м²",
@@ -82,6 +87,32 @@ const OBJECTS = [
     badge: "Новостройка",
     badgeColor: "bg-blue-600",
   },
+  {
+    id: 6,
+    title: "3-комнатная квартира с видом на парк",
+    type: "Жилая",
+    subtype: "Квартира",
+    city: "Москва, Хамовники",
+    price: "32 500 000 ₽",
+    area: "98 м²",
+    yield: "—",
+    img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80",
+    badge: "Жилая",
+    badgeColor: "bg-sky-600",
+  },
+  {
+    id: 7,
+    title: "Коттедж с участком 15 соток, Рублёвка",
+    type: "Жилая",
+    subtype: "Дом / Коттедж",
+    city: "Московская обл., Одинцово",
+    price: "85 000 000 ₽",
+    area: "320 м²",
+    yield: "—",
+    img: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80",
+    badge: "Жилая",
+    badgeColor: "bg-sky-600",
+  },
 ]
 
 const CAT_MAP: Record<string, string> = {
@@ -89,10 +120,12 @@ const CAT_MAP: Record<string, string> = {
   commercial: "Коммерческая",
   auction: "С торгов",
   newbuild: "Новостройки",
+  residential: "Жилая",
 }
 
 export default function Marketplace() {
   const [activeCategory, setActiveCategory] = useState("Все")
+  const [activeSubtype, setActiveSubtype] = useState("")
   const [search, setSearch] = useState("")
   const [dbObjects, setDbObjects] = useState<typeof OBJECTS>([])
   const [loading, setLoading] = useState(true)
@@ -105,9 +138,9 @@ export default function Marketplace() {
   const [areaTo, setAreaTo] = useState("")
   const [cityFilter, setCityFilter] = useState("")
 
-  // Меняем категорию — сбрасываем доп. фильтры, открываем панель если есть характеристики
   function handleCategoryChange(cat: string) {
     setActiveCategory(cat)
+    setActiveSubtype("")
     setExtraFilters({})
     if (cat !== "Все" && CAT_ID_MAP[cat]) {
       setShowFilters(true)
@@ -121,15 +154,17 @@ export default function Marketplace() {
     setAreaFrom("")
     setAreaTo("")
     setCityFilter("")
+    setActiveSubtype("")
   }
 
   const hasActiveFilters =
     Object.values(extraFilters).some(v => v.trim()) ||
-    priceFrom || priceTo || areaFrom || areaTo || cityFilter
+    priceFrom || priceTo || areaFrom || areaTo || cityFilter || activeSubtype
 
-  // Поля фильтра для активной категории
-  const activeCatFields = activeCategory !== "Все" && CAT_ID_MAP[activeCategory]
-    ? getCategoryFields(CAT_ID_MAP[activeCategory])
+  const activeCatId = activeCategory !== "Все" ? (CAT_ID_MAP[activeCategory] ?? "") : ""
+  const activeCatDef = WIZ_CATEGORIES.find(c => c.id === activeCatId)
+  const activeCatFields = activeCatId
+    ? getCategoryFields(activeCatId, activeSubtype)
     : []
 
   useEffect(() => {
@@ -139,17 +174,21 @@ export default function Marketplace() {
         const parsed = JSON.parse(typeof data === "string" ? data : JSON.stringify(data))
         const arr = (parsed.objects || []).map((o: Record<string, unknown>) => {
           const photos = Array.isArray(o.photos) ? (o.photos as string[]) : []
+          const ef = (o.extra_fields as Record<string, string>) ?? {}
+          const catLabel = CAT_MAP[o.category as string] ?? (o.type as string)
           return {
             id: String(o.id),
             title: String(o.title ?? ""),
-            type: CAT_MAP[o.category as string] ?? (o.type as string),
+            type: catLabel,
+            subtype: ef.subtype ?? "",
             city: String(o.city ?? ""),
             price: o.price ? `${o.price} ₽` : "—",
             area: o.area ? `${o.area} м²` : "—",
             yield: (o.yield_percent as string) || "—",
             img: photos[0] || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
-            badge: null,
-            badgeColor: "",
+            badge: catLabel,
+            badgeColor: CAT_BADGE_COLOR[catLabel] ?? "bg-gray-600",
+            extra_fields: ef,
           }
         })
         setDbObjects(arr)
@@ -162,9 +201,10 @@ export default function Marketplace() {
 
   const filtered = allObjects.filter((o) => {
     const matchCat = activeCategory === "Все" || o.type === activeCategory
+    const oSubtype = (o as Record<string, unknown>).subtype as string ?? ""
+    const matchSubtype = !activeSubtype || oSubtype === activeSubtype
     const matchSearch = o.title.toLowerCase().includes(search.toLowerCase()) || o.city.toLowerCase().includes(search.toLowerCase())
 
-    // Фильтрация по extra_fields категории
     const matchExtra = activeCatFields.every(({ key }) => {
       const filterVal = (extraFilters[key] ?? "").trim().toLowerCase()
       if (!filterVal) return true
@@ -172,20 +212,17 @@ export default function Marketplace() {
       return objVal.toLowerCase().includes(filterVal)
     })
 
-    // Фильтрация по цене (убираем нечисловые символы)
     const priceNum = parseFloat(o.price.replace(/[^\d.]/g, "")) || 0
     const matchPriceFrom = priceFrom ? priceNum >= parseFloat(priceFrom.replace(/\s/g, "")) : true
     const matchPriceTo = priceTo ? priceNum <= parseFloat(priceTo.replace(/\s/g, "")) : true
 
-    // Фильтрация по площади
     const areaNum = parseFloat(o.area.replace(/[^\d.]/g, "")) || 0
     const matchAreaFrom = areaFrom ? areaNum >= parseFloat(areaFrom) : true
     const matchAreaTo = areaTo ? areaNum <= parseFloat(areaTo) : true
 
-    // Фильтрация по городу
     const matchCity = cityFilter ? o.city.toLowerCase().includes(cityFilter.trim().toLowerCase()) : true
 
-    return matchCat && matchSearch && matchExtra && matchPriceFrom && matchPriceTo && matchAreaFrom && matchAreaTo && matchCity
+    return matchCat && matchSubtype && matchSearch && matchExtra && matchPriceFrom && matchPriceTo && matchAreaFrom && matchAreaTo && matchCity
   })
 
   return (
@@ -195,10 +232,10 @@ export default function Marketplace() {
       <section className="px-4 md:px-8 pt-8 pb-16 max-w-7xl mx-auto">
         <div className="text-center mb-6">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">Каталог недвижимости</h1>
-          <p className="text-gray-400 text-lg">Коммерческая, инвестиционная недвижимость, торги и новостройки</p>
+          <p className="text-gray-400 text-lg">Жилая, коммерческая, инвестиционная недвижимость, новостройки и торги</p>
         </div>
 
-        {/* Строка поиска + кнопки категорий + кнопка фильтров */}
+        {/* Строка поиска + кнопка фильтров */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1">
             <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -221,15 +258,15 @@ export default function Marketplace() {
             Фильтры
             {hasActiveFilters && (
               <span className="ml-1 bg-white/20 rounded-full text-xs px-1.5 py-0.5 leading-none">
-                {[priceFrom, priceTo, areaFrom, areaTo, ...Object.values(extraFilters)].filter(v => v.trim()).length}
+                {[priceFrom, priceTo, areaFrom, areaTo, activeSubtype, ...Object.values(extraFilters)].filter(v => v.trim()).length}
               </span>
             )}
           </button>
         </div>
 
         {/* Кнопки категорий */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {CATEGORIES.map((cat) => (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {MARKET_CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => handleCategoryChange(cat)}
@@ -243,6 +280,25 @@ export default function Marketplace() {
             </button>
           ))}
         </div>
+
+        {/* Подтипы активной категории */}
+        {activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {activeCatDef.subtypes.map(st => (
+              <button
+                key={st}
+                onClick={() => setActiveSubtype(prev => prev === st ? "" : st)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  activeSubtype === st
+                    ? "border-violet-500 bg-violet-500/15 text-violet-300"
+                    : "border-[#2a2a2a] bg-transparent text-gray-500 hover:text-gray-300 hover:border-[#3a3a3a]"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Единая панель фильтров */}
         {showFilters && (
@@ -370,7 +426,14 @@ export default function Marketplace() {
                 </div>
 
                 <div className="p-5">
-                  <p className="text-xs text-gray-500 mb-1">{obj.type}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs text-gray-500">{obj.type}</p>
+                    {(obj as Record<string, unknown>).subtype && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400">
+                        {(obj as Record<string, unknown>).subtype as string}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-white font-semibold text-sm mb-2 leading-snug">{obj.title}</h3>
                   <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-4">
                     <Icon name="MapPin" className="h-3.5 w-3.5 text-violet-400" />
