@@ -12,12 +12,12 @@ interface Step1Props {
 }
 
 const CAT_BG: Record<string, string> = {
-  "commercial":  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=60",
-  "investment":  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&q=60",
-  "resort":      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&q=60",
-  "auction":     "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&q=60",
-  "residential": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=60",
-  "newbuild":    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=60",
+  "commercial":  "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b50fb88-f4e7-44ec-8719-e0fd7f90acf6.jpg",
+  "investment":  "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+  "resort":      "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/af1636ce-1678-40e8-bfaf-e34e3c3e0013.jpg",
+  "auction":     "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/17b020ab-c66f-445a-8a81-9f2954d40507.jpg",
+  "residential": "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/d5483eb7-291b-489e-a47f-d29a366ea71d.jpg",
+  "newbuild":    "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2e040e9f-00a8-40b1-801c-bd3442c7aafa.jpg",
 }
 
 const RESORT_SUBTYPE_ICONS: Record<string, string> = {
