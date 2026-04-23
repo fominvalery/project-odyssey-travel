@@ -11,6 +11,15 @@ interface Step1Props {
   setForm: (f: WizardForm) => void
 }
 
+const CAT_BG: Record<string, string> = {
+  "commercial":  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=60",
+  "investment":  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&q=60",
+  "resort":      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&q=60",
+  "auction":     "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&q=60",
+  "residential": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=60",
+  "newbuild":    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=60",
+}
+
 const RESORT_SUBTYPE_ICONS: Record<string, string> = {
   "Апарт-отель": "Hotel",
   "Апарт-комплекс": "Building2",
@@ -46,23 +55,44 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
           <div key={group.label}>
             <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">{group.label}</p>
             <div className="grid grid-cols-2 gap-3">
-              {groupCats.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => { setCategory(cat.id); setSubtype("") }}
-                  className={`rounded-2xl border p-5 text-center transition-all hover:border-blue-500/50 ${
-                    category === cat.id ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center ${
-                    category === cat.id ? "bg-blue-500/20" : "bg-[#1a1a1a]"
-                  }`}>
-                    <Icon name={cat.icon as "Home"} fallback="Building2" className={`h-5 w-5 ${category === cat.id ? "text-blue-400" : "text-gray-400"}`} />
-                  </div>
-                  <p className="font-semibold text-white text-sm mb-0.5">{cat.label}</p>
-                  <p className="text-[11px] text-gray-500 leading-tight">{cat.desc}</p>
-                </button>
-              ))}
+              {groupCats.map((cat) => {
+                const bg = CAT_BG[cat.id]
+                const isActive = category === cat.id
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setCategory(cat.id); setSubtype("") }}
+                    className={`relative rounded-2xl border overflow-hidden text-center transition-all hover:border-blue-500/50 ${
+                      isActive ? "border-blue-500" : "border-[#1f1f1f]"
+                    }`}
+                    style={{ minHeight: 130 }}
+                  >
+                    {/* Фоновое фото */}
+                    {bg && (
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                        style={{ backgroundImage: `url(${bg})` }}
+                      />
+                    )}
+                    {/* Оверлей */}
+                    <div className={`absolute inset-0 transition-all ${
+                      isActive
+                        ? "bg-blue-950/70"
+                        : "bg-[#080808]/75 hover:bg-[#080808]/60"
+                    }`} />
+                    {/* Контент */}
+                    <div className="relative z-10 p-5">
+                      <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center backdrop-blur-sm ${
+                        isActive ? "bg-blue-500/30 border border-blue-400/40" : "bg-white/10 border border-white/10"
+                      }`}>
+                        <Icon name={cat.icon as "Home"} fallback="Building2" className={`h-5 w-5 ${isActive ? "text-blue-300" : "text-gray-300"}`} />
+                      </div>
+                      <p className="font-semibold text-white text-sm mb-0.5">{cat.label}</p>
+                      <p className={`text-[11px] leading-tight ${isActive ? "text-blue-200/70" : "text-gray-400"}`}>{cat.desc}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )
