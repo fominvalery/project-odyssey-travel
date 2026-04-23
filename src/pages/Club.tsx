@@ -112,7 +112,7 @@ export default function Club() {
           </span>
 
           <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-5">
-            Кабинет-24 — Клуб
+            Кабинет-<span className="text-blue-400">24</span>
           </h1>
 
           <p className="text-lg md:text-xl text-gray-400 leading-relaxed mb-8 max-w-xl mx-auto">
