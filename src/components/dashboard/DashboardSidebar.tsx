@@ -172,75 +172,54 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
         </div>
       </aside>
 
-      {/* Мобильное меню */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-[#1f1f1f] flex justify-around px-2 py-2">
-        {isBasic ? (
-          // Базовый: Объекты, Рефералы, Профиль, Маркетплейс, Поддержка
-          <>
-            {(["objects", "referral", "profile"] as const).map((id) => {
-              const icons: Record<string, string> = { objects: "Building2", referral: "Gift", profile: "User" }
-              const labels: Record<string, string> = { objects: "Объекты", referral: "Рефералы", profile: "Профиль" }
-              return (
-                <button
-                  key={id}
-                  onClick={() => setSection(id)}
-                  className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${
-                    section === id ? "text-blue-400" : "text-gray-500"
-                  }`}
-                >
-                  <Icon name={icons[id]} className="h-5 w-5" />
-                  {labels[id]}
-                </button>
-              )
-            })}
-            <button
-              onClick={() => navigate("/marketplace")}
-              className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs text-gray-500"
-            >
-              <Icon name="Store" className="h-5 w-5" />
-              Маркетплейс
-            </button>
-            <button
-              onClick={() => setSection("support")}
-              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${
-                section === "support" ? "text-blue-400" : "text-gray-500"
-              }`}
-            >
-              <Icon name="Headphones" className="h-5 w-5" />
-              Поддержка
-            </button>
-          </>
-        ) : (
-          // Полное меню
-          (["dashboard", "objects", "analytics", "crm", "support"] as const).map((id) => {
-            const icons: Record<string, string> = {
-              dashboard: "LayoutDashboard",
-              objects: "Building2",
-              analytics: "BarChart2",
-              crm: "Users",
-              support: "Headphones",
-            }
-            const labels: Record<string, string> = {
-              dashboard: "Главная",
-              objects: "Объекты",
-              analytics: "Аналитика",
-              crm: "CRM",
-              support: "Поддержка",
-            }
+      {/* Мобильное меню — горизонтальная прокрутка */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-[#1f1f1f]">
+        <div className="flex overflow-x-auto scrollbar-none px-2 py-2 gap-1">
+          {(isBasic
+            ? [
+                { id: "objects",   label: "Объекты",    icon: "Building2",     action: "section" },
+                { id: "referral",  label: "Рефералы",   icon: "Gift",          action: "section" },
+                { id: "profile",   label: "Профиль",    icon: "User",          action: "section" },
+                { id: "marketplace", label: "Маркетплейс", icon: "Store",      action: "navigate" },
+                { id: "support",   label: "Поддержка",  icon: "Headphones",    action: "section" },
+              ]
+            : [
+                { id: "dashboard", label: "Главная",    icon: "LayoutDashboard", action: "section" },
+                { id: "objects",   label: "Объекты",    icon: "Building2",       action: "section" },
+                { id: "crm",       label: "CRM",        icon: "Users",           action: "section" },
+                { id: "analytics", label: "Аналитика",  icon: "BarChart2",       action: "section" },
+                { id: "club",      label: "Сеть",       icon: "Zap",             action: "section" },
+                { id: "messages",  label: "Сообщения",  icon: "MessageSquare",   action: "section" },
+                { id: "referral",  label: "Рефералы",   icon: "Gift",            action: "section" },
+                { id: "profile",   label: "Профиль",    icon: "User",            action: "section" },
+                { id: "marketplace", label: "Маркетплейс", icon: "Store",        action: "navigate" },
+                { id: "support",   label: "Поддержка",  icon: "Headphones",      action: "section" },
+              ]
+          ).map((item) => {
+            const isActive = section === item.id
+            const hasUnread = item.id === "messages" && unreadMessages > 0
             return (
               <button
-                key={id}
-                onClick={() => setSection(id)}
-                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${
-                  section === id ? "text-blue-400" : "text-gray-500"
+                key={item.id}
+                onClick={() => item.action === "navigate" ? navigate(`/${item.id}`) : setSection(item.id as Section)}
+                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors shrink-0 relative ${
+                  isActive ? "text-violet-400" : "text-gray-500"
                 }`}
               >
-                <Icon name={icons[id]} className="h-5 w-5" />
-                {labels[id]}
+                <div className="relative">
+                  <Icon name={item.icon} className="h-5 w-5" />
+                  {hasUnread && (
+                    <span className="absolute -top-1 -right-1 bg-violet-500 text-white text-[9px] font-bold rounded-full h-3.5 w-3.5 flex items-center justify-center">
+                      {unreadMessages > 9 ? "9+" : unreadMessages}
+                    </span>
+                  )}
+                </div>
+                <span className="whitespace-nowrap">{item.label}</span>
+                {isActive && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-violet-400 rounded-full" />}
               </button>
             )
-          })
-        )}
+          })}
+        </div>
       </div>
 
       <AddStatusModal
