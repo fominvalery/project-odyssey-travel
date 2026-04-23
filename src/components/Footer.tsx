@@ -24,7 +24,7 @@ export function Footer() {
           <h4 className="text-white font-semibold mb-4">Основные разделы</h4>
           <ul className="space-y-2 text-sm text-gray-400">
             <li><Link to="/marketplace" className="hover:text-white transition-colors">Маркетплейс</Link></li>
-            <li><Link to="/dashboard" className="hover:text-white transition-colors">Личный кабинет</Link></li>
+            <li><Link to="/club" className="hover:text-white transition-colors">Клуб</Link></li>
             <li><Link to="/referral" className="hover:text-white transition-colors">Реферальная программа</Link></li>
             <li><Link to="/ecosystem" className="hover:text-white transition-colors">Экосистема</Link></li>
           </ul>

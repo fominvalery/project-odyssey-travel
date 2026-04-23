@@ -43,6 +43,9 @@ export function Header() {
           <button onClick={() => navigate("/referral")} className="text-sm text-gray-300 hover:text-white transition-colors">
             Реферальная программа
           </button>
+          <button onClick={() => navigate("/club")} className="text-sm text-gray-300 hover:text-white transition-colors">
+            Клуб
+          </button>
         </nav>
 
         {user ? (
