@@ -67,18 +67,19 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
                     }`}
                     style={{ minHeight: 130 }}
                   >
-                    {/* Фоновое фото */}
+                      {/* Фоновое фото */}
                     {bg && (
-                      <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                        style={{ backgroundImage: `url(${bg})` }}
+                      <img
+                        src={bg}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
                     )}
                     {/* Оверлей */}
                     <div className={`absolute inset-0 transition-all ${
                       isActive
                         ? "bg-blue-950/70"
-                        : "bg-[#080808]/75 hover:bg-[#080808]/60"
+                        : "bg-black/72"
                     }`} />
                     {/* Контент */}
                     <div className="relative z-10 p-5">
