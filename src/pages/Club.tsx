@@ -105,7 +105,7 @@ function FeatureCard({ f }: { f: typeof FEATURES[0] }) {
 
   return (
     <div
-      className={`relative rounded-2xl border ${f.bg} min-h-[360px] flex flex-col overflow-hidden cursor-pointer`}
+      className={`relative rounded-2xl border ${f.bg} min-h-[280px] flex flex-col overflow-hidden cursor-pointer`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onTouchStart={() => setHovered(h => !h)}
