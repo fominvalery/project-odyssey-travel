@@ -306,46 +306,52 @@ export default function Club() {
       <section id="how-it-works" className="relative px-4 py-20 border-y border-[#1a1a1a] overflow-hidden">
         {/* Сетка-фон */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-[#080b14]" />
-          {/* Сетка линий */}
-          <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          {/* Сетка линий — яркая */}
+          <svg className="absolute inset-0 w-full h-full opacity-40" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#4f46e5" strokeWidth="0.5"/>
+                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#6366f1" strokeWidth="0.8"/>
               </pattern>
+              <radialGradient id="glow-center" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.15"/>
+                <stop offset="100%" stopColor="#6366f1" stopOpacity="0"/>
+              </radialGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
+            <rect width="100%" height="100%" fill="url(#glow-center)" />
           </svg>
           {/* Светящиеся узлы */}
-          {[
-            { cx: "15%", cy: "25%", r: 3 }, { cx: "35%", cy: "15%", r: 2 },
-            { cx: "55%", cy: "30%", r: 4 }, { cx: "75%", cy: "20%", r: 2 },
-            { cx: "90%", cy: "45%", r: 3 }, { cx: "20%", cy: "65%", r: 2 },
-            { cx: "50%", cy: "75%", r: 3 }, { cx: "80%", cy: "70%", r: 2 },
-            { cx: "10%", cy: "85%", r: 2 }, { cx: "65%", cy: "55%", r: 3 },
-          ].map((node, i) => (
-            <svg key={i} className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-              <circle cx={node.cx} cy={node.cy} r={node.r} fill="#818cf8" opacity="0.8">
-                <animate attributeName="opacity" values="0.4;1;0.4" dur={`${2.5 + i * 0.4}s`} repeatCount="indefinite"/>
-              </circle>
-              <circle cx={node.cx} cy={node.cy} r={node.r * 4} fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.3"/>
-            </svg>
-          ))}
-          {/* Соединяющие линии */}
-          <svg className="absolute inset-0 w-full h-full opacity-15" xmlns="http://www.w3.org/2000/svg">
-            <line x1="15%" y1="25%" x2="35%" y2="15%" stroke="#818cf8" strokeWidth="0.8"/>
-            <line x1="35%" y1="15%" x2="55%" y2="30%" stroke="#818cf8" strokeWidth="0.8"/>
-            <line x1="55%" y1="30%" x2="75%" y2="20%" stroke="#818cf8" strokeWidth="0.8"/>
-            <line x1="75%" y1="20%" x2="90%" y2="45%" stroke="#818cf8" strokeWidth="0.8"/>
-            <line x1="20%" y1="65%" x2="50%" y2="75%" stroke="#818cf8" strokeWidth="0.8"/>
-            <line x1="50%" y1="75%" x2="80%" y2="70%" stroke="#818cf8" strokeWidth="0.8"/>
-            <line x1="15%" y1="25%" x2="20%" y2="65%" stroke="#818cf8" strokeWidth="0.8"/>
-            <line x1="55%" y1="30%" x2="65%" y2="55%" stroke="#818cf8" strokeWidth="0.8"/>
-            <line x1="65%" y1="55%" x2="80%" y2="70%" stroke="#818cf8" strokeWidth="0.8"/>
+          <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            {[
+              { cx: "15%", cy: "25%", r: 4, d: "2.5s" }, { cx: "35%", cy: "15%", r: 3, d: "3.1s" },
+              { cx: "55%", cy: "30%", r: 5, d: "2.8s" }, { cx: "75%", cy: "20%", r: 3, d: "3.5s" },
+              { cx: "90%", cy: "45%", r: 4, d: "2.2s" }, { cx: "20%", cy: "65%", r: 3, d: "3.8s" },
+              { cx: "50%", cy: "75%", r: 4, d: "2.6s" }, { cx: "80%", cy: "70%", r: 3, d: "3.2s" },
+              { cx: "10%", cy: "85%", r: 3, d: "2.9s" }, { cx: "65%", cy: "55%", r: 4, d: "3.4s" },
+              { cx: "40%", cy: "50%", r: 5, d: "2.3s" }, { cx: "85%", cy: "30%", r: 3, d: "3.7s" },
+            ].map((node, i) => (
+              <g key={i}>
+                <circle cx={node.cx} cy={node.cy} r={node.r * 5} fill="#6366f1" opacity="0.08">
+                  <animate attributeName="opacity" values="0.04;0.15;0.04" dur={node.d} repeatCount="indefinite"/>
+                </circle>
+                <circle cx={node.cx} cy={node.cy} r={node.r} fill="#a5b4fc">
+                  <animate attributeName="opacity" values="0.5;1;0.5" dur={node.d} repeatCount="indefinite"/>
+                </circle>
+              </g>
+            ))}
+            {/* Соединяющие линии */}
+            {[
+              ["15%","25%","35%","15%"], ["35%","15%","55%","30%"], ["55%","30%","75%","20%"],
+              ["75%","20%","90%","45%"], ["20%","65%","50%","75%"], ["50%","75%","80%","70%"],
+              ["15%","25%","20%","65%"], ["55%","30%","65%","55%"], ["65%","55%","80%","70%"],
+              ["35%","15%","40%","50%"], ["40%","50%","65%","55%"], ["85%","30%","90%","45%"],
+            ].map(([x1,y1,x2,y2], i) => (
+              <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#818cf8" strokeWidth="1" opacity="0.35"/>
+            ))}
           </svg>
-          {/* Затемнение по краям */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#080b14]/60 via-transparent to-[#080b14]/60" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#080b14]/40 via-transparent to-[#080b14]/40" />
+          {/* Плавное затемнение по краям */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/70 via-transparent to-[#0a0a0a]/70" />
         </div>
 
         <div className="relative max-w-4xl mx-auto text-center mb-14">
