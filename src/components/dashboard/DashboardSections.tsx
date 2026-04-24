@@ -97,6 +97,8 @@ export function DashboardReferral({ userId }: ReferralProps) {
         stats={stats}
         loading={loading}
         onWithdrawClick={() => setWithdrawalOpen(true)}
+        userId={userId}
+        onBalanceUpdate={(newBalance) => setStats(s => s ? { ...s, balance: newBalance } : s)}
       />
 
       <DashboardReferralTabs

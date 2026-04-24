@@ -1,14 +1,20 @@
+import { useState } from "react"
 import Icon from "@/components/ui/icon"
 import { ReferralStats } from "./referralTypes"
+import PayWithBalanceModal from "./PayWithBalanceModal"
 
 interface Props {
   stats: ReferralStats | null
   loading: boolean
   onWithdrawClick: () => void
+  userId: string
+  onBalanceUpdate?: (newBalance: number) => void
 }
 
-export default function DashboardReferralStats({ stats, loading, onWithdrawClick }: Props) {
+export default function DashboardReferralStats({ stats, loading, onWithdrawClick, userId, onBalanceUpdate }: Props) {
   const level = stats?.level
+  const [showPayModal, setShowPayModal] = useState(false)
+  const balance = stats?.balance ?? 0
 
   return (
     <>
@@ -86,22 +92,23 @@ export default function DashboardReferralStats({ stats, loading, onWithdrawClick
         </div>
       </div>
 
-      {/* Вывод средств + Конвертация */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+      {/* Оплатить тариф + Конвертация */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Icon name="ArrowDownToLine" className="h-5 w-5 text-orange-400" />
-            <span className="font-semibold">Вывод средств</span>
+            <Icon name="Zap" className="h-5 w-5 text-blue-400" />
+            <span className="font-semibold">Оплатить тариф баллами</span>
           </div>
           <p className="text-sm text-gray-400 mb-4">
-            Для вывода необходимо заполнить реквизиты ИП, самозанятого или ООО.
+            Используйте реферальный баланс для оплаты подписки Клуб. Курс 1:1.
           </p>
           <button
-            onClick={onWithdrawClick}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-sm font-medium hover:bg-[#222] transition-colors"
+            onClick={() => setShowPayModal(true)}
+            disabled={balance < 990}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
           >
-            <Icon name="FileText" className="h-4 w-4 text-gray-400" />
-            Заполнить реквизиты
+            <Icon name="Zap" className="h-4 w-4" />
+            {balance < 990 ? `Нужно ещё ${(990 - balance).toLocaleString("ru-RU")} ₽` : "Выбрать период"}
           </button>
         </div>
         <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
@@ -114,6 +121,39 @@ export default function DashboardReferralStats({ stats, loading, onWithdrawClick
           </p>
         </div>
       </div>
+
+      {/* Вывод средств — во всю ширину */}
+      <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 mb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon name="ArrowDownToLine" className="h-5 w-5 text-orange-400" />
+            <div>
+              <span className="font-semibold">Вывод средств</span>
+              <p className="text-sm text-gray-400 mt-0.5">Для вывода необходимо заполнить реквизиты ИП, самозанятого или ООО.</p>
+            </div>
+          </div>
+          <button
+            onClick={onWithdrawClick}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-sm font-medium hover:bg-[#222] transition-colors shrink-0 ml-4"
+          >
+            <Icon name="FileText" className="h-4 w-4 text-gray-400" />
+            Заполнить реквизиты
+          </button>
+        </div>
+      </div>
+
+      {showPayModal && (
+        <PayWithBalanceModal
+          userId={userId}
+          balance={balance}
+          onClose={() => setShowPayModal(false)}
+          onSuccess={(newBalance, subscriptionEndAt) => {
+            setShowPayModal(false)
+            onBalanceUpdate?.(newBalance)
+            window.dispatchEvent(new CustomEvent("k24_subscription_updated", { detail: { subscriptionEndAt } }))
+          }}
+        />
+      )}
     </>
   )
 }
