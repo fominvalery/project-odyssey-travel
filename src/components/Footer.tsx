@@ -3,7 +3,7 @@ import Icon from "@/components/ui/icon"
 
 export function Footer() {
   return (
-    <footer className="bg-background mt-16">
+    <footer className="bg-background">
       {/* Основной блок */}
       <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-4 gap-10">
         {/* Логотип и описание */}
