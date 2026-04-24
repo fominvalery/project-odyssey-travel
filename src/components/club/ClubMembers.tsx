@@ -4,7 +4,7 @@ import { STEPS } from "./clubData"
 
 export function ClubHowItWorks() {
   return (
-    <section id="how-it-works" className="relative px-4 py-10 overflow-hidden">
+    <section id="how-it-works" className="relative px-4 pt-10 pb-4 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <svg className="absolute inset-0 w-full h-full opacity-40" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -75,7 +75,7 @@ export function ClubHowItWorks() {
 
 export function ClubNetwork() {
   return (
-    <section className="px-4 py-10 max-w-6xl mx-auto">
+    <section className="px-4 pt-4 pb-10 max-w-6xl mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Сеть и живое общение</h2>
         <p className="text-gray-400 text-lg max-w-xl mx-auto">Клуб — это не просто инструменты. Это люди</p>
