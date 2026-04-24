@@ -13,7 +13,7 @@ const FEATURES = [
     desc: "Находи партнёров по специализации и городу. Делай совместные сделки с теми, кому доверяешь.",
     color: "text-violet-400",
     bg: "bg-violet-500/10 border-violet-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/a5490c71-bd5d-4f86-b155-572f023d365c.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/029c4c4d-049f-497f-b70f-53e70ebae142.jpg",
   },
   {
     icon: "Diamond",
@@ -21,7 +21,7 @@ const FEATURES = [
     desc: "Видишь объекты других участников клуба. Предлагаешь своих клиентов — получаешь комиссию.",
     color: "text-blue-400",
     bg: "bg-blue-500/10 border-blue-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/f3c6649a-f191-4f58-9cab-79930555e404.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/7484ab1c-1d8a-4304-8413-1a91b83906a7.jpg",
   },
   {
     icon: "Shield",
@@ -29,7 +29,7 @@ const FEATURES = [
     desc: "Все заявки в одном месте. Воронка продаж, канбан, история переписки с клиентом.",
     color: "text-emerald-400",
     bg: "bg-emerald-500/10 border-emerald-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/0d5e7af9-6ef4-47f6-890f-bee0f517eecd.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/56389e12-342c-440c-a34c-b294a560051c.jpg",
   },
   {
     icon: "Sparkles",
@@ -37,7 +37,7 @@ const FEATURES = [
     desc: "Генерация описаний объектов, PDF-презентации и аналитика — одним кликом, без копирайтера.",
     color: "text-amber-400",
     bg: "bg-amber-500/10 border-amber-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/5e95cdac-6ddd-4489-8f77-db6159516b72.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/7d2bcfa5-cfbc-4269-b5c0-884749d0110c.jpg",
   },
   {
     icon: "Star",
@@ -45,7 +45,7 @@ const FEATURES = [
     desc: "Публикуй объекты в открытом каталоге и получай входящие запросы от покупателей и арендаторов.",
     color: "text-cyan-400",
     bg: "bg-cyan-500/10 border-cyan-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/c6a83054-f139-49cb-9583-07b0dd18a5d0.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/cc55be8f-7fb3-44a4-bb2f-ae5980224098.jpg",
   },
   {
     icon: "Trophy",
@@ -53,7 +53,7 @@ const FEATURES = [
     desc: "Приглашай коллег в клуб и получай бонусы за каждого активного участника, которого привёл.",
     color: "text-pink-400",
     bg: "bg-pink-500/10 border-pink-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/ce8314b0-cc5a-48d6-be70-dd133907c5d8.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/8e50957c-90f8-4f34-8373-59bfc2772b06.jpg",
   },
   {
     icon: "TrendingUp",
@@ -61,7 +61,7 @@ const FEATURES = [
     desc: "Статистика просмотров, количество лидов и конверсия по каждому объекту в реальном времени.",
     color: "text-orange-400",
     bg: "bg-orange-500/10 border-orange-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/0e1896a7-06a7-4e56-b708-9b950b122bbd.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/c67aad42-76a4-42da-9d80-76a8a2d9d4b7.jpg",
   },
 ]
 
