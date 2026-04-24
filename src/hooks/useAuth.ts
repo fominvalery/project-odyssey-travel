@@ -132,6 +132,17 @@ export function useAuth() {
         avatar: userData.avatar_url || userData.avatar || null,
         createdAt: userData.created_at || new Date().toISOString(),
         isSuperadmin: userData.is_superadmin || false,
+        firstName: userData.first_name ?? "",
+        lastName: userData.last_name ?? "",
+        middleName: userData.middle_name ?? "",
+        city: userData.city ?? "",
+        specializations: userData.specializations ?? [],
+        bio: userData.bio ?? "",
+        experience: userData.experience ?? "",
+        telegram: userData.telegram_username ?? userData.telegram ?? "",
+        vk: userData.vk_username ?? userData.vk ?? "",
+        max: userData.max_username ?? userData.max ?? "",
+        website: userData.website ?? "",
       }
       if (data.access_token) {
         localStorage.setItem("estatepro_access_token", data.access_token)
