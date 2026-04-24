@@ -58,8 +58,8 @@ export default function Club() {
 
       {/* ── CTA ───────────────────────────────────────────────────────────── */}
       <section className="relative px-4 py-12 text-center overflow-hidden">
-        {/* Сетка — от середины вниз */}
-        <div className="absolute inset-x-0 bottom-0 top-1/2 pointer-events-none">
+        {/* Сетка — на весь блок */}
+        <div className="absolute inset-0 pointer-events-none">
           <svg className="absolute inset-0 w-full h-full opacity-35" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="cta-grid" width="60" height="60" patternUnits="userSpaceOnUse">
