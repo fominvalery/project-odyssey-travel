@@ -29,6 +29,7 @@ export interface UserProfile {
   vk?: string
   max?: string
   website?: string
+  subscriptionEndAt?: string | null
 }
 
 /** Карта: status → plan (единственный источник маппинга) */
@@ -143,6 +144,7 @@ export function useAuth() {
         vk: userData.vk_username ?? userData.vk ?? "",
         max: userData.max_username ?? userData.max ?? "",
         website: userData.website ?? "",
+        subscriptionEndAt: userData.subscription_end_at ?? null,
       }
       if (data.access_token) {
         localStorage.setItem("estatepro_access_token", data.access_token)
@@ -237,6 +239,7 @@ export function useAuth() {
         vk: userData.vk ?? local.vk ?? '',
         max: userData.max ?? local.max ?? '',
         website: userData.website ?? local.website ?? '',
+        subscriptionEndAt: userData.subscription_end_at ?? local.subscriptionEndAt ?? null,
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
       setUser(updated)

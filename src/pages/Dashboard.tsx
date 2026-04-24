@@ -12,6 +12,8 @@ import DashboardClub from "@/components/dashboard/DashboardClub"
 import DashboardMessages from "@/components/dashboard/DashboardMessages"
 import AiChatBubble from "@/components/AiChatBubble"
 import NotificationBell from "@/components/dashboard/NotificationBell"
+import SubscriptionBadge from "@/components/dashboard/SubscriptionBadge"
+import { ClubPayDialog } from "@/components/pricing/ClubPayDialog"
 import { useToast } from "@/hooks/use-toast"
 import func2url from "../../backend/func2url.json"
 
@@ -72,6 +74,7 @@ export default function Dashboard() {
   const [openPartnerName, setOpenPartnerName] = useState<string | null>(null)
   const [openPartnerAvatar, setOpenPartnerAvatar] = useState<string | null>(null)
   const [openPartnerStatus, setOpenPartnerStatus] = useState<string | null>(null)
+  const [showRenewDialog, setShowRenewDialog] = useState(false)
 
   function handleOpenMessage(partnerId: string, partnerName: string, partnerAvatar: string | null, partnerStatus: string) {
     setOpenPartnerId(partnerId)
@@ -231,9 +234,11 @@ export default function Dashboard() {
 
       <main className="flex-1 overflow-auto pb-20 md:pb-0">
         {/* Топ-бар с колокольчиком */}
-        <div className="sticky top-0 z-40 flex justify-end px-6 py-3 border-b border-[#1a1a1a] bg-[#0a0a0a]/80 backdrop-blur-sm">
+        <div className="sticky top-0 z-40 flex items-center justify-end gap-3 px-6 py-3 border-b border-[#1a1a1a] bg-[#0a0a0a]/80 backdrop-blur-sm">
+          <SubscriptionBadge user={user} onRenew={() => setShowRenewDialog(true)} />
           <NotificationBell userId={user.id} />
         </div>
+        <ClubPayDialog open={showRenewDialog} onClose={() => setShowRenewDialog(false)} />
         {section === "dashboard" && (
           <DashboardHome user={user} objects={objects} />
         )}

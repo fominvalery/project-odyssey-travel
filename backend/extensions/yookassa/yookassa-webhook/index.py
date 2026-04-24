@@ -2,7 +2,7 @@
 import json
 import os
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
@@ -185,11 +185,24 @@ def handler(event, context):
                             """, (qty, order_user_id))
                     elif order_type == 'subscription' and order_user_id:
                         # Активируем тариф Клуб: plan = 'pro', status = 'broker'
+                        # Если подписка уже активна — продлеваем от текущего end_at, иначе от now
+                        cur.execute(f"""
+                            SELECT subscription_end_at FROM {S}users WHERE id = %s
+                        """, (order_user_id,))
+                        sub_row = cur.fetchone()
+                        existing_end = sub_row[0] if sub_row and sub_row[0] else None
+                        now_dt = datetime.utcnow()
+                        if existing_end and existing_end > now_dt:
+                            new_end = existing_end + timedelta(days=30)
+                        else:
+                            new_end = now_dt + timedelta(days=30)
+                        grace_end = new_end + timedelta(days=3)
                         cur.execute(f"""
                             UPDATE {S}users
-                            SET plan = 'pro', status = 'broker', updated_at = %s
+                            SET plan = 'pro', status = 'broker', updated_at = %s,
+                                subscription_end_at = %s, grace_period_end_at = %s
                             WHERE id = %s AND is_superadmin = false
-                        """, (now, order_user_id))
+                        """, (now, new_end.isoformat(), grace_end.isoformat(), order_user_id))
 
                         # Начисляем реферальную комиссию рефереру
                         try:

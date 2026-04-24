@@ -17,7 +17,8 @@ def handle(event: dict, origin: str = '*') -> dict:
                is_superadmin, listings_used, listings_extra, listings_period_start,
                first_name, last_name, middle_name, city,
                specializations, bio, experience,
-               telegram_username, vk_username, max_username, website
+               telegram_username, vk_username, max_username, website,
+               subscription_end_at
         FROM {S}users WHERE id = {escape(user_id)}
     """)
 
@@ -28,7 +29,8 @@ def handle(event: dict, origin: str = '*') -> dict:
      listings_used, listings_extra, listings_period_start,
      first_name, last_name, middle_name, city,
      specializations, bio, experience,
-     telegram_username, vk_username, max_username, website) = user
+     telegram_username, vk_username, max_username, website,
+     subscription_end_at) = user
 
     return response(200, {
         'user': {
@@ -55,5 +57,6 @@ def handle(event: dict, origin: str = '*') -> dict:
             'vk': vk_username or '',
             'max': max_username or '',
             'website': website or '',
+            'subscription_end_at': subscription_end_at.isoformat() if subscription_end_at else None,
         }
     }, origin)

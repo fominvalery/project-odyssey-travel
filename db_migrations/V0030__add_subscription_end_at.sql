@@ -1,0 +1,3 @@
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS subscription_end_at TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS grace_period_end_at TIMESTAMP;
