@@ -250,7 +250,7 @@ export default function Club() {
           </h1>
 
           <p className="text-xl md:text-2xl font-semibold text-white leading-relaxed mb-3 max-w-xl mx-auto">
-            Закрытый клуб. Открытые возможности.
+            Закрытый клуб — Открытые возможности
           </p>
           <p className="text-base md:text-lg text-gray-400 leading-relaxed mb-8 max-w-xl mx-auto">
             Платформа для тех, кто делает сделки — а не ждёт их.
