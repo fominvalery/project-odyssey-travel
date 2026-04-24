@@ -383,10 +383,12 @@ export default function Club() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-8">
-            <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center mb-6">
-              <Icon name="Zap" className="h-6 w-6 text-violet-400" />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center shrink-0">
+                <Icon name="Zap" className="h-6 w-6 text-violet-400" />
+              </div>
+              <h3 className="text-white font-bold text-xl">Сеть брокеров</h3>
             </div>
-            <h3 className="text-white font-bold text-xl mb-3">Сеть брокеров</h3>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
               Каталог всех участников клуба с фильтрацией по специализации, городу и опыту. Найди брокера под конкретную задачу — будь то офисы в Москве или курортная недвижимость в Сочи. Предложи коллаборацию, раздели комиссию, закрой сделку быстрее.
             </p>
@@ -400,10 +402,12 @@ export default function Club() {
             </ul>
           </div>
           <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-8">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center mb-6">
-              <Icon name="MessageSquare" className="h-6 w-6 text-blue-400" />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center shrink-0">
+                <Icon name="MessageSquare" className="h-6 w-6 text-blue-400" />
+              </div>
+              <h3 className="text-white font-bold text-xl">Прямые сообщения</h3>
             </div>
-            <h3 className="text-white font-bold text-xl mb-3">Прямые сообщения</h3>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
               Пиши любому участнику клуба напрямую — без мессенджеров, без лишних шагов. Обсуждай объекты, уточняй условия сделки, договаривайся о показе. Всё общение в одном месте, рядом с CRM и объектами.
             </p>
