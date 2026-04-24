@@ -15,7 +15,7 @@ export function ClubBannerSection() {
   const navigate = useNavigate()
 
   return (
-    <section className="pt-6 pb-20 px-4">
+    <section className="pt-4 pb-6 px-4">
       <div
         className="max-w-5xl mx-auto rounded-2xl border border-violet-500/20 p-10 md:p-14 text-center relative overflow-hidden"
         style={{ backgroundImage: `url(${BG_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center" }}
