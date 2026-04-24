@@ -1,0 +1,1 @@
+UPDATE t_p32045231_project_odyssey_trav.org_invites SET email = 'v.viva82@mail.ru' WHERE id = '9104b2e3-7848-492e-b017-d90de3a07a23';

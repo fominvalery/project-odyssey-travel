@@ -558,6 +558,19 @@ def create_invite(user_id, org_id, body):
         org_row = cur.fetchone()
         org_name = org_row['name'] if org_row else 'Агентство'
 
+        # Внутреннее уведомление при автодобавлении
+        if auto_joined and existing:
+            role_title = ROLE_TITLES.get(role_code, role_code)
+            cur.execute(
+                "INSERT INTO notifications(user_id, type, title, body) VALUES (%s,%s,%s,%s)",
+                (
+                    existing['id'],
+                    'invite',
+                    f'Вы добавлены в агентство «{org_name}»',
+                    f'{inviter_name} добавил вас в агентство «{org_name}» как {role_title}. Кабинет агентства доступен в боковом меню.',
+                ),
+            )
+
         conn.commit()
 
         # Отправляем email (не критично — не блокирует ответ)

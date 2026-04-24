@@ -110,8 +110,8 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
         </nav>
 
         <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
-          {/* Мои агентства — только для agency */}
-          {!isBasic && orgs.length > 0 && (
+          {/* Мои агентства — показываем всем у кого есть членство */}
+          {orgs.length > 0 && (
             <div className="mb-3 space-y-1">
               <div className="text-[10px] uppercase tracking-wider text-gray-500 px-2 mb-1">
                 Мои агентства
