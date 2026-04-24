@@ -13,6 +13,15 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
   const [moreFallback, setMoreFallback] = useState(false)
   const encodedUrl = encodeURIComponent(url)
   const encodedText = encodeURIComponent(title)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+  function openShare(href: string, w = 600, h = 500) {
+    if (isMobile) {
+      window.location.href = href
+    } else {
+      window.open(href, "_blank", `noopener,noreferrer,width=${w},height=${h}`)
+    }
+  }
 
   async function copyToClipboard(text: string) {
     try {
@@ -117,7 +126,7 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
             {/* Telegram */}
             <button
               type="button"
-              onClick={() => window.open(targets[0].href, "_blank", "noopener,noreferrer,width=600,height=600")}
+              onClick={() => openShare(targets[0].href, 600, 600)}
               className="flex flex-col items-center gap-2 group"
             >
               <div className={`w-14 h-14 rounded-2xl ${targets[0].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
@@ -131,7 +140,7 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
             {/* Яндекс Почта */}
             <button
               type="button"
-              onClick={() => window.open(targets[1].href, "_blank", "noopener,noreferrer,width=700,height=500")}
+              onClick={() => openShare(targets[1].href, 700, 500)}
               className="flex flex-col items-center gap-2 group"
             >
               <div className={`w-14 h-14 rounded-2xl ${targets[1].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
@@ -159,7 +168,7 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
             {/* ВКонтакте */}
             <button
               type="button"
-              onClick={() => window.open(targets[2].href, "_blank", "noopener,noreferrer,width=600,height=500")}
+              onClick={() => openShare(targets[2].href, 600, 500)}
               className="flex flex-col items-center gap-2 group"
             >
               <div className={`w-14 h-14 rounded-2xl ${targets[2].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
