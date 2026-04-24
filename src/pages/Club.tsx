@@ -4,25 +4,25 @@ import { Footer } from "@/components/Footer"
 import Icon from "@/components/ui/icon"
 import { GlowButton } from "@/components/ui/glow-button"
 import { RegisterModal } from "@/components/RegisterModal"
-import { useState } from "react"
+import { useState, useRef } from "react"
 
 const FEATURES = [
   {
-    icon: "Users",
+    icon: "Crown",
     title: "Закрытая сеть брокеров",
     desc: "Находи партнёров по специализации и городу. Делай совместные сделки с теми, кому доверяешь.",
     color: "text-violet-400",
     bg: "bg-violet-500/10 border-violet-500/20",
   },
   {
-    icon: "Building2",
+    icon: "Diamond",
     title: "Объекты коллег",
     desc: "Видишь объекты других участников клуба. Предлагаешь своих клиентов — получаешь комиссию.",
     color: "text-blue-400",
     bg: "bg-blue-500/10 border-blue-500/20",
   },
   {
-    icon: "ClipboardList",
+    icon: "Shield",
     title: "CRM и лиды",
     desc: "Все заявки в одном месте. Воронка продаж, канбан, история переписки с клиентом.",
     color: "text-emerald-400",
@@ -36,21 +36,21 @@ const FEATURES = [
     bg: "bg-amber-500/10 border-amber-500/20",
   },
   {
-    icon: "Store",
+    icon: "Star",
     title: "Размещение в маркетплейсе",
     desc: "Публикуй объекты в открытом каталоге и получай входящие запросы от покупателей и арендаторов.",
     color: "text-cyan-400",
     bg: "bg-cyan-500/10 border-cyan-500/20",
   },
   {
-    icon: "Gift",
+    icon: "Trophy",
     title: "Реферальная программа",
     desc: "Приглашай коллег в клуб и получай бонусы за каждого активного участника, которого привёл.",
     color: "text-pink-400",
     bg: "bg-pink-500/10 border-pink-500/20",
   },
   {
-    icon: "BarChart2",
+    icon: "TrendingUp",
     title: "Аналитика по объектам",
     desc: "Статистика просмотров, количество лидов и конверсия по каждому объекту в реальном времени.",
     color: "text-orange-400",
@@ -86,6 +86,67 @@ const MOCK_MEMBERS = [
   { name: "Наталья Орлова", role: "Торговая недвижимость", city: "Краснодар", initials: "НО", color: "from-amber-600 to-orange-600" },
 ]
 
+function FeaturesCarousel() {
+  const [current, setCurrent] = useState(0)
+  const totalSlides = Math.ceil(FEATURES.length / 2)
+
+  const prev = () => setCurrent(c => Math.max(0, c - 1))
+  const next = () => setCurrent(c => Math.min(totalSlides - 1, c + 1))
+
+  const visible = FEATURES.slice(current * 2, current * 2 + 2)
+
+  return (
+    <div className="w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+        {visible.map(f => (
+          <div key={f.title} className={`rounded-2xl border p-6 ${f.bg} min-h-[180px]`}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-black/20 shrink-0">
+                <Icon name={f.icon as "Crown"} className={`h-5 w-5 ${f.color}`} />
+              </div>
+              <h3 className="text-white font-semibold text-base leading-tight">{f.title}</h3>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Навигация */}
+      <div className="flex items-center justify-center gap-4">
+        <button
+          onClick={prev}
+          disabled={current === 0}
+          className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-gray-400 hover:text-white hover:border-violet-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          <Icon name="ChevronLeft" className="h-4 w-4" />
+        </button>
+
+        <div className="flex items-center gap-2">
+          {Array.from({ length: totalSlides }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`rounded-full transition-all ${
+                i === current
+                  ? "w-6 h-2 bg-violet-500"
+                  : "w-2 h-2 bg-[#333] hover:bg-[#555]"
+              }`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={next}
+          disabled={current === totalSlides - 1}
+          className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-gray-400 hover:text-white hover:border-violet-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          <Icon name="ChevronRight" className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Club() {
   const navigate = useNavigate()
   const [registerOpen, setRegisterOpen] = useState(false)
@@ -96,7 +157,6 @@ export default function Club() {
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden px-4 pt-14 pb-16 text-center">
-        {/* Фоновая картинка */}
         <div className="absolute inset-0 pointer-events-none">
           <img
             src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/1ea4abe3-37e5-4db8-9984-0a8f76563081.jpg"
@@ -160,22 +220,12 @@ export default function Club() {
       </section>
 
       {/* ── Что даёт Клуб ─────────────────────────────────────────────────── */}
-      <section className="px-4 py-20 max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Что даёт членство в Клубе</h2>
+      <section className="px-4 pt-10 pb-10 max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Что даёт Клуб</h2>
           <p className="text-gray-400 text-lg max-w-xl mx-auto">Всё что нужно брокеру — в одном месте</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {FEATURES.map(f => (
-            <div key={f.title} className={`rounded-2xl border p-6 ${f.bg}`}>
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-black/20`}>
-                <Icon name={f.icon as "Users"} className={`h-5 w-5 ${f.color}`} />
-              </div>
-              <h3 className="text-white font-semibold text-base mb-2">{f.title}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
+        <FeaturesCarousel />
       </section>
 
       {/* ── Как это работает ──────────────────────────────────────────────── */}
@@ -208,7 +258,6 @@ export default function Club() {
           <p className="text-gray-400 text-lg max-w-xl mx-auto">Клуб — это не просто инструменты. Это люди</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Сеть */}
           <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-8">
             <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center mb-6">
               <Icon name="Zap" className="h-6 w-6 text-violet-400" />
@@ -226,7 +275,6 @@ export default function Club() {
               ))}
             </ul>
           </div>
-          {/* Сообщения */}
           <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-8">
             <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center mb-6">
               <Icon name="MessageSquare" className="h-6 w-6 text-blue-400" />
