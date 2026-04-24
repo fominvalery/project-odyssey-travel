@@ -114,12 +114,12 @@ export default function DashboardObjects({
         <div className="flex flex-wrap gap-2 mb-3">
           {[
             { label: "Все",         icon: "",             color: "" },
-            { label: "Жилая",       icon: "Home",         color: "" },
-            { label: "Новостройки", icon: "Construction", color: "" },
             { label: "Коммерция",   icon: "Building2",    color: "" },
+            { label: "Новостройки", icon: "Construction", color: "" },
             { label: "Инвестиции",  icon: "TrendingUp",   color: "" },
             { label: "Курортная",   icon: "Sun",          color: "cyan" },
             { label: "Торги",       icon: "Gavel",        color: "" },
+            { label: "Жилая",       icon: "Home",         color: "" },
           ].map(({ label, icon, color }) => (
             <button
               key={label}
