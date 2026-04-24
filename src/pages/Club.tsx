@@ -303,8 +303,52 @@ export default function Club() {
       </section>
 
       {/* ── Как это работает ──────────────────────────────────────────────── */}
-      <section id="how-it-works" className="px-4 py-20 bg-[#0d0d0d] border-y border-[#1a1a1a]">
-        <div className="max-w-4xl mx-auto text-center mb-14">
+      <section id="how-it-works" className="relative px-4 py-20 border-y border-[#1a1a1a] overflow-hidden">
+        {/* Сетка-фон */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-[#080b14]" />
+          {/* Сетка линий */}
+          <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#4f46e5" strokeWidth="0.5"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+          {/* Светящиеся узлы */}
+          {[
+            { cx: "15%", cy: "25%", r: 3 }, { cx: "35%", cy: "15%", r: 2 },
+            { cx: "55%", cy: "30%", r: 4 }, { cx: "75%", cy: "20%", r: 2 },
+            { cx: "90%", cy: "45%", r: 3 }, { cx: "20%", cy: "65%", r: 2 },
+            { cx: "50%", cy: "75%", r: 3 }, { cx: "80%", cy: "70%", r: 2 },
+            { cx: "10%", cy: "85%", r: 2 }, { cx: "65%", cy: "55%", r: 3 },
+          ].map((node, i) => (
+            <svg key={i} className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <circle cx={node.cx} cy={node.cy} r={node.r} fill="#818cf8" opacity="0.8">
+                <animate attributeName="opacity" values="0.4;1;0.4" dur={`${2.5 + i * 0.4}s`} repeatCount="indefinite"/>
+              </circle>
+              <circle cx={node.cx} cy={node.cy} r={node.r * 4} fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.3"/>
+            </svg>
+          ))}
+          {/* Соединяющие линии */}
+          <svg className="absolute inset-0 w-full h-full opacity-15" xmlns="http://www.w3.org/2000/svg">
+            <line x1="15%" y1="25%" x2="35%" y2="15%" stroke="#818cf8" strokeWidth="0.8"/>
+            <line x1="35%" y1="15%" x2="55%" y2="30%" stroke="#818cf8" strokeWidth="0.8"/>
+            <line x1="55%" y1="30%" x2="75%" y2="20%" stroke="#818cf8" strokeWidth="0.8"/>
+            <line x1="75%" y1="20%" x2="90%" y2="45%" stroke="#818cf8" strokeWidth="0.8"/>
+            <line x1="20%" y1="65%" x2="50%" y2="75%" stroke="#818cf8" strokeWidth="0.8"/>
+            <line x1="50%" y1="75%" x2="80%" y2="70%" stroke="#818cf8" strokeWidth="0.8"/>
+            <line x1="15%" y1="25%" x2="20%" y2="65%" stroke="#818cf8" strokeWidth="0.8"/>
+            <line x1="55%" y1="30%" x2="65%" y2="55%" stroke="#818cf8" strokeWidth="0.8"/>
+            <line x1="65%" y1="55%" x2="80%" y2="70%" stroke="#818cf8" strokeWidth="0.8"/>
+          </svg>
+          {/* Затемнение по краям */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#080b14]/60 via-transparent to-[#080b14]/60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#080b14]/40 via-transparent to-[#080b14]/40" />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto text-center mb-14">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Как это работает</h2>
           <p className="text-gray-400 text-lg">Три шага до первой партнёрской сделки</p>
         </div>
