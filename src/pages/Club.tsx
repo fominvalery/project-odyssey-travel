@@ -14,6 +14,7 @@ const FEATURES = [
     color: "text-violet-400",
     bg: "bg-violet-500/10 border-violet-500/20",
     img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/ade09cc6-882e-46eb-bde6-38c6ee42304f.jpg",
+    utp: ["500+ брокеров в одной сети", "Фильтр по городу и специализации", "Совместные сделки с доверенными коллегами", "Закрытый доступ — только проверенные"],
   },
   {
     icon: "Diamond",
@@ -22,6 +23,7 @@ const FEATURES = [
     color: "text-blue-400",
     bg: "bg-blue-500/10 border-blue-500/20",
     img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/7484ab1c-1d8a-4304-8413-1a91b83906a7.jpg",
+    utp: ["1 200+ объектов коммерческой недвижимости", "Офисы, склады, торговые площади", "Комиссия за приведённого клиента", "Эксклюзивные объекты только для участников"],
   },
   {
     icon: "Shield",
@@ -30,6 +32,7 @@ const FEATURES = [
     color: "text-emerald-400",
     bg: "bg-emerald-500/10 border-emerald-500/20",
     img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/d6290ab6-9bca-40a5-bc61-370b075a9243.jpg",
+    utp: ["Канбан-доска для ведения сделок", "История переписки с каждым клиентом", "Автоматические напоминания и задачи", "Воронка продаж в реальном времени"],
   },
   {
     icon: "Sparkles",
@@ -38,6 +41,7 @@ const FEATURES = [
     color: "text-amber-400",
     bg: "bg-amber-500/10 border-amber-500/20",
     img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/7d2bcfa5-cfbc-4269-b5c0-884749d0110c.jpg",
+    utp: ["Автогенерация описаний объектов", "PDF-презентация за 10 секунд", "ИИ-анализ рынка и конкурентов", "Персональный стиль под ваш бренд"],
   },
   {
     icon: "Star",
@@ -46,6 +50,7 @@ const FEATURES = [
     color: "text-cyan-400",
     bg: "bg-cyan-500/10 border-cyan-500/20",
     img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/75418899-09a6-4e38-8054-fab84073cf33.jpg",
+    utp: ["Публичный каталог без лишних шагов", "Входящие заявки от покупателей", "SEO-продвижение каждого объекта", "Статистика просмотров и обращений"],
   },
   {
     icon: "Trophy",
@@ -54,6 +59,7 @@ const FEATURES = [
     color: "text-pink-400",
     bg: "bg-pink-500/10 border-pink-500/20",
     img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/8e50957c-90f8-4f34-8373-59bfc2772b06.jpg",
+    utp: ["Бонус за каждого приглашённого коллегу", "Многоуровневая реферальная система", "Начисление на баланс автоматически", "Нет лимита на количество рефералов"],
   },
   {
     icon: "TrendingUp",
@@ -62,6 +68,7 @@ const FEATURES = [
     color: "text-orange-400",
     bg: "bg-orange-500/10 border-orange-500/20",
     img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/c67aad42-76a4-42da-9d80-76a8a2d9d4b7.jpg",
+    utp: ["Просмотры и лиды по каждому объекту", "Конверсия воронки в реальном времени", "Сравнение эффективности объектов", "Экспорт отчётов в один клик"],
   },
 ]
 
@@ -129,7 +136,15 @@ function FeatureCard({ f }: { f: typeof FEATURES[0] }) {
           </div>
           <h3 className="text-white font-semibold text-base leading-tight">{f.title}</h3>
         </div>
-        <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
+        <p className="text-gray-400 text-sm leading-relaxed mb-4">{f.desc}</p>
+        <ul className="space-y-2 mt-auto">
+          {f.utp.map(item => (
+            <li key={item} className="flex items-start gap-2 text-sm text-gray-300">
+              <Icon name="CircleCheck" className={`h-4 w-4 mt-0.5 shrink-0 ${f.color}`} />
+              {item}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )
