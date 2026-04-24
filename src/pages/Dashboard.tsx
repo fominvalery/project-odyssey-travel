@@ -91,6 +91,11 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState("Все")
   const [objSearch, setObjSearch] = useState("")
 
+  // Обновляем профиль при открытии дашборда (чтобы подтянуть subscription_end_at и актуальный статус)
+  useEffect(() => {
+    if (user?.id) refreshProfile()
+  }, [])
+
   // Проверяем возврат после оплаты ЮКассы
   useEffect(() => {
     const pendingRaw = localStorage.getItem("yookassa_pending_order")
