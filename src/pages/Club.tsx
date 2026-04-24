@@ -275,7 +275,7 @@ export default function Club() {
       </section>
 
       {/* ── Цифры ─────────────────────────────────────────────────────────── */}
-      <section className="px-4 py-12 border-y border-[#1a1a1a]">
+      <section className="px-4 py-8 border-y border-[#1a1a1a]">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             { value: "500+", label: "Участников в сети", icon: "Users" },
@@ -294,7 +294,7 @@ export default function Club() {
       </section>
 
       {/* ── Что даёт Клуб ─────────────────────────────────────────────────── */}
-      <section className="px-4 pt-10 pb-10 max-w-6xl mx-auto">
+      <section className="px-4 pt-8 pb-8 max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Что даёт Клуб</h2>
           <p className="text-gray-400 text-lg max-w-xl mx-auto">Всё что нужно брокеру — в одном месте</p>
@@ -303,7 +303,7 @@ export default function Club() {
       </section>
 
       {/* ── Как это работает ──────────────────────────────────────────────── */}
-      <section id="how-it-works" className="relative px-4 py-20 border-y border-[#1a1a1a] overflow-hidden">
+      <section id="how-it-works" className="relative px-4 py-10 border-y border-[#1a1a1a] overflow-hidden">
         {/* Сетка-фон */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Сетка линий — яркая */}
@@ -354,7 +354,7 @@ export default function Club() {
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/70 via-transparent to-[#0a0a0a]/70" />
         </div>
 
-        <div className="relative max-w-4xl mx-auto text-center mb-14">
+        <div className="relative max-w-4xl mx-auto text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Как это работает</h2>
           <p className="text-gray-400 text-lg">Три шага до первой партнёрской сделки</p>
         </div>
@@ -376,8 +376,8 @@ export default function Club() {
       </section>
 
       {/* ── Сеть и общение ────────────────────────────────────────────────── */}
-      <section className="px-4 py-20 max-w-6xl mx-auto">
-        <div className="text-center mb-14">
+      <section className="px-4 py-10 max-w-6xl mx-auto">
+        <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Сеть и живое общение</h2>
           <p className="text-gray-400 text-lg max-w-xl mx-auto">Клуб — это не просто инструменты. Это люди</p>
         </div>
@@ -420,8 +420,8 @@ export default function Club() {
       </section>
 
       {/* ── Участники ─────────────────────────────────────────────────────── */}
-      <section className="px-4 py-20 bg-[#0d0d0d] border-y border-[#1a1a1a]">
-        <div className="max-w-5xl mx-auto text-center mb-12">
+      <section className="px-4 py-10 bg-[#0d0d0d] border-y border-[#1a1a1a]">
+        <div className="max-w-5xl mx-auto text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Кто уже в Клубе</h2>
           <p className="text-gray-400 text-lg">Профессионалы, которые выбрали системный подход к сделкам</p>
         </div>
@@ -442,7 +442,7 @@ export default function Club() {
       </section>
 
       {/* ── CTA ───────────────────────────────────────────────────────────── */}
-      <section className="px-4 py-24 text-center">
+      <section className="px-4 py-12 text-center">
         <div className="max-w-2xl mx-auto">
           <div className="w-16 h-16 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center mx-auto mb-8">
             <Icon name="Zap" className="h-8 w-8 text-violet-400" />
