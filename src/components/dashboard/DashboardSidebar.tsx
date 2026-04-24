@@ -175,6 +175,19 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
       {/* Мобильное меню — горизонтальная прокрутка */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-[#1f1f1f]">
         <div className="flex overflow-x-auto scrollbar-none px-2 py-2 gap-1">
+          {/* Агентства */}
+          {orgs.map((o) => (
+            <button
+              key={o.id}
+              onClick={() => navigate(`/agency/${o.id}`)}
+              className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors shrink-0 text-gray-500 hover:text-violet-400"
+            >
+              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+                <Icon name="Building2" className="h-3 w-3 text-white" />
+              </div>
+              <span className="whitespace-nowrap max-w-[60px] truncate">{o.name}</span>
+            </button>
+          ))}
           {(isBasic
             ? [
                 { id: "objects",   label: "Объекты",    icon: "Building2",     action: "section" },
