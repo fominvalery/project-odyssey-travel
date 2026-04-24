@@ -17,12 +17,25 @@ interface ClubPayDialogProps {
   onClose: () => void
 }
 
+const PLANS = [
+  { months: 1,  price: 990,   perMonth: 990,  discount: null },
+  { months: 3,  price: 2673,  perMonth: 891,  discount: 10 },
+  { months: 6,  price: 5167,  perMonth: 861,  discount: 13 },
+  { months: 12, price: 10000, perMonth: 833,  discount: 16 },
+]
+
+function monthLabel(m: number) {
+  if (m === 1) return "1 месяц"
+  if (m < 5) return `${m} месяца`
+  return `${m} месяцев`
+}
+
 export function ClubPayDialog({ open, onClose }: ClubPayDialogProps) {
   const { user } = useAuthContext()
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
-  const PLAN_PRICE = 990
+  const [selectedPlan, setSelectedPlan] = useState(PLANS[0])
 
   const effectiveEmail = user?.email || email
   const effectiveName = user?.name || name
@@ -39,14 +52,15 @@ export function ClubPayDialog({ open, onClose }: ClubPayDialogProps) {
       return
     }
     const response = await createPayment({
-      amount: PLAN_PRICE,
+      amount: selectedPlan.price,
       userEmail: effectiveEmail,
       userName: effectiveName,
-      description: "Тариф Клуб — 1 месяц",
+      description: `Тариф Клуб — ${monthLabel(selectedPlan.months)}`,
       returnUrl: getReturnUrl(),
-      cartItems: [{ id: "club", name: "Тариф Клуб", quantity: 1, price: PLAN_PRICE }],
+      cartItems: [{ id: "club", name: `Тариф Клуб — ${monthLabel(selectedPlan.months)}`, quantity: 1, price: selectedPlan.price }],
       orderType: "subscription",
       userId: user?.id,
+      months: selectedPlan.months,
     })
     if (response?.payment_url) {
       window.location.href = response.payment_url
@@ -61,11 +75,36 @@ export function ClubPayDialog({ open, onClose }: ClubPayDialogProps) {
             <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
               <Icon name="Zap" className="h-4 w-4 text-blue-400" />
             </div>
-            Тариф КЛУБ — 990 ₽/мес
+            Тариф КЛУБ
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-1">
+          {/* Выбор периода */}
+          <div className="grid grid-cols-2 gap-2">
+            {PLANS.map(plan => (
+              <button
+                key={plan.months}
+                onClick={() => setSelectedPlan(plan)}
+                className={`relative rounded-xl border p-3 text-left transition-colors ${
+                  selectedPlan.months === plan.months
+                    ? "border-blue-500 bg-blue-500/10"
+                    : "border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]"
+                }`}
+              >
+                {plan.discount && (
+                  <span className="absolute top-2 right-2 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 rounded-full px-1.5 py-0.5">
+                    −{plan.discount}%
+                  </span>
+                )}
+                <p className="text-white font-semibold text-sm">{monthLabel(plan.months)}</p>
+                <p className="text-white font-bold text-base mt-0.5">{plan.price.toLocaleString("ru-RU")} ₽</p>
+                <p className="text-gray-500 text-xs mt-0.5">{plan.perMonth} ₽/мес</p>
+              </button>
+            ))}
+          </div>
+
+          {/* Данные пользователя */}
           {user ? (
             <div className="rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] p-3 flex items-center gap-3">
               <Icon name="User" className="h-4 w-4 text-blue-400 shrink-0" />
@@ -99,9 +138,17 @@ export function ClubPayDialog({ open, onClose }: ClubPayDialogProps) {
             </>
           )}
 
+          {/* Итого */}
           <div className="rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] p-4 flex items-center justify-between">
-            <span className="font-semibold text-white">Итого</span>
-            <span className="text-xl font-bold text-white">990 ₽</span>
+            <div>
+              <span className="font-semibold text-white">Итого</span>
+              {selectedPlan.discount && (
+                <p className="text-xs text-emerald-400 mt-0.5">
+                  Экономия {(990 * selectedPlan.months - selectedPlan.price).toLocaleString("ru-RU")} ₽
+                </p>
+              )}
+            </div>
+            <span className="text-xl font-bold text-white">{selectedPlan.price.toLocaleString("ru-RU")} ₽</span>
           </div>
 
           {errorMsg && <p className="text-xs text-red-400">{errorMsg}</p>}
@@ -119,7 +166,7 @@ export function ClubPayDialog({ open, onClose }: ClubPayDialogProps) {
               disabled={isLoading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {isLoading ? "Загрузка..." : "Оплатить 990 ₽"}
+              {isLoading ? "Загрузка..." : `Оплатить ${selectedPlan.price.toLocaleString("ru-RU")} ₽`}
             </Button>
           </div>
         </div>

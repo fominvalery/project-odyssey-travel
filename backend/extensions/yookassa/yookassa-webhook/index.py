@@ -185,6 +185,10 @@ def handler(event, context):
                             """, (qty, order_user_id))
                     elif order_type == 'subscription' and order_user_id:
                         # Активируем тариф Клуб: plan = 'pro', status = 'broker'
+                        # Берём количество месяцев из метаданных платежа
+                        months = int(verified_payment.get('metadata', {}).get('months', 1))
+                        days = months * 30
+
                         # Если подписка уже активна — продлеваем от текущего end_at, иначе от now
                         cur.execute(f"""
                             SELECT subscription_end_at FROM {S}users WHERE id = %s
@@ -193,9 +197,9 @@ def handler(event, context):
                         existing_end = sub_row[0] if sub_row and sub_row[0] else None
                         now_dt = datetime.utcnow()
                         if existing_end and existing_end > now_dt:
-                            new_end = existing_end + timedelta(days=30)
+                            new_end = existing_end + timedelta(days=days)
                         else:
-                            new_end = now_dt + timedelta(days=30)
+                            new_end = now_dt + timedelta(days=days)
                         grace_end = new_end + timedelta(days=3)
                         cur.execute(f"""
                             UPDATE {S}users

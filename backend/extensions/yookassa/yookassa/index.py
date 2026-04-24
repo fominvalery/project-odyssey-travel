@@ -226,6 +226,7 @@ def handler(event, context):
     cart_items = data.get('cart_items', [])
     user_id = data.get('user_id', None)
     order_type = data.get('order_type', 'listings')
+    months = int(data.get('months', 1))
 
     if amount < MIN_AMOUNT or amount > MAX_AMOUNT:
         return {
@@ -306,7 +307,8 @@ def handler(event, context):
         # Create YooKassa payment
         metadata = {
             "order_id": str(order_id),
-            "order_number": order_number
+            "order_number": order_number,
+            "months": str(months)
         }
 
         payment_response = create_yookassa_payment(
