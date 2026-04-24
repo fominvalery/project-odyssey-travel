@@ -210,7 +210,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                   className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
                 />
               ) : (
-                <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.firstName || <span className="text-gray-600">—</span>}</p>
+                <p className="text-sm text-white py-2 min-h-[38px]">{form.firstName || <span className="text-gray-500">—</span>}</p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -224,7 +224,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                   className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
                 />
               ) : (
-                <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.lastName || <span className="text-gray-600">—</span>}</p>
+                <p className="text-sm text-white py-2 min-h-[38px]">{form.lastName || <span className="text-gray-500">—</span>}</p>
               )}
             </div>
             <div className="space-y-1.5 sm:col-span-2">
@@ -237,7 +237,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                   className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500"
                 />
               ) : (
-                <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.middleName || <span className="text-gray-600">—</span>}</p>
+                <p className="text-sm text-white py-2 min-h-[38px]">{form.middleName || <span className="text-gray-500">—</span>}</p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -247,7 +247,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                   placeholder="+7 900 000-00-00"
                   className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
               ) : (
-                <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.phone || <span className="text-gray-600">—</span>}</p>
+                <p className="text-sm text-white py-2 min-h-[38px]">{form.phone || <span className="text-gray-500">—</span>}</p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -261,7 +261,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                   placeholder="ООО Ромашка"
                   className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
               ) : (
-                <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.company || <span className="text-gray-600">—</span>}</p>
+                <p className="text-sm text-white py-2 min-h-[38px]">{form.company || <span className="text-gray-500">—</span>}</p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -271,7 +271,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                   placeholder="Москва"
                   className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-blue-500" />
               ) : (
-                <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.city || <span className="text-gray-600">—</span>}</p>
+                <p className="text-sm text-white py-2 min-h-[38px]">{form.city || <span className="text-gray-500">—</span>}</p>
               )}
             </div>
           </div>
@@ -294,7 +294,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                 {editing ? (
                   <SpecializationPicker value={form.specializations} onChange={(v) => setForm({ ...form, specializations: v })} />
                 ) : (
-                  <div className="flex flex-wrap gap-1.5 px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">
+                  <div className="flex flex-wrap gap-1.5 py-2 min-h-[38px]">
                     {form.specializations.length > 0 ? form.specializations.map(s => (
                       <span key={s} className="text-xs bg-violet-500/15 text-violet-300 border border-violet-500/25 px-2 py-0.5 rounded-lg">{s}</span>
                     )) : <span className="text-gray-600 text-sm">—</span>}
@@ -315,7 +315,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                     <option value="более 10 лет">более 10 лет</option>
                   </select>
                 ) : (
-                  <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.experience || <span className="text-gray-600">—</span>}</p>
+                  <p className="text-sm text-white py-2 min-h-[38px]">{form.experience || <span className="text-gray-500">—</span>}</p>
                 )}
               </div>
 
@@ -326,7 +326,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                     placeholder="https://mysite.ru"
                     className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500" />
                 ) : (
-                  <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.website || <span className="text-gray-600">—</span>}</p>
+                  <p className="text-sm text-white py-2 min-h-[38px]">{form.website || <span className="text-gray-500">—</span>}</p>
                 )}
               </div>
 
@@ -338,7 +338,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                     rows={3}
                     className="w-full rounded-xl bg-[#0f0f0f] border border-[#262626] text-white text-sm px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder:text-gray-600" />
                 ) : (
-                  <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.bio || <span className="text-gray-600">—</span>}</p>
+                  <p className="text-sm text-white py-2 min-h-[38px]">{form.bio || <span className="text-gray-500">—</span>}</p>
                 )}
               </div>
 
@@ -351,7 +351,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                     placeholder="@username"
                     className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500" />
                 ) : (
-                  <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.telegram || <span className="text-gray-600">—</span>}</p>
+                  <p className="text-sm text-white py-2 min-h-[38px]">{form.telegram || <span className="text-gray-500">—</span>}</p>
                 )}
               </div>
 
@@ -364,7 +364,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                     placeholder="vk.com/username"
                     className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500" />
                 ) : (
-                  <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.vk || <span className="text-gray-600">—</span>}</p>
+                  <p className="text-sm text-white py-2 min-h-[38px]">{form.vk || <span className="text-gray-500">—</span>}</p>
                 )}
               </div>
 
@@ -377,7 +377,7 @@ export function DashboardProfile({ user, initials, form, setForm, saved, onSave,
                     placeholder="Ссылка или username в MAX"
                     className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500" />
                 ) : (
-                  <p className="text-sm text-white px-3 py-2 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] min-h-[38px]">{form.max || <span className="text-gray-600">—</span>}</p>
+                  <p className="text-sm text-white py-2 min-h-[38px]">{form.max || <span className="text-gray-500">—</span>}</p>
                 )}
               </div>
             </div>
