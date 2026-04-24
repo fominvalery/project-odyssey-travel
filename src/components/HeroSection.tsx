@@ -3,6 +3,7 @@ import { Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { GlowButton } from "@/components/ui/glow-button"
 import { RegisterModal } from "@/components/RegisterModal"
+import Icon from "@/components/ui/icon"
 
 export function HeroSection() {
   const [registerOpen, setRegisterOpen] = useState(false)
@@ -27,7 +28,7 @@ export function HeroSection() {
           onClick={() => setRegisterOpen(true)}
           className="rounded-full px-6 py-2 text-sm"
         >
-          Зарегистрироваться бесплатно <ArrowUpRight className="ml-2 h-4 w-4" />
+          Зарегистрироваться бесплатно <Icon name="ArrowUpRight" className="ml-2 h-4 w-4" />
         </GlowButton>
         <Button variant="outline" className="rounded-full border-gray-700 bg-transparent text-white hover:bg-gray-800">
           <Play className="mr-2 h-4 w-4 fill-blue-500 text-blue-500" /> Смотреть обзор
