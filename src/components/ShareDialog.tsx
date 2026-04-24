@@ -115,10 +115,9 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
         <div className="p-5">
           <div className="grid grid-cols-4 gap-3 mb-4">
             {/* Telegram */}
-            <a
-              href={targets[0].href}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => window.open(targets[0].href, "_blank", "noopener,noreferrer,width=600,height=600")}
               className="flex flex-col items-center gap-2 group"
             >
               <div className={`w-14 h-14 rounded-2xl ${targets[0].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
@@ -127,13 +126,12 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
               <span className="text-[11px] text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
                 {targets[0].name}
               </span>
-            </a>
+            </button>
 
             {/* Яндекс Почта */}
-            <a
-              href={targets[1].href}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => window.open(targets[1].href, "_blank", "noopener,noreferrer,width=700,height=500")}
               className="flex flex-col items-center gap-2 group"
             >
               <div className={`w-14 h-14 rounded-2xl ${targets[1].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
@@ -142,7 +140,7 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
               <span className="text-[11px] text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
                 {targets[1].name}
               </span>
-            </a>
+            </button>
 
             {/* MAX — кастомный клик */}
             <button
@@ -159,10 +157,9 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
             </button>
 
             {/* ВКонтакте */}
-            <a
-              href={targets[2].href}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => window.open(targets[2].href, "_blank", "noopener,noreferrer,width=600,height=500")}
               className="flex flex-col items-center gap-2 group"
             >
               <div className={`w-14 h-14 rounded-2xl ${targets[2].bg} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
@@ -171,7 +168,7 @@ export default function ShareDialog({ title, url, onClose }: ShareDialogProps) {
               <span className="text-[11px] text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
                 {targets[2].name}
               </span>
-            </a>
+            </button>
           </div>
 
           {/* Подсказка для MAX */}
