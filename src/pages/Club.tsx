@@ -4,7 +4,9 @@ import { Footer } from "@/components/Footer"
 import Icon from "@/components/ui/icon"
 import { GlowButton } from "@/components/ui/glow-button"
 import { RegisterModal } from "@/components/RegisterModal"
+import { ClubPayDialog } from "@/components/pricing/ClubPayDialog"
 import { useState, useRef } from "react"
+import { useAuthContext } from "@/context/AuthContext"
 
 const FEATURES = [
   {
@@ -237,6 +239,16 @@ function FeaturesCarousel() {
 export default function Club() {
   const navigate = useNavigate()
   const [registerOpen, setRegisterOpen] = useState(false)
+  const [payOpen, setPayOpen] = useState(false)
+  const { user } = useAuthContext()
+
+  const handleCtaClick = () => {
+    if (user) {
+      setPayOpen(true)
+    } else {
+      setRegisterOpen(true)
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
@@ -471,28 +483,25 @@ export default function Club() {
       {/* ── CTA ───────────────────────────────────────────────────────────── */}
       <section className="px-4 py-12 text-center">
         <div className="max-w-2xl mx-auto">
-          <div className="w-16 h-16 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center mx-auto mb-8">
-            <Icon name="Zap" className="h-8 w-8 text-violet-400" />
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-5">
-            Готов работать в профессиональной среде?
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Здесь не ждут сделок —<br className="hidden sm:block" /> здесь их создают.
           </h2>
-          <p className="text-gray-400 text-lg mb-10">
-            Вступи в Клуб сегодня — и уже завтра у тебя будут партнёры, объекты и инструменты для роста.
+          <p className="text-gray-400 text-lg mb-8">
+            Никакого воздуха. Только объекты, партнёры и реальные сделки.
           </p>
-          <button
-            onClick={() => setRegisterOpen(true)}
-            className="px-10 py-5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xl transition-all hover:scale-105 shadow-xl shadow-violet-500/30"
+          <GlowButton
+            onClick={handleCtaClick}
+            className="px-10 py-4 rounded-xl text-base font-bold"
           >
-            Вступить в Клуб бесплатно
-          </button>
-          <p className="text-gray-600 text-sm mt-4">Регистрация займёт 2 минуты</p>
+            Вступить в Клуб
+          </GlowButton>
         </div>
       </section>
 
       <Footer />
 
       <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="basic" />
+      <ClubPayDialog open={payOpen} onClose={() => setPayOpen(false)} />
     </main>
   )
 }
