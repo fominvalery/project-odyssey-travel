@@ -16,11 +16,11 @@ export function HeroSection() {
       </div>
 
       <h1 className="mb-4 max-w-3xl text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white text-balance">
-        Ваша профессиональная платформа недвижимости
+        Платформа для брокеров коммерческой недвижимости
       </h1>
 
       <p className="mb-8 max-w-xl text-gray-400">
-        Коммерческая, инвестиционная, с торгов и новостройки — CRM, маркетплейс и реферальная программа в одном месте.
+        CRM, маркетплейс объектов и закрытый клуб брокеров — офисы, склады, торговые площади по всей России в одном месте.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4">
