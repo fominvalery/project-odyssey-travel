@@ -1,0 +1,15 @@
+name: Subscription Checker
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-subscriptions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run subscription checker
+        run: |
+          curl -s -X GET "https://functions.poehali.dev/34cd0693-d330-408d-a6fe-1bdce31950d8" \
+            -H "Content-Type: application/json"
