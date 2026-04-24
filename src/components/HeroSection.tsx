@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button"
 import { GlowButton } from "@/components/ui/glow-button"
 import { RegisterModal } from "@/components/RegisterModal"
 import Icon from "@/components/ui/icon"
+import { useToast } from "@/hooks/use-toast"
 
 export function HeroSection() {
   const [registerOpen, setRegisterOpen] = useState(false)
+  const { toast } = useToast()
 
   return (
     <section className="flex flex-col items-center justify-center px-4 pt-8 pb-6 text-center">
@@ -30,7 +32,11 @@ export function HeroSection() {
         >
           Зарегистрироваться бесплатно <Icon name="ArrowUpRight" className="ml-2 h-4 w-4" />
         </GlowButton>
-        <Button variant="outline" className="rounded-full border-gray-700 bg-transparent text-white hover:bg-gray-800">
+        <Button
+          variant="outline"
+          className="rounded-full border-gray-700 bg-transparent text-white hover:bg-gray-800"
+          onClick={() => toast({ title: "Скоро", description: "Обзор платформы уже готовится 🎬" })}
+        >
           <Play className="mr-2 h-4 w-4 fill-blue-500 text-blue-500" /> Смотреть обзор
         </Button>
       </div>
