@@ -27,7 +27,7 @@ export default function Club() {
     <main className="min-h-screen bg-[#0a0a0a]">
       <Header />
 
-      <ClubHero onRegister={() => setRegisterOpen(true)} />
+      <ClubHero onCtaClick={handleCtaClick} />
 
       {/* ── Цифры ─────────────────────────────────────────────────────────── */}
       <section className="px-4 py-8">

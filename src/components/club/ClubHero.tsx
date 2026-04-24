@@ -2,10 +2,10 @@ import Icon from "@/components/ui/icon"
 import { GlowButton } from "@/components/ui/glow-button"
 
 interface ClubHeroProps {
-  onRegister: () => void
+  onCtaClick: () => void
 }
 
-export function ClubHero({ onRegister }: ClubHeroProps) {
+export function ClubHero({ onCtaClick }: ClubHeroProps) {
   return (
     <section className="relative overflow-hidden px-4 pt-14 pb-16 text-center">
       <div className="absolute inset-0 pointer-events-none">
@@ -36,7 +36,7 @@ export function ClubHero({ onRegister }: ClubHeroProps) {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <GlowButton
-            onClick={onRegister}
+            onClick={onCtaClick}
             className="px-8 py-3.5 rounded-xl text-base"
           >
             Вступить в Клуб
