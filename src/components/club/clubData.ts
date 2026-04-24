@@ -86,22 +86,21 @@ export const STEPS = [
 ]
 
 export const MOCK_MEMBERS = [
-  { name: "Алексей Морозов", role: "Коммерческая недвижимость", city: "Москва", years: 11, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/ff45244e-7e06-43ab-974b-d6255d7e9b2d.jpg" },
-  { name: "Ирина Соколова", role: "Инвестиции в недвижимость", city: "Санкт-Петербург", years: 8, status: "away", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b7a80f6-8684-4f2d-8413-4c403a3a211c.jpg" },
-  { name: "Дмитрий Волков", role: "Офисная недвижимость", city: "Екатеринбург", years: 14, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/1ef395f8-edca-4b6b-aa64-ca83372cf683.jpg" },
-  { name: "Наталья Орлова", role: "Торговая недвижимость", city: "Краснодар", years: 6, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/abe8b054-ca5e-41b5-8d24-c03b5178373d.jpg" },
-  { name: "Сергей Крылов", role: "Складская недвижимость", city: "Новосибирск", years: 9, status: "away", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/7606d452-bce9-4c0b-89a1-07452766c317.jpg" },
-  { name: "Мария Белова", role: "Торговые помещения", city: "Казань", years: 5, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/0812fcd3-99a3-4219-a26e-de787c6fe428.jpg" },
-  { name: "Роман Зайцев", role: "Коммерческая аренда", city: "Ростов-на-Дону", years: 12, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/9299eea2-26a1-4d13-9605-7861658d505b.jpg" },
-  { name: "Елена Громова", role: "Инвестиции и девелопмент", city: "Москва", years: 16, status: "away", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/026b7c14-4919-4a5f-8346-7d83a805dab0.jpg" },
-  { name: "Павел Соловьёв", role: "Стрит-ритейл", city: "Самара", years: 7, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/7fe42deb-ad8a-46d2-a276-7dd060cd1a6d.jpg" },
-  { name: "Анастасия Фёдорова", role: "Торговая недвижимость", city: "Нижний Новгород", years: 10, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/265626e4-f7fb-4a9b-b24a-6db1a809f8e6.jpg" },
-  { name: "Виктор Ларин", role: "Производственная аренда", city: "Челябинск", years: 19, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/20642c14-fecd-438f-a371-f7ba25c34870.jpg" },
-  { name: "Юлия Тихонова", role: "Офисная недвижимость", city: "Воронеж", years: 4, status: "away", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/d018385a-6e61-4a26-abc5-8abd269bfa68.jpg" },
+  { name: "Алексей Морозов", role: "Коммерческая недвижимость", city: "Москва", years: 11, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/6633f52e-641a-408f-9426-ed60debcfe5d.jpg" },
+  { name: "Ирина Соколова", role: "Инвестиции в недвижимость", city: "Санкт-Петербург", years: 8, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/1e2273aa-1a78-462a-ba58-91ba8471fdfe.jpg" },
+  { name: "Дмитрий Волков", role: "Офисная недвижимость", city: "Екатеринбург", years: 14, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/c6ec76ef-99d4-4e2e-980a-53b35f3597bb.jpg" },
+  { name: "Наталья Орлова", role: "Торговая недвижимость", city: "Краснодар", years: 6, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/741cd2ae-f323-406d-880f-70ce8f93821a.jpg" },
+  { name: "Сергей Крылов", role: "Складская недвижимость", city: "Новосибирск", years: 9, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/be92bdcc-d9b6-46e5-8e89-ebb6c3f9536c.jpg" },
+  { name: "Мария Белова", role: "Торговые помещения", city: "Казань", years: 5, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e495cdea-eebd-4e66-8b73-0c81e67fc3d0.jpg" },
+  { name: "Роман Зайцев", role: "Коммерческая аренда", city: "Ростов-на-Дону", years: 12, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/bce937d7-5bf3-45b6-8bdf-3f8384aa584d.jpg" },
+  { name: "Елена Громова", role: "Инвестиции и девелопмент", city: "Москва", years: 16, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/ef939dd5-60b2-41ca-92f0-53138d64536f.jpg" },
+  { name: "Павел Соловьёв", role: "Стрит-ритейл", city: "Самара", years: 7, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/3e42d312-f2a5-43ba-945c-e07973e1ee48.jpg" },
+  { name: "Анастасия Фёдорова", role: "Торговая недвижимость", city: "Нижний Новгород", years: 10, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/516c65ba-8b26-4d95-b6c2-8ad55e436456.jpg" },
+  { name: "Виктор Ларин", role: "Производственная аренда", city: "Челябинск", years: 19, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/842c6d4d-f5c2-4496-8fef-bfa7e0161a3e.jpg" },
+  { name: "Юлия Тихонова", role: "Офисная недвижимость", city: "Воронеж", years: 4, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/381d680d-3fa8-4f2b-86a3-5615010b3b43.jpg" },
 ]
 
 export const STATUS_DOT: Record<string, string> = {
-  online: "bg-emerald-400",
-  away: "bg-yellow-400",
+  online: "bg-blue-500",
   offline: "bg-gray-500",
 }
