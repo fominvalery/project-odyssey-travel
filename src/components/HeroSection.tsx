@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ArrowUpRight, Play } from "lucide-react"
+import { Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { GlowButton } from "@/components/ui/glow-button"
 import { RegisterModal } from "@/components/RegisterModal"
@@ -12,7 +12,6 @@ export function HeroSection() {
       <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] py-2 text-sm px-2">
         <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-400">НОВИНКА</span>
         <span className="text-gray-300">Недвижимость с торгов — эксклюзивные объекты</span>
-        <ArrowUpRight className="h-4 w-4 text-gray-400" />
       </div>
 
       <h1 className="mb-4 max-w-3xl text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white text-balance">
