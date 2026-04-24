@@ -13,7 +13,7 @@ const FEATURES = [
     desc: "Находи партнёров по специализации и городу. Делай совместные сделки с теми, кому доверяешь.",
     color: "text-violet-400",
     bg: "bg-violet-500/10 border-violet-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e030d5d4-6fd9-41f5-8ccd-507b2280da2e.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/a5490c71-bd5d-4f86-b155-572f023d365c.jpg",
   },
   {
     icon: "Diamond",
@@ -21,7 +21,7 @@ const FEATURES = [
     desc: "Видишь объекты других участников клуба. Предлагаешь своих клиентов — получаешь комиссию.",
     color: "text-blue-400",
     bg: "bg-blue-500/10 border-blue-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/871fab4a-3061-4b5c-935c-d30c7057e8cc.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/f3c6649a-f191-4f58-9cab-79930555e404.jpg",
   },
   {
     icon: "Shield",
@@ -29,7 +29,7 @@ const FEATURES = [
     desc: "Все заявки в одном месте. Воронка продаж, канбан, история переписки с клиентом.",
     color: "text-emerald-400",
     bg: "bg-emerald-500/10 border-emerald-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/b4b46af8-45d3-461d-90b7-e44baa0575df.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/0d5e7af9-6ef4-47f6-890f-bee0f517eecd.jpg",
   },
   {
     icon: "Sparkles",
@@ -37,7 +37,7 @@ const FEATURES = [
     desc: "Генерация описаний объектов, PDF-презентации и аналитика — одним кликом, без копирайтера.",
     color: "text-amber-400",
     bg: "bg-amber-500/10 border-amber-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/3bb3f628-3757-4b7b-99ad-22bc5dcd5f96.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/5e95cdac-6ddd-4489-8f77-db6159516b72.jpg",
   },
   {
     icon: "Star",
@@ -45,7 +45,7 @@ const FEATURES = [
     desc: "Публикуй объекты в открытом каталоге и получай входящие запросы от покупателей и арендаторов.",
     color: "text-cyan-400",
     bg: "bg-cyan-500/10 border-cyan-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/a5c19814-41c3-4524-8152-a582780c9633.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/c6a83054-f139-49cb-9583-07b0dd18a5d0.jpg",
   },
   {
     icon: "Trophy",
@@ -53,7 +53,7 @@ const FEATURES = [
     desc: "Приглашай коллег в клуб и получай бонусы за каждого активного участника, которого привёл.",
     color: "text-pink-400",
     bg: "bg-pink-500/10 border-pink-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/7229406f-27d4-41ef-a717-4e0201bb0bdc.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/ce8314b0-cc5a-48d6-be70-dd133907c5d8.jpg",
   },
   {
     icon: "TrendingUp",
@@ -61,7 +61,7 @@ const FEATURES = [
     desc: "Статистика просмотров, количество лидов и конверсия по каждому объекту в реальном времени.",
     color: "text-orange-400",
     bg: "bg-orange-500/10 border-orange-500/20",
-    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/73963a42-8641-4418-ba59-73b99e6e1272.jpg",
+    img: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/0e1896a7-06a7-4e56-b708-9b950b122bbd.jpg",
   },
 ]
 
@@ -94,45 +94,33 @@ const MOCK_MEMBERS = [
 ]
 
 function FeatureCard({ f }: { f: typeof FEATURES[0] }) {
-  const [popup, setPopup] = useState(false)
-  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 })
-
-  const handleMouseEnter = (e: React.MouseEvent) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    setPopupPos({ x: rect.right + 12, y: rect.top })
-    setPopup(true)
-  }
+  const [hovered, setHovered] = useState(false)
 
   return (
-    <div className={`relative rounded-2xl border ${f.bg} min-h-[360px] flex flex-col overflow-hidden`}>
-      {/* Картинка — верхняя половина */}
+    <div
+      className={`relative rounded-2xl border ${f.bg} min-h-[360px] flex flex-col overflow-hidden cursor-pointer`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Картинка — появляется при наведении поверх всего */}
       <div
-        className="relative h-48 overflow-hidden cursor-zoom-in shrink-0"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={() => setPopup(false)}
+        className={`absolute inset-0 z-10 transition-opacity duration-400 ${hovered ? "opacity-100" : "opacity-0"}`}
       >
-        <img
-          src={f.img}
-          alt={f.title}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
-        <div className="absolute bottom-3 right-3">
-          <Icon name="ZoomIn" className="h-4 w-4 text-white/60" />
-        </div>
-
-        {/* Попап при наведении */}
-        {popup && (
-          <div
-            className="fixed z-50 w-80 rounded-2xl overflow-hidden shadow-2xl border border-white/10 pointer-events-none"
-            style={{ left: Math.min(popupPos.x, window.innerWidth - 340), top: Math.max(8, popupPos.y) }}
-          >
-            <img src={f.img} alt={f.title} className="w-full object-cover" />
+        <img src={f.img} alt={f.title} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+        {/* Текст поверх картинки */}
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-black/40 backdrop-blur-sm shrink-0">
+              <Icon name={f.icon as "Crown"} className={`h-5 w-5 ${f.color}`} />
+            </div>
+            <h3 className="text-white font-semibold text-base leading-tight">{f.title}</h3>
           </div>
-        )}
+          <p className="text-gray-200 text-sm leading-relaxed">{f.desc}</p>
+        </div>
       </div>
 
-      {/* Текст — нижняя половина */}
+      {/* Обычное состояние — текст */}
       <div className="flex flex-col flex-1 p-6">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-black/20 shrink-0">
