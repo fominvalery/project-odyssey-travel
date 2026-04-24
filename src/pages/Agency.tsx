@@ -407,6 +407,36 @@ export default function Agency() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Мобильное нижнее меню */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-[#1f1f1f]">
+        <div className="flex overflow-x-auto scrollbar-none px-2 py-2 gap-1">
+          {visibleItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setSection(item.id)}
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors shrink-0 relative ${
+                section === item.id
+                  ? item.group === "agency" ? "text-violet-400" : "text-blue-400"
+                  : "text-gray-500"
+              }`}
+            >
+              <Icon name={item.icon as "Star"} fallback="Circle" className="h-5 w-5" />
+              <span className="whitespace-nowrap">{item.label}</span>
+              {section === item.id && (
+                <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full ${item.group === "agency" ? "bg-violet-400" : "bg-blue-400"}`} />
+              )}
+            </button>
+          ))}
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs text-gray-500 shrink-0"
+          >
+            <Icon name="ArrowLeft" className="h-5 w-5" />
+            <span className="whitespace-nowrap">Кабинет</span>
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
