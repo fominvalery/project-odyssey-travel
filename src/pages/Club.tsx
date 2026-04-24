@@ -94,15 +94,21 @@ const STEPS = [
 ]
 
 const MOCK_MEMBERS = [
-  { name: "Алексей Морозов", role: "Коммерческая недвижимость", city: "Москва", initials: "АМ", color: "from-violet-600 to-blue-600", years: 11 },
-  { name: "Ирина Соколова", role: "Инвестиции в недвижимость", city: "Санкт-Петербург", initials: "ИС", color: "from-pink-600 to-rose-600", years: 8 },
-  { name: "Дмитрий Волков", role: "Офисная недвижимость", city: "Екатеринбург", initials: "ДВ", color: "from-emerald-600 to-teal-600", years: 14 },
-  { name: "Наталья Орлова", role: "Торговая недвижимость", city: "Краснодар", initials: "НО", color: "from-amber-600 to-orange-600", years: 6 },
-  { name: "Сергей Крылов", role: "Складская недвижимость", city: "Новосибирск", initials: "СК", color: "from-cyan-600 to-blue-600", years: 9 },
-  { name: "Мария Белова", role: "Торговые помещения", city: "Казань", initials: "МБ", color: "from-fuchsia-600 to-pink-600", years: 5 },
-  { name: "Роман Зайцев", role: "Коммерческая аренда", city: "Ростов-на-Дону", initials: "РЗ", color: "from-orange-600 to-red-600", years: 12 },
-  { name: "Елена Громова", role: "Инвестиции и девелопмент", city: "Москва", initials: "ЕГ", color: "from-teal-600 to-emerald-600", years: 16 },
+  { name: "Алексей Морозов", role: "Коммерческая недвижимость", city: "Москва", years: 11, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/ff45244e-7e06-43ab-974b-d6255d7e9b2d.jpg" },
+  { name: "Ирина Соколова", role: "Инвестиции в недвижимость", city: "Санкт-Петербург", years: 8, status: "away", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b7a80f6-8684-4f2d-8413-4c403a3a211c.jpg" },
+  { name: "Дмитрий Волков", role: "Офисная недвижимость", city: "Екатеринбург", years: 14, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/1ef395f8-edca-4b6b-aa64-ca83372cf683.jpg" },
+  { name: "Наталья Орлова", role: "Торговая недвижимость", city: "Краснодар", years: 6, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/abe8b054-ca5e-41b5-8d24-c03b5178373d.jpg" },
+  { name: "Сергей Крылов", role: "Складская недвижимость", city: "Новосибирск", years: 9, status: "away", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/7606d452-bce9-4c0b-89a1-07452766c317.jpg" },
+  { name: "Мария Белова", role: "Торговые помещения", city: "Казань", years: 5, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/0812fcd3-99a3-4219-a26e-de787c6fe428.jpg" },
+  { name: "Роман Зайцев", role: "Коммерческая аренда", city: "Ростов-на-Дону", years: 12, status: "offline", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/9299eea2-26a1-4d13-9605-7861658d505b.jpg" },
+  { name: "Елена Громова", role: "Инвестиции и девелопмент", city: "Москва", years: 16, status: "online", photo: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/026b7c14-4919-4a5f-8346-7d83a805dab0.jpg" },
 ]
+
+const STATUS_DOT: Record<string, string> = {
+  online: "bg-emerald-400",
+  away: "bg-yellow-400",
+  offline: "bg-gray-500",
+}
 
 function FeatureCard({ f }: { f: typeof FEATURES[0] }) {
   const [hovered, setHovered] = useState(false)
@@ -440,11 +446,8 @@ export default function Club() {
             {[...MOCK_MEMBERS, ...MOCK_MEMBERS].map((m, i) => (
               <div key={i} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5 text-center w-52 shrink-0 hover:border-violet-500/30 transition-colors">
                 <div className="relative w-14 h-14 mx-auto mb-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center`}>
-                    <span className="text-white font-bold text-lg">{m.initials}</span>
-                  </div>
-                  {/* Зелёная точка активности */}
-                  <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#111]" />
+                  <img src={m.photo} alt={m.name} className="w-14 h-14 rounded-2xl object-cover object-top" />
+                  <span className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 ${STATUS_DOT[m.status]} rounded-full border-2 border-[#111]`} />
                 </div>
                 <p className="text-white font-semibold text-sm mb-1">{m.name}</p>
                 <p className="text-violet-400 text-xs mb-1">{m.role}</p>
