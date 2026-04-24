@@ -275,7 +275,7 @@ export default function Club() {
       </section>
 
       {/* ── Цифры ─────────────────────────────────────────────────────────── */}
-      <section className="px-4 py-8 border-y border-[#1a1a1a]">
+      <section className="px-4 py-8">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             { value: "500+", label: "Участников в сети", icon: "Users" },
@@ -303,7 +303,7 @@ export default function Club() {
       </section>
 
       {/* ── Как это работает ──────────────────────────────────────────────── */}
-      <section id="how-it-works" className="relative px-4 py-10 border-y border-[#1a1a1a] overflow-hidden">
+      <section id="how-it-works" className="relative px-4 py-10 overflow-hidden">
         {/* Сетка-фон */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Сетка линий — яркая */}
@@ -420,7 +420,7 @@ export default function Club() {
       </section>
 
       {/* ── Участники ─────────────────────────────────────────────────────── */}
-      <section className="px-4 py-10 bg-[#0d0d0d] border-y border-[#1a1a1a]">
+      <section className="px-4 py-10 bg-[#0d0d0d]">
         <div className="max-w-5xl mx-auto text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Кто уже в Клубе</h2>
           <p className="text-gray-400 text-lg">Профессионалы, которые выбрали системный подход к сделкам</p>
