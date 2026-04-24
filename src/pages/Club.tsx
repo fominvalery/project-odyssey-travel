@@ -94,10 +94,14 @@ const STEPS = [
 ]
 
 const MOCK_MEMBERS = [
-  { name: "Алексей Морозов", role: "Коммерческая недвижимость", city: "Москва", initials: "АМ", color: "from-violet-600 to-blue-600" },
-  { name: "Ирина Соколова", role: "Инвестиции в недвижимость", city: "Санкт-Петербург", initials: "ИС", color: "from-pink-600 to-rose-600" },
-  { name: "Дмитрий Волков", role: "Офисная недвижимость", city: "Екатеринбург", initials: "ДВ", color: "from-emerald-600 to-teal-600" },
-  { name: "Наталья Орлова", role: "Торговая недвижимость", city: "Краснодар", initials: "НО", color: "from-amber-600 to-orange-600" },
+  { name: "Алексей Морозов", role: "Коммерческая недвижимость", city: "Москва", initials: "АМ", color: "from-violet-600 to-blue-600", years: 11 },
+  { name: "Ирина Соколова", role: "Инвестиции в недвижимость", city: "Санкт-Петербург", initials: "ИС", color: "from-pink-600 to-rose-600", years: 8 },
+  { name: "Дмитрий Волков", role: "Офисная недвижимость", city: "Екатеринбург", initials: "ДВ", color: "from-emerald-600 to-teal-600", years: 14 },
+  { name: "Наталья Орлова", role: "Торговая недвижимость", city: "Краснодар", initials: "НО", color: "from-amber-600 to-orange-600", years: 6 },
+  { name: "Сергей Крылов", role: "Складская недвижимость", city: "Новосибирск", initials: "СК", color: "from-cyan-600 to-blue-600", years: 9 },
+  { name: "Мария Белова", role: "Торговые помещения", city: "Казань", initials: "МБ", color: "from-fuchsia-600 to-pink-600", years: 5 },
+  { name: "Роман Зайцев", role: "Коммерческая аренда", city: "Ростов-на-Дону", initials: "РЗ", color: "from-orange-600 to-red-600", years: 12 },
+  { name: "Елена Громова", role: "Инвестиции и девелопмент", city: "Москва", initials: "ЕГ", color: "from-teal-600 to-emerald-600", years: 16 },
 ]
 
 function FeatureCard({ f }: { f: typeof FEATURES[0] }) {
@@ -425,24 +429,35 @@ export default function Club() {
       </section>
 
       {/* ── Участники ─────────────────────────────────────────────────────── */}
-      <section className="px-4 py-10 bg-[#0d0d0d]">
-        <div className="max-w-5xl mx-auto text-center mb-8">
+      <section className="py-10 bg-[#0d0d0d] overflow-hidden">
+        <div className="max-w-5xl mx-auto text-center mb-8 px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Кто уже в Клубе</h2>
           <p className="text-gray-400 text-lg">Профессионалы, которые выбрали системный подход к сделкам</p>
         </div>
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {MOCK_MEMBERS.map(m => (
-            <div key={m.name} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5 text-center hover:border-violet-500/30 transition-colors">
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center mx-auto mb-4`}>
-                <span className="text-white font-bold text-lg">{m.initials}</span>
+        {/* Бегущая строка */}
+        <div className="relative">
+          <div className="flex gap-4 animate-marquee w-max">
+            {[...MOCK_MEMBERS, ...MOCK_MEMBERS].map((m, i) => (
+              <div key={i} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5 text-center w-52 shrink-0 hover:border-violet-500/30 transition-colors">
+                <div className="relative w-14 h-14 mx-auto mb-4">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center`}>
+                    <span className="text-white font-bold text-lg">{m.initials}</span>
+                  </div>
+                  {/* Зелёная точка активности */}
+                  <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#111]" />
+                </div>
+                <p className="text-white font-semibold text-sm mb-1">{m.name}</p>
+                <p className="text-violet-400 text-xs mb-1">{m.role}</p>
+                <p className="text-gray-500 text-xs flex items-center justify-center gap-1 mb-1">
+                  <Icon name="MapPin" className="h-3 w-3" />{m.city}
+                </p>
+                <p className="text-gray-600 text-xs">{m.years} лет опыта</p>
               </div>
-              <p className="text-white font-semibold text-sm mb-1">{m.name}</p>
-              <p className="text-violet-400 text-xs mb-1">{m.role}</p>
-              <p className="text-gray-500 text-xs flex items-center justify-center gap-1">
-                <Icon name="MapPin" className="h-3 w-3" />{m.city}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
+          {/* Затемнение по краям */}
+          <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#0d0d0d] to-transparent pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0d0d0d] to-transparent pointer-events-none" />
         </div>
       </section>
 
