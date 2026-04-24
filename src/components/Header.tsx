@@ -100,6 +100,49 @@ export function Header() {
 
       <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="basic" />
       <LoginModal open={loginOpen} onOpenChange={setLoginOpen} onRegister={() => { setLoginOpen(false); setRegisterOpen(true) }} />
+
+      {/* Мобильное нижнее меню для незарегистрированных */}
+      {!user && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0d0d0d]/95 backdrop-blur-sm border-t border-[#1f1f1f]">
+          <div className="flex items-center justify-around px-2 py-2">
+            <button
+              onClick={() => navigate("/")}
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${location.pathname === "/" ? "text-blue-400" : "text-gray-500"}`}
+            >
+              <Icon name="Store" className="h-5 w-5" />
+              <span>Маркетплейс</span>
+            </button>
+            <button
+              onClick={() => navigate("/ecosystem")}
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${location.pathname === "/ecosystem" ? "text-blue-400" : "text-gray-500"}`}
+            >
+              <Icon name="Layers" className="h-5 w-5" />
+              <span>Экосистема</span>
+            </button>
+            <button
+              onClick={() => navigate("/club")}
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${location.pathname === "/club" ? "text-violet-400" : "text-gray-500"}`}
+            >
+              <Icon name="Crown" className="h-5 w-5" />
+              <span>Клуб</span>
+            </button>
+            <button
+              onClick={() => navigate("/referral")}
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs transition-colors ${location.pathname === "/referral" ? "text-blue-400" : "text-gray-500"}`}
+            >
+              <Icon name="Gift" className="h-5 w-5" />
+              <span>Рефералы</span>
+            </button>
+            <button
+              onClick={() => setLoginOpen(true)}
+              className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs text-gray-500 transition-colors"
+            >
+              <Icon name="LogIn" className="h-5 w-5" />
+              <span>Войти</span>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }
