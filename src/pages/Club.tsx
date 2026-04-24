@@ -155,8 +155,8 @@ function FeaturesCarousel() {
   const totalSlides = Math.ceil(FEATURES.length / 2)
   const touchStartX = useRef<number | null>(null)
 
-  const prev = () => setCurrent(c => Math.max(0, c - 1))
-  const next = () => setCurrent(c => Math.min(totalSlides - 1, c + 1))
+  const prev = () => setCurrent(c => (c - 1 + totalSlides) % totalSlides)
+  const next = () => setCurrent(c => (c + 1) % totalSlides)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
@@ -170,7 +170,11 @@ function FeaturesCarousel() {
     touchStartX.current = null
   }
 
-  const visible = FEATURES.slice(current * 2, current * 2 + 2)
+  const startIdx = current * 2
+  const visible = [
+    FEATURES[startIdx % FEATURES.length],
+    FEATURES[(startIdx + 1) % FEATURES.length],
+  ]
 
   return (
     <div className="w-full">
@@ -186,8 +190,7 @@ function FeaturesCarousel() {
       <div className="flex items-center justify-center gap-4">
         <button
           onClick={prev}
-          disabled={current === 0}
-          className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-gray-400 hover:text-white hover:border-violet-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-gray-400 hover:text-white hover:border-violet-500/50 transition-all"
         >
           <Icon name="ChevronLeft" className="h-4 w-4" />
         </button>
@@ -208,8 +211,7 @@ function FeaturesCarousel() {
 
         <button
           onClick={next}
-          disabled={current === totalSlides - 1}
-          className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-gray-400 hover:text-white hover:border-violet-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-gray-400 hover:text-white hover:border-violet-500/50 transition-all"
         >
           <Icon name="ChevronRight" className="h-4 w-4" />
         </button>
