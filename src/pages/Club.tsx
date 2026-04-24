@@ -101,6 +101,7 @@ function FeatureCard({ f }: { f: typeof FEATURES[0] }) {
       className={`relative rounded-2xl border ${f.bg} min-h-[360px] flex flex-col overflow-hidden cursor-pointer`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onTouchStart={() => setHovered(h => !h)}
     >
       {/* Картинка — появляется при наведении поверх всего */}
       <div
