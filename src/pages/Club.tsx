@@ -89,15 +89,32 @@ const MOCK_MEMBERS = [
 function FeaturesCarousel() {
   const [current, setCurrent] = useState(0)
   const totalSlides = Math.ceil(FEATURES.length / 2)
+  const touchStartX = useRef<number | null>(null)
 
   const prev = () => setCurrent(c => Math.max(0, c - 1))
   const next = () => setCurrent(c => Math.min(totalSlides - 1, c + 1))
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (diff > 40) next()
+    else if (diff < -40) prev()
+    touchStartX.current = null
+  }
 
   const visible = FEATURES.slice(current * 2, current * 2 + 2)
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {visible.map(f => (
           <div key={f.title} className={`rounded-2xl border p-6 ${f.bg} min-h-[180px]`}>
             <div className="flex items-center gap-3 mb-3">
