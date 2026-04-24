@@ -249,10 +249,11 @@ export default function Club() {
             Кабинет-<span className="text-blue-400">24</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-400 leading-relaxed mb-8 max-w-xl mx-auto">
-            Где сделки рождаются из доверия.<br />
-            Где брокеры — закрывают сделки.<br />
-            Где твои коллеги — лучшие партнёры.
+          <p className="text-xl md:text-2xl font-semibold text-white leading-relaxed mb-3 max-w-xl mx-auto">
+            Закрытый клуб. Открытые возможности.
+          </p>
+          <p className="text-base md:text-lg text-gray-400 leading-relaxed mb-8 max-w-xl mx-auto">
+            Платформа для тех, кто делает сделки — а не ждёт их.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
