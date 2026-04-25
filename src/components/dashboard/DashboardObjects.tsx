@@ -34,6 +34,7 @@ interface Props {
   userName?: string
   onArchive?: (id: string, status: "Продан" | "Сдан") => void
   onRestore?: (id: string) => void
+  onSaveOwner?: (id: string, fields: Record<string, string>) => void
 }
 
 export default function DashboardObjects({
@@ -43,7 +44,7 @@ export default function DashboardObjects({
   objSearch, setObjSearch, userId,
   isBasic = false, listingsUsed = 0, listingsExtra = 0,
   userEmail = "", userName = "",
-  onArchive, onRestore,
+  onArchive, onRestore, onSaveOwner,
 }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showArchive, setShowArchive] = useState(false)
@@ -374,6 +375,7 @@ export default function DashboardObjects({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onArchive={onArchive}
+                onSaveOwner={onSaveOwner}
               />
             ))}
           </div>

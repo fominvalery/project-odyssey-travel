@@ -207,6 +207,21 @@ export default function Dashboard() {
     }
   }
 
+  async function handleSaveOwner(id: string, ownerFields: Record<string, string>) {
+    if (!user?.id) return
+    const obj = objects.find(o => String(o.id) === String(id))
+    if (!obj) return
+    const updatedExtra = { ...(obj.extra_fields ?? {}), ...ownerFields }
+    try {
+      await fetch(func2url.objects, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, user_id: user.id, status: obj.status, extra_fields: updatedExtra }),
+      })
+      setObjects(prev => prev.map(o => String(o.id) === String(id) ? { ...o, extra_fields: updatedExtra } : o))
+    } catch { /* noop */ }
+  }
+
   async function handleArchiveObject(id: string, status: "Продан" | "Сдан") {
     if (!user?.id) return
     try {
@@ -283,6 +298,7 @@ export default function Dashboard() {
             onDelete={handleDeleteObject}
             onArchive={handleArchiveObject}
             onRestore={handleRestoreObject}
+            onSaveOwner={handleSaveOwner}
             onWizardSaved={handleWizardSaved}
             onWizardClose={handleWizardClose}
             catFilter={catFilter}

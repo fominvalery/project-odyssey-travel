@@ -240,10 +240,18 @@ def handler(event: dict, context) -> dict:
 
             # Частичное обновление — только статус (для архива/восстановления)
             status_only = set(body.keys()) <= {"id", "user_id", "status"}
+            # Частичное обновление — только extra_fields (для данных собственника)
+            extra_only = set(body.keys()) <= {"id", "user_id", "status", "extra_fields"} and "extra_fields" in body and "status" in body
+
             if status_only and "status" in body:
                 cur.execute(
                     "UPDATE " + schema + ".objects SET status=%s WHERE id=%s RETURNING " + SELECT_COLS,
                     (body["status"], obj_id),
+                )
+            elif extra_only:
+                cur.execute(
+                    "UPDATE " + schema + ".objects SET extra_fields=%s::jsonb, status=%s WHERE id=%s RETURNING " + SELECT_COLS,
+                    (json.dumps(body["extra_fields"]), body["status"], obj_id),
                 )
             else:
                 extra = json.dumps(body.get("extra_fields", {}))

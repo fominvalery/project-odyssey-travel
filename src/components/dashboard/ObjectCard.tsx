@@ -2,12 +2,46 @@ import { useState, useRef, useEffect } from "react"
 import Icon from "@/components/ui/icon"
 import type { ObjectData } from "@/components/AddObjectWizard"
 
-function OwnerBlock({ extraFields }: { extraFields: Record<string, string> }) {
+function OwnerBlock({
+  extraFields,
+  objId,
+  onSave,
+}: {
+  extraFields: Record<string, string>
+  objId: string
+  onSave?: (id: string, fields: Record<string, string>) => void
+}) {
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [draft, setDraft] = useState({
+    owner_name: extraFields.owner_name ?? "",
+    owner_phone: extraFields.owner_phone ?? "",
+    owner_fee: extraFields.owner_fee ?? "",
+    owner_comment: extraFields.owner_comment ?? "",
+  })
+
+  function handleEdit() {
+    setDraft({
+      owner_name: extraFields.owner_name ?? "",
+      owner_phone: extraFields.owner_phone ?? "",
+      owner_fee: extraFields.owner_fee ?? "",
+      owner_comment: extraFields.owner_comment ?? "",
+    })
+    setEditing(true)
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    await onSave?.(objId, draft)
+    setSaving(false)
+    setEditing(false)
+  }
+
   return (
     <div className="border border-amber-500/20 rounded-xl bg-amber-500/5 overflow-hidden mb-1">
       <button
-        onClick={() => setOpen(v => !v)}
+        onClick={() => { setOpen(v => !v); setEditing(false) }}
         className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
       >
         <span className="flex items-center gap-1.5">
@@ -16,7 +50,8 @@ function OwnerBlock({ extraFields }: { extraFields: Record<string, string> }) {
         </span>
         <Icon name={open ? "ChevronUp" : "ChevronDown"} className="h-3 w-3" />
       </button>
-      {open && (
+
+      {open && !editing && (
         <div className="px-3 pb-3 space-y-1.5 border-t border-amber-500/10">
           {extraFields.owner_name && (
             <div className="flex items-center gap-2 pt-2">
@@ -44,6 +79,61 @@ function OwnerBlock({ extraFields }: { extraFields: Record<string, string> }) {
               <span className="text-xs text-gray-400 leading-relaxed">{extraFields.owner_comment}</span>
             </div>
           )}
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-1.5 mt-2 text-[11px] text-amber-400/70 hover:text-amber-400 transition-colors"
+          >
+            <Icon name="Pencil" className="h-3 w-3" /> Редактировать
+          </button>
+        </div>
+      )}
+
+      {open && editing && (
+        <div className="px-3 pb-3 space-y-2 border-t border-amber-500/10 pt-3">
+          {[
+            { key: "owner_name", label: "ФИО", placeholder: "Иванов Иван Иванович", icon: "User" },
+            { key: "owner_phone", label: "Телефон", placeholder: "+7 900 000 00 00", icon: "Phone" },
+            { key: "owner_fee", label: "Вознаграждение", placeholder: "3% / 50 000 ₽", icon: "Percent" },
+          ].map(f => (
+            <div key={f.key}>
+              <label className="text-[10px] text-gray-500 block mb-0.5">{f.label}</label>
+              <div className="relative">
+                <Icon name={f.icon as "User"} className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-600" />
+                <input
+                  value={draft[f.key as keyof typeof draft]}
+                  onChange={e => setDraft(d => ({ ...d, [f.key]: e.target.value }))}
+                  placeholder={f.placeholder}
+                  className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-[#111] border border-[#2a2a2a] text-xs text-white placeholder:text-gray-700 focus:outline-none focus:border-amber-500/40"
+                />
+              </div>
+            </div>
+          ))}
+          <div>
+            <label className="text-[10px] text-gray-500 block mb-0.5">Комментарий</label>
+            <textarea
+              value={draft.owner_comment}
+              onChange={e => setDraft(d => ({ ...d, owner_comment: e.target.value }))}
+              placeholder="Условия, договорённости..."
+              rows={2}
+              className="w-full px-3 py-1.5 rounded-lg bg-[#111] border border-[#2a2a2a] text-xs text-white placeholder:text-gray-700 focus:outline-none focus:border-amber-500/40 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+            >
+              {saving ? <Icon name="Loader2" className="h-3 w-3 animate-spin" /> : <Icon name="Check" className="h-3 w-3" />}
+              Сохранить
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              className="px-3 py-1.5 rounded-lg text-[11px] text-gray-500 hover:text-white bg-[#1a1a1a] transition-colors"
+            >
+              Отмена
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -55,6 +145,7 @@ interface ObjectCardProps {
   onEdit: (obj: ObjectData) => void
   onDelete: (id: string) => void
   onArchive?: (id: string, status: "Продан" | "Сдан") => void
+  onSaveOwner?: (id: string, fields: Record<string, string>) => void
 }
 
 const BADGE_BY_TYPE: Record<string, { label: string; color: string; icon: string }> = {
@@ -76,7 +167,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 const ARCHIVE_STATUSES = ["Продан", "Сдан"]
 
-export default function ObjectCard({ obj, onEdit, onDelete, onArchive }: ObjectCardProps) {
+export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner }: ObjectCardProps) {
   const [showArchiveMenu, setShowArchiveMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const photo = obj.photos && obj.photos.length > 0 ? obj.photos[0] : null
@@ -171,8 +262,12 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive }: ObjectC
         </div>
 
         {/* Данные собственника */}
-        {(obj.extra_fields?.owner_name || obj.extra_fields?.owner_phone) && (
-          <OwnerBlock extraFields={obj.extra_fields} />
+        {obj.extra_fields && (
+          <OwnerBlock
+            extraFields={obj.extra_fields}
+            objId={String(obj.id)}
+            onSave={onSaveOwner}
+          />
         )}
 
         {/* Действия */}
