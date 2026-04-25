@@ -127,6 +127,22 @@ export const CATEGORY_GROUPS = [
   { label: "Жилая недвижимость", ids: ["residential", "newbuild"] },
 ]
 
+// ── Поля аренды для Жилой ───────────────────────────────────────────────────
+export const RESIDENTIAL_RENT_FIELDS = [
+  { key: "rooms", label: "Количество комнат", placeholder: "3" },
+  { key: "floor", label: "Этаж", placeholder: "5" },
+  { key: "floors_total", label: "Этажей в доме", placeholder: "16" },
+  { key: "building_type", label: "Тип дома", placeholder: "Монолит / Кирпич / Панель" },
+  { key: "condition", label: "Состояние", placeholder: "Евроремонт / Дизайнерский / Стандарт" },
+  { key: "bathroom", label: "Санузел", placeholder: "Раздельный / Совмещённый" },
+  { key: "balcony", label: "Балкон / Лоджия", placeholder: "Есть / Нет" },
+  { key: "furniture", label: "Мебель", placeholder: "Полностью меблирована / Частично / Без мебели" },
+  { key: "appliances", label: "Техника", placeholder: "Вся техника / Частично / Нет" },
+  { key: "pets", label: "Животные", placeholder: "Можно / Нельзя" },
+  { key: "deposit", label: "Залог (₽)", placeholder: "100 000" },
+  { key: "lease_term", label: "Срок аренды", placeholder: "Длительная / Посуточно / От 3 мес." },
+]
+
 // ── Поля для Жилой ──────────────────────────────────────────────────────────
 const RESIDENTIAL_FIELDS = [
   { key: "rooms", label: "Количество комнат", placeholder: "3" },
@@ -147,6 +163,31 @@ const INVESTMENT_FIELDS = [
   { key: "rent", label: "Арендный доход (₽/мес)", placeholder: "150 000" },
   { key: "strategy", label: "Стратегия инвестирования", placeholder: "Долгосрочная аренда" },
   { key: "encumbrance", label: "Обременение / Арендатор", placeholder: "Якорный арендатор, договор до 2028" },
+]
+
+// ── Поля аренды для Коммерции ────────────────────────────────────────────────
+export const COMMERCIAL_RENT_FIELDS_OFFICE = [
+  { key: "class", label: "Класс объекта", placeholder: "A / B+ / B / C" },
+  { key: "floor", label: "Этаж", placeholder: "3" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "3.2" },
+  { key: "condition", label: "Состояние", placeholder: "Open space / Кабинеты / С мебелью" },
+  { key: "parking", label: "Парковка", placeholder: "40 м/м подземная" },
+  { key: "access", label: "Доступ", placeholder: "Круглосуточный / Бизнес-часы" },
+  { key: "rent_price_sqm", label: "Ставка аренды (₽/м²/мес)", placeholder: "2 500" },
+  { key: "opex", label: "Эксплуатационные расходы (₽/м²)", placeholder: "500" },
+  { key: "lease_from", label: "Аренда от (м²)", placeholder: "50" },
+  { key: "lease_term", label: "Минимальный срок аренды", placeholder: "11 мес. / 1 год" },
+]
+
+export const COMMERCIAL_RENT_FIELDS_DEFAULT = [
+  { key: "floor", label: "Этаж", placeholder: "1" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "3.5" },
+  { key: "condition", label: "Состояние", placeholder: "Готово / Требует ремонта" },
+  { key: "rent_price_sqm", label: "Ставка аренды (₽/м²/мес)", placeholder: "1 800" },
+  { key: "opex", label: "Коммунальные платежи", placeholder: "Включены / По счётчику" },
+  { key: "lease_term", label: "Минимальный срок аренды", placeholder: "11 мес." },
+  { key: "tenant", label: "Арендатор", placeholder: "Свободно / Есть арендатор" },
+  { key: "deposit", label: "Залог (мес.)", placeholder: "2" },
 ]
 
 // ── Поля для Коммерции ───────────────────────────────────────────────────────

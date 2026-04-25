@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
-import { CATEGORIES, getCategoryFields } from "../wizardTypes"
+import { CATEGORIES, getCategoryFields, RESIDENTIAL_RENT_FIELDS, COMMERCIAL_RENT_FIELDS_OFFICE, COMMERCIAL_RENT_FIELDS_DEFAULT } from "../wizardTypes"
 import type { WizardForm } from "../wizardTypes"
 
 interface Step3Props {
@@ -11,26 +11,68 @@ interface Step3Props {
   subtype: string
   categoryFields: Record<string, string>
   onCategoryField: (key: string, value: string) => void
+  dealType?: string
 }
 
 const RESORT_FINANCE_KEYS = new Set(["occupancy", "avg_check", "annual_revenue", "yield", "payback", "entry_price", "revenue_model", "forecast_occupancy"])
 const RESORT_INFRA_KEYS = new Set(["pool", "spa", "restaurant", "beach", "parking", "conference"])
 
+function getRentFields(category: string, subtype: string) {
+  if (category === "residential") return RESIDENTIAL_RENT_FIELDS
+  if (category === "commercial") {
+    if (subtype === "Офис / БЦ") return COMMERCIAL_RENT_FIELDS_OFFICE
+    return COMMERCIAL_RENT_FIELDS_DEFAULT
+  }
+  return []
+}
+
 export function Step3Details({
-  form, setForm, category, subtype, categoryFields, onCategoryField,
+  form, setForm, category, subtype, categoryFields, onCategoryField, dealType,
 }: Step3Props) {
   const catLabel = CATEGORIES.find(c => c.id === category)?.label ?? ""
-  const fields = getCategoryFields(category, subtype)
   const isResort = category === "resort"
+  const isRent = dealType === "rent"
+  const showDealBadge = (category === "commercial" || category === "residential") && dealType
+
+  const fields = isRent
+    ? getRentFields(category, subtype)
+    : getCategoryFields(category, subtype)
 
   const financeFields = isResort ? fields.filter(f => RESORT_FINANCE_KEYS.has(f.key)) : []
   const infraFields = isResort ? fields.filter(f => RESORT_INFRA_KEYS.has(f.key)) : []
   const mainFields = isResort ? fields.filter(f => !RESORT_FINANCE_KEYS.has(f.key) && !RESORT_INFRA_KEYS.has(f.key)) : fields
 
+  const priceLabel = isResort
+    ? "Цена входа / Стоимость (₽)"
+    : isRent
+      ? "Стоимость аренды (₽/мес)"
+      : "Цена (₽)"
+
+  const pricePlaceholder = isResort
+    ? "120 000 000"
+    : isRent
+      ? "150 000"
+      : "18 500 000"
+
   return (
     <div className="space-y-6">
-      {/* Подтип — напоминание */}
-      {subtype && (
+      {/* Бейдж типа сделки */}
+      {showDealBadge && (
+        <div className={`flex items-center gap-2 text-xs rounded-xl px-4 py-2.5 ${
+          isRent
+            ? "text-emerald-300 bg-emerald-500/10 border border-emerald-500/20"
+            : "text-blue-300 bg-blue-500/10 border border-blue-500/20"
+        }`}>
+          <Icon name={isRent ? "KeyRound" : "Tag"} className="h-3.5 w-3.5 shrink-0" />
+          <span>
+            {isRent ? "Аренда" : "Продажа"}
+            {subtype ? ` · ${subtype}` : ""} — характеристики подобраны автоматически
+          </span>
+        </div>
+      )}
+
+      {/* Подтип — напоминание (для не deal_type категорий) */}
+      {subtype && !showDealBadge && (
         <div className={`flex items-center gap-2 text-xs rounded-xl px-4 py-2.5 ${
           isResort
             ? "text-cyan-300 bg-cyan-500/10 border border-cyan-500/20"
@@ -44,22 +86,32 @@ export function Step3Details({
       {/* Цена и площадь */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label className="text-xs text-gray-400 mb-1.5 block">{isResort ? "Цена входа / Стоимость (₽)" : "Цена (₽)"}</Label>
-          <Input placeholder={isResort ? "120 000 000" : "18 500 000"} value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
-            className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600" />
+          <Label className="text-xs text-gray-400 mb-1.5 block">{priceLabel}</Label>
+          <Input
+            placeholder={pricePlaceholder}
+            value={form.price}
+            onChange={e => setForm({ ...form, price: e.target.value })}
+            className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
+          />
         </div>
         <div>
           <Label className="text-xs text-gray-400 mb-1.5 block">Площадь (м²)</Label>
-          <Input placeholder={isResort ? "2 400" : "142"} value={form.area} onChange={e => setForm({ ...form, area: e.target.value })}
-            className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600" />
+          <Input
+            placeholder={isResort ? "2 400" : "142"}
+            value={form.area}
+            onChange={e => setForm({ ...form, area: e.target.value })}
+            className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
+          />
         </div>
       </div>
 
       {/* Основные характеристики */}
       {mainFields.length > 0 && (
-        <div className={`border-t pt-4 ${isResort ? "border-cyan-500/20" : "border-[#1f1f1f]"}`}>
-          <p className={`text-xs font-semibold uppercase tracking-widest mb-4 ${isResort ? "text-cyan-400" : "text-blue-400"}`}>
-            {catLabel}{subtype ? ` · ${subtype}` : ""} — параметры объекта
+        <div className={`border-t pt-4 ${isResort ? "border-cyan-500/20" : isRent ? "border-emerald-500/20" : "border-[#1f1f1f]"}`}>
+          <p className={`text-xs font-semibold uppercase tracking-widest mb-4 ${
+            isResort ? "text-cyan-400" : isRent ? "text-emerald-400" : "text-blue-400"
+          }`}>
+            {catLabel}{subtype ? ` · ${subtype}` : ""} — {isRent ? "условия аренды" : "параметры объекта"}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {mainFields.map(field => (
@@ -69,7 +121,9 @@ export function Step3Details({
                   placeholder={field.placeholder}
                   value={categoryFields[field.key] ?? ""}
                   onChange={e => onCategoryField(field.key, e.target.value)}
-                  className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
+                  className={`bg-[#111] text-white placeholder:text-gray-600 ${
+                    isRent ? "border-emerald-500/20 focus-visible:ring-emerald-500" : "border-[#1f1f1f]"
+                  }`}
                 />
               </div>
             ))}

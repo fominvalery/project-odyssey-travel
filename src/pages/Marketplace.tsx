@@ -34,11 +34,15 @@ export default function Marketplace() {
   const [cityFilter, setCityFilter] = useState("")
   const [showArchive, setShowArchive] = useState(false)
   const [archiveSearch, setArchiveSearch] = useState("")
+  const [dealFilter, setDealFilter] = useState("") // "sale" | "rent" | ""
+
+  const DEAL_FILTER_CATS = ["Коммерческая", "Жилая"]
 
   function handleCategoryChange(cat: string) {
     setActiveCategory(cat)
     setActiveSubtype("")
     setExtraFilters({})
+    if (!DEAL_FILTER_CATS.includes(cat)) setDealFilter("")
     if (cat !== "Все" && CAT_ID_MAP[cat]) {
       setShowFilters(true)
     }
@@ -156,7 +160,10 @@ export default function Marketplace() {
 
     const matchCity = cityFilter ? o.city.toLowerCase().includes(cityFilter.trim().toLowerCase()) : true
 
-    return matchCat && matchSubtype && matchSearch && matchExtra && matchPriceFrom && matchPriceTo && matchAreaFrom && matchAreaTo && matchCity
+    const objDealType = ((o as Record<string, unknown>).extra_fields as Record<string, string> | undefined)?.deal_type ?? ""
+    const matchDeal = !dealFilter || objDealType === dealFilter
+
+    return matchCat && matchSubtype && matchSearch && matchExtra && matchPriceFrom && matchPriceTo && matchAreaFrom && matchAreaTo && matchCity && matchDeal
   })
 
   const filteredArchive = archiveObjects.filter(o => {
@@ -206,11 +213,35 @@ export default function Marketplace() {
               activeCatFields={activeCatFields}
             />
 
-            {/* Кнопка Архив после категорий */}
-            <div className="flex justify-end mb-4 -mt-2">
+            {/* Фильтр Продажа / Аренда + кнопка Архив */}
+            <div className="flex items-center justify-between mb-4 -mt-2 flex-wrap gap-2">
+              {DEAL_FILTER_CATS.includes(activeCategory) && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Тип сделки:</span>
+                  {[
+                    { value: "", label: "Все" },
+                    { value: "sale", label: "Продажа" },
+                    { value: "rent", label: "Аренда" },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setDealFilter(opt.value)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        dealFilter === opt.value
+                          ? opt.value === "rent"
+                            ? "bg-emerald-600 text-white"
+                            : "bg-blue-600 text-white"
+                          : "bg-[#1a1a1a] text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <button
                 onClick={handleShowArchive}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition-colors"
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition-colors ml-auto"
               >
                 <Icon name="Archive" className="h-4 w-4" />
                 Архив объектов

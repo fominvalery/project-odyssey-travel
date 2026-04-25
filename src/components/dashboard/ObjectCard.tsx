@@ -35,6 +35,9 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive }: ObjectC
   const badge = BADGE_BY_TYPE[obj.type] ?? { label: obj.type, color: "bg-[#1f1f1f]", icon: "Tag" }
   const statusCls = STATUS_STYLE[obj.status] ?? "bg-[#1f1f1f] text-gray-400 border-[#2a2a2a]"
   const isArchived = ARCHIVE_STATUSES.includes(obj.status)
+  const dealType = obj.extra_fields?.deal_type
+  const isRent = dealType === "rent"
+  const priceLabel = isRent ? `${obj.price} ₽/мес` : obj.price ? `${obj.price} ₽` : "—"
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -97,7 +100,18 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive }: ObjectC
 
         <div className="flex items-end justify-between mb-4 mt-auto">
           <div>
-            <p className="text-lg font-bold text-white">{obj.price ? `${obj.price} ₽` : "—"}</p>
+            <div className="flex items-center gap-2 mb-0.5">
+              {dealType && (
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  isRent
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                }`}>
+                  {isRent ? "Аренда" : "Продажа"}
+                </span>
+              )}
+            </div>
+            <p className="text-lg font-bold text-white">{priceLabel}</p>
             {obj.area && <p className="text-xs text-gray-500">{obj.area} м²</p>}
           </div>
           {obj.yield_percent && (

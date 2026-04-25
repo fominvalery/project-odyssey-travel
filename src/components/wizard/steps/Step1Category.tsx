@@ -10,7 +10,11 @@ interface Step1Props {
   setSubtype: (v: string) => void
   form: WizardForm
   setForm: (f: WizardForm) => void
+  dealType: string
+  setDealType: (v: string) => void
 }
+
+const DEAL_TYPE_CATEGORIES = ["commercial", "residential"]
 
 const CAT_BG: Record<string, string> = {
   "commercial":  "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b50fb88-f4e7-44ec-8719-e0fd7f90acf6.jpg",
@@ -44,14 +48,30 @@ const RESORT_SUBTYPE_ICONS: Record<string, string> = {
   "Готовый арендный бизнес в курортной локации": "TrendingUp",
 }
 
-export function Step1Category({ category, setCategory, subtype, setSubtype }: Step1Props) {
+export function Step1Category({ category, setCategory, subtype, setSubtype, dealType, setDealType }: Step1Props) {
   const selectedCat = CATEGORIES.find(c => c.id === category)
   const isResort = category === "resort"
+  const showDealType = DEAL_TYPE_CATEGORIES.includes(category)
   const subtypeRef = useRef<HTMLDivElement>(null)
+  const dealTypeRef = useRef<HTMLDivElement>(null)
 
   function handleCategorySelect(id: string) {
     setCategory(id)
     setSubtype("")
+    if (DEAL_TYPE_CATEGORIES.includes(id)) {
+      setDealType("")
+      setTimeout(() => {
+        dealTypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
+    } else {
+      setTimeout(() => {
+        subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
+    }
+  }
+
+  function handleDealTypeSelect(v: string) {
+    setDealType(v)
     setTimeout(() => {
       subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     }, 50)
@@ -79,20 +99,10 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
                     }`}
                     style={{ minHeight: 160 }}
                   >
-                    {/* Фоновое фото */}
                     {bg && (
-                      <img
-                        src={bg}
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                      <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     )}
-                    {/* Оверлей */}
-                    <div
-                      className="absolute inset-0 transition-all duration-300"
-                      style={{ background: isActive ? "rgba(23,37,84,0.68)" : "rgba(0,0,0,0.58)" }}
-                    />
-                    {/* Контент */}
+                    <div className="absolute inset-0 transition-all duration-300" style={{ background: isActive ? "rgba(23,37,84,0.68)" : "rgba(0,0,0,0.58)" }} />
                     <div className="relative z-10 p-6 flex flex-col items-center justify-center h-full">
                       <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center backdrop-blur-sm transition-all ${
                         isActive ? "bg-blue-500/40 border border-blue-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
@@ -109,6 +119,51 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
           </div>
         )
       })}
+
+      {/* Выбор типа сделки для Коммерции и Жилой */}
+      {showDealType && (
+        <div ref={dealTypeRef} className="rounded-2xl border border-[#2a2a2a] bg-[#0d0d0d] p-5">
+          <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-4">Что планируете?</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => handleDealTypeSelect("sale")}
+              className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all ${
+                dealType === "sale"
+                  ? "border-blue-500 bg-blue-500/10 text-white"
+                  : "border-[#2a2a2a] bg-[#111] text-gray-400 hover:border-white/20 hover:text-white"
+              }`}
+            >
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                dealType === "sale" ? "bg-blue-500/20" : "bg-[#1a1a1a]"
+              }`}>
+                <Icon name="Tag" className={`h-6 w-6 ${dealType === "sale" ? "text-blue-400" : "text-gray-500"}`} />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-sm">Продать</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">Единоразовая сделка</p>
+              </div>
+            </button>
+            <button
+              onClick={() => handleDealTypeSelect("rent")}
+              className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all ${
+                dealType === "rent"
+                  ? "border-emerald-500 bg-emerald-500/10 text-white"
+                  : "border-[#2a2a2a] bg-[#111] text-gray-400 hover:border-white/20 hover:text-white"
+              }`}
+            >
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                dealType === "rent" ? "bg-emerald-500/20" : "bg-[#1a1a1a]"
+              }`}>
+                <Icon name="KeyRound" className={`h-6 w-6 ${dealType === "rent" ? "text-emerald-400" : "text-gray-500"}`} />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-sm">Сдать в аренду</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">Ежемесячный доход</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Выбор подтипа для Курортной — с подгруппами */}
       {isResort && selectedCat?.subgroups && (
@@ -143,8 +198,8 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
         </div>
       )}
 
-      {/* Выбор подтипа для НЕ курортных категорий */}
-      {!isResort && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (
+      {/* Выбор подтипа для НЕ курортных (показываем после выбора deal_type если нужен, или сразу) */}
+      {!isResort && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
         <div ref={subtypeRef}>
           <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">
             Тип объекта — {selectedCat.label}

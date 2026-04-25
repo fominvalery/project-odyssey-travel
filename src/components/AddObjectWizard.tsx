@@ -19,6 +19,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
   const [step, setStep] = useState(0)
   const [category, setCategory] = useState(initial?.category ?? "")
   const [subtype, setSubtype] = useState(initial?.extra_fields?.subtype ?? initial?.subtype ?? "")
+  const [dealType, setDealType] = useState(initial?.extra_fields?.deal_type ?? "")
   const [publishToMarket, setPublishToMarket] = useState(initial?.published ?? true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<WizardForm>({
@@ -58,7 +59,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
 
   async function handlePublish() {
     const cat = CATEGORIES.find(c => c.id === category)
-    const enrichedFields = subtype ? { ...categoryFields, subtype } : categoryFields
+    const enrichedFields = { ...categoryFields, ...(subtype ? { subtype } : {}), ...(dealType ? { deal_type: dealType } : {}) }
     const payload = {
       user_id: userId ?? "",
       category,
@@ -180,7 +181,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
 
         {/* Шаги */}
         {step === 0 && (
-          <Step1Category category={category} setCategory={setCategory} subtype={subtype} setSubtype={setSubtype} form={form} setForm={setForm} />
+          <Step1Category category={category} setCategory={setCategory} subtype={subtype} setSubtype={setSubtype} form={form} setForm={setForm} dealType={dealType} setDealType={setDealType} />
         )}
         {step === 1 && (
           <Step2Location form={form} setForm={setForm} />
@@ -193,6 +194,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             subtype={subtype}
             categoryFields={categoryFields}
             onCategoryField={handleCategoryField}
+            dealType={dealType}
           />
         )}
         {step === 3 && (

@@ -15,6 +15,9 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
   const occupancy = ef?.occupancy ?? ""
   const avgCheck = ef?.avg_check ?? ""
   const units = ef?.units ?? ""
+  const dealType = ef?.deal_type ?? ""
+  const isRent = dealType === "rent"
+  const priceDisplay = isRent && obj.price !== "—" ? `${obj.price}/мес` : obj.price
 
   return (
     <div
@@ -85,7 +88,16 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
         ) : (
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-lg font-bold text-white">{obj.price}</p>
+              {dealType && (
+                <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1 ${
+                  isRent
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                }`}>
+                  {isRent ? "Аренда" : "Продажа"}
+                </span>
+              )}
+              <p className="text-lg font-bold text-white">{priceDisplay}</p>
               <p className="text-xs text-gray-500">{obj.area}</p>
             </div>
             {obj.yield !== "—" && (
