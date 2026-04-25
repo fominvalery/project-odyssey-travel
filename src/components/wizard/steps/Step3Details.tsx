@@ -13,6 +13,13 @@ function unformatPrice(val: string): string {
   return val.replace(/\s/g, "")
 }
 
+// Ключи полей которые нужно форматировать как числа с пробелами
+const PRICE_KEYS = new Set([
+  "rent", "start_price", "deposit", "entry_price",
+  "annual_revenue", "avg_check",
+  "rent_price_sqm", "opex", "owner_fee",
+])
+
 interface Step3Props {
   form: WizardForm
   setForm: (f: WizardForm) => void
@@ -124,19 +131,24 @@ export function Step3Details({
             {catLabel}{subtype ? ` · ${subtype}` : ""} — {isRent ? "условия аренды" : "параметры объекта"}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {mainFields.map(field => (
-              <div key={field.key}>
-                <Label className="text-xs text-gray-400 mb-1.5 block">{field.label}</Label>
-                <Input
-                  placeholder={field.placeholder}
-                  value={categoryFields[field.key] ?? ""}
-                  onChange={e => onCategoryField(field.key, e.target.value)}
-                  className={`bg-[#111] text-white placeholder:text-gray-600 ${
-                    isRent ? "border-emerald-500/20 focus-visible:ring-emerald-500" : "border-[#1f1f1f]"
-                  }`}
-                />
-              </div>
-            ))}
+            {mainFields.map(field => {
+              const isNum = PRICE_KEYS.has(field.key)
+              const val = categoryFields[field.key] ?? ""
+              return (
+                <div key={field.key}>
+                  <Label className="text-xs text-gray-400 mb-1.5 block">{field.label}</Label>
+                  <Input
+                    placeholder={field.placeholder}
+                    value={isNum ? formatPrice(val) : val}
+                    onChange={e => onCategoryField(field.key, isNum ? unformatPrice(e.target.value) : e.target.value)}
+                    inputMode={isNum ? "numeric" : undefined}
+                    className={`bg-[#111] text-white placeholder:text-gray-600 ${
+                      isRent ? "border-emerald-500/20 focus-visible:ring-emerald-500" : "border-[#1f1f1f]"
+                    }`}
+                  />
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -149,17 +161,22 @@ export function Step3Details({
             Финансовые показатели
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {financeFields.map(field => (
-              <div key={field.key}>
-                <Label className="text-xs text-gray-400 mb-1.5 block">{field.label}</Label>
-                <Input
-                  placeholder={field.placeholder}
-                  value={categoryFields[field.key] ?? ""}
-                  onChange={e => onCategoryField(field.key, e.target.value)}
-                  className="bg-[#0a1a1a] border-cyan-500/20 text-white placeholder:text-gray-600 focus-visible:ring-cyan-500"
-                />
-              </div>
-            ))}
+            {financeFields.map(field => {
+              const isNum = PRICE_KEYS.has(field.key)
+              const val = categoryFields[field.key] ?? ""
+              return (
+                <div key={field.key}>
+                  <Label className="text-xs text-gray-400 mb-1.5 block">{field.label}</Label>
+                  <Input
+                    placeholder={field.placeholder}
+                    value={isNum ? formatPrice(val) : val}
+                    onChange={e => onCategoryField(field.key, isNum ? unformatPrice(e.target.value) : e.target.value)}
+                    inputMode={isNum ? "numeric" : undefined}
+                    className="bg-[#0a1a1a] border-cyan-500/20 text-white placeholder:text-gray-600 focus-visible:ring-cyan-500"
+                  />
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
