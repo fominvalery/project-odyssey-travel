@@ -230,47 +230,55 @@ def handler(event: dict, context) -> dict:
             if str(row[0]) != str(user_id):
                 return resp(403, {"error": "forbidden"})
 
-            extra = json.dumps(body.get("extra_fields", {}))
-            photos = body.get("photos") or []
-            org_id = body.get("org_id") or None
-            dept_id = body.get("department_id") or None
-
-            base_set = (
-                "category=%s, type=%s, title=%s, city=%s, address=%s,"
-                " price=%s, area=%s, description=%s, yield_percent=%s,"
-                " extra_fields=%s::jsonb, status=%s, published=%s, photos=%s,"
-                " org_id=%s, department_id=%s"
-            )
-            base_vals = (
-                body.get("category", ""),
-                body.get("type", ""),
-                body.get("title", ""),
-                body.get("city", ""),
-                body.get("address", ""),
-                body.get("price", ""),
-                body.get("area", ""),
-                body.get("description", ""),
-                body.get("yield_percent", ""),
-                extra,
-                body.get("status", "Активен"),
-                bool(body.get("published", False)),
-                photos,
-                org_id,
-                dept_id,
-            )
-
-            if "presentation_url" in body:
-                sql = (
-                    "UPDATE " + schema + ".objects SET " + base_set +
-                    ", presentation_url=%s WHERE id=%s RETURNING " + SELECT_COLS
+            # Частичное обновление — только статус (для архива/восстановления)
+            status_only = set(body.keys()) <= {"id", "user_id", "status"}
+            if status_only and "status" in body:
+                cur.execute(
+                    "UPDATE " + schema + ".objects SET status=%s WHERE id=%s RETURNING " + SELECT_COLS,
+                    (body["status"], obj_id),
                 )
-                cur.execute(sql, base_vals + (body.get("presentation_url") or None, obj_id))
             else:
-                sql = (
-                    "UPDATE " + schema + ".objects SET " + base_set +
-                    " WHERE id=%s RETURNING " + SELECT_COLS
+                extra = json.dumps(body.get("extra_fields", {}))
+                photos = body.get("photos") or []
+                org_id = body.get("org_id") or None
+                dept_id = body.get("department_id") or None
+
+                base_set = (
+                    "category=%s, type=%s, title=%s, city=%s, address=%s,"
+                    " price=%s, area=%s, description=%s, yield_percent=%s,"
+                    " extra_fields=%s::jsonb, status=%s, published=%s, photos=%s,"
+                    " org_id=%s, department_id=%s"
                 )
-                cur.execute(sql, base_vals + (obj_id,))
+                base_vals = (
+                    body.get("category", ""),
+                    body.get("type", ""),
+                    body.get("title", ""),
+                    body.get("city", ""),
+                    body.get("address", ""),
+                    body.get("price", ""),
+                    body.get("area", ""),
+                    body.get("description", ""),
+                    body.get("yield_percent", ""),
+                    extra,
+                    body.get("status", "Активен"),
+                    bool(body.get("published", False)),
+                    photos,
+                    org_id,
+                    dept_id,
+                )
+
+                if "presentation_url" in body:
+                    sql = (
+                        "UPDATE " + schema + ".objects SET " + base_set +
+                        ", presentation_url=%s WHERE id=%s RETURNING " + SELECT_COLS
+                    )
+                    cur.execute(sql, base_vals + (body.get("presentation_url") or None, obj_id))
+                else:
+                    sql = (
+                        "UPDATE " + schema + ".objects SET " + base_set +
+                        " WHERE id=%s RETURNING " + SELECT_COLS
+                    )
+                    cur.execute(sql, base_vals + (obj_id,))
 
             row = cur.fetchone()
             conn.commit()
