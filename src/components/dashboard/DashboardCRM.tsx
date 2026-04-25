@@ -22,6 +22,7 @@ interface DashboardCRMProps {
   userId: string
   orgId?: string
   deptId?: string
+  onReassignLead?: (lead: Lead) => void
 }
 
 // ── Канбан-колонка ─────────────────────────────────────────────────────────────
@@ -38,9 +39,10 @@ interface KanbanColumnProps {
   onDelete: (id: string) => void
   onOverdueRefresh: () => void
   onLeadUpdate: (lead: Lead) => void
+  onReassign?: (lead: Lead) => void
 }
 
-function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onStageChange, onDelete, onOverdueRefresh, onLeadUpdate }: KanbanColumnProps) {
+function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onStageChange, onDelete, onOverdueRefresh, onLeadUpdate, onReassign }: KanbanColumnProps) {
   return (
     <div className="flex flex-col min-w-[260px] w-[260px]">
       <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border mb-2 ${bg}`}>
@@ -63,6 +65,7 @@ function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onSta
             onDelete={onDelete}
             onOverdueRefresh={onOverdueRefresh}
             onLeadUpdate={onLeadUpdate}
+            onReassign={onReassign}
           />
         ))}
       </div>
@@ -72,7 +75,7 @@ function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onSta
 
 // ── Основной компонент ─────────────────────────────────────────────────────────
 
-export function DashboardCRM({ userId, orgId, deptId }: DashboardCRMProps) {
+export function DashboardCRM({ userId, orgId, deptId, onReassignLead }: DashboardCRMProps) {
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(false)
   const [filterStage, setFilterStage] = useState<FunnelStage | "Все">("Все")
@@ -292,6 +295,7 @@ export function DashboardCRM({ userId, orgId, deptId }: DashboardCRMProps) {
                   onDelete={handleDelete}
                   onOverdueRefresh={loadOverdue}
                   onLeadUpdate={(updated) => setLeads(prev => prev.map(l => l.id === updated.id ? updated : l))}
+                  onReassign={onReassignLead}
                 />
               )
             })}

@@ -29,6 +29,8 @@ import AgencyReviewsTab from "@/components/agency/AgencyReviewsTab"
 import InviteModal from "@/components/agency/InviteModal"
 import DepartmentModal from "@/components/agency/DepartmentModal"
 import ReassignObjectModal from "@/components/agency/ReassignObjectModal"
+import ReassignLeadModal from "@/components/agency/ReassignLeadModal"
+import type { Lead } from "@/components/dashboard/LeadCard"
 import { DashboardCRM } from "@/components/dashboard/DashboardCRM"
 import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import DashboardClub from "@/components/dashboard/DashboardClub"
@@ -100,6 +102,7 @@ export default function Agency() {
   const [statusFilter, setStatusFilter] = useState("Все")
   const [objSearch, setObjSearch] = useState("")
   const [reassigningObject, setReassigningObject] = useState<ObjectData | null>(null)
+  const [reassigningLead, setReassigningLead] = useState<Lead | null>(null)
   const [profileForm, setProfileForm] = useState<ProfileForm>({
     firstName: user?.firstName ?? "", lastName: user?.lastName ?? "",
     middleName: user?.middleName ?? "", name: user?.name ?? "",
@@ -154,6 +157,16 @@ export default function Agency() {
     if (!user || !orgId) return
     try { await agencyApi.updateEmployee(user.id, orgId, { user_id: targetUserId, department_id: deptId }); toast({ title: "Отдел обновлён" }); reload() }
     catch (e) { toast({ title: "Ошибка", description: (e as Error).message, variant: "destructive" }) }
+  }
+
+  async function handleReassignLead(leadId: string, toUserId: string) {
+    if (!user || !orgId) return
+    await fetch(func2url.leads, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: leadId, requester_id: user.id, to_owner_id: toUserId, org_id: orgId }),
+    })
+    toast({ title: "Клиент переназначен" })
   }
 
   async function handleReassignObject(objId: string, toUserId: string) {
@@ -347,7 +360,11 @@ export default function Agency() {
           )}
 
           {section === "crm" && user && orgId && (
-            <DashboardCRM userId={user.id} orgId={orgId} deptId={isRop ? (myDeptId ?? undefined) : undefined} />
+            <DashboardCRM
+              userId={user.id} orgId={orgId}
+              deptId={isRop ? (myDeptId ?? undefined) : undefined}
+              onReassignLead={isDirector ? (lead) => setReassigningLead(lead) : undefined}
+            />
           )}
 
           {section === "analytics" && canSee(myRole, "rop") && orgId && (
@@ -435,6 +452,16 @@ export default function Agency() {
           currentUserId={user.id}
           onReassign={handleReassignObject}
           onClose={() => setReassigningObject(null)}
+        />
+      )}
+
+      {reassigningLead && user && (
+        <ReassignLeadModal
+          lead={reassigningLead}
+          employees={employees}
+          currentUserId={user.id}
+          onReassign={handleReassignLead}
+          onClose={() => setReassigningLead(null)}
         />
       )}
 

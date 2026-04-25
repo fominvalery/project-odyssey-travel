@@ -212,6 +212,38 @@ def handler(event: dict, context) -> dict:
             conn.commit()
             return resp(200, {"ok": True})
 
+        # ---------- PATCH (reassign) ----------
+        if method == "PATCH":
+            body = json.loads(event.get("body") or "{}")
+            lead_id = body.get("id")
+            requester_id = body.get("requester_id")
+            to_owner_id = body.get("to_owner_id")
+            org_id = body.get("org_id")
+
+            if not lead_id or not requester_id or not to_owner_id:
+                return resp(400, {"error": "id, requester_id, to_owner_id required"})
+
+            # Проверяем что реквестер — директор/учредитель в АН
+            if org_id:
+                cur.execute(
+                    f"SELECT role_code FROM {schema}.org_memberships "
+                    "WHERE user_id=%s AND organization_id=%s AND status='active'",
+                    (requester_id, org_id),
+                )
+                role_row = cur.fetchone()
+                if not role_row or role_row[0] not in ("founder", "director"):
+                    return resp(403, {"error": "Нужна роль директора или учредителя"})
+
+            cur.execute(
+                f"UPDATE {schema}.leads SET owner_id=%s WHERE id=%s RETURNING {SELECT_COLS}",
+                (to_owner_id, lead_id),
+            )
+            row = cur.fetchone()
+            if not row:
+                return resp(404, {"error": "not found"})
+            conn.commit()
+            return resp(200, {"ok": True, "lead": row_to_lead(row)})
+
         return resp(405, {"error": "Method not allowed"})
     finally:
         cur.close()

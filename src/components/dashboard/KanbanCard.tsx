@@ -23,6 +23,7 @@ interface KanbanCardProps {
   onDelete: (id: string) => void
   onOverdueRefresh: () => void
   onLeadUpdate?: (lead: Lead) => void
+  onReassign?: (lead: Lead) => void
 }
 
 function StagePopover({ lead, onStageChange }: { lead: Lead; onStageChange: (id: string, stage: FunnelStage) => void }) {
@@ -53,7 +54,7 @@ function StagePopover({ lead, onStageChange }: { lead: Lead; onStageChange: (id:
   )
 }
 
-export function KanbanCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, onOverdueRefresh, onLeadUpdate }: KanbanCardProps) {
+export function KanbanCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, onOverdueRefresh, onLeadUpdate, onReassign }: KanbanCardProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
 
   return (
@@ -83,6 +84,15 @@ export function KanbanCard({ lead, ownerId, hasOverdue, onStageChange, onDelete,
 
           <div className="flex items-center gap-1.5">
             <LeadTasksDialog lead={lead} ownerId={ownerId} hasOverdue={hasOverdue} onOverdueRefresh={onOverdueRefresh} />
+            {onReassign && (
+              <button
+                onClick={() => onReassign(lead)}
+                className="h-6 w-6 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-blue-400 hover:text-blue-300 hover:border-blue-500/40 transition-colors"
+                title="Переназначить"
+              >
+                <Icon name="ArrowRightLeft" className="h-3 w-3" />
+              </button>
+            )}
             <StagePopover lead={lead} onStageChange={onStageChange} />
             <button
               onClick={() => setSheetOpen(true)}
