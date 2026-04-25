@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import Icon from "@/components/ui/icon"
 import { ObjectDetailData, FIELD_LABELS } from "./types"
 
@@ -13,10 +14,28 @@ export default function ObjectGallery({ obj, activePhoto, setActivePhoto }: Obje
   const HIDDEN_KEYS = new Set(["subtype", "deal_type"])
   const extraKeys = Object.keys(extra).filter(k => extra[k] && extra[k].toString().trim() && !HIDDEN_KEYS.has(k))
 
+  function prev() {
+    setActivePhoto(activePhoto === 0 ? photos.length - 1 : activePhoto - 1)
+  }
+
+  function next() {
+    setActivePhoto(activePhoto === photos.length - 1 ? 0 : activePhoto + 1)
+  }
+
+  useEffect(() => {
+    if (photos.length <= 1) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") prev()
+      if (e.key === "ArrowRight") next()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [activePhoto, photos.length])
+
   return (
     <div className="lg:col-span-2">
       {/* Галерея */}
-      <div className="rounded-2xl overflow-hidden bg-[#111] border border-[#1f1f1f] mb-4">
+      <div className="relative rounded-2xl overflow-hidden bg-[#111] border border-[#1f1f1f] mb-4 group">
         {photos.length > 0 ? (
           <img
             src={photos[activePhoto]}
@@ -28,7 +47,31 @@ export default function ObjectGallery({ obj, activePhoto, setActivePhoto }: Obje
             <Icon name="Building2" className="h-20 w-20 text-gray-700" />
           </div>
         )}
+
+        {/* Стрелки */}
+        {photos.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100"
+            >
+              <Icon name="ChevronLeft" className="h-5 w-5" />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100"
+            >
+              <Icon name="ChevronRight" className="h-5 w-5" />
+            </button>
+
+            {/* Счётчик фото */}
+            <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full border border-white/10">
+              {activePhoto + 1} / {photos.length}
+            </div>
+          </>
+        )}
       </div>
+
       {photos.length > 1 && (
         <div className="flex gap-2 overflow-x-auto mb-8 pb-2">
           {photos.map((p, i) => (
