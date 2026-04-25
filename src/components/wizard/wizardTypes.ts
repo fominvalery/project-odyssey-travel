@@ -36,7 +36,7 @@ export interface WizardForm {
   presentation_contact_company: string
 }
 
-export const STEPS = ["Основное", "Локация", "Характеристики", "Описание", "Презентация", "Публикация"]
+export const STEPS = ["Основное", "Локация", "Характеристики", "Описание", "Презентация", "Публикация", "Собственник"]
 
 // Группы категорий для визарда
 export interface CategoryItem {

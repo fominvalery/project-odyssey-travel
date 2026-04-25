@@ -32,7 +32,13 @@ def get_conn():
     return conn, schema
 
 
-def row_to_obj(r):
+def strip_private_fields(extra: dict) -> dict:
+    """Удаляет конфиденциальные поля собственника из extra_fields для публичных запросов."""
+    return {k: v for k, v in extra.items() if not k.startswith("owner_")}
+
+
+def row_to_obj(r, private=False):
+    extra = r[11] or {}
     return {
         "id": str(r[0]),
         "user_id": str(r[1]) if r[1] else None,
@@ -45,7 +51,7 @@ def row_to_obj(r):
         "area": r[8] or "",
         "description": r[9] or "",
         "yield_percent": r[10] or "",
-        "extra_fields": r[11] or {},
+        "extra_fields": extra if private else strip_private_fields(extra),
         "status": r[12] or "Активен",
         "published": r[13] or False,
         "created_at": r[14].isoformat() if r[14] else "",
@@ -137,7 +143,9 @@ def handler(event: dict, context) -> dict:
                 )
 
             rows = cur.fetchall()
-            return resp(200, {"objects": [row_to_obj(r) for r in rows]})
+            # Приватные данные (owner_*) только для владельца
+            is_private = bool(user_id)
+            return resp(200, {"objects": [row_to_obj(r, private=is_private) for r in rows]})
 
         # ---------- POST ----------
         if method == "POST":

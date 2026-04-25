@@ -2,6 +2,54 @@ import { useState, useRef, useEffect } from "react"
 import Icon from "@/components/ui/icon"
 import type { ObjectData } from "@/components/AddObjectWizard"
 
+function OwnerBlock({ extraFields }: { extraFields: Record<string, string> }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border border-amber-500/20 rounded-xl bg-amber-500/5 overflow-hidden mb-1">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
+      >
+        <span className="flex items-center gap-1.5">
+          <Icon name="Lock" className="h-3 w-3" />
+          Данные собственника
+        </span>
+        <Icon name={open ? "ChevronUp" : "ChevronDown"} className="h-3 w-3" />
+      </button>
+      {open && (
+        <div className="px-3 pb-3 space-y-1.5 border-t border-amber-500/10">
+          {extraFields.owner_name && (
+            <div className="flex items-center gap-2 pt-2">
+              <Icon name="User" className="h-3 w-3 text-gray-500 shrink-0" />
+              <span className="text-xs text-gray-300">{extraFields.owner_name}</span>
+            </div>
+          )}
+          {extraFields.owner_phone && (
+            <div className="flex items-center gap-2">
+              <Icon name="Phone" className="h-3 w-3 text-gray-500 shrink-0" />
+              <a href={`tel:${extraFields.owner_phone}`} className="text-xs text-blue-400 hover:underline">
+                {extraFields.owner_phone}
+              </a>
+            </div>
+          )}
+          {extraFields.owner_fee && (
+            <div className="flex items-center gap-2">
+              <Icon name="Percent" className="h-3 w-3 text-gray-500 shrink-0" />
+              <span className="text-xs text-gray-300">{extraFields.owner_fee}</span>
+            </div>
+          )}
+          {extraFields.owner_comment && (
+            <div className="flex items-start gap-2">
+              <Icon name="MessageSquare" className="h-3 w-3 text-gray-500 shrink-0 mt-0.5" />
+              <span className="text-xs text-gray-400 leading-relaxed">{extraFields.owner_comment}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface ObjectCardProps {
   obj: ObjectData
   onEdit: (obj: ObjectData) => void
@@ -121,6 +169,11 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive }: ObjectC
             </div>
           )}
         </div>
+
+        {/* Данные собственника */}
+        {(obj.extra_fields?.owner_name || obj.extra_fields?.owner_phone) && (
+          <OwnerBlock extraFields={obj.extra_fields} />
+        )}
 
         {/* Действия */}
         <div className="flex gap-2 pt-3 border-t border-[#1a1a1a]">

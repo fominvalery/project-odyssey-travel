@@ -10,6 +10,7 @@ import func2url from "../../../backend/func2url.json"
 export { Step1Category } from "./steps/Step1Category"
 export { Step3Details } from "./steps/Step3Details"
 export { Step5Presentation } from "./steps/Step5Presentation"
+export { Step7Owner } from "./steps/Step7Owner"
 
 // ── Шаг 2: Локация ──────────────────────────────────────────────────────────
 

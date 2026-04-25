@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import func2url from "../../backend/func2url.json"
 import { ObjectData, WizardForm, STEPS, CATEGORIES } from "./wizard/wizardTypes"
-import { Step1Category, Step2Location, Step3Details, Step4Landing, Step5Presentation, Step6Publish } from "./wizard/WizardSteps"
+import { Step1Category, Step2Location, Step3Details, Step4Landing, Step5Presentation, Step6Publish, Step7Owner } from "./wizard/WizardSteps"
 
 export type { ObjectData }
 
@@ -20,6 +20,12 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
   const [category, setCategory] = useState(initial?.category ?? "")
   const [subtype, setSubtype] = useState(initial?.extra_fields?.subtype ?? initial?.subtype ?? "")
   const [dealType, setDealType] = useState(initial?.extra_fields?.deal_type ?? "")
+  const [ownerFields, setOwnerFields] = useState({
+    owner_name: initial?.extra_fields?.owner_name ?? "",
+    owner_phone: initial?.extra_fields?.owner_phone ?? "",
+    owner_fee: initial?.extra_fields?.owner_fee ?? "",
+    owner_comment: initial?.extra_fields?.owner_comment ?? "",
+  })
   const [publishToMarket, setPublishToMarket] = useState(initial?.published ?? true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<WizardForm>({
@@ -59,7 +65,12 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
 
   async function handlePublish() {
     const cat = CATEGORIES.find(c => c.id === category)
-    const enrichedFields = { ...categoryFields, ...(subtype ? { subtype } : {}), ...(dealType ? { deal_type: dealType } : {}) }
+    const enrichedFields = {
+      ...categoryFields,
+      ...(subtype ? { subtype } : {}),
+      ...(dealType ? { deal_type: dealType } : {}),
+      ...ownerFields,
+    }
     const payload = {
       user_id: userId ?? "",
       category,
@@ -228,6 +239,9 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             setPublishToMarket={setPublishToMarket}
           />
         )}
+        {step === 6 && (
+          <Step7Owner ownerFields={ownerFields} setOwnerFields={setOwnerFields} />
+        )}
 
         {/* Кнопки навигации */}
         <div className="flex justify-between mt-8 pt-6 border-t border-[#1f1f1f]">
@@ -238,13 +252,17 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
           >
             <Icon name="ArrowLeft" className="h-4 w-4 mr-2" /> Назад
           </Button>
-          {step < 5 ? (
+          {step < 6 ? (
             <Button
               onClick={handleNext}
               disabled={step === 0 && !category}
               className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40"
             >
-              Далее <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
+              {step === 5 ? (
+                <><Icon name="Lock" className="h-4 w-4 mr-2" />Данные собственника</>
+              ) : (
+                <>Далее <Icon name="ArrowRight" className="h-4 w-4 ml-2" /></>
+              )}
             </Button>
           ) : (
             <Button onClick={handlePublish} disabled={saving} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60">
