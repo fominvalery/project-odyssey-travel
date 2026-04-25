@@ -47,4 +47,13 @@ export const FIELD_LABELS: Record<string, string> = {
   delivery: "Срок сдачи",
   corpus: "Корпус / секция",
   chess: "Шахматка",
+  furniture: "Мебель",
+  appliances: "Техника",
+  pets: "Животные",
+  lease_term: "Срок аренды",
+  rent_price_sqm: "Ставка аренды",
+  opex: "Эксплуатационные расходы",
+  lease_from: "Аренда от",
+  encumbrance: "Арендатор / обременение",
+  deal_type: "",
 }

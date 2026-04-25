@@ -31,10 +31,25 @@ export default function ObjectSidebar({
     }
     setShowContacts(true)
   }
+  const dealType = (obj.extra_fields as Record<string, string> | undefined)?.deal_type ?? ""
+  const isRent = dealType === "rent"
+  const priceLabel = isRent ? "Стоимость аренды" : "Стоимость"
+  const priceSuffix = isRent ? " ₽/мес" : " ₽"
+
   return (
     <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-6">
-      <p className="text-xs text-gray-500 mb-1">Стоимость</p>
-      <p className="text-3xl font-bold mb-6">{obj.price ? `${obj.price} ₽` : "По запросу"}</p>
+      {dealType && (
+        <div className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full mb-3 ${
+          isRent
+            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+            : "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+        }`}>
+          <Icon name={isRent ? "KeyRound" : "Tag"} className="h-3 w-3" />
+          {isRent ? "Сдаётся в аренду" : "Продажа"}
+        </div>
+      )}
+      <p className="text-xs text-gray-500 mb-1">{priceLabel}</p>
+      <p className="text-3xl font-bold mb-6">{obj.price ? `${obj.price}${priceSuffix}` : "По запросу"}</p>
 
       {obj.owner && (
         <div className="border-t border-[#1f1f1f] pt-5 mb-5">
