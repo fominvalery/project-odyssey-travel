@@ -55,7 +55,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
 
   function handleNext() {
     if (step === 0 && !category) return
-    setStep(s => Math.min(s + 1, 5))
+    setStep(s => Math.min(s + 1, STEPS.length - 1))
   }
 
   function handleBack() {
