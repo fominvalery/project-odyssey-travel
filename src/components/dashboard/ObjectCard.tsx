@@ -262,13 +262,11 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwn
         </div>
 
         {/* Данные собственника */}
-        {obj.extra_fields && (
-          <OwnerBlock
-            extraFields={obj.extra_fields}
-            objId={String(obj.id)}
-            onSave={onSaveOwner}
-          />
-        )}
+        <OwnerBlock
+          extraFields={obj.extra_fields ?? {}}
+          objId={String(obj.id)}
+          onSave={onSaveOwner}
+        />
 
         {/* Действия */}
         <div className="flex gap-2 pt-3 border-t border-[#1a1a1a]">
