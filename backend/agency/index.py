@@ -369,6 +369,110 @@ def update_employee(user_id, org_id, target_user_id, body):
         return _cors({'ok': True})
 
 
+def fire_employee(user_id, org_id, body):
+    """Уволить сотрудника: снять из АН, передать объекты и лиды получателю."""
+    target_user_id = body.get('user_id')
+    if not target_user_id:
+        return _cors({'error': 'user_id обязателен'}, 400)
+
+    with _conn() as conn, conn.cursor() as cur:
+        # Проверка прав — только директор или учредитель
+        m = _membership(cur, user_id, org_id)
+        if not m or m[1] not in ADMIN_ROLES:
+            return _cors({'error': 'Нужна роль учредителя или директора'}, 403)
+
+        # Нельзя уволить самого себя
+        if target_user_id == user_id:
+            return _cors({'error': 'Нельзя уволить самого себя'}, 400)
+
+        # Получаем данные увольняемого
+        cur.execute(
+            "SELECT role_code, department_id FROM org_memberships "
+            "WHERE user_id=%s AND organization_id=%s AND status='active'",
+            (target_user_id, org_id)
+        )
+        target = cur.fetchone()
+        if not target:
+            return _cors({'error': 'Сотрудник не найден'}, 404)
+
+        target_role, target_dept_id = target
+
+        # Директор не может уволить учредителя или другого директора
+        if m[1] == 'director' and target_role in ADMIN_ROLES:
+            return _cors({'error': 'Директор не может уволить учредителя или директора'}, 403)
+
+        # Определяем получателя объектов и лидов:
+        # 1. РОП отдела → 2. Директор → 3. Учредитель
+        recipient_id = None
+
+        if target_dept_id:
+            # Ищем РОПа отдела
+            cur.execute(
+                "SELECT user_id FROM org_memberships "
+                "WHERE organization_id=%s AND department_id=%s AND role_code='rop' AND status='active' LIMIT 1",
+                (org_id, target_dept_id)
+            )
+            rop_row = cur.fetchone()
+            if rop_row:
+                recipient_id = rop_row[0]
+
+        if not recipient_id:
+            # Ищем директора
+            cur.execute(
+                "SELECT user_id FROM org_memberships "
+                "WHERE organization_id=%s AND role_code='director' AND status='active' LIMIT 1",
+                (org_id,)
+            )
+            dir_row = cur.fetchone()
+            if dir_row:
+                recipient_id = dir_row[0]
+
+        if not recipient_id:
+            # Ищем учредителя
+            cur.execute(
+                "SELECT user_id FROM org_memberships "
+                "WHERE organization_id=%s AND role_code='founder' AND status='active' LIMIT 1",
+                (org_id,)
+            )
+            founder_row = cur.fetchone()
+            if founder_row:
+                recipient_id = founder_row[0]
+
+        if not recipient_id:
+            return _cors({'error': 'Не найден получатель для передачи объектов'}, 400)
+
+        # Переносим объекты уволенного → получателю со статусом Актуализировать
+        cur.execute(
+            "UPDATE objects SET user_id=%s, status='Актуализировать', "
+            "extra_fields = extra_fields || jsonb_build_object('transferred_from', %s::text, 'transferred_from_org', %s::text) "
+            "WHERE user_id=%s",
+            (recipient_id, target_user_id, org_id, target_user_id)
+        )
+        objects_transferred = cur.rowcount
+
+        # Переносим лиды уволенного → получателю
+        cur.execute(
+            "UPDATE leads SET owner_id=%s WHERE owner_id=%s",
+            (recipient_id, target_user_id)
+        )
+        leads_transferred = cur.rowcount
+
+        # Снимаем сотрудника из АН (меняем статус на fired)
+        cur.execute(
+            "UPDATE org_memberships SET status='fired' "
+            "WHERE user_id=%s AND organization_id=%s",
+            (target_user_id, org_id)
+        )
+
+        conn.commit()
+        return _cors({
+            'ok': True,
+            'recipient_id': str(recipient_id),
+            'objects_transferred': objects_transferred,
+            'leads_transferred': leads_transferred,
+        })
+
+
 # ── Departments ────────────────────────────────────────────────────────
 
 def list_departments(user_id, org_id):
@@ -1007,6 +1111,8 @@ def handler(event, context) -> dict:
             return list_employees(user_id, org_id, qs)
         if action == 'update_employee':
             return update_employee(user_id, org_id, body.get('user_id'), body)
+        if action == 'fire_employee':
+            return fire_employee(user_id, org_id, body)
         if action == 'list_departments':
             return list_departments(user_id, org_id)
         if action == 'create_department':

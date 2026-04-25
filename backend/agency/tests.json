@@ -20,6 +20,14 @@
       "path": "/?action=unknown_xyz",
       "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000000"},
       "expectedStatus": 400
+    },
+    {
+      "name": "fire_employee without user_id returns 400",
+      "method": "POST",
+      "path": "/?action=fire_employee",
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000000", "X-Org-Id": "00000000-0000-0000-0000-000000000000"},
+      "body": {},
+      "expectedStatus": 400
     }
   ]
 }

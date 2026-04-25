@@ -174,6 +174,14 @@ export const agencyApi = {
     payload: { user_id: string; role_code?: RoleCode; department_id?: string | null; status?: string },
   ) => call<{ ok: true }>({ action: "update_employee", userId, orgId, body: payload }),
 
+  fireEmployee: (
+    userId: string,
+    orgId: string,
+    targetUserId: string,
+  ) => call<{ ok: true; recipient_id: string; objects_transferred: number; leads_transferred: number }>({
+    action: "fire_employee", userId, orgId, body: { user_id: targetUserId },
+  }),
+
   listDepartments: (userId: string, orgId: string) =>
     call<Department[]>({ action: "list_departments", userId, orgId, method: "GET" }),
 

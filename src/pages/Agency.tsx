@@ -153,6 +153,20 @@ export default function Agency() {
     try { await agencyApi.updateEmployee(user.id, orgId, { user_id: targetUserId, department_id: deptId }); toast({ title: "Отдел обновлён" }); reload() }
     catch (e) { toast({ title: "Ошибка", description: (e as Error).message, variant: "destructive" }) }
   }
+
+  async function fireEmployee(targetUserId: string) {
+    if (!user || !orgId) return
+    try {
+      const res = await agencyApi.fireEmployee(user.id, orgId, targetUserId)
+      toast({
+        title: "Сотрудник уволен",
+        description: `Передано объектов: ${res.objects_transferred}, лидов: ${res.leads_transferred}`,
+      })
+      reload()
+    } catch (e) {
+      toast({ title: "Ошибка", description: (e as Error).message, variant: "destructive" })
+    }
+  }
   async function confirmDeleteDept() {
     if (!user || !orgId || !deletingDept) return
     try { await agencyApi.deleteDepartment(user.id, orgId, deletingDept.id); toast({ title: "Отдел архивирован" }); setDeletingDept(null); reload() }
@@ -360,8 +374,11 @@ export default function Agency() {
           {section === "employees" && canSee(myRole, "rop") && (
             <AgencyEmployeesTab employees={employees} departments={departments}
               deptFilter={deptFilter} setDeptFilter={setDeptFilter}
-              isDirector={isDirector} isFounder={isFounder} currentUserId={user?.id}
-              onChangeRole={changeRole} onChangeDepartment={changeDepartment} />
+              isDirector={isDirector} isFounder={isFounder} isRop={isRop}
+              currentUserId={user?.id} myDeptId={myDeptId}
+              onChangeRole={changeRole} onChangeDepartment={changeDepartment}
+              onFireEmployee={isDirector ? fireEmployee : undefined}
+              onInvite={() => setInviteOpen(true)} />
           )}
 
           {section === "departments" && canSee(myRole, "director") && (
@@ -389,7 +406,9 @@ export default function Agency() {
       {orgId && (
         <>
           <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)}
-            orgId={orgId} departments={departments} onInvited={reload} canInviteDirector={isFounder} />
+            orgId={orgId} departments={departments} onInvited={reload}
+            canInviteDirector={isFounder}
+            isRop={isRop} ropDeptId={isRop ? myDeptId : null} />
           <DepartmentModal open={deptModalOpen} onClose={() => setDeptModalOpen(false)}
             orgId={orgId} employees={employees} department={editingDept} onSaved={reload} />
         </>

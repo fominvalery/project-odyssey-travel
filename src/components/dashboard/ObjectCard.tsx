@@ -169,6 +169,7 @@ const STATUS_STYLE: Record<string, string> = {
   "Продан":           "bg-red-500/15 text-red-400 border-red-500/30",
   "Сдан":             "bg-orange-500/15 text-orange-400 border-orange-500/30",
   "Ожидает аукциона": "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  "Актуализировать":  "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
 }
 
 const ARCHIVE_STATUSES = ["Продан", "Сдан"]

@@ -35,8 +35,10 @@ interface Props {
   orgId: string
   departments?: Department[]
   onInvited?: () => void
-  /** Если true — добавим опцию «Директор» (доступна только учредителю) */
   canInviteDirector?: boolean
+  /** Если задан — РОП приглашает только в свой отдел */
+  ropDeptId?: string | null
+  isRop?: boolean
 }
 
 const NONE_DEPT = "__none__"
@@ -48,10 +50,15 @@ export default function InviteModal({
   departments = [],
   onInvited,
   canInviteDirector = false,
+  ropDeptId,
+  isRop = false,
 }: Props) {
+  // РОП не может приглашать РОПов и выше
   const roleOptions: RoleCode[] = canInviteDirector
     ? ["director", ...BASE_ROLE_OPTIONS]
-    : BASE_ROLE_OPTIONS
+    : isRop
+      ? BASE_ROLE_OPTIONS.filter(r => r !== "rop")
+      : BASE_ROLE_OPTIONS
   const { user } = useAuthContext()
   const [form, setForm] = useState<{
     full_name: string
@@ -64,7 +71,7 @@ export default function InviteModal({
     email: "",
     phone: "",
     role_code: "broker",
-    department_id: NONE_DEPT,
+    department_id: ropDeptId ?? NONE_DEPT,
   })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ url: string; autoJoined: boolean } | null>(null)
@@ -166,22 +173,28 @@ export default function InviteModal({
             {departments.length > 0 && (
               <div>
                 <label className="text-sm font-medium mb-1 block">Отдел</label>
-                <Select
-                  value={form.department_id}
-                  onValueChange={(v) => setForm({ ...form, department_id: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE_DEPT}>Без отдела</SelectItem>
-                    {departments.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {isRop && ropDeptId ? (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-300">
+                    <Icon name="Network" size={14} className="text-emerald-400" />
+                    {departments.find(d => d.id === ropDeptId)?.name ?? "Ваш отдел"}
+                    <span className="text-xs text-slate-500 ml-1">(фиксировано)</span>
+                  </div>
+                ) : (
+                  <Select
+                    value={form.department_id}
+                    onValueChange={(v) => setForm({ ...form, department_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE_DEPT}>Без отдела</SelectItem>
+                      {departments.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
             <Button onClick={submit} disabled={loading} className="w-full mt-2">
