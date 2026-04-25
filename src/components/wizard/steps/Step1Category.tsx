@@ -1,3 +1,4 @@
+import { useRef } from "react"
 import Icon from "@/components/ui/icon"
 import { CATEGORIES, CATEGORY_GROUPS } from "../wizardTypes"
 import type { WizardForm } from "../wizardTypes"
@@ -46,6 +47,15 @@ const RESORT_SUBTYPE_ICONS: Record<string, string> = {
 export function Step1Category({ category, setCategory, subtype, setSubtype }: Step1Props) {
   const selectedCat = CATEGORIES.find(c => c.id === category)
   const isResort = category === "resort"
+  const subtypeRef = useRef<HTMLDivElement>(null)
+
+  function handleCategorySelect(id: string) {
+    setCategory(id)
+    setSubtype("")
+    setTimeout(() => {
+      subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 50)
+  }
 
   return (
     <div className="space-y-6">
@@ -61,7 +71,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
                 return (
                   <button
                     key={cat.id}
-                    onClick={() => { setCategory(cat.id); setSubtype("") }}
+                    onClick={() => handleCategorySelect(cat.id)}
                     className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
                       isActive
                         ? "border-blue-500 shadow-lg shadow-blue-500/20"
@@ -102,7 +112,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
 
       {/* Выбор подтипа для Курортной — с подгруппами */}
       {isResort && selectedCat?.subgroups && (
-        <div className="space-y-4">
+        <div className="space-y-4" ref={subtypeRef}>
           {selectedCat.subgroups.map(sg => (
             <div key={sg.label}>
               <p className="text-[11px] text-cyan-400/70 uppercase tracking-widest mb-2 flex items-center gap-1.5">
@@ -135,7 +145,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype }: St
 
       {/* Выбор подтипа для НЕ курортных категорий */}
       {!isResort && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (
-        <div>
+        <div ref={subtypeRef}>
           <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">
             Тип объекта — {selectedCat.label}
           </p>
