@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react"
 import Icon from "@/components/ui/icon"
 import type { ObjectData } from "@/components/AddObjectWizard"
 
@@ -5,6 +6,7 @@ interface ObjectCardProps {
   obj: ObjectData
   onEdit: (obj: ObjectData) => void
   onDelete: (id: string) => void
+  onArchive?: (id: string, status: "Продан" | "Сдан") => void
 }
 
 const BADGE_BY_TYPE: Record<string, { label: string; color: string; icon: string }> = {
@@ -20,13 +22,29 @@ const STATUS_STYLE: Record<string, string> = {
   "Активен":          "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   "Черновик":         "bg-gray-500/15 text-gray-400 border-gray-500/30",
   "Продан":           "bg-red-500/15 text-red-400 border-red-500/30",
+  "Сдан":             "bg-orange-500/15 text-orange-400 border-orange-500/30",
   "Ожидает аукциона": "bg-amber-500/15 text-amber-400 border-amber-500/30",
 }
 
-export default function ObjectCard({ obj, onEdit, onDelete }: ObjectCardProps) {
+const ARCHIVE_STATUSES = ["Продан", "Сдан"]
+
+export default function ObjectCard({ obj, onEdit, onDelete, onArchive }: ObjectCardProps) {
+  const [showArchiveMenu, setShowArchiveMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const photo = obj.photos && obj.photos.length > 0 ? obj.photos[0] : null
   const badge = BADGE_BY_TYPE[obj.type] ?? { label: obj.type, color: "bg-[#1f1f1f]", icon: "Tag" }
   const statusCls = STATUS_STYLE[obj.status] ?? "bg-[#1f1f1f] text-gray-400 border-[#2a2a2a]"
+  const isArchived = ARCHIVE_STATUSES.includes(obj.status)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowArchiveMenu(false)
+      }
+    }
+    if (showArchiveMenu) document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [showArchiveMenu])
 
   return (
     <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] overflow-hidden hover:border-blue-500/40 transition-colors group flex flex-col">
@@ -92,13 +110,48 @@ export default function ObjectCard({ obj, onEdit, onDelete }: ObjectCardProps) {
 
         {/* Действия */}
         <div className="flex gap-2 pt-3 border-t border-[#1a1a1a]">
-          <button
-            onClick={() => onEdit(obj)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-gray-300 bg-[#1a1a1a] hover:bg-[#222] hover:text-white transition-colors"
-          >
-            <Icon name="Pencil" className="h-3.5 w-3.5" />
-            Изменить
-          </button>
+          {!isArchived && (
+            <button
+              onClick={() => onEdit(obj)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-gray-300 bg-[#1a1a1a] hover:bg-[#222] hover:text-white transition-colors"
+            >
+              <Icon name="Pencil" className="h-3.5 w-3.5" />
+              Изменить
+            </button>
+          )}
+
+          {/* Кнопка "В архив" — только для активных/черновиков */}
+          {!isArchived && onArchive && (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowArchiveMenu(v => !v)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-colors border border-amber-500/20"
+                title="Перенести в архив"
+              >
+                <Icon name="Archive" className="h-3.5 w-3.5" />
+                В архив
+              </button>
+              {showArchiveMenu && (
+                <div className="absolute bottom-full mb-2 left-0 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-xl z-20 overflow-hidden min-w-[130px]">
+                  <button
+                    onClick={() => { onArchive(String(obj.id), "Продан"); setShowArchiveMenu(false) }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <Icon name="Tag" className="h-3.5 w-3.5" />
+                    Продан
+                  </button>
+                  <button
+                    onClick={() => { onArchive(String(obj.id), "Сдан"); setShowArchiveMenu(false) }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-orange-400 hover:bg-orange-500/10 transition-colors border-t border-[#2a2a2a]"
+                  >
+                    <Icon name="KeyRound" className="h-3.5 w-3.5" />
+                    Сдан
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {obj.presentation_url && (
             <a
               href={obj.presentation_url}

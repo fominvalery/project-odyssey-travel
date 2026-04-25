@@ -116,11 +116,18 @@ def handler(event: dict, context) -> dict:
                 rows = cur.fetchall()
                 return resp(200, {"objects": [row_to_obj(r) for r in rows]})
 
+            archive = params.get("archive")
+
             if user_id:
                 cur.execute(
                     "SELECT " + SELECT_COLS + " FROM " + schema + ".objects"
                     " WHERE user_id = %s ORDER BY created_at DESC",
                     (user_id,),
+                )
+            elif archive:
+                cur.execute(
+                    "SELECT " + SELECT_COLS + " FROM " + schema + ".objects"
+                    " WHERE status IN ('Продан', 'Сдан') ORDER BY created_at DESC",
                 )
             else:
                 cur.execute(

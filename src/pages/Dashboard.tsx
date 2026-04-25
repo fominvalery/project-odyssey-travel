@@ -207,6 +207,30 @@ export default function Dashboard() {
     }
   }
 
+  async function handleArchiveObject(id: string, status: "Продан" | "Сдан") {
+    if (!user?.id) return
+    try {
+      await fetch(func2url.objects, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, user_id: user.id, status }),
+      })
+      setObjects(prev => prev.map(o => String(o.id) === String(id) ? { ...o, status } : o))
+    } catch { /* noop */ }
+  }
+
+  async function handleRestoreObject(id: string) {
+    if (!user?.id) return
+    try {
+      await fetch(func2url.objects, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, user_id: user.id, status: "Активен" }),
+      })
+      setObjects(prev => prev.map(o => String(o.id) === String(id) ? { ...o, status: "Активен" } : o))
+    } catch { /* noop */ }
+  }
+
   function handleEditObject(obj: ObjectData) {
     setEditingObject(obj)
     setShowWizard(true)
@@ -257,6 +281,8 @@ export default function Dashboard() {
             editingObject={editingObject}
             onEdit={handleEditObject}
             onDelete={handleDeleteObject}
+            onArchive={handleArchiveObject}
+            onRestore={handleRestoreObject}
             onWizardSaved={handleWizardSaved}
             onWizardClose={handleWizardClose}
             catFilter={catFilter}
