@@ -4,6 +4,15 @@ import Icon from "@/components/ui/icon"
 import { CATEGORIES, getCategoryFields, RESIDENTIAL_RENT_FIELDS, COMMERCIAL_RENT_FIELDS_OFFICE, COMMERCIAL_RENT_FIELDS_DEFAULT } from "../wizardTypes"
 import type { WizardForm } from "../wizardTypes"
 
+function formatPrice(val: string): string {
+  const digits = val.replace(/\D/g, "")
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+}
+
+function unformatPrice(val: string): string {
+  return val.replace(/\s/g, "")
+}
+
 interface Step3Props {
   form: WizardForm
   setForm: (f: WizardForm) => void
@@ -89,8 +98,9 @@ export function Step3Details({
           <Label className="text-xs text-gray-400 mb-1.5 block">{priceLabel}</Label>
           <Input
             placeholder={pricePlaceholder}
-            value={form.price}
-            onChange={e => setForm({ ...form, price: e.target.value })}
+            value={formatPrice(form.price)}
+            onChange={e => setForm({ ...form, price: unformatPrice(e.target.value) })}
+            inputMode="numeric"
             className="bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
           />
         </div>
