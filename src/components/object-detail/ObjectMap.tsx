@@ -61,14 +61,14 @@ export default function ObjectMap({ city, address }: Props) {
   if (notFound) return null
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-[#1f1f1f] mt-6">
+    <div className="rounded-2xl overflow-hidden border border-[#1f1f1f] mt-6" style={{ isolation: "isolate", zIndex: 0, position: "relative" }}>
       <div className="px-4 py-3 bg-[#111] border-b border-[#1f1f1f] flex items-center gap-2">
         <span className="text-sm font-medium text-white">Расположение</span>
         {(address || city) && (
           <span className="text-xs text-gray-400 truncate">{[address, city].filter(Boolean).join(", ")}</span>
         )}
       </div>
-      <div ref={containerRef} style={{ height: 280 }} />
+      <div ref={containerRef} style={{ height: 280, zIndex: 0 }} />
     </div>
   )
 }

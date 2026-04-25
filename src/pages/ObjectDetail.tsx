@@ -125,15 +125,8 @@ export default function ObjectDetail() {
             setActivePhoto={setActivePhoto}
           />
 
-          {/* Карта под галереей */}
-          {(obj.address || obj.city) && (
-            <div className="lg:col-span-2">
-              <ObjectMap city={obj.city} address={obj.address} />
-            </div>
-          )}
-
           {/* Правая колонка — цена + контакты + форма заявки */}
-          <aside className="lg:col-span-1 space-y-4">
+          <aside className="lg:col-span-1 space-y-4" style={{ position: "relative", zIndex: 10 }}>
             <ObjectSidebar
               obj={obj}
               showContacts={showContacts}
@@ -175,6 +168,13 @@ export default function ObjectDetail() {
               />
             )}
           </aside>
+
+          {/* Карта под галереей */}
+          {(obj.address || obj.city) && (
+            <div className="lg:col-span-2" style={{ position: "relative", zIndex: 0 }}>
+              <ObjectMap city={obj.city} address={obj.address} />
+            </div>
+          )}
         </div>
       </section>
       <Footer />
