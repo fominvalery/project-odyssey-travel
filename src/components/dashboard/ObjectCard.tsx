@@ -52,38 +52,44 @@ function OwnerBlock({
       </button>
 
       {open && !editing && (
-        <div className="px-3 pb-3 space-y-1.5 border-t border-amber-500/10">
-          {extraFields.owner_name && (
-            <div className="flex items-center gap-2 pt-2">
-              <Icon name="User" className="h-3 w-3 text-gray-500 shrink-0" />
-              <span className="text-xs text-gray-300">{extraFields.owner_name}</span>
-            </div>
-          )}
-          {extraFields.owner_phone && (
-            <div className="flex items-center gap-2">
-              <Icon name="Phone" className="h-3 w-3 text-gray-500 shrink-0" />
-              <a href={`tel:${extraFields.owner_phone}`} className="text-xs text-blue-400 hover:underline">
-                {extraFields.owner_phone}
-              </a>
-            </div>
-          )}
-          {extraFields.owner_fee && (
-            <div className="flex items-center gap-2">
-              <Icon name="Percent" className="h-3 w-3 text-gray-500 shrink-0" />
-              <span className="text-xs text-gray-300">{extraFields.owner_fee}</span>
-            </div>
-          )}
-          {extraFields.owner_comment && (
-            <div className="flex items-start gap-2">
-              <Icon name="MessageSquare" className="h-3 w-3 text-gray-500 shrink-0 mt-0.5" />
-              <span className="text-xs text-gray-400 leading-relaxed">{extraFields.owner_comment}</span>
+        <div className="px-3 pb-3 border-t border-amber-500/10">
+          {!extraFields.owner_name && !extraFields.owner_phone && !extraFields.owner_fee && !extraFields.owner_comment ? (
+            <p className="text-[11px] text-gray-600 pt-2 pb-1">Данные не заполнены</p>
+          ) : (
+            <div className="space-y-1.5 pt-2">
+              {extraFields.owner_name && (
+                <div className="flex items-center gap-2">
+                  <Icon name="User" className="h-3 w-3 text-gray-500 shrink-0" />
+                  <span className="text-xs text-gray-300">{extraFields.owner_name}</span>
+                </div>
+              )}
+              {extraFields.owner_phone && (
+                <div className="flex items-center gap-2">
+                  <Icon name="Phone" className="h-3 w-3 text-gray-500 shrink-0" />
+                  <a href={`tel:${extraFields.owner_phone}`} className="text-xs text-blue-400 hover:underline">
+                    {extraFields.owner_phone}
+                  </a>
+                </div>
+              )}
+              {extraFields.owner_fee && (
+                <div className="flex items-center gap-2">
+                  <Icon name="Percent" className="h-3 w-3 text-gray-500 shrink-0" />
+                  <span className="text-xs text-gray-300">{extraFields.owner_fee}</span>
+                </div>
+              )}
+              {extraFields.owner_comment && (
+                <div className="flex items-start gap-2">
+                  <Icon name="MessageSquare" className="h-3 w-3 text-gray-500 shrink-0 mt-0.5" />
+                  <span className="text-xs text-gray-400 leading-relaxed">{extraFields.owner_comment}</span>
+                </div>
+              )}
             </div>
           )}
           <button
             onClick={handleEdit}
             className="flex items-center gap-1.5 mt-2 text-[11px] text-amber-400/70 hover:text-amber-400 transition-colors"
           >
-            <Icon name="Pencil" className="h-3 w-3" /> Редактировать
+            <Icon name="Pencil" className="h-3 w-3" /> {extraFields.owner_name || extraFields.owner_phone ? "Редактировать" : "Добавить данные"}
           </button>
         </div>
       )}
