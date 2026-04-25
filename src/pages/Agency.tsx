@@ -28,6 +28,7 @@ import AgencyDealsTab from "@/components/agency/AgencyDealsTab"
 import AgencyReviewsTab from "@/components/agency/AgencyReviewsTab"
 import InviteModal from "@/components/agency/InviteModal"
 import DepartmentModal from "@/components/agency/DepartmentModal"
+import ReassignObjectModal from "@/components/agency/ReassignObjectModal"
 import { DashboardCRM } from "@/components/dashboard/DashboardCRM"
 import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import DashboardClub from "@/components/dashboard/DashboardClub"
@@ -98,6 +99,7 @@ export default function Agency() {
   const [catFilter, setCatFilter] = useState("Все")
   const [statusFilter, setStatusFilter] = useState("Все")
   const [objSearch, setObjSearch] = useState("")
+  const [reassigningObject, setReassigningObject] = useState<ObjectData | null>(null)
   const [profileForm, setProfileForm] = useState<ProfileForm>({
     firstName: user?.firstName ?? "", lastName: user?.lastName ?? "",
     middleName: user?.middleName ?? "", name: user?.name ?? "",
@@ -152,6 +154,17 @@ export default function Agency() {
     if (!user || !orgId) return
     try { await agencyApi.updateEmployee(user.id, orgId, { user_id: targetUserId, department_id: deptId }); toast({ title: "Отдел обновлён" }); reload() }
     catch (e) { toast({ title: "Ошибка", description: (e as Error).message, variant: "destructive" }) }
+  }
+
+  async function handleReassignObject(objId: string, toUserId: string) {
+    if (!user || !orgId) return
+    await fetch(func2url.objects, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: objId, requester_id: user.id, to_user_id: toUserId, org_id: orgId }),
+    })
+    toast({ title: "Объект переназначен" })
+    reloadObjects()
   }
 
   async function fireEmployee(targetUserId: string) {
@@ -329,6 +342,7 @@ export default function Agency() {
               statusFilter={statusFilter} setStatusFilter={setStatusFilter}
               objSearch={objSearch} setObjSearch={setObjSearch}
               userId={user?.id ?? ""} isBasic={false}
+              onReassign={isDirector ? (obj) => setReassigningObject(obj) : undefined}
             />
           )}
 
@@ -412,6 +426,16 @@ export default function Agency() {
           <DepartmentModal open={deptModalOpen} onClose={() => setDeptModalOpen(false)}
             orgId={orgId} employees={employees} department={editingDept} onSaved={reload} />
         </>
+      )}
+
+      {reassigningObject && user && (
+        <ReassignObjectModal
+          obj={reassigningObject}
+          employees={employees}
+          currentUserId={user.id}
+          onReassign={handleReassignObject}
+          onClose={() => setReassigningObject(null)}
+        />
       )}
 
       <Dialog open={!!deletingDept} onOpenChange={(v) => !v && setDeletingDept(null)}>

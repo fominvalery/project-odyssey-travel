@@ -152,6 +152,7 @@ interface ObjectCardProps {
   onDelete: (id: string) => void
   onArchive?: (id: string, status: "Продан" | "Сдан") => void
   onSaveOwner?: (id: string, fields: Record<string, string>) => void
+  onReassign?: (obj: ObjectData) => void
 }
 
 const BADGE_BY_TYPE: Record<string, { label: string; color: string; icon: string }> = {
@@ -174,7 +175,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 const ARCHIVE_STATUSES = ["Продан", "Сдан"]
 
-export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner }: ObjectCardProps) {
+export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner, onReassign }: ObjectCardProps) {
   const [showArchiveMenu, setShowArchiveMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const photo = obj.photos && obj.photos.length > 0 ? obj.photos[0] : null
@@ -284,6 +285,17 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwn
             >
               <Icon name="Pencil" className="h-3.5 w-3.5" />
               Изменить
+            </button>
+          )}
+
+          {/* Кнопка переназначить — только в режиме АН */}
+          {onReassign && (
+            <button
+              onClick={() => onReassign(obj)}
+              className="shrink-0 w-10 flex items-center justify-center rounded-xl text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors border border-violet-500/20"
+              title="Переназначить сотруднику"
+            >
+              <Icon name="ArrowRightLeft" className="h-3.5 w-3.5" />
             </button>
           )}
 

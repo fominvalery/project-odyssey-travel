@@ -322,6 +322,39 @@ def handler(event: dict, context) -> dict:
             conn.commit()
             return resp(200, {"ok": True})
 
+        # ---------- PATCH (reassign) ----------
+        if method == "PATCH":
+            body = json.loads(event.get("body") or "{}")
+            obj_id = body.get("id")
+            requester_id = body.get("requester_id")   # директор/учредитель
+            to_user_id = body.get("to_user_id")       # новый владелец
+            org_id = body.get("org_id")               # для проверки членства
+
+            if not obj_id or not requester_id or not to_user_id:
+                return resp(400, {"error": "id, requester_id, to_user_id required"})
+
+            # Проверяем что реквестер — директор/учредитель в АН
+            if org_id:
+                cur.execute(
+                    "SELECT role_code FROM " + schema + ".org_memberships "
+                    "WHERE user_id=%s AND organization_id=%s AND status='active'",
+                    (requester_id, org_id),
+                )
+                role_row = cur.fetchone()
+                if not role_row or role_row[0] not in ("founder", "director"):
+                    return resp(403, {"error": "Нужна роль директора или учредителя"})
+
+            # Переназначаем объект
+            cur.execute(
+                "UPDATE " + schema + ".objects SET user_id=%s WHERE id=%s RETURNING " + SELECT_COLS,
+                (to_user_id, obj_id),
+            )
+            row = cur.fetchone()
+            if not row:
+                return resp(404, {"error": "not found"})
+            conn.commit()
+            return resp(200, {"ok": True, "object": row_to_obj(row, private=False)})
+
         return resp(405, {"error": "method not allowed"})
 
     finally:
