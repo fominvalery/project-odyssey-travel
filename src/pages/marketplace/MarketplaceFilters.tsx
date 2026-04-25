@@ -76,13 +76,13 @@ export default function MarketplaceFilters({
         </button>
       </div>
 
-      {/* Кнопки категорий */}
-      <div className="flex flex-wrap gap-2 mb-3">
+      {/* Кнопки категорий — на мобильном горизонтальный скролл без переноса */}
+      <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
         {MARKET_CATEGORIES.map((cat) => (
           <button
             key={cat}
             onClick={() => onCategoryChange(cat)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors shrink-0 ${
               activeCategory === cat
                 ? "bg-blue-600 text-white"
                 : "bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#262626]"

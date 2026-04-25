@@ -35,12 +35,15 @@ export default function Marketplace() {
   const [showArchive, setShowArchive] = useState(false)
   const [archiveSearch, setArchiveSearch] = useState("")
   const [dealFilter, setDealFilter] = useState("") // "sale" | "rent" | ""
+  const [visibleCount, setVisibleCount] = useState(18)
 
+  const PAGE_SIZE = 18
   const DEAL_FILTER_CATS = ["Коммерческая", "Жилая"]
 
   function handleCategoryChange(cat: string) {
     setActiveCategory(cat)
     setActiveSubtype("")
+    setVisibleCount(18)
     setExtraFilters({})
     if (!DEAL_FILTER_CATS.includes(cat)) setDealFilter("")
     if (cat !== "Все" && CAT_ID_MAP[cat]) {
@@ -56,6 +59,7 @@ export default function Marketplace() {
     setAreaTo("")
     setCityFilter("")
     setActiveSubtype("")
+    setVisibleCount(18)
   }
 
   const hasActiveFilters =
@@ -67,6 +71,12 @@ export default function Marketplace() {
   const activeCatFields = activeCatId
     ? getCategoryFields(activeCatId, activeSubtype)
     : []
+
+  // Сброс пагинации при смене любого фильтра
+  useEffect(() => { setVisibleCount(18) }, [
+    search, activeCategory, activeSubtype, dealFilter,
+    priceFrom, priceTo, areaFrom, areaTo, cityFilter,
+  ])
 
   useEffect(() => {
     fetch(`${func2url.objects}?marketplace=true`)
@@ -255,15 +265,40 @@ export default function Marketplace() {
             ) : filtered.length === 0 ? (
               <div className="text-center py-20 text-gray-500">Объекты не найдены</div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filtered.map((obj) => (
-                  <MarketplaceCard
-                    key={obj.id}
-                    obj={obj}
-                    onShare={setShareTarget}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filtered.slice(0, visibleCount).map((obj) => (
+                    <MarketplaceCard
+                      key={obj.id}
+                      obj={obj}
+                      onShare={setShareTarget}
+                    />
+                  ))}
+                </div>
+
+                {/* Показать ещё */}
+                {visibleCount < filtered.length && (
+                  <div className="text-center mt-10">
+                    <p className="text-sm text-gray-500 mb-4">
+                      Показано {Math.min(visibleCount, filtered.length)} из {filtered.length} объектов
+                    </p>
+                    <button
+                      onClick={() => setVisibleCount(v => v + PAGE_SIZE)}
+                      className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-sm font-medium hover:bg-[#222] hover:border-blue-500/40 transition-all"
+                    >
+                      <Icon name="ChevronDown" className="h-4 w-4" />
+                      Показать ещё {Math.min(PAGE_SIZE, filtered.length - visibleCount)}
+                    </button>
+                  </div>
+                )}
+
+                {/* Все загружены */}
+                {visibleCount >= filtered.length && filtered.length > PAGE_SIZE && (
+                  <p className="text-center text-xs text-gray-600 mt-8">
+                    Все {filtered.length} объектов загружены
+                  </p>
+                )}
+              </>
             )}
           </>
         ) : (
