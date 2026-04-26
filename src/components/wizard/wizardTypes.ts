@@ -134,13 +134,13 @@ export const CATEGORIES: CategoryItem[] = [
       // Земля
       "Земля под строительство МКД", "Земля под застройку (коммерция)", "Земля под жилую застройку", "Земля под коммерцию",
       // Специальные форматы
-      "Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию",
+      "Портфель объектов", "Доля в объекте", "Sale & Leaseback", "Срочная продажа",
     ],
     subgroups: [
       { label: "Готовый арендный бизнес", items: ["ГАБ (готовый арендный бизнес)", "Создание ГАБ", "ГАБ Субаренда"] },
       { label: "Редевелопмент и девелопмент", items: ["Редевелопмент", "Девелоперский проект", "Реконструкция"] },
       { label: "Земельные участки", items: ["Земля под строительство МКД", "Земля под застройку (коммерция)", "Земля под жилую застройку", "Земля под коммерцию"] },
-      { label: "Специальные форматы", items: ["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"] },
+      { label: "Специальные форматы", items: ["Портфель объектов", "Доля в объекте", "Sale & Leaseback", "Срочная продажа"] },
     ],
   },
   // Курортная — НОВЫЙ РАЗДЕЛ
@@ -469,18 +469,70 @@ const INVESTMENT_FIELDS_LAND_COMMERCIAL = [
   { key: "entry_price", label: "Цена входа (₽)", placeholder: "25 000 000" },
 ]
 
-// ── Поля для Инвестиций: Специальные форматы ────────────────────────────────
-const INVESTMENT_FIELDS_SPECIAL = [
-  { key: "roi", label: "ROI (%)", placeholder: "15" },
-  { key: "yield", label: "Доходность (%/год)", placeholder: "12" },
-  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "7" },
-  { key: "entry_price", label: "Цена входа (₽)", placeholder: "100 000 000" },
-  { key: "share", label: "Доля / Объём сделки", placeholder: "25% / 100% / Пул" },
-  { key: "object_type", label: "Тип актива", placeholder: "Портфель / Доля / ГАБ" },
-  { key: "revenue_model", label: "Модель дохода", placeholder: "Аренда / Дивиденды / Прирост стоимости" },
-  { key: "strategy", label: "Стратегия выхода", placeholder: "IPO / Перепродажа / Удержание" },
-  { key: "encumbrance", label: "Обременения / Риски", placeholder: "Нет / Залог / Судебные споры" },
-  { key: "partner", label: "Партнёр / Соинвестор", placeholder: "Ищем / Есть" },
+// ── Поля: Портфель объектов ──────────────────────────────────────────────────
+const INVESTMENT_FIELDS_PORTFOLIO = [
+  { key: "objects_count", label: "Кол-во объектов в портфеле", placeholder: "5" },
+  { key: "object_types", label: "Типы объектов", placeholder: "3 склада, 1 офис, 1 торговое" },
+  { key: "total_area", label: "Общая площадь (м²)", placeholder: "15 000" },
+  { key: "total_rent", label: "Суммарный арендный доход (₽/мес)", placeholder: "2 500 000" },
+  { key: "occupancy", label: "Загрузка портфеля (%)", placeholder: "92" },
+  { key: "yield", label: "Средняя доходность (%/год)", placeholder: "11" },
+  { key: "roi", label: "ROI портфеля (%)", placeholder: "14" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "8" },
+  { key: "entry_price", label: "Цена портфеля (₽)", placeholder: "350 000 000" },
+  { key: "geography", label: "География объектов", placeholder: "Москва, Подмосковье" },
+  { key: "encumbrance", label: "Обременения / Риски", placeholder: "Нет / Залог одного объекта" },
+  { key: "strategy", label: "Стратегия выхода", placeholder: "Продажа целиком / Продажа по частям / Удержание" },
+  { key: "partner", label: "Соинвесторы", placeholder: "Есть / Ищем" },
+]
+
+// ── Поля: Доля в объекте ─────────────────────────────────────────────────────
+const INVESTMENT_FIELDS_SHARE = [
+  { key: "share_size", label: "Размер доли (%)", placeholder: "25%" },
+  { key: "object_type", label: "Тип объекта", placeholder: "БЦ / ТЦ / Склад / ГАБ" },
+  { key: "total_value", label: "Общая стоимость объекта (₽)", placeholder: "400 000 000" },
+  { key: "entry_price", label: "Цена доли (₽)", placeholder: "100 000 000" },
+  { key: "share_income", label: "Доход с доли (₽/мес)", placeholder: "200 000" },
+  { key: "yield", label: "Доходность на долю (%/год)", placeholder: "10" },
+  { key: "legal_form", label: "Правовая форма", placeholder: "Совместная собственность / ООО / Договор / ЗПИФ" },
+  { key: "co_owners", label: "Совладельцы", placeholder: "2 физлица / Юрлицо" },
+  { key: "exit_conditions", label: "Условия выхода", placeholder: "Преимущественное право / Свободная продажа" },
+  { key: "encumbrance", label: "Обременения / Риски", placeholder: "Нет / Залог / Корпоративный конфликт" },
+  { key: "strategy", label: "Стратегия", placeholder: "Удержание и доход / Выкуп 100% / Перепродажа доли" },
+  { key: "partner", label: "Партнёр / Покупатель", placeholder: "Ищем / Есть интерес" },
+]
+
+// ── Поля: Sale & Leaseback (продажа с обратной арендой) ──────────────────────
+const INVESTMENT_FIELDS_SALE_LEASEBACK = [
+  { key: "seller_tenant", label: "Продавец / Арендатор", placeholder: "ООО Ромашка (торговая сеть)" },
+  { key: "object_type", label: "Тип объекта", placeholder: "Склад / Офис / Торговое / Производство" },
+  { key: "leaseback_rate", label: "Ставка обратной аренды (₽/мес)", placeholder: "800 000" },
+  { key: "leaseback_term", label: "Срок договора обратной аренды (лет)", placeholder: "10" },
+  { key: "indexing", label: "Индексация", placeholder: "5% в год / По CPI" },
+  { key: "roi", label: "ROI для покупателя (%)", placeholder: "12" },
+  { key: "yield", label: "Доходность (%/год)", placeholder: "10" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "9" },
+  { key: "entry_price", label: "Цена сделки (₽)", placeholder: "120 000 000" },
+  { key: "seller_motivation", label: "Мотивация продавца", placeholder: "Пополнение оборотных средств / Оптимизация активов" },
+  { key: "credit_rating", label: "Надёжность арендатора", placeholder: "Крупная сеть / ААА / Госкомпания" },
+  { key: "encumbrance", label: "Обременения", placeholder: "Нет / Залог снимается при сделке" },
+  { key: "strategy", label: "Стратегия выхода инвестора", placeholder: "Удержание / Перепродажа ГАБ через 5 лет" },
+]
+
+// ── Поля: Срочная продажа ────────────────────────────────────────────────────
+const INVESTMENT_FIELDS_URGENT = [
+  { key: "object_type", label: "Тип объекта", placeholder: "Офис / Склад / Торговое / Жильё" },
+  { key: "market_value", label: "Рыночная стоимость (₽)", placeholder: "150 000 000" },
+  { key: "entry_price", label: "Цена продажи (₽)", placeholder: "110 000 000" },
+  { key: "discount", label: "Дисконт к рынку (%)", placeholder: "25%" },
+  { key: "urgency_reason", label: "Причина срочности", placeholder: "Закрытие бизнеса / Переезд / Долговая нагрузка / Раздел имущества" },
+  { key: "deal_deadline", label: "Срок закрытия сделки", placeholder: "1 мес. / До конца квартала" },
+  { key: "condition", label: "Состояние объекта", placeholder: "Готово / Требует ремонта" },
+  { key: "encumbrance", label: "Обременения", placeholder: "Нет / Залог банка / Арест" },
+  { key: "current_tenant", label: "Текущий арендатор", placeholder: "Свободно / Есть арендатор" },
+  { key: "documents_ready", label: "Документы готовы", placeholder: "Да, все / В процессе" },
+  { key: "negotiable", label: "Торг", placeholder: "Да / Нет / При быстром выходе" },
+  { key: "strategy", label: "Привлекательность для инвестора", placeholder: "Флип / ГАБ / Редевелопмент" },
 ]
 
 // ── Поля для Инвестиций (общий fallback) ─────────────────────────────────────
@@ -899,7 +951,10 @@ export function getCategoryFields(catId: string, subtype?: string) {
     if (subtype === "Земля под застройку (коммерция)") return INVESTMENT_FIELDS_LAND_COMMERCIAL_BUILD
     if (subtype === "Земля под жилую застройку") return INVESTMENT_FIELDS_LAND_RESIDENTIAL
     if (subtype === "Земля под коммерцию") return INVESTMENT_FIELDS_LAND_COMMERCIAL
-    if (["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"].includes(subtype)) return INVESTMENT_FIELDS_SPECIAL
+    if (subtype === "Портфель объектов") return INVESTMENT_FIELDS_PORTFOLIO
+    if (subtype === "Доля в объекте") return INVESTMENT_FIELDS_SHARE
+    if (subtype === "Sale & Leaseback") return INVESTMENT_FIELDS_SALE_LEASEBACK
+    if (subtype === "Срочная продажа") return INVESTMENT_FIELDS_URGENT
     return INVESTMENT_FIELDS
   }
   if (catId === "auction") {
