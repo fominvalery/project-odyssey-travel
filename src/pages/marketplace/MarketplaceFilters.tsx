@@ -93,14 +93,66 @@ export default function MarketplaceFilters({
         ))}
       </div>
 
-      {/* Подтипы активной категории */}
-      {activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
+      {/* Для Новостроек — второй ряд: группа Коммерческая / Жилая */}
+      {(() => {
+        if (activeCategory !== "Новостройки") return null
+        const NEWBUILD_COMMERCIAL = ["Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)", "ГАБ в новостройке"]
+        const NEWBUILD_RESIDENTIAL = ["Квартира в новостройке", "Апартаменты", "Таунхаус", "Пентхаус"]
+        const activeGroup = NEWBUILD_COMMERCIAL.includes(activeSubtype) ? "commercial"
+          : NEWBUILD_RESIDENTIAL.includes(activeSubtype) ? "residential" : ""
+        const visibleSubtypes = activeGroup === "commercial" ? NEWBUILD_COMMERCIAL
+          : activeGroup === "residential" ? NEWBUILD_RESIDENTIAL
+          : [...NEWBUILD_COMMERCIAL, ...NEWBUILD_RESIDENTIAL]
+        return (
+          <>
+            <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {[
+                { id: "commercial", label: "Коммерческая", subtypes: NEWBUILD_COMMERCIAL },
+                { id: "residential", label: "Жилая", subtypes: NEWBUILD_RESIDENTIAL },
+              ].map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => {
+                    if (activeGroup === g.id) onSubtypeChange("")
+                    else onSubtypeChange(g.subtypes[0])
+                  }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors shrink-0 border ${
+                    activeGroup === g.id
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#262626] border-[#2a2a2a]"
+                  }`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {visibleSubtypes.map(st => (
+                <button
+                  key={st}
+                  onClick={() => onSubtypeChange(activeSubtype === st ? "" : st)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors shrink-0 ${
+                    activeSubtype === st
+                      ? "border-violet-500 bg-violet-500/15 text-violet-300"
+                      : "border-[#2a2a2a] bg-transparent text-gray-500 hover:text-gray-300 hover:border-[#3a3a3a]"
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </>
+        )
+      })()}
+
+      {/* Подтипы для всех остальных категорий */}
+      {activeCategory !== "Новостройки" && activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
+        <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {activeCatDef.subtypes.map(st => (
             <button
               key={st}
               onClick={() => onSubtypeChange(activeSubtype === st ? "" : st)}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors shrink-0 ${
                 activeSubtype === st
                   ? "border-violet-500 bg-violet-500/15 text-violet-300"
                   : "border-[#2a2a2a] bg-transparent text-gray-500 hover:text-gray-300 hover:border-[#3a3a3a]"

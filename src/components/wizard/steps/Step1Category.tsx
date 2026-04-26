@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import Icon from "@/components/ui/icon"
 import { CATEGORIES, CATEGORY_GROUPS } from "../wizardTypes"
 import type { WizardForm } from "../wizardTypes"
@@ -15,6 +15,23 @@ interface Step1Props {
 }
 
 const DEAL_TYPE_CATEGORIES = ["commercial", "residential"]
+
+const NEWBUILD_GROUPS = [
+  {
+    id: "commercial",
+    label: "Коммерческая",
+    desc: "Офис, ритейл в БЦ, стрит-ритейл в ЖК",
+    icon: "Building2",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b50fb88-f4e7-44ec-8719-e0fd7f90acf6.jpg",
+  },
+  {
+    id: "residential",
+    label: "Жилая",
+    desc: "Квартира, апартаменты, таунхаус",
+    icon: "Home",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/d5483eb7-291b-489e-a47f-d29a366ea71d.jpg",
+  },
+]
 
 const CAT_BG: Record<string, string> = {
   "commercial":  "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b50fb88-f4e7-44ec-8719-e0fd7f90acf6.jpg",
@@ -49,16 +66,24 @@ const RESORT_SUBTYPE_ICONS: Record<string, string> = {
 }
 
 export function Step1Category({ category, setCategory, subtype, setSubtype, dealType, setDealType }: Step1Props) {
+  const [newbuildGroup, setNewbuildGroup] = useState<"commercial" | "residential" | "">("")
   const selectedCat = CATEGORIES.find(c => c.id === category)
   const isResort = category === "resort"
+  const isNewbuild = category === "newbuild"
   const showDealType = DEAL_TYPE_CATEGORIES.includes(category)
   const subtypeRef = useRef<HTMLDivElement>(null)
   const dealTypeRef = useRef<HTMLDivElement>(null)
+  const newbuildGroupRef = useRef<HTMLDivElement>(null)
 
   function handleCategorySelect(id: string) {
     setCategory(id)
     setSubtype("")
-    if (DEAL_TYPE_CATEGORIES.includes(id)) {
+    if (id === "newbuild") {
+      setNewbuildGroup("")
+      setTimeout(() => {
+        newbuildGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
+    } else if (DEAL_TYPE_CATEGORIES.includes(id)) {
       setDealType("")
       setTimeout(() => {
         dealTypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -68,6 +93,14 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
     }
+  }
+
+  function handleNewbuildGroupSelect(groupId: "commercial" | "residential") {
+    setNewbuildGroup(groupId)
+    setSubtype("")
+    setTimeout(() => {
+      subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 50)
   }
 
   function handleDealTypeSelect(v: string) {
@@ -165,6 +198,40 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         </div>
       )}
 
+      {/* Выбор группы для Новостроек — Коммерческая / Жилая */}
+      {isNewbuild && (
+        <div ref={newbuildGroupRef} className="space-y-3">
+          <p className="text-[11px] text-gray-500 uppercase tracking-widest">Тип новостройки</p>
+          <div className="grid grid-cols-2 gap-3">
+            {NEWBUILD_GROUPS.map(g => {
+              const isActive = newbuildGroup === g.id
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => handleNewbuildGroupSelect(g.id as "commercial" | "residential")}
+                  className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
+                    isActive ? "border-blue-500 shadow-lg shadow-blue-500/20" : "border-[#2a2a2a] hover:border-white/30"
+                  }`}
+                  style={{ minHeight: 140 }}
+                >
+                  <img src={g.bg} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 transition-all duration-300" style={{ background: isActive ? "rgba(23,37,84,0.68)" : "rgba(0,0,0,0.58)" }} />
+                  <div className="relative z-10 p-5 flex flex-col items-center justify-center h-full">
+                    <div className={`w-10 h-10 rounded-xl mb-3 flex items-center justify-center backdrop-blur-sm transition-all ${
+                      isActive ? "bg-blue-500/40 border border-blue-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
+                    }`}>
+                      <Icon name={g.icon as "Home"} fallback="Building2" className={`h-5 w-5 ${isActive ? "text-blue-200" : "text-white/80"}`} />
+                    </div>
+                    <p className="font-bold text-white text-sm mb-1 drop-shadow">{g.label}</p>
+                    <p className={`text-[11px] leading-snug drop-shadow ${isActive ? "text-blue-200/80" : "text-white/50"}`}>{g.desc}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Выбор подтипа для Курортной — с подгруппами */}
       {isResort && selectedCat?.subgroups && (
         <div className="space-y-4" ref={subtypeRef}>
@@ -198,8 +265,44 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         </div>
       )}
 
-      {/* Выбор подтипа для НЕ курортных (показываем после выбора deal_type если нужен, или сразу) */}
-      {!isResort && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
+      {/* Выбор подтипа для Новостроек — с группировкой после выбора группы */}
+      {isNewbuild && newbuildGroup && selectedCat?.subgroups && (
+        <div ref={subtypeRef} className="space-y-3">
+          {selectedCat.subgroups
+            .filter(sg =>
+              newbuildGroup === "commercial" ? sg.label === "Коммерческие" : sg.label === "Жилые"
+            )
+            .map(sg => (
+              <div key={sg.label}>
+                <p className="text-[11px] text-blue-400/70 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <span className="w-3 h-px bg-blue-500/40 inline-block"></span>
+                  {sg.label} новостройки
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sg.items.map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setSubtype(st)}
+                      className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                        subtype === st
+                          ? "border-blue-500 bg-blue-500/15 text-blue-300"
+                          : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-[#3a3a3a] hover:text-white"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          {!subtype && (
+            <p className="text-[11px] text-gray-600">Выберите тип — характеристики подберутся автоматически</p>
+          )}
+        </div>
+      )}
+
+      {/* Выбор подтипа для НЕ курортных и НЕ новостроек */}
+      {!isResort && !isNewbuild && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
         <div ref={subtypeRef}>
           <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">
             Тип объекта — {selectedCat.label}

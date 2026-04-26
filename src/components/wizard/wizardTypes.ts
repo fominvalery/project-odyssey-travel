@@ -63,10 +63,19 @@ export const CATEGORIES: CategoryItem[] = [
   {
     id: "newbuild",
     label: "Новостройки",
-    desc: "ЖК, шахматка, застройщик",
+    desc: "ЖК, БЦ, застройщик, шахматка",
     icon: "Construction",
     group: "residential",
-    subtypes: ["Квартира в новостройке", "Апартаменты", "Таунхаус", "Пентхаус"],
+    subtypes: [
+      // Коммерческие
+      "Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)", "ГАБ в новостройке",
+      // Жилые
+      "Квартира в новостройке", "Апартаменты", "Таунхаус", "Пентхаус",
+    ],
+    subgroups: [
+      { label: "Коммерческие", items: ["Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)", "ГАБ в новостройке"] },
+      { label: "Жилые", items: ["Квартира в новостройке", "Апартаменты", "Таунхаус", "Пентхаус"] },
+    ],
   },
   // Коммерческая
   {
@@ -259,6 +268,51 @@ const NEWBUILD_FIELDS = [
   { key: "mortgage", label: "Ипотека", placeholder: "Семейная 6% / Военная" },
 ]
 
+// Коммерческие новостройки — офис/ритейл в БЦ
+const NEWBUILD_COMMERCIAL_OFFICE_FIELDS = [
+  { key: "complex", label: "Название БЦ / ЖК", placeholder: "БЦ Москва-Сити / ЖК Апрель" },
+  { key: "developer", label: "Застройщик", placeholder: "ГК ПИК / Самолёт" },
+  { key: "delivery", label: "Срок сдачи", placeholder: "Q3 2026" },
+  { key: "class", label: "Класс объекта", placeholder: "A / B+ / B" },
+  { key: "floor", label: "Этаж", placeholder: "5" },
+  { key: "floors_total", label: "Этажей в здании", placeholder: "25" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "3.2" },
+  { key: "finishing", label: "Отделка", placeholder: "Чистовая / Shell&Core / Open Space" },
+  { key: "parking", label: "Парковка", placeholder: "Подземная / Наземная" },
+  { key: "mortgage", label: "Ипотека / Рассрочка", placeholder: "Есть / Нет / Условия" },
+  { key: "chess", label: "Шахматка", placeholder: "Доступна" },
+]
+
+// Коммерческие новостройки — стрит-ритейл
+const NEWBUILD_COMMERCIAL_RETAIL_FIELDS = [
+  { key: "complex", label: "Название ЖК / БЦ", placeholder: "ЖК Парк Апрель" },
+  { key: "developer", label: "Застройщик", placeholder: "ГК Самолёт" },
+  { key: "delivery", label: "Срок сдачи", placeholder: "Q4 2026" },
+  { key: "floor", label: "Этаж", placeholder: "1 (первая линия)" },
+  { key: "frontage", label: "Витрина (м)", placeholder: "12" },
+  { key: "entrance", label: "Вход", placeholder: "Отдельный с улицы" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "4.5" },
+  { key: "traffic", label: "Трафик (чел/день)", placeholder: "5 000" },
+  { key: "finishing", label: "Отделка", placeholder: "Без отделки / Белая коробка" },
+  { key: "tenant", label: "Якорный арендатор", placeholder: "Свободно / Продуктовый ритейл" },
+  { key: "mortgage", label: "Ипотека / Рассрочка", placeholder: "Есть / Нет / Условия" },
+  { key: "chess", label: "Шахматка", placeholder: "Доступна" },
+]
+
+// Коммерческие новостройки — апарт-отель / ГАБ
+const NEWBUILD_COMMERCIAL_APART_FIELDS = [
+  { key: "complex", label: "Название комплекса", placeholder: "Апарт-отель Сочи Парк" },
+  { key: "developer", label: "Застройщик", placeholder: "ГК Курорты России" },
+  { key: "delivery", label: "Срок сдачи", placeholder: "Q2 2027" },
+  { key: "units", label: "Юнитов в комплексе", placeholder: "120" },
+  { key: "finishing", label: "Отделка", placeholder: "Чистовая с мебелью / Под ключ" },
+  { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Планируется" },
+  { key: "yield", label: "Прогнозная доходность (%/год)", placeholder: "12" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "8" },
+  { key: "mortgage", label: "Ипотека / Рассрочка", placeholder: "Есть / Нет / Условия" },
+  { key: "chess", label: "Шахматка", placeholder: "Доступна" },
+]
+
 // ── Поля для Курортной недвижимости ─────────────────────────────────────────
 
 // Базовые поля — для всех курортных объектов
@@ -366,7 +420,13 @@ export function getCategoryFields(catId: string, subtype?: string) {
   if (catId === "residential") return RESIDENTIAL_FIELDS
   if (catId === "investment") return INVESTMENT_FIELDS
   if (catId === "auction") return AUCTION_FIELDS
-  if (catId === "newbuild") return NEWBUILD_FIELDS
+  if (catId === "newbuild") {
+    if (!subtype) return NEWBUILD_FIELDS
+    if (subtype.includes("Офис")) return NEWBUILD_COMMERCIAL_OFFICE_FIELDS
+    if (subtype.includes("Стрит") || subtype.includes("ритейл")) return NEWBUILD_COMMERCIAL_RETAIL_FIELDS
+    if (subtype.includes("Апарт-отель") || subtype.includes("ГАБ")) return NEWBUILD_COMMERCIAL_APART_FIELDS
+    return NEWBUILD_FIELDS
+  }
   if (catId === "commercial") {
     if (!subtype) return COMMERCIAL_FIELDS_DEFAULT
     if (subtype.includes("Офис") || subtype.includes("БЦ")) return COMMERCIAL_FIELDS_OFFICE
