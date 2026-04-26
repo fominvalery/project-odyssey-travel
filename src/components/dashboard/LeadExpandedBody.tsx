@@ -180,7 +180,7 @@ export function LeadExpandedBody({ lead, ownerId, onDelete, onLeadUpdate }: Lead
         )}
       </div>
 
-      {/* Объект + файлы */}
+      {/* Объект */}
       {lead.object_title && (
         <div className="rounded-xl bg-[#0d0d0d] border border-[#1a1a1a] p-3">
           <p className="text-xs text-gray-500 mb-1">Объект</p>
@@ -197,48 +197,49 @@ export function LeadExpandedBody({ lead, ownerId, onDelete, onLeadUpdate }: Lead
           ) : (
             <p className="text-white font-medium truncate">{lead.object_title}</p>
           )}
-
-          <div className="mt-3">
-            <p className="text-xs text-gray-500 mb-2">Предложения для клиента (PDF и др.)</p>
-            {files.length > 0 && (
-              <div className="space-y-1.5 mb-2">
-                {files.map(f => (
-                  <a
-                    key={f.id}
-                    href={f.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-xs text-gray-300 hover:text-blue-400 bg-[#111] rounded-lg px-3 py-2 border border-[#1a1a1a]"
-                  >
-                    <Icon name="FileText" className="h-4 w-4 text-red-400 shrink-0" />
-                    <span className="flex-1 truncate">{f.name}</span>
-                    <span className="text-gray-600">{formatSize(f.size_bytes)}</span>
-                    <Icon name="Download" className="h-3.5 w-3.5 text-gray-500" />
-                  </a>
-                ))}
-              </div>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              onChange={handleFileSelect}
-              className="hidden"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingFile}
-              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-[#111] border border-dashed border-[#2a2a2a] text-gray-400 hover:text-white hover:border-blue-400 transition-colors w-full justify-center disabled:opacity-50"
-            >
-              {uploadingFile ? (
-                <><Icon name="Loader2" className="h-3.5 w-3.5 animate-spin" /> Загружаю...</>
-              ) : (
-                <><Icon name="Upload" className="h-3.5 w-3.5" /> Добавить файл</>
-              )}
-            </button>
-          </div>
         </div>
       )}
+
+      {/* Предложения для клиента */}
+      <div className="rounded-xl bg-[#0d0d0d] border border-[#1a1a1a] p-3">
+        <p className="text-xs text-gray-500 mb-2">Предложения для клиента (PDF и др.)</p>
+        {files.length > 0 && (
+          <div className="space-y-1.5 mb-2">
+            {files.map(f => (
+              <a
+                key={f.id}
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-gray-300 hover:text-blue-400 bg-[#111] rounded-lg px-3 py-2 border border-[#1a1a1a]"
+              >
+                <Icon name="FileText" className="h-4 w-4 text-red-400 shrink-0" />
+                <span className="flex-1 truncate">{f.name}</span>
+                <span className="text-gray-600">{formatSize(f.size_bytes)}</span>
+                <Icon name="Download" className="h-3.5 w-3.5 text-gray-500" />
+              </a>
+            ))}
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={handleFileSelect}
+          className="hidden"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadingFile}
+          className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-[#111] border border-dashed border-[#2a2a2a] text-gray-400 hover:text-white hover:border-blue-400 transition-colors w-full justify-center disabled:opacity-50"
+        >
+          {uploadingFile ? (
+            <><Icon name="Loader2" className="h-3.5 w-3.5 animate-spin" /> Загружаю...</>
+          ) : (
+            <><Icon name="Upload" className="h-3.5 w-3.5" /> Добавить файл</>
+          )}
+        </button>
+      </div>
 
       {/* Сообщение от клиента */}
       {lead.message && (
