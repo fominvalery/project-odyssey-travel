@@ -113,7 +113,7 @@ export const INVESTMENT_GROUPS = [
     label: "Спец. форматы",
     desc: "Портфель, доля, Sale & Leaseback",
     icon: "Layers",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/17b020ab-c66f-445a-8a81-9f2954d40507.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/5b8d838b-05d4-4c7f-98f7-51c7c2e60002.jpg",
   },
 ]
 
