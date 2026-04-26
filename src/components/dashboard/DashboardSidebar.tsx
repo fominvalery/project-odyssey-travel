@@ -150,30 +150,6 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             </div>
           )}
 
-          {/* Переключатель режима для супер-админа */}
-          {user.isSuperadmin && onPreviewStatusChange && (
-            <div className="mb-3 rounded-xl bg-[#111] border border-[#1f1f1f] p-2">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider px-1 mb-1.5">Режим просмотра</p>
-              <div className="flex flex-col gap-1">
-                {PREVIEW_STATUSES.map(({ value, label, icon }) => (
-                  <button
-                    key={value}
-                    onClick={() => onPreviewStatusChange(previewStatus === value ? null : value)}
-                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors text-left ${
-                      previewStatus === value
-                        ? "bg-amber-500/15 text-amber-400 border border-amber-500/25"
-                        : "text-gray-500 hover:text-white hover:bg-[#1a1a1a]"
-                    }`}
-                  >
-                    <Icon name={icon} className="h-3.5 w-3.5 shrink-0" />
-                    {label}
-                    {previewStatus === value && <Icon name="Check" className="h-3 w-3 ml-auto" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           <button
             onClick={() => setStatusModalOpen(true)}
             className="w-full flex items-center gap-2 px-3 py-2 mb-3 rounded-xl text-xs font-medium bg-gradient-to-r from-violet-500/15 to-pink-500/15 border border-violet-500/30 text-violet-200 hover:from-violet-500/25 hover:to-pink-500/25 transition-colors"
