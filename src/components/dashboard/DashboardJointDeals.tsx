@@ -137,7 +137,7 @@ export default function DashboardJointDeals({ userId }: Props) {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-4">
         <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center">
           <Icon name="Handshake" className="h-4.5 w-4.5 text-violet-400" />
         </div>
@@ -145,6 +145,26 @@ export default function DashboardJointDeals({ userId }: Props) {
           <h1 className="text-lg font-bold text-white">Совместные сделки</h1>
           <p className="text-xs text-gray-500">Управление партнёрскими сделками</p>
         </div>
+      </div>
+
+      {/* Подсказка */}
+      <div className="rounded-xl bg-violet-500/5 border border-violet-500/15 px-4 py-3 mb-6 space-y-1.5">
+        <p className="text-xs text-violet-300 font-medium flex items-center gap-1.5">
+          <Icon name="Info" className="h-3.5 w-3.5 shrink-0" />
+          Как работает
+        </p>
+        <p className="text-xs text-gray-400 leading-relaxed">
+          Инструмент для партнёрства между участниками Клуба. Заполните условия сотрудничества — они фиксируются и становятся видны обоим участникам. Партнёр получит предложение и подтвердит или отклонит его прямо в чате.
+        </p>
+        <div className="flex flex-col gap-1 pt-0.5">
+          <p className="text-xs text-gray-500">
+            <span className="text-gray-300 font-medium">Совместная работа</span> — оба активно ведут сделку и делят комиссию по договорённости.
+          </p>
+          <p className="text-xs text-gray-500">
+            <span className="text-gray-300 font-medium">Передача контакта</span> — вы передаёте клиента или объект партнёру, условия фиксируются.
+          </p>
+        </div>
+        <p className="text-[11px] text-gray-600 pt-0.5">Чтобы создать СЗ — откройте чат с партнёром в разделе Сообщения и нажмите «Совместная сделка».</p>
       </div>
 
       {deals.length === 0 ? (
