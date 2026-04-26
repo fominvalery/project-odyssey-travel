@@ -51,7 +51,12 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { toast } = useToast()
-  const isBasic = !user?.isSuperadmin && (!user?.status || user?.status === "basic")
+  // Для супер-админа: режим просмотра (имитация статуса)
+  const [previewStatus, setPreviewStatus] = useState<"basic" | "broker" | "agency" | null>(null)
+  const effectiveStatus = user?.isSuperadmin && previewStatus ? previewStatus : user?.status
+  const isBasic = !user?.isSuperadmin
+    ? (!user?.status || user?.status === "basic")
+    : previewStatus === "basic"
   const [section, setSection] = useState<Section>(isBasic ? "objects" : "dashboard")
   const [form, setForm] = useState({
     firstName: user?.firstName ?? "",
@@ -299,6 +304,11 @@ export default function Dashboard() {
         initials={initials}
         onLogout={() => { logout(); navigate("/") }}
         unreadMessages={unreadMessages}
+        previewStatus={previewStatus}
+        onPreviewStatusChange={(s) => {
+          setPreviewStatus(s)
+          setSection(s === "basic" ? "objects" : "dashboard")
+        }}
       />
 
       <main className="flex-1 overflow-auto pb-20 md:pb-0">
