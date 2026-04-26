@@ -332,19 +332,63 @@ const INVESTMENT_FIELDS_SUBLEASE_GAB = [
   { key: "encumbrance_risk", label: "Риски", placeholder: "Расторжение договора / Нет" },
 ]
 
-// ── Поля для Инвестиций: Редевелопмент / Девелопмент ────────────────────────
+// ── Поля: Редевелопмент (смена назначения объекта) ───────────────────────────
 const INVESTMENT_FIELDS_REDEVELOPMENT = [
-  { key: "project_stage", label: "Стадия проекта", placeholder: "Концепция / Проект / Строительство" },
-  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "15 000" },
-  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "25" },
-  { key: "payback", label: "Срок реализации (лет)", placeholder: "3" },
-  { key: "entry_price", label: "Цена входа (₽)", placeholder: "200 000 000" },
-  { key: "revenue_model", label: "Модель монетизации", placeholder: "Продажа / Аренда / Смешанная" },
-  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Есть / Нет / В работе" },
-  { key: "permits", label: "Разрешения / ГПЗУ", placeholder: "Есть / В работе / Нет" },
-  { key: "urban_restrictions", label: "Ограничения застройки", placeholder: "ЗОУИТ, охранные зоны" },
+  { key: "current_use", label: "Текущее назначение объекта", placeholder: "Завод / Склад / Офис / Гостиница" },
+  { key: "target_use", label: "Целевое назначение", placeholder: "Лофт-апарты / ТЦ / БЦ / Жильё" },
+  { key: "object_area", label: "Площадь объекта (м²)", placeholder: "5 000" },
+  { key: "land_area", label: "Площадь участка (сот.)", placeholder: "30" },
+  { key: "vri_change", label: "Смена категории / ВРИ", placeholder: "Требуется / Не требуется / В работе" },
+  { key: "permits", label: "Разрешения / Согласования", placeholder: "Есть / В работе / Нет" },
+  { key: "project_stage", label: "Стадия проекта", placeholder: "Концепция / Проект / Согласование / Реализация" },
+  { key: "renovation_cost", label: "Стоимость преобразования (₽)", placeholder: "80 000 000" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "120 000 000" },
+  { key: "forecast_value", label: "Прогнозная стоимость после (₽)", placeholder: "350 000 000" },
+  { key: "revenue_model", label: "Модель монетизации", placeholder: "Продажа / ГАБ / Смешанная" },
+  { key: "investment_horizon", label: "Горизонт инвестиции (лет)", placeholder: "2–4" },
+  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "30" },
+  { key: "urban_restrictions", label: "Ограничения / ЗОУИТ", placeholder: "Нет / Охранная зона" },
   { key: "partner", label: "Партнёр / Девелопер", placeholder: "Есть / Ищем" },
-  { key: "strategy", label: "Стратегия инвестирования", placeholder: "Fix & Flip / Долгосрочное удержание" },
+]
+
+// ── Поля: Девелоперский проект (строительство с нуля) ────────────────────────
+const INVESTMENT_FIELDS_DEVELOPMENT = [
+  { key: "project_stage", label: "Стадия проекта", placeholder: "Концепция / Проект / ГПЗУ / РНС / Стройка" },
+  { key: "object_type", label: "Тип объекта", placeholder: "МКД / БЦ / ТЦ / Апарт-отель / Склад" },
+  { key: "land_area", label: "Площадь участка (Га)", placeholder: "0.8 Га" },
+  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "12 000" },
+  { key: "gpzu", label: "ГПЗУ", placeholder: "Есть / В работе / Нет" },
+  { key: "rns", label: "Разрешение на строительство (РНС)", placeholder: "Есть / В работе / Нет" },
+  { key: "contractor", label: "Подрядчик / ГК", placeholder: "Есть / В поиске / Тендер" },
+  { key: "total_investment", label: "Общий объём финансирования (₽)", placeholder: "500 000 000" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "150 000 000" },
+  { key: "revenue_model", label: "Модель выхода", placeholder: "Продажа / Аренда / ГАБ / Смешанная" },
+  { key: "forecast_revenue", label: "Прогнозная выручка (₽)", placeholder: "900 000 000" },
+  { key: "investment_horizon", label: "Срок реализации (лет)", placeholder: "3–5" },
+  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "40" },
+  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Все подключены / В работе" },
+  { key: "partner", label: "Партнёр / Соинвестор", placeholder: "Есть / Ищем" },
+  { key: "urban_restrictions", label: "Ограничения застройки", placeholder: "ЗОУИТ / Нет" },
+]
+
+// ── Поля: Реконструкция (улучшение без смены назначения) ────────────────────
+const INVESTMENT_FIELDS_RECONSTRUCTION = [
+  { key: "current_use", label: "Текущее назначение", placeholder: "Офис / Склад / Торговое / Жильё" },
+  { key: "object_area", label: "Текущая площадь (м²)", placeholder: "2 000" },
+  { key: "area_after", label: "Площадь после реконструкции (м²)", placeholder: "3 500" },
+  { key: "condition", label: "Текущее состояние", placeholder: "Аварийное / Требует капремонта / Под модернизацию" },
+  { key: "reconstruction_scope", label: "Объём работ", placeholder: "Капремонт / Надстройка этажей / Расширение / Фасад" },
+  { key: "reconstruction_cost", label: "Стоимость реконструкции (₽)", placeholder: "40 000 000" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "60 000 000" },
+  { key: "current_value", label: "Текущая рыночная стоимость (₽)", placeholder: "80 000 000" },
+  { key: "forecast_value", label: "Прогнозная стоимость после (₽)", placeholder: "180 000 000" },
+  { key: "current_rent", label: "Текущая арендная ставка (₽/м²/мес)", placeholder: "800" },
+  { key: "forecast_rent", label: "Прогнозная ставка после (₽/м²/мес)", placeholder: "2 500" },
+  { key: "permits", label: "Разрешения на реконструкцию", placeholder: "Есть / В работе / Нет" },
+  { key: "investment_horizon", label: "Срок реконструкции (мес.)", placeholder: "12–18" },
+  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "35" },
+  { key: "strategy", label: "Стратегия выхода", placeholder: "Продажа / Удержание и аренда / ГАБ" },
+  { key: "partner", label: "Партнёр / Подрядчик", placeholder: "Есть / Ищем" },
 ]
 
 // ── Поля: Земля под строительство МКД ───────────────────────────────────────
@@ -848,7 +892,9 @@ export function getCategoryFields(catId: string, subtype?: string) {
     if (subtype === "ГАБ (готовый арендный бизнес)") return INVESTMENT_FIELDS_GAB
     if (subtype === "Создание ГАБ") return INVESTMENT_FIELDS_CREATE_GAB
     if (subtype === "ГАБ Субаренда") return INVESTMENT_FIELDS_SUBLEASE_GAB
-    if (["Редевелопмент", "Девелоперский проект", "Реконструкция"].includes(subtype)) return INVESTMENT_FIELDS_REDEVELOPMENT
+    if (subtype === "Редевелопмент") return INVESTMENT_FIELDS_REDEVELOPMENT
+    if (subtype === "Девелоперский проект") return INVESTMENT_FIELDS_DEVELOPMENT
+    if (subtype === "Реконструкция") return INVESTMENT_FIELDS_RECONSTRUCTION
     if (subtype === "Земля под строительство МКД") return INVESTMENT_FIELDS_LAND_MKD
     if (subtype === "Земля под застройку (коммерция)") return INVESTMENT_FIELDS_LAND_COMMERCIAL_BUILD
     if (subtype === "Земля под жилую застройку") return INVESTMENT_FIELDS_LAND_RESIDENTIAL
