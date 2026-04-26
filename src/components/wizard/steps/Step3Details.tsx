@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
-import { CATEGORIES, getCategoryFields, RESIDENTIAL_RENT_FIELDS, COMMERCIAL_RENT_FIELDS_OFFICE, COMMERCIAL_RENT_FIELDS_DEFAULT, COMMERCIAL_RENT_FIELDS_RETAIL, COMMERCIAL_RENT_FIELDS_WAREHOUSE } from "../wizardTypes"
+import { CATEGORIES, getCategoryFields, RESIDENTIAL_RENT_FIELDS, RESIDENTIAL_SHORTTERM_FIELDS, COMMERCIAL_RENT_FIELDS_OFFICE, COMMERCIAL_RENT_FIELDS_DEFAULT, COMMERCIAL_RENT_FIELDS_RETAIL, COMMERCIAL_RENT_FIELDS_WAREHOUSE } from "../wizardTypes"
 import type { WizardForm } from "../wizardTypes"
 
 function formatPrice(val: string): string {
@@ -37,8 +37,15 @@ const COMMERCIAL_OFFICE_SUBTYPES = ["Бизнес-центр", "Офис", "См
 const COMMERCIAL_RETAIL_SUBTYPES = ["Торговое помещение", "Street retail", "Магазин", "ТЦ / Торговый центр", "Торговая галерея", "Шоурум"]
 const COMMERCIAL_WAREHOUSE_SUBTYPES = ["Склад", "Логистический комплекс", "Производственное помещение", "Промышленная база", "Флекс-помещение", "Light industrial"]
 
-function getRentFields(category: string, subtype: string) {
-  if (category === "residential") return RESIDENTIAL_RENT_FIELDS
+const RESIDENTIAL_SHORTTERM_SUBTYPES = ["Студия", "Квартира", "Апартаменты", "Лофт", "Комната"]
+
+function getRentFields(category: string, subtype: string, categoryFields?: Record<string, string>) {
+  if (category === "residential") {
+    // Посуточная аренда — если выбран соответствующий срок или подтип подходит
+    const isShortTerm = categoryFields?.["lease_term"]?.toLowerCase().includes("посуточ")
+    if (isShortTerm) return RESIDENTIAL_SHORTTERM_FIELDS
+    return RESIDENTIAL_RENT_FIELDS
+  }
   if (category === "commercial") {
     if (COMMERCIAL_OFFICE_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_OFFICE
     if (COMMERCIAL_RETAIL_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_RETAIL
@@ -67,7 +74,7 @@ export function Step3Details({
   const showDealBadge = (category === "commercial" || category === "residential") && dealType
 
   const fields = isRent
-    ? getRentFields(category, subtype)
+    ? getRentFields(category, subtype, categoryFields)
     : getCategoryFields(category, subtype)
 
   const financeFields = isResort ? fields.filter(f => RESORT_FINANCE_KEYS.has(f.key)) : []
