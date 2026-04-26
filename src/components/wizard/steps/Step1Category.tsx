@@ -40,6 +40,37 @@ const RESIDENTIAL_GROUPS = [
   },
 ]
 
+const AUCTION_GROUPS = [
+  {
+    id: "bankruptcy",
+    label: "Банкротство",
+    desc: "Физлица, юрлица, конкурсная масса",
+    icon: "Scale",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/17b020ab-c66f-445a-8a81-9f2954d40507.jpg",
+  },
+  {
+    id: "state",
+    label: "Гос. и муниц.",
+    desc: "РФФИ, Росимущество, муниципальные",
+    icon: "Landmark",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b50fb88-f4e7-44ec-8719-e0fd7f90acf6.jpg",
+  },
+  {
+    id: "pledge",
+    label: "Залоговое",
+    desc: "Залоги банков, арест, обременения",
+    icon: "ShieldAlert",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+  },
+  {
+    id: "special",
+    label: "Спец. форматы",
+    desc: "44-ФЗ, приватизация, исп. производство",
+    icon: "FileText",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/af1636ce-1678-40e8-bfaf-e34e3c3e0013.jpg",
+  },
+]
+
 const INVESTMENT_GROUPS = [
   {
     id: "gab",
@@ -163,12 +194,14 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
   const [residentialGroup, setResidentialGroup] = useState<"urban" | "suburban" | "premium" | "">("")
   const [commercialGroup, setCommercialGroup] = useState<"office" | "retail" | "warehouse" | "service" | "mixed" | "">("")
   const [investmentGroup, setInvestmentGroup] = useState<"gab" | "redevelopment" | "land" | "special" | "">("")
+  const [auctionGroup, setAuctionGroup] = useState<"bankruptcy" | "state" | "pledge" | "special" | "">("")
   const selectedCat = CATEGORIES.find(c => c.id === category)
   const isResort = category === "resort"
   const isNewbuild = category === "newbuild"
   const isResidential = category === "residential"
   const isCommercial = category === "commercial"
   const isInvestment = category === "investment"
+  const isAuction = category === "auction"
   const showDealType = DEAL_TYPE_CATEGORIES.includes(category)
   const subtypeRef = useRef<HTMLDivElement>(null)
   const dealTypeRef = useRef<HTMLDivElement>(null)
@@ -176,6 +209,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
   const residentialGroupRef = useRef<HTMLDivElement>(null)
   const commercialGroupRef = useRef<HTMLDivElement>(null)
   const investmentGroupRef = useRef<HTMLDivElement>(null)
+  const auctionGroupRef = useRef<HTMLDivElement>(null)
 
   function handleCategorySelect(id: string) {
     setCategory(id)
@@ -202,6 +236,11 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
       setTimeout(() => {
         investmentGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
+    } else if (id === "auction") {
+      setAuctionGroup("")
+      setTimeout(() => {
+        auctionGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
     } else if (DEAL_TYPE_CATEGORIES.includes(id)) {
       setDealType("")
       setTimeout(() => {
@@ -212,6 +251,14 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
     }
+  }
+
+  function handleAuctionGroupSelect(groupId: "bankruptcy" | "state" | "pledge" | "special") {
+    setAuctionGroup(groupId)
+    setSubtype("")
+    setTimeout(() => {
+      subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 50)
   }
 
   function handleInvestmentGroupSelect(groupId: "gab" | "redevelopment" | "land" | "special") {
@@ -425,6 +472,80 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
                       className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
                         subtype === st
                           ? "border-amber-500 bg-amber-500/15 text-amber-300"
+                          : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-[#3a3a3a] hover:text-white"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          {!subtype && (
+            <p className="text-[11px] text-gray-600">Выберите тип — поля формы подстроятся автоматически</p>
+          )}
+        </div>
+      )}
+
+      {/* Выбор группы для Торгов — 4 карточки */}
+      {isAuction && (
+        <div ref={auctionGroupRef} className="space-y-3">
+          <p className="text-[11px] text-gray-500 uppercase tracking-widest">Тип торгов</p>
+          <div className="grid grid-cols-2 gap-3">
+            {AUCTION_GROUPS.map(g => {
+              const isActive = auctionGroup === g.id
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => handleAuctionGroupSelect(g.id as "bankruptcy" | "state" | "pledge" | "special")}
+                  className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
+                    isActive ? "border-green-500 shadow-lg shadow-green-500/20" : "border-[#2a2a2a] hover:border-white/30"
+                  }`}
+                  style={{ minHeight: 120 }}
+                >
+                  <img src={g.bg} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 transition-all duration-300" style={{ background: isActive ? "rgba(5,46,22,0.72)" : "rgba(0,0,0,0.60)" }} />
+                  <div className="relative z-10 p-4 flex flex-col items-center justify-center h-full">
+                    <div className={`w-9 h-9 rounded-xl mb-2 flex items-center justify-center backdrop-blur-sm transition-all ${
+                      isActive ? "bg-green-500/40 border border-green-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
+                    }`}>
+                      <Icon name={g.icon as "Home"} fallback="Gavel" className={`h-4 w-4 ${isActive ? "text-green-200" : "text-white/80"}`} />
+                    </div>
+                    <p className="font-bold text-white text-xs mb-0.5 drop-shadow">{g.label}</p>
+                    <p className={`text-[10px] leading-snug drop-shadow ${isActive ? "text-green-200/80" : "text-white/50"}`}>{g.desc}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Подтипы для Торгов — после выбора группы */}
+      {isAuction && auctionGroup && selectedCat?.subgroups && (
+        <div ref={subtypeRef} className="space-y-3">
+          {selectedCat.subgroups
+            .filter(sg => {
+              if (auctionGroup === "bankruptcy") return sg.label === "Банкротство"
+              if (auctionGroup === "state") return sg.label === "Государственные и муниципальные"
+              if (auctionGroup === "pledge") return sg.label === "Залоговое имущество"
+              if (auctionGroup === "special") return sg.label === "Специальные форматы"
+              return false
+            })
+            .map(sg => (
+              <div key={sg.label}>
+                <p className="text-[11px] text-green-400/70 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <span className="w-3 h-px bg-green-500/40 inline-block"></span>
+                  {sg.label}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sg.items.map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setSubtype(st)}
+                      className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                        subtype === st
+                          ? "border-green-500 bg-green-500/15 text-green-300"
                           : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-[#3a3a3a] hover:text-white"
                       }`}
                     >
@@ -668,8 +789,8 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         </div>
       )}
 
-      {/* Выбор подтипа для НЕ курортных, НЕ новостроек, НЕ жилой, НЕ коммерции, НЕ инвестиций */}
-      {!isResort && !isNewbuild && !isResidential && !isCommercial && !isInvestment && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
+      {/* Выбор подтипа для НЕ курортных, НЕ новостроек, НЕ жилой, НЕ коммерции, НЕ инвестиций, НЕ торгов */}
+      {!isResort && !isNewbuild && !isResidential && !isCommercial && !isInvestment && !isAuction && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
         <div ref={subtypeRef}>
           <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">
             Тип объекта — {selectedCat.label}

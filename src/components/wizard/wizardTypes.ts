@@ -171,10 +171,25 @@ export const CATEGORIES: CategoryItem[] = [
   {
     id: "auction",
     label: "Торги",
-    desc: "Аукционы и банкротство",
+    desc: "Банкротство, РФФИ, залоги, муниципальные",
     icon: "Gavel",
     group: "other",
-    subtypes: ["Банкротство", "Муниципальные торги", "РФФИ", "Реализация залогов"],
+    subtypes: [
+      // Банкротство
+      "Банкротство физлица", "Банкротство юрлица", "Конкурсная масса",
+      // Государственные и муниципальные
+      "Муниципальные торги", "Государственный аукцион", "РФФИ",
+      // Залоговое имущество
+      "Реализация залогов банка", "Имущество под обременением", "Арестованное имущество",
+      // Специальные
+      "Торги по 44-ФЗ / 223-ФЗ", "Приватизация", "Торги по исполнительному производству",
+    ],
+    subgroups: [
+      { label: "Банкротство", items: ["Банкротство физлица", "Банкротство юрлица", "Конкурсная масса"] },
+      { label: "Государственные и муниципальные", items: ["Муниципальные торги", "Государственный аукцион", "РФФИ"] },
+      { label: "Залоговое имущество", items: ["Реализация залогов банка", "Имущество под обременением", "Арестованное имущество"] },
+      { label: "Специальные форматы", items: ["Торги по 44-ФЗ / 223-ФЗ", "Приватизация", "Торги по исполнительному производству"] },
+    ],
   },
 ]
 
@@ -506,6 +521,53 @@ export const COMMERCIAL_RENT_FIELDS_WAREHOUSE = [
   { key: "indexing", label: "Индексация", placeholder: "5% в год" },
 ]
 
+// ── Поля Торгов: Банкротство ─────────────────────────────────────────────────
+const AUCTION_FIELDS_BANKRUPTCY = [
+  { key: "etp", label: "ЭТП (площадка)", placeholder: "МЭТС / Торги.ру / Сбербанк-АСТ" },
+  { key: "lot_number", label: "Номер лота", placeholder: "№ 12345-ЕФРСБ" },
+  { key: "auction_date", label: "Дата аукциона", placeholder: "01.06.2026" },
+  { key: "start_price", label: "Начальная цена (₽)", placeholder: "5 000 000" },
+  { key: "deposit", label: "Задаток (₽)", placeholder: "500 000" },
+  { key: "case_number", label: "Номер дела о банкротстве", placeholder: "А40-123456/2024" },
+  { key: "arbitration_manager", label: "Арбитражный управляющий", placeholder: "Иванов И.И." },
+  { key: "efrsb_link", label: "Ссылка на ЕФРСБ", placeholder: "https://fedresurs.ru/..." },
+  { key: "bidding_step", label: "Шаг торгов", placeholder: "5% / 100 000 ₽" },
+  { key: "object_condition", label: "Состояние объекта", placeholder: "Жилое / Требует ремонта" },
+  { key: "encumbrance", label: "Обременения", placeholder: "Нет / Залог банка / Аренда" },
+  { key: "documents", label: "Документы", placeholder: "Правоустанавливающие / Техплан" },
+]
+
+// ── Поля Торгов: Государственные / Муниципальные / РФФИ ──────────────────────
+const AUCTION_FIELDS_STATE = [
+  { key: "etp", label: "ЭТП (площадка)", placeholder: "РФФИ / Росимущество / ГИС Торги" },
+  { key: "lot_number", label: "Номер лота / извещения", placeholder: "№ 270520241234" },
+  { key: "auction_date", label: "Дата аукциона", placeholder: "15.06.2026" },
+  { key: "start_price", label: "Начальная цена (₽)", placeholder: "8 000 000" },
+  { key: "deposit", label: "Задаток (₽)", placeholder: "800 000" },
+  { key: "organizer", label: "Организатор торгов", placeholder: "Росимущество / Администрация МО" },
+  { key: "bidding_step", label: "Шаг аукциона", placeholder: "100 000 ₽ / 1%" },
+  { key: "ownership", label: "Форма собственности", placeholder: "Федеральная / Муниципальная" },
+  { key: "object_condition", label: "Состояние объекта", placeholder: "Действующее / Требует ремонта" },
+  { key: "encumbrance", label: "Обременения", placeholder: "Нет / Аренда до 2027" },
+  { key: "documents", label: "Документы", placeholder: "Выписка ЕГРН, техпаспорт" },
+]
+
+// ── Поля Торгов: Залоговое имущество ─────────────────────────────────────────
+const AUCTION_FIELDS_PLEDGE = [
+  { key: "etp", label: "ЭТП (площадка)", placeholder: "Сбербанк-АСТ / ВТБ / Альфа" },
+  { key: "lot_number", label: "Номер лота", placeholder: "№ 2024-ЗАЛ-0042" },
+  { key: "auction_date", label: "Дата реализации", placeholder: "20.06.2026" },
+  { key: "start_price", label: "Начальная цена (₽)", placeholder: "12 000 000" },
+  { key: "deposit", label: "Задаток (₽)", placeholder: "1 200 000" },
+  { key: "pledgee", label: "Залогодержатель (банк)", placeholder: "Сбербанк / ВТБ / Газпромбанк" },
+  { key: "pledge_agreement", label: "Договор залога", placeholder: "№ ДЗ-2021-001 от 01.01.2021" },
+  { key: "bidding_step", label: "Шаг торгов", placeholder: "100 000 ₽" },
+  { key: "object_condition", label: "Состояние объекта", placeholder: "Жилое / Коммерческое / Земля" },
+  { key: "encumbrance", label: "Прочие обременения", placeholder: "Нет / Арест / Аренда" },
+  { key: "documents", label: "Документы", placeholder: "Оценка, выписка ЕГРН" },
+]
+
+// ── Поля Торгов (общий fallback) ──────────────────────────────────────────────
 const AUCTION_FIELDS = [
   { key: "etp", label: "ЭТП (площадка)", placeholder: "Торги.ру / МЭТС" },
   { key: "lot_number", label: "Номер лота", placeholder: "№ 12345" },
@@ -513,6 +575,8 @@ const AUCTION_FIELDS = [
   { key: "start_price", label: "Начальная цена (₽)", placeholder: "5 000 000" },
   { key: "deposit", label: "Залог (₽)", placeholder: "500 000" },
   { key: "auction_subtype", label: "Тип торгов", placeholder: "Банкротство / Муниципальные" },
+  { key: "bidding_step", label: "Шаг торгов", placeholder: "5% / 100 000 ₽" },
+  { key: "encumbrance", label: "Обременения", placeholder: "Нет / Залог / Арест" },
 ]
 
 const NEWBUILD_FIELDS = [
@@ -691,7 +755,13 @@ export function getCategoryFields(catId: string, subtype?: string) {
     if (["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"].includes(subtype)) return INVESTMENT_FIELDS_SPECIAL
     return INVESTMENT_FIELDS
   }
-  if (catId === "auction") return AUCTION_FIELDS
+  if (catId === "auction") {
+    if (!subtype) return AUCTION_FIELDS
+    if (["Банкротство физлица", "Банкротство юрлица", "Конкурсная масса"].includes(subtype)) return AUCTION_FIELDS_BANKRUPTCY
+    if (["Муниципальные торги", "Государственный аукцион", "РФФИ", "Торги по 44-ФЗ / 223-ФЗ", "Приватизация", "Торги по исполнительному производству"].includes(subtype)) return AUCTION_FIELDS_STATE
+    if (["Реализация залогов банка", "Имущество под обременением", "Арестованное имущество"].includes(subtype)) return AUCTION_FIELDS_PLEDGE
+    return AUCTION_FIELDS
+  }
   if (catId === "newbuild") {
     if (!subtype) return NEWBUILD_FIELDS
     if (subtype.includes("Офис")) return NEWBUILD_COMMERCIAL_OFFICE_FIELDS
