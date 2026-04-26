@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
-import { CATEGORIES, getCategoryFields, RESIDENTIAL_RENT_FIELDS, RESIDENTIAL_SHORTTERM_FIELDS, COMMERCIAL_RENT_FIELDS_OFFICE, COMMERCIAL_RENT_FIELDS_DEFAULT, COMMERCIAL_RENT_FIELDS_RETAIL, COMMERCIAL_RENT_FIELDS_WAREHOUSE } from "../wizardTypes"
+import { CATEGORIES, getCategoryFields, RESIDENTIAL_RENT_FIELDS, RESIDENTIAL_SHORTTERM_FIELDS, COMMERCIAL_RENT_FIELDS_OFFICE, COMMERCIAL_RENT_FIELDS_DEFAULT, COMMERCIAL_RENT_FIELDS_RETAIL, COMMERCIAL_RENT_FIELDS_WAREHOUSE, COMMERCIAL_RENT_FIELDS_SERVICE, COMMERCIAL_RENT_FIELDS_SUBLEASE } from "../wizardTypes"
 import type { WizardForm } from "../wizardTypes"
 
 function formatPrice(val: string): string {
@@ -36,20 +36,22 @@ const RESORT_INFRA_KEYS = new Set(["pool", "spa", "restaurant", "beach", "parkin
 const COMMERCIAL_OFFICE_SUBTYPES = ["Бизнес-центр", "Офис", "Смарт-офис", "Сервисный офис", "Коворкинг", "Особняк"]
 const COMMERCIAL_RETAIL_SUBTYPES = ["Торговое помещение", "Street retail", "Магазин", "ТЦ / Торговый центр", "Торговая галерея", "Шоурум"]
 const COMMERCIAL_WAREHOUSE_SUBTYPES = ["Склад", "Логистический комплекс", "Производственное помещение", "Промышленная база", "Флекс-помещение", "Light industrial"]
-
-const RESIDENTIAL_SHORTTERM_SUBTYPES = ["Студия", "Квартира", "Апартаменты", "Лофт", "Комната"]
+const COMMERCIAL_SERVICE_SUBTYPES = ["Ресторан", "Кафе", "Бар", "Салон красоты", "Медицинский центр", "Автосервис", "Автомойка"]
 
 function getRentFields(category: string, subtype: string, categoryFields?: Record<string, string>) {
   if (category === "residential") {
-    // Посуточная аренда — если выбран соответствующий срок или подтип подходит
     const isShortTerm = categoryFields?.["lease_term"]?.toLowerCase().includes("посуточ")
     if (isShortTerm) return RESIDENTIAL_SHORTTERM_FIELDS
     return RESIDENTIAL_RENT_FIELDS
   }
   if (category === "commercial") {
+    // Субаренда — если в полях указан соответствующий формат
+    const isSublease = categoryFields?.["sublease_from"] || categoryFields?.["sublease_right"]
+    if (isSublease) return COMMERCIAL_RENT_FIELDS_SUBLEASE
     if (COMMERCIAL_OFFICE_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_OFFICE
     if (COMMERCIAL_RETAIL_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_RETAIL
     if (COMMERCIAL_WAREHOUSE_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_WAREHOUSE
+    if (COMMERCIAL_SERVICE_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_SERVICE
     return COMMERCIAL_RENT_FIELDS_DEFAULT
   }
   return []

@@ -793,15 +793,53 @@ export const COMMERCIAL_RENT_FIELDS_RETAIL = [
 
 export const COMMERCIAL_RENT_FIELDS_WAREHOUSE = [
   { key: "ceiling", label: "Высота потолков (м)", placeholder: "10" },
+  { key: "class", label: "Класс склада", placeholder: "A / B+ / B / C" },
   { key: "rent_price_sqm", label: "Ставка аренды (₽/м²/мес)", placeholder: "800" },
   { key: "opex", label: "Эксплуатационные расходы (₽/м²)", placeholder: "150" },
   { key: "deposit", label: "Залог (мес.)", placeholder: "2" },
   { key: "lease_term", label: "Минимальный срок аренды", placeholder: "1 год / 3 года" },
-  { key: "gates", label: "Ворота", placeholder: "4 доктерных" },
+  { key: "gates", label: "Ворота", placeholder: "4 доктерных / Секционные" },
   { key: "ramp", label: "Пандус", placeholder: "Есть / Нет" },
-  { key: "temp_regime", label: "Температурный режим", placeholder: "Отапливаемый / Холодный" },
-  { key: "truck_access", label: "Подъезд для фур", placeholder: "Да / Нет" },
+  { key: "temp_regime", label: "Температурный режим", placeholder: "Отапливаемый / Холодный / Заморозка" },
+  { key: "truck_access", label: "Подъезд для фур", placeholder: "Да, 20-тонники / Нет" },
+  { key: "railway", label: "Ж/Д ветка", placeholder: "Есть / Нет" },
+  { key: "crane", label: "Кран-балка (т)", placeholder: "5 / Нет" },
+  { key: "floor_load", label: "Нагрузка на пол (т/м²)", placeholder: "5" },
+  { key: "parking", label: "Парковка фур", placeholder: "20 мест" },
   { key: "indexing", label: "Индексация", placeholder: "5% в год" },
+]
+
+// ── Поля аренды: Сервис и общепит ────────────────────────────────────────────
+export const COMMERCIAL_RENT_FIELDS_SERVICE = [
+  { key: "floor", label: "Этаж", placeholder: "1" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "3.5" },
+  { key: "rent_price_sqm", label: "Ставка аренды (₽/м²/мес)", placeholder: "2 000" },
+  { key: "opex", label: "Коммунальные платежи", placeholder: "По счётчику / ~20 000 ₽" },
+  { key: "deposit", label: "Залог (мес.)", placeholder: "2" },
+  { key: "lease_term", label: "Минимальный срок аренды", placeholder: "11 мес. / 1 год" },
+  { key: "entrance", label: "Вход", placeholder: "Отдельный с улицы / Из здания" },
+  { key: "wet_point", label: "Мокрая точка", placeholder: "Есть / Нет" },
+  { key: "ventilation", label: "Вытяжная вентиляция", placeholder: "Есть / Нет / Под установку" },
+  { key: "power", label: "Электромощность (кВт)", placeholder: "30" },
+  { key: "traffic", label: "Трафик (чел/день)", placeholder: "3 000" },
+  { key: "neighbors", label: "Окружение", placeholder: "Жилой дом / ТЦ / Офисный центр" },
+  { key: "indexing", label: "Индексация", placeholder: "5% в год / По CPI" },
+]
+
+// ── Поля субаренды коммерции ──────────────────────────────────────────────────
+export const COMMERCIAL_RENT_FIELDS_SUBLEASE = [
+  { key: "sublease_from", label: "Субаренда от", placeholder: "ООО Арендатор (основной договор)" },
+  { key: "rent_price_sqm", label: "Ставка субаренды (₽/м²/мес)", placeholder: "2 500" },
+  { key: "base_rent", label: "Основная ставка аренды (₽/м²/мес)", placeholder: "1 500" },
+  { key: "spread", label: "Спред / маржа (₽/м²)", placeholder: "1 000" },
+  { key: "lease_term", label: "Срок субаренды", placeholder: "До окончания основного договора" },
+  { key: "main_lease_end", label: "Окончание основного договора", placeholder: "31.12.2028" },
+  { key: "sublease_right", label: "Право субаренды", placeholder: "Прописано в договоре / Согласие арендодателя" },
+  { key: "deposit", label: "Залог (мес.)", placeholder: "2" },
+  { key: "opex", label: "Коммунальные платежи", placeholder: "По счётчику / Включены" },
+  { key: "floor", label: "Этаж", placeholder: "3" },
+  { key: "condition", label: "Состояние", placeholder: "С отделкой / Под ключ" },
+  { key: "indexing", label: "Индексация", placeholder: "5% в год / По CPI" },
 ]
 
 // ── Поля Торгов: Банкротство ─────────────────────────────────────────────────
