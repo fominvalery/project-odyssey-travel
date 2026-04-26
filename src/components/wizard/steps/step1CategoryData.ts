@@ -44,7 +44,7 @@ export const RESORT_GROUPS = [
     label: "Загородный отдых",
     desc: "База отдыха, эко-отель, кемпинг",
     icon: "Trees",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2e040e9f-00a8-40b1-801c-bd3442c7aafa.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/8ac47afb-ca65-4fef-aadc-27cb63761b56.jpg",
   },
   {
     id: "invest",

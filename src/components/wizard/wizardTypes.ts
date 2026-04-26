@@ -913,20 +913,75 @@ const RESORT_VILLA_FIELDS = [
   { key: "sales_channels", label: "Каналы продаж", placeholder: "Airbnb, Авито, прямые бронирования" },
 ]
 
-// Инвестиционные и земельные проекты
-const RESORT_INVEST_FIELDS = [
+// Объект под управление (передача УК)
+const RESORT_MGMT_FIELDS = [
+  { key: "object_type", label: "Тип объекта", placeholder: "Отель / База отдыха / Глэмпинг" },
+  { key: "units", label: "Номерной фонд (ед.)", placeholder: "24" },
+  { key: "season", label: "Сезонность", placeholder: "Круглогодично / Лето" },
+  { key: "occupancy", label: "Текущая загрузка (%)", placeholder: "45" },
+  { key: "avg_check", label: "Средний чек (₽/ночь)", placeholder: "4 000" },
+  { key: "annual_revenue", label: "Текущая выручка (₽/год)", placeholder: "5 000 000" },
+  { key: "management_format", label: "Формат передачи УК", placeholder: "Доверительное управление / Аренда бизнеса / Партнёрство" },
+  { key: "owner_fee", label: "Доход собственника (₽/мес)", placeholder: "150 000" },
+  { key: "management_term", label: "Срок договора с УК (лет)", placeholder: "3–5" },
+  { key: "condition", label: "Состояние объекта", placeholder: "Действующий / Требует ремонта" },
+  { key: "licenses", label: "Лицензии и разрешения", placeholder: "Классификация, пожарная" },
+  { key: "sales_channels", label: "Каналы продаж", placeholder: "Booking / Прямые / Нет" },
+  { key: "entry_price", label: "Стоимость объекта (₽)", placeholder: "30 000 000" },
+]
+
+// Земельный участок под курортный проект
+const RESORT_LAND_FIELDS = [
   { key: "land_area", label: "Площадь участка (Га)", placeholder: "5" },
   { key: "land_use", label: "Вид разрешённого использования", placeholder: "Туризм / Рекреация / ИЖС" },
-  { key: "project_stage", label: "Стадия проекта", placeholder: "Концепция / Проект / Строительство" },
-  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Есть / Нет / В работе" },
-  { key: "urban_restrictions", label: "Градостроительные ограничения", placeholder: "ЗОУИТ, охранные зоны и т.д." },
-  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "10 000" },
-  { key: "entry_price", label: "Цена входа (₽)", placeholder: "50 000 000" },
-  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "18" },
+  { key: "location", label: "Локация / Курорт", placeholder: "Сочи / Алтай / Байкал / Карелия" },
+  { key: "distance_water", label: "Расстояние до воды (м)", placeholder: "200 м до моря" },
+  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Электро, вода — есть / Нет" },
+  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "3 000" },
+  { key: "urban_restrictions", label: "Ограничения / ЗОУИТ", placeholder: "Водоохранная зона / Нет" },
+  { key: "project_concept", label: "Концепция проекта", placeholder: "Глэмпинг / Эко-отель / Апарт-отель" },
+  { key: "entry_price", label: "Цена участка (₽)", placeholder: "25 000 000" },
+  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "20" },
+  { key: "investment_horizon", label: "Горизонт инвестиции (лет)", placeholder: "3–5" },
+  { key: "partner", label: "Партнёр / Девелопер", placeholder: "Есть / Ищем" },
+]
+
+// Инвестиционный проект под строительство
+const RESORT_BUILD_PROJECT_FIELDS = [
+  { key: "project_stage", label: "Стадия проекта", placeholder: "Концепция / Проект / РНС / Стройка" },
+  { key: "object_type", label: "Тип объекта", placeholder: "Глэмпинг / Апарт-отель / Санаторий" },
+  { key: "location", label: "Локация / Курорт", placeholder: "Сочи / Алтай / Горный Алтай" },
+  { key: "land_area", label: "Площадь участка (Га)", placeholder: "2" },
+  { key: "build_potential", label: "Площадь застройки (м²)", placeholder: "4 000" },
+  { key: "planned_units", label: "Плановый номерной фонд", placeholder: "40 номеров / домиков" },
+  { key: "total_investment", label: "Общий объём инвестиций (₽)", placeholder: "120 000 000" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "40 000 000" },
+  { key: "revenue_model", label: "Модель монетизации", placeholder: "Собственное управление / УК / ГАБ" },
+  { key: "forecast_occupancy", label: "Прогноз загрузки (%)", placeholder: "65" },
+  { key: "forecast_revenue", label: "Прогнозная выручка (₽/год)", placeholder: "18 000 000" },
+  { key: "yield", label: "Прогнозная доходность (%/год)", placeholder: "18" },
   { key: "payback", label: "Срок окупаемости (лет)", placeholder: "6" },
-  { key: "revenue_model", label: "Модель дохода", placeholder: "Гостиница / Апарт-отель / ГАБ" },
-  { key: "forecast_occupancy", label: "Прогноз загрузки (%)", placeholder: "70" },
-  { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Планируется" },
+  { key: "investment_horizon", label: "Срок реализации (лет)", placeholder: "2" },
+  { key: "partner", label: "Партнёр / Соинвестор", placeholder: "Есть / Ищем" },
+]
+
+// ГАБ в курортной локации
+const RESORT_GAB_FIELDS = [
+  { key: "object_type", label: "Тип объекта", placeholder: "Мини-отель / Глэмпинг / База отдыха" },
+  { key: "location", label: "Локация / Курорт", placeholder: "Сочи / Байкал / Алтай" },
+  { key: "units", label: "Номерной фонд (ед.)", placeholder: "15" },
+  { key: "occupancy", label: "Средняя загрузка (%)", placeholder: "68" },
+  { key: "avg_check", label: "Средний чек (₽/ночь)", placeholder: "6 000" },
+  { key: "annual_revenue", label: "Годовая выручка (₽)", placeholder: "12 000 000" },
+  { key: "yield", label: "Доходность (%/год)", placeholder: "14" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "7" },
+  { key: "roi", label: "ROI (%)", placeholder: "16" },
+  { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Собственное" },
+  { key: "sales_channels", label: "Каналы продаж", placeholder: "Ostrovok, Booking, прямые" },
+  { key: "season", label: "Сезонность", placeholder: "Круглогодично / Лето / Зима" },
+  { key: "licenses", label: "Лицензии", placeholder: "Классификация — есть" },
+  { key: "entry_price", label: "Цена объекта (₽)", placeholder: "85 000 000" },
+  { key: "strategy", label: "Стратегия выхода", placeholder: "Удержание / Перепродажа через 5 лет" },
 ]
 
 const RESIDENTIAL_SUBURBAN_SUBTYPES = ["Дом", "Коттедж", "Таунхаус", "Дуплекс", "Дача", "Частный дом", "Загородный дом", "Часть дома", "Участок под жилую застройку", "Малоэтажный жилой дом"]
@@ -986,15 +1041,18 @@ export function getCategoryFields(catId: string, subtype?: string) {
   }
   if (catId === "resort") {
     if (!subtype) return RESORT_BASE_FIELDS
-    // Земля и инвест-проекты
-    if (subtype.includes("Земельный") || subtype.includes("Инвестиционный проект") || subtype.includes("строительство")) return RESORT_INVEST_FIELDS
-    // SPA, Wellness, Санатории, Пансионаты
-    if (subtype.includes("SPA") || subtype.includes("Wellness") || subtype.includes("Санаторий") || subtype.includes("Пансионат")) return RESORT_SPA_FIELDS
-    // Базы отдыха, Турбазы, Эко-отели, Курортные комплексы
-    if (subtype.includes("База") || subtype.includes("Турбаза") || subtype.includes("Эко") || subtype.includes("Курортный")) return RESORT_NATURE_FIELDS
+    // Инвест-подтипы — каждый со своими полями
+    if (subtype === "Объект под управление") return RESORT_MGMT_FIELDS
+    if (subtype === "Земельный участок под курортный проект") return RESORT_LAND_FIELDS
+    if (subtype === "Инвестиционный проект под строительство") return RESORT_BUILD_PROJECT_FIELDS
+    if (subtype === "Готовый арендный бизнес в курортной локации") return RESORT_GAB_FIELDS
+    // SPA, Wellness, Санатории, Пансионаты, Медкурорт
+    if (["SPA-отель", "Wellness-отель", "Санаторий", "Пансионат", "Медицинский курорт"].includes(subtype)) return RESORT_SPA_FIELDS
+    // Базы отдыха, Турбазы, Эко-отели, Курортные комплексы, Клубы, Кемпинг
+    if (["База отдыха", "Турбаза", "Эко-отель", "Курортный комплекс", "Загородный клуб", "Кемпинг / Автокемпинг"].includes(subtype)) return RESORT_NATURE_FIELDS
     // Виллы и коттеджи
-    if (subtype.includes("Виллы") || subtype.includes("коттеджи")) return RESORT_VILLA_FIELDS
-    // Отели, Гостиницы, Апарт-отели и т.д.
+    if (subtype === "Виллы и коттеджи под аренду") return RESORT_VILLA_FIELDS
+    // Отели, Гостиницы, Апарт-отели, Глэмпинг и т.д.
     return RESORT_HOTEL_FIELDS
   }
   return []
