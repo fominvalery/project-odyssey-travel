@@ -759,6 +759,55 @@ const AUCTION_FIELDS_PLEDGE = [
   { key: "documents", label: "Документы", placeholder: "Оценка, выписка ЕГРН" },
 ]
 
+// ── Поля Торгов: 44-ФЗ / 223-ФЗ ─────────────────────────────────────────────
+const AUCTION_FIELDS_FZ44 = [
+  { key: "etp", label: "ЭТП (площадка)", placeholder: "РТС-тендер / Сбербанк-АСТ / ЕИС" },
+  { key: "lot_number", label: "Номер закупки / извещения", placeholder: "№ 0123456789012345678" },
+  { key: "auction_date", label: "Дата аукциона", placeholder: "15.06.2026" },
+  { key: "start_price", label: "Начальная (максимальная) цена (₽)", placeholder: "10 000 000" },
+  { key: "deposit", label: "Задаток / обеспечение (₽)", placeholder: "1 000 000" },
+  { key: "bidding_step", label: "Шаг аукциона", placeholder: "0.5% / 1%" },
+  { key: "organizer", label: "Заказчик", placeholder: "Минобороны / Администрация / ФСИН" },
+  { key: "object_condition", label: "Состояние объекта", placeholder: "Действующее / Требует ремонта" },
+  { key: "contract_term", label: "Срок исполнения контракта", placeholder: "12 мес." },
+  { key: "encumbrance", label: "Обременения", placeholder: "Нет / Аренда / Сервитут" },
+  { key: "documents", label: "Документация", placeholder: "ЕИС, техзадание, ЕГРН" },
+  { key: "requirements", label: "Требования к участнику", placeholder: "СРО / Лицензия / Нет" },
+]
+
+// ── Поля Торгов: Приватизация ─────────────────────────────────────────────────
+const AUCTION_FIELDS_PRIVATIZATION = [
+  { key: "etp", label: "ЭТП (площадка)", placeholder: "ГИС Торги / Росимущество" },
+  { key: "lot_number", label: "Номер лота", placeholder: "№ ПРВ-2024-001" },
+  { key: "auction_date", label: "Дата аукциона", placeholder: "20.06.2026" },
+  { key: "start_price", label: "Начальная цена (₽)", placeholder: "15 000 000" },
+  { key: "deposit", label: "Задаток (₽)", placeholder: "1 500 000" },
+  { key: "bidding_step", label: "Шаг аукциона", placeholder: "5% / 500 000 ₽" },
+  { key: "ownership", label: "Уровень собственности", placeholder: "Федеральная / Региональная / Муниципальная" },
+  { key: "privatization_basis", label: "Основание приватизации", placeholder: "ФЗ-178 / Прогнозный план" },
+  { key: "object_condition", label: "Состояние объекта", placeholder: "Действующее / Законсервировано" },
+  { key: "current_tenant", label: "Текущий арендатор", placeholder: "Свободно / Есть арендатор" },
+  { key: "encumbrance", label: "Обременения", placeholder: "Нет / Аренда / Сервитут" },
+  { key: "documents", label: "Документы", placeholder: "Выписка ЕГРН, техпаспорт, оценка" },
+]
+
+// ── Поля Торгов: Исполнительное производство ─────────────────────────────────
+const AUCTION_FIELDS_ENFORCEMENT = [
+  { key: "etp", label: "ЭТП (площадка)", placeholder: "МЭТС / Торги.ру / РАД" },
+  { key: "lot_number", label: "Номер лота", placeholder: "№ ИП-2024-0042" },
+  { key: "auction_date", label: "Дата торгов", placeholder: "25.06.2026" },
+  { key: "start_price", label: "Начальная цена (₽)", placeholder: "8 000 000" },
+  { key: "deposit", label: "Задаток (₽)", placeholder: "800 000" },
+  { key: "enforcement_number", label: "Номер исполнительного производства", placeholder: "№ 12345/24/77001-ИП" },
+  { key: "bailiff", label: "Судебный пристав / ФССП", placeholder: "МОСП по ЦАО / УФССП по Москве" },
+  { key: "bidding_step", label: "Шаг торгов", placeholder: "5% / 100 000 ₽" },
+  { key: "debt_amount", label: "Сумма долга (₽)", placeholder: "5 000 000" },
+  { key: "debtor", label: "Должник", placeholder: "ООО Ромашка / Иванов И.И." },
+  { key: "object_condition", label: "Состояние объекта", placeholder: "Жилое / Нежилое / Земля" },
+  { key: "encumbrance", label: "Обременения / Арест", placeholder: "Арест ФССП / Залог банка" },
+  { key: "documents", label: "Документы", placeholder: "Постановление, ЕГРН, оценка" },
+]
+
 // ── Поля Торгов (общий fallback) ──────────────────────────────────────────────
 const AUCTION_FIELDS = [
   { key: "etp", label: "ЭТП (площадка)", placeholder: "Торги.ру / МЭТС" },
@@ -1015,7 +1064,10 @@ export function getCategoryFields(catId: string, subtype?: string) {
   if (catId === "auction") {
     if (!subtype) return AUCTION_FIELDS
     if (["Банкротство физлица", "Банкротство юрлица", "Конкурсная масса"].includes(subtype)) return AUCTION_FIELDS_BANKRUPTCY
-    if (["Муниципальные торги", "Государственный аукцион", "РФФИ", "Торги по 44-ФЗ / 223-ФЗ", "Приватизация", "Торги по исполнительному производству"].includes(subtype)) return AUCTION_FIELDS_STATE
+    if (["Муниципальные торги", "Государственный аукцион", "РФФИ"].includes(subtype)) return AUCTION_FIELDS_STATE
+    if (subtype === "Торги по 44-ФЗ / 223-ФЗ") return AUCTION_FIELDS_FZ44
+    if (subtype === "Приватизация") return AUCTION_FIELDS_PRIVATIZATION
+    if (subtype === "Торги по исполнительному производству") return AUCTION_FIELDS_ENFORCEMENT
     if (["Реализация залогов банка", "Имущество под обременением", "Арестованное имущество"].includes(subtype)) return AUCTION_FIELDS_PLEDGE
     return AUCTION_FIELDS
   }
