@@ -48,11 +48,21 @@ function getRentFields(category: string, subtype: string) {
   return []
 }
 
+function parseNum(v: string) {
+  return parseFloat(v.replace(/\s/g, "").replace(",", ".")) || 0
+}
+
 export function Step3Details({
   form, setForm, category, subtype, categoryFields, onCategoryField, dealType,
 }: Step3Props) {
   const catLabel = CATEGORIES.find(c => c.id === category)?.label ?? ""
   const isResort = category === "resort"
+  const isSubleaseGAB = subtype === "ГАБ Субаренда"
+
+  // Автоподсчёт арендного спреда для ГАБ Субаренда
+  const spreadAuto = isSubleaseGAB
+    ? Math.max(0, parseNum(categoryFields["rent_sub"] ?? "") - parseNum(categoryFields["rent_base"] ?? ""))
+    : 0
   const isRent = dealType === "rent"
   const showDealBadge = (category === "commercial" || category === "residential") && dealType
 
@@ -156,6 +166,52 @@ export function Step3Details({
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* Автоподсчёт спреда — ГАБ Субаренда */}
+      {isSubleaseGAB && (categoryFields["rent_base"] || categoryFields["rent_sub"]) && (
+        <div className="rounded-2xl bg-gradient-to-br from-amber-950/40 to-yellow-950/20 border border-amber-500/20 p-4 space-y-3">
+          <p className="text-xs text-amber-400 font-semibold uppercase tracking-widest flex items-center gap-2">
+            <Icon name="Calculator" className="h-3.5 w-3.5" />
+            Расчёт арендного дохода
+          </p>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-xl bg-[#1a1208] border border-amber-500/20 p-3">
+              <p className="text-[10px] text-gray-500 mb-1">Аренда (плачу)</p>
+              <p className="text-sm font-bold text-white">{formatPrice(categoryFields["rent_base"] ?? "0")} ₽</p>
+            </div>
+            <div className="rounded-xl bg-[#1a1208] border border-amber-500/20 p-3">
+              <p className="text-[10px] text-gray-500 mb-1">Субаренда (получаю)</p>
+              <p className="text-sm font-bold text-white">{formatPrice(categoryFields["rent_sub"] ?? "0")} ₽</p>
+            </div>
+            <div className="rounded-xl bg-amber-500/10 border border-amber-500/40 p-3">
+              <p className="text-[10px] text-amber-400 mb-1">Доход (спред)</p>
+              <p className="text-sm font-bold text-amber-300">{formatPrice(String(spreadAuto))} ₽/мес</p>
+            </div>
+          </div>
+          {spreadAuto > 0 && categoryFields["lease_term_years"] && (
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="rounded-xl bg-[#1a1208] border border-amber-500/20 p-3">
+                <p className="text-[10px] text-gray-500 mb-1">Прогноз за срок (без индексации)</p>
+                <p className="text-sm font-bold text-white">
+                  {formatPrice(String(spreadAuto * 12 * parseNum(categoryFields["lease_term_years"] ?? "0")))} ₽
+                </p>
+                <p className="text-[10px] text-gray-600 mt-1">
+                  {formatPrice(String(spreadAuto))} × 12 × {categoryFields["lease_term_years"]} лет
+                </p>
+              </div>
+              <div className="rounded-xl bg-[#1a1208] border border-amber-500/20 p-3">
+                <p className="text-[10px] text-gray-500 mb-1">Стоимость актива (МАП × 12)</p>
+                <p className="text-sm font-bold text-white">
+                  {formatPrice(String(spreadAuto * (parseNum(categoryFields["map_multiplier"] ?? "12"))))} ₽
+                </p>
+                <p className="text-[10px] text-gray-600 mt-1">
+                  {formatPrice(String(spreadAuto))} × {categoryFields["map_multiplier"] || "12"} мес.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
