@@ -1,9 +1,11 @@
 import { useRef, useState } from "react"
-import Icon from "@/components/ui/icon"
-import { CATEGORIES, CATEGORY_GROUPS } from "../wizardTypes"
+import { CATEGORIES } from "../wizardTypes"
 import type { WizardForm } from "../wizardTypes"
 import CategoryGroupPicker from "./CategoryGroupPicker"
 import CategorySubtypePicker from "./CategorySubtypePicker"
+import CategoryMainGrid from "./CategoryMainGrid"
+import DealTypePicker from "./DealTypePicker"
+import NewbuildGroupPicker from "./NewbuildGroupPicker"
 import {
   DEAL_TYPE_CATEGORIES,
   RESIDENTIAL_GROUPS,
@@ -11,8 +13,6 @@ import {
   AUCTION_GROUPS,
   INVESTMENT_GROUPS,
   COMMERCIAL_GROUPS,
-  NEWBUILD_GROUPS,
-  CAT_BG,
 } from "./step1CategoryData"
 
 interface Step1Props {
@@ -157,46 +157,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
   return (
     <div className="space-y-6">
       {/* Главная сетка категорий */}
-      {CATEGORY_GROUPS.map(group => {
-        const groupCats = CATEGORIES.filter(c => group.ids.includes(c.id))
-        return (
-          <div key={group.label}>
-            <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">{group.label}</p>
-            <div className="grid grid-cols-2 gap-3">
-              {groupCats.map((cat) => {
-                const bg = CAT_BG[cat.id]
-                const isActive = category === cat.id
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleCategorySelect(cat.id)}
-                    className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
-                      isActive
-                        ? "border-blue-500 shadow-lg shadow-blue-500/20"
-                        : "border-[#2a2a2a] hover:border-white/30"
-                    }`}
-                    style={{ minHeight: 160 }}
-                  >
-                    {bg && (
-                      <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    )}
-                    <div className="absolute inset-0 transition-all duration-300" style={{ background: isActive ? "rgba(23,37,84,0.68)" : "rgba(0,0,0,0.58)" }} />
-                    <div className="relative z-10 p-6 flex flex-col items-center justify-center h-full">
-                      <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center backdrop-blur-sm transition-all ${
-                        isActive ? "bg-blue-500/40 border border-blue-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
-                      }`}>
-                        <Icon name={cat.icon as "Home"} fallback="Building2" className={`h-6 w-6 ${isActive ? "text-blue-200" : "text-white/80"}`} />
-                      </div>
-                      <p className="font-bold text-white text-base mb-1 drop-shadow">{cat.label}</p>
-                      <p className={`text-xs leading-snug drop-shadow ${isActive ? "text-blue-200/80" : "text-white/50"}`}>{cat.desc}</p>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )
-      })}
+      <CategoryMainGrid category={category} onSelect={handleCategorySelect} />
 
       {/* Выбор группы для Жилой */}
       {isResidential && (
@@ -306,81 +267,24 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
 
       {/* Выбор типа сделки (жилая и коммерция — только после выбора группы) */}
       {showDealType && (!isResidential || residentialGroup) && (!isCommercial || commercialGroup) && (
-        <div ref={dealTypeRef} className="rounded-2xl border border-[#2a2a2a] bg-[#0d0d0d] p-5">
-          <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-4">Что планируете?</p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleDealTypeSelect("sale")}
-              className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all ${
-                dealType === "sale"
-                  ? "border-blue-500 bg-blue-500/10 text-white"
-                  : "border-[#2a2a2a] bg-[#111] text-gray-400 hover:border-white/20 hover:text-white"
-              }`}
-            >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                dealType === "sale" ? "bg-blue-500/20" : "bg-[#1a1a1a]"
-              }`}>
-                <Icon name="Tag" className={`h-6 w-6 ${dealType === "sale" ? "text-blue-400" : "text-gray-500"}`} />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-sm">Продать</p>
-                <p className="text-[11px] text-gray-500 mt-0.5">Единоразовая сделка</p>
-              </div>
-            </button>
-            <button
-              onClick={() => handleDealTypeSelect("rent")}
-              className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all ${
-                dealType === "rent"
-                  ? "border-emerald-500 bg-emerald-500/10 text-white"
-                  : "border-[#2a2a2a] bg-[#111] text-gray-400 hover:border-white/20 hover:text-white"
-              }`}
-            >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                dealType === "rent" ? "bg-emerald-500/20" : "bg-[#1a1a1a]"
-              }`}>
-                <Icon name="KeyRound" className={`h-6 w-6 ${dealType === "rent" ? "text-emerald-400" : "text-gray-500"}`} />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-sm">Сдать в аренду</p>
-                <p className="text-[11px] text-gray-500 mt-0.5">Ежемесячный доход</p>
-              </div>
-            </button>
-          </div>
-        </div>
+        <DealTypePicker
+          dealType={dealType}
+          onSelect={handleDealTypeSelect}
+          containerRef={dealTypeRef}
+        />
       )}
 
-      {/* Выбор группы для Новостроек */}
+      {/* Выбор группы и подтипов для Новостроек */}
       {isNewbuild && (
-        <div ref={newbuildGroupRef} className="space-y-3">
-          <p className="text-[11px] text-gray-500 uppercase tracking-widest">Тип новостройки</p>
-          <div className="grid grid-cols-2 gap-3">
-            {NEWBUILD_GROUPS.map(g => {
-              const isActive = newbuildGroup === g.id
-              return (
-                <button
-                  key={g.id}
-                  onClick={() => handleNewbuildGroupSelect(g.id as "commercial" | "residential")}
-                  className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
-                    isActive ? "border-blue-500 shadow-lg shadow-blue-500/20" : "border-[#2a2a2a] hover:border-white/30"
-                  }`}
-                  style={{ minHeight: 140 }}
-                >
-                  <img src={g.bg} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 transition-all duration-300" style={{ background: isActive ? "rgba(23,37,84,0.68)" : "rgba(0,0,0,0.58)" }} />
-                  <div className="relative z-10 p-5 flex flex-col items-center justify-center h-full">
-                    <div className={`w-10 h-10 rounded-xl mb-3 flex items-center justify-center backdrop-blur-sm transition-all ${
-                      isActive ? "bg-blue-500/40 border border-blue-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
-                    }`}>
-                      <Icon name={g.icon as "Home"} fallback="Building2" className={`h-5 w-5 ${isActive ? "text-blue-200" : "text-white/80"}`} />
-                    </div>
-                    <p className="font-bold text-white text-sm mb-1 drop-shadow">{g.label}</p>
-                    <p className={`text-[11px] leading-snug drop-shadow ${isActive ? "text-blue-200/80" : "text-white/50"}`}>{g.desc}</p>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
+        <NewbuildGroupPicker
+          newbuildGroup={newbuildGroup}
+          onGroupSelect={handleNewbuildGroupSelect}
+          subtype={subtype}
+          onSubtypeSelect={setSubtype}
+          subgroups={selectedCat?.subgroups}
+          groupRef={newbuildGroupRef}
+          subtypeRef={subtypeRef}
+        />
       )}
 
       {/* Выбор группы для Курортной */}
@@ -415,20 +319,6 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
           onSubtypeSelect={setSubtype}
           accentColor="cyan"
           showIcons={true}
-          emptyHint="Выберите тип — характеристики подберутся автоматически"
-          containerRef={subtypeRef}
-        />
-      )}
-
-      {/* Подтипы для Новостроек */}
-      {isNewbuild && newbuildGroup && selectedCat?.subgroups && (
-        <CategorySubtypePicker
-          subgroups={selectedCat.subgroups}
-          filterLabel={newbuildGroup === "commercial" ? "Коммерческие" : "Жилые"}
-          subtype={subtype}
-          onSubtypeSelect={setSubtype}
-          accentColor="blue"
-          labelSuffix=" новостройки"
           emptyHint="Выберите тип — характеристики подберутся автоматически"
           containerRef={subtypeRef}
         />
