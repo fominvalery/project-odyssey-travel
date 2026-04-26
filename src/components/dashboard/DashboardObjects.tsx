@@ -36,7 +36,8 @@ interface Props {
   onRestore?: (id: string) => void
   onSaveOwner?: (id: string, fields: Record<string, string>) => void
   onReassign?: (obj: import("@/components/AddObjectWizard").ObjectData) => void
-  employees?: Array<{ user_id: string; name: string }>
+  employees?: Array<{ user_id: string; name: string; department_id?: string }>
+  departments?: Array<{ id: string; name: string }>
 }
 
 export default function DashboardObjects({
@@ -48,12 +49,14 @@ export default function DashboardObjects({
   userEmail = "", userName = "",
   onArchive, onRestore, onSaveOwner, onReassign,
   employees,
+  departments,
 }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showArchive, setShowArchive] = useState(false)
   const [archiveSearch, setArchiveSearch] = useState("")
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [employeeFilter, setEmployeeFilter] = useState("")
+  const [deptFilter, setDeptFilter] = useState("")
 
   const canAddListing = !isBasic || (listingsUsed < FREE_LIMIT + listingsExtra)
 
@@ -65,6 +68,10 @@ export default function DashboardObjects({
   const activeObjects = objects.filter(o => !ARCHIVE_STATUSES.includes(o.status))
   const archivedObjects = objects.filter(o => ARCHIVE_STATUSES.includes(o.status))
 
+  const deptEmployeeIds = deptFilter && employees
+    ? new Set(employees.filter(e => e.department_id === deptFilter).map(e => e.user_id))
+    : null
+
   const filtered = activeObjects.filter(o => {
     const matchCat = catFilter === "Все" || o.type === catFilter
     const matchSt = statusFilter === "Все" || o.status === statusFilter
@@ -72,7 +79,8 @@ export default function DashboardObjects({
       || o.title.toLowerCase().includes(objSearch.toLowerCase())
       || o.city.toLowerCase().includes(objSearch.toLowerCase())
     const matchEmployee = !employeeFilter || o.user_id === employeeFilter
-    return matchCat && matchSt && matchSearch && matchEmployee
+    const matchDept = !deptEmployeeIds || deptEmployeeIds.has(o.user_id)
+    return matchCat && matchSt && matchSearch && matchEmployee && matchDept
   })
 
   const filteredArchive = archivedObjects.filter(o => {
@@ -325,18 +333,37 @@ export default function DashboardObjects({
               </button>
             ))}
           </div>
+          {departments && departments.length > 0 && (
+            <select
+              value={deptFilter}
+              onChange={e => { setDeptFilter(e.target.value); setEmployeeFilter("") }}
+              className="rounded-xl bg-[#111] border border-[#1f1f1f] text-sm px-3 py-2 text-white focus:outline-none min-w-[160px]"
+            >
+              <option value="">Все отделы</option>
+              {departments.map(dept => (
+                <option key={dept.id} value={dept.id}>{dept.name}</option>
+              ))}
+            </select>
+          )}
           {employees && employees.length > 0 && (
             <select
               value={employeeFilter}
-              onChange={e => setEmployeeFilter(e.target.value)}
-              className="h-8 px-2 pr-7 rounded-xl text-xs bg-[#111] border border-[#1f1f1f] text-gray-300 focus:outline-none focus:border-blue-500/40 cursor-pointer appearance-none"
-              style={{ backgroundImage: "none" }}
+              onChange={e => { setEmployeeFilter(e.target.value); setDeptFilter("") }}
+              className="rounded-xl bg-[#111] border border-[#1f1f1f] text-sm px-3 py-2 text-white focus:outline-none min-w-[160px]"
             >
               <option value="">Все сотрудники</option>
               {employees.map(emp => (
                 <option key={emp.user_id} value={emp.user_id}>{emp.name}</option>
               ))}
             </select>
+          )}
+          {(deptFilter || employeeFilter) && (
+            <button
+              onClick={() => { setDeptFilter(""); setEmployeeFilter("") }}
+              className="px-3 py-2 rounded-xl text-sm text-gray-400 bg-[#1a1a1a] hover:text-white hover:bg-[#222] border border-[#1f1f1f] transition-colors whitespace-nowrap"
+            >
+              Сбросить
+            </button>
           )}
           <div className="relative">
             <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
