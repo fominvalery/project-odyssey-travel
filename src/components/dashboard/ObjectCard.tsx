@@ -153,6 +153,7 @@ interface ObjectCardProps {
   onArchive?: (id: string, status: "Продан" | "Сдан") => void
   onSaveOwner?: (id: string, fields: Record<string, string>) => void
   onReassign?: (obj: ObjectData) => void
+  employeeName?: string
 }
 
 const BADGE_BY_TYPE: Record<string, { label: string; color: string; icon: string }> = {
@@ -175,7 +176,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 const ARCHIVE_STATUSES = ["Продан", "Сдан"]
 
-export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner, onReassign }: ObjectCardProps) {
+export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner, onReassign, employeeName }: ObjectCardProps) {
   const [showArchiveMenu, setShowArchiveMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const photo = obj.photos && obj.photos.length > 0 ? obj.photos[0] : null
@@ -235,6 +236,12 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwn
       {/* Контент */}
       <div className="p-5 flex-1 flex flex-col">
         <h3 className="font-semibold text-white text-sm mb-1 leading-snug line-clamp-2">{obj.title}</h3>
+        {employeeName && (
+          <span className="text-[10px] text-gray-500 flex items-center gap-1 mb-1">
+            <Icon name="User" className="h-2.5 w-2.5" />
+            {employeeName}
+          </span>
+        )}
         {obj.subtype && (
           <span className="inline-block text-[10px] text-gray-500 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full px-2 py-0.5 mb-2 w-fit">
             {obj.subtype}

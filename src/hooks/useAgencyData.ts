@@ -32,9 +32,11 @@ interface UseAgencyDataOptions {
   orgId: string
   /** Для РОП — фильтровать по отделу */
   deptId?: string | null
+  /** Роль пользователя — определяет область видимости */
+  role?: string | null
 }
 
-export function useAgencyObjects({ userId, orgId, deptId }: UseAgencyDataOptions) {
+export function useAgencyObjects({ userId, orgId, deptId, role }: UseAgencyDataOptions) {
   const [objects, setObjects] = useState<ObjectData[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -42,8 +44,17 @@ export function useAgencyObjects({ userId, orgId, deptId }: UseAgencyDataOptions
     if (!userId || !orgId) return
     setLoading(true)
     try {
-      let url = `${func2url.objects}?org_id=${encodeURIComponent(orgId)}`
-      if (deptId) url += `&department_id=${encodeURIComponent(deptId)}`
+      let url: string
+      if (role === "broker") {
+        // Обычный сотрудник — только свои объекты
+        url = `${func2url.objects}?user_id=${encodeURIComponent(userId)}`
+      } else if (deptId) {
+        // РОП — объекты своего отдела
+        url = `${func2url.objects}?org_id=${encodeURIComponent(orgId)}&department_id=${encodeURIComponent(deptId)}`
+      } else {
+        // Директор/Учредитель — все объекты АН
+        url = `${func2url.objects}?org_id=${encodeURIComponent(orgId)}`
+      }
       const r = await fetch(url)
       const data = await r.json()
       const arr = Array.isArray(data.objects) ? data.objects.map(mapFromServer) : []
@@ -53,7 +64,7 @@ export function useAgencyObjects({ userId, orgId, deptId }: UseAgencyDataOptions
     } finally {
       setLoading(false)
     }
-  }, [userId, orgId, deptId])
+  }, [userId, orgId, deptId, role])
 
   useEffect(() => { load() }, [load])
 

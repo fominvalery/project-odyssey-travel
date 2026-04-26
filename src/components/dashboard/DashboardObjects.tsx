@@ -36,6 +36,7 @@ interface Props {
   onRestore?: (id: string) => void
   onSaveOwner?: (id: string, fields: Record<string, string>) => void
   onReassign?: (obj: import("@/components/AddObjectWizard").ObjectData) => void
+  employees?: Array<{ user_id: string; name: string }>
 }
 
 export default function DashboardObjects({
@@ -46,11 +47,13 @@ export default function DashboardObjects({
   isBasic = false, listingsUsed = 0, listingsExtra = 0,
   userEmail = "", userName = "",
   onArchive, onRestore, onSaveOwner, onReassign,
+  employees,
 }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showArchive, setShowArchive] = useState(false)
   const [archiveSearch, setArchiveSearch] = useState("")
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [employeeFilter, setEmployeeFilter] = useState("")
 
   const canAddListing = !isBasic || (listingsUsed < FREE_LIMIT + listingsExtra)
 
@@ -68,7 +71,8 @@ export default function DashboardObjects({
     const matchSearch = !objSearch
       || o.title.toLowerCase().includes(objSearch.toLowerCase())
       || o.city.toLowerCase().includes(objSearch.toLowerCase())
-    return matchCat && matchSt && matchSearch
+    const matchEmployee = !employeeFilter || o.user_id === employeeFilter
+    return matchCat && matchSt && matchSearch && matchEmployee
   })
 
   const filteredArchive = archivedObjects.filter(o => {
@@ -321,6 +325,19 @@ export default function DashboardObjects({
               </button>
             ))}
           </div>
+          {employees && employees.length > 0 && (
+            <select
+              value={employeeFilter}
+              onChange={e => setEmployeeFilter(e.target.value)}
+              className="h-8 px-2 pr-7 rounded-xl text-xs bg-[#111] border border-[#1f1f1f] text-gray-300 focus:outline-none focus:border-blue-500/40 cursor-pointer appearance-none"
+              style={{ backgroundImage: "none" }}
+            >
+              <option value="">Все сотрудники</option>
+              {employees.map(emp => (
+                <option key={emp.user_id} value={emp.user_id}>{emp.name}</option>
+              ))}
+            </select>
+          )}
           <div className="relative">
             <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
             <Input
@@ -378,6 +395,7 @@ export default function DashboardObjects({
                 onArchive={onArchive}
                 onSaveOwner={onSaveOwner}
                 onReassign={onReassign}
+                employeeName={employees?.find(e => e.user_id === obj.user_id)?.name}
               />
             ))}
           </div>
@@ -398,6 +416,15 @@ export default function DashboardObjects({
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-blue-400">{obj.type}</span>
                       {obj.published && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">В маркетплейсе</span>}
+                      {employees && obj.user_id && (() => {
+                        const eName = employees.find(e => e.user_id === obj.user_id)?.name
+                        return eName ? (
+                          <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                            <Icon name="User" className="h-2.5 w-2.5" />
+                            {eName}
+                          </span>
+                        ) : null
+                      })()}
                     </div>
                   </div>
                 </div>

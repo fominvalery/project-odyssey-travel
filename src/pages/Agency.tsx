@@ -106,10 +106,12 @@ export default function Agency() {
   const myDeptId = employees.find(e => e.user_id === user?.id)?.department_id ?? null
   const isRop = myRole === "rop"
 
+  const isDirectorOrFounder = myRole === "director" || myRole === "founder"
   const { objects, loading: loadingObjects, reload: reloadObjects } = useAgencyObjects({
     userId: user?.id ?? "",
     orgId: orgId ?? "",
     deptId: isRop ? myDeptId : null,
+    role: isDirectorOrFounder ? "director" : isRop ? "rop" : "broker",
   })
 
   useEffect(() => {
