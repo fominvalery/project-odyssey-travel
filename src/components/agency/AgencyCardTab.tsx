@@ -41,7 +41,7 @@ export default function AgencyCardTab({ org, userId, orgId, onSaved }: Props) {
         const res = await fetch((func2url as Record<string, string>)["upload-photo"], {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image_base64: dataUrl, folder: "logos" }),
+          body: JSON.stringify({ image: dataUrl, folder: "logos" }),
         }).then(r => r.json()).catch(() => null)
         if (res?.url) setForm(f => ({ ...f, logo_url: res.url }))
         setUploadingLogo(false)
