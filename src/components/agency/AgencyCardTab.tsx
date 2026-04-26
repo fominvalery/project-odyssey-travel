@@ -1,10 +1,11 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { agencyApi, OrgFull, ROLE_TITLES, isAdmin } from "@/lib/agencyApi"
 import { toast } from "@/hooks/use-toast"
+import func2url from "../../../backend/func2url.json"
 
 const SPECIALIZATIONS = [
   "Коммерческая недвижимость", "Жилая недвижимость", "Загородная недвижимость",
@@ -25,6 +26,32 @@ export default function AgencyCardTab({ org, userId, orgId, onSaved }: Props) {
   const canEdit = isAdmin(org.my_role)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleLogoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingLogo(true)
+    try {
+      const reader = new FileReader()
+      reader.onload = async (ev) => {
+        const dataUrl = ev.target?.result as string
+        setForm(f => ({ ...f, logo_url: dataUrl }))
+        const res = await fetch((func2url as Record<string, string>)["upload-photo"], {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_base64: dataUrl, folder: "logos" }),
+        }).then(r => r.json()).catch(() => null)
+        if (res?.url) setForm(f => ({ ...f, logo_url: res.url }))
+        setUploadingLogo(false)
+      }
+      reader.readAsDataURL(file)
+    } catch {
+      setUploadingLogo(false)
+    }
+    e.target.value = ""
+  }
   const [form, setForm] = useState({
     name: org.name,
     inn: org.inn ?? "",
@@ -78,22 +105,28 @@ export default function AgencyCardTab({ org, userId, orgId, onSaved }: Props) {
       {/* Шапка — логотип + название + мета */}
       <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-6 flex items-start gap-5">
         <div className="relative shrink-0">
-          <Avatar className="h-20 w-20 rounded-2xl">
-            {org.logo_url ? <AvatarImage src={org.logo_url} className="object-cover" /> : null}
+          <Avatar
+            className={`h-20 w-20 rounded-2xl ${canEdit && editing ? "cursor-pointer" : ""}`}
+            onClick={() => canEdit && editing && logoInputRef.current?.click()}
+          >
+            {form.logo_url ? <AvatarImage src={form.logo_url} className="object-cover" /> : null}
             <AvatarFallback className="bg-gradient-to-br from-violet-600 to-blue-600 text-white text-xl font-bold rounded-2xl">
               {initials}
             </AvatarFallback>
           </Avatar>
           {canEdit && editing && (
-            <div className="mt-2">
-              <Input
-                placeholder="URL логотипа"
-                value={form.logo_url}
-                onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))}
-                className={`${inputCls} text-xs h-7`}
-              />
-            </div>
+            <button
+              onClick={() => logoInputRef.current?.click()}
+              disabled={uploadingLogo}
+              className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center border-2 border-[#111] transition-colors"
+            >
+              {uploadingLogo
+                ? <Icon name="Loader2" className="h-3 w-3 text-white animate-spin" />
+                : <Icon name="Camera" className="h-3 w-3 text-white" />
+              }
+            </button>
           )}
+          <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoSelect} />
         </div>
         <div className="flex-1 min-w-0">
           {editing ? (
