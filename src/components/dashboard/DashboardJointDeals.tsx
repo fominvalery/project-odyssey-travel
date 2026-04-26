@@ -164,7 +164,7 @@ export default function DashboardJointDeals({ userId }: Props) {
             <span className="text-gray-300 font-medium">Передача контакта</span> — вы передаёте клиента или объект партнёру, условия фиксируются.
           </p>
         </div>
-        <p className="text-[11px] text-gray-600 pt-0.5">Чтобы создать СЗ — откройте чат с партнёром в разделе Сообщения и нажмите «Совместная сделка».</p>
+        <p className="text-[11px] text-gray-600 pt-0.5">Чтобы создать СЗ — найдите партнёра в разделе «Сеть», нажмите «Написать» и в открывшемся чате нажмите «Совместная сделка».</p>
       </div>
 
       {deals.length === 0 ? (
