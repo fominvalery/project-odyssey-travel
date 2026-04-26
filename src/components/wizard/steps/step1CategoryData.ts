@@ -130,7 +130,7 @@ export const COMMERCIAL_GROUPS = [
     label: "Торговая",
     desc: "Ритейл, магазин, ТЦ, шоурум",
     icon: "ShoppingBag",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/00ec244b-ffcd-46f1-93ec-52f2f285bb1d.jpg",
   },
   {
     id: "warehouse",
@@ -144,14 +144,14 @@ export const COMMERCIAL_GROUPS = [
     label: "Сервис",
     desc: "Ресторан, салон, медцентр",
     icon: "UtensilsCrossed",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/af1636ce-1678-40e8-bfaf-e34e3c3e0013.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/b284b8b9-38be-42df-a6a3-4b79c8e91e06.jpg",
   },
   {
     id: "mixed",
     label: "Смешанные",
     desc: "ПСН, ОЗС, свободное назначение",
     icon: "LayoutGrid",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2e040e9f-00a8-40b1-801c-bd3442c7aafa.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e9cd355a-ba3b-450c-8127-f972c6e68426.jpg",
   },
 ]
 
