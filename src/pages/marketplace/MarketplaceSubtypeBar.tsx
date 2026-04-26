@@ -72,8 +72,8 @@ export default function MarketplaceSubtypeBar({
 
   // Новостройки
   if (activeCategory === "Новостройки") {
-    const NEWBUILD_COMMERCIAL = ["Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)", "ГАБ в новостройке"]
-    const NEWBUILD_RESIDENTIAL = ["Квартира в новостройке", "Апартаменты", "Таунхаус", "Пентхаус"]
+    const NEWBUILD_COMMERCIAL = ["Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)"]
+    const NEWBUILD_RESIDENTIAL = ["Квартира в новостройке", "Студия", "Апартаменты", "Лофт", "Дуплекс", "Таунхаус", "Пентхаус"]
     const activeGroup = NEWBUILD_COMMERCIAL.includes(activeSubtype) ? "commercial"
       : NEWBUILD_RESIDENTIAL.includes(activeSubtype) ? "residential" : ""
     const visibleSubtypes = activeGroup === "commercial" ? NEWBUILD_COMMERCIAL

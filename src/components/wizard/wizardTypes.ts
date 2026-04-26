@@ -83,13 +83,13 @@ export const CATEGORIES: CategoryItem[] = [
     group: "residential",
     subtypes: [
       // Коммерческие
-      "Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)", "ГАБ в новостройке",
+      "Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)",
       // Жилые
-      "Квартира в новостройке", "Апартаменты", "Таунхаус", "Пентхаус",
+      "Квартира в новостройке", "Студия", "Апартаменты", "Лофт", "Дуплекс", "Таунхаус", "Пентхаус",
     ],
     subgroups: [
-      { label: "Коммерческие", items: ["Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)", "ГАБ в новостройке"] },
-      { label: "Жилые", items: ["Квартира в новостройке", "Апартаменты", "Таунхаус", "Пентхаус"] },
+      { label: "Коммерческие", items: ["Офис в БЦ", "Стрит-ритейл в БЦ", "Стрит-ритейл в ЖК", "Апарт-отель (юниты)"] },
+      { label: "Жилые", items: ["Квартира в новостройке", "Студия", "Апартаменты", "Лофт", "Дуплекс", "Таунхаус", "Пентхаус"] },
     ],
   },
   // Коммерческая
@@ -820,6 +820,63 @@ const AUCTION_FIELDS = [
   { key: "encumbrance", label: "Обременения", placeholder: "Нет / Залог / Арест" },
 ]
 
+// Жилые новостройки: Квартира / Студия / Апартаменты / Лофт
+const NEWBUILD_FIELDS_FLAT = [
+  { key: "complex", label: "Название ЖК", placeholder: "Парк Апрель" },
+  { key: "developer", label: "Застройщик", placeholder: "ГК Самолёт" },
+  { key: "delivery", label: "Срок сдачи", placeholder: "Q3 2026" },
+  { key: "corpus", label: "Корпус / Секция", placeholder: "К1, С2" },
+  { key: "floor", label: "Этаж", placeholder: "7" },
+  { key: "floors_total", label: "Этажей в доме", placeholder: "25" },
+  { key: "rooms", label: "Количество комнат", placeholder: "2 / Студия / Свободная" },
+  { key: "layout", label: "Планировка", placeholder: "Евро / Классика / Свободная" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "2.8" },
+  { key: "finishing", label: "Отделка", placeholder: "Чистовая / Предчистовая / Без отделки" },
+  { key: "chess", label: "Шахматка", placeholder: "Доступна" },
+  { key: "housing_class", label: "Класс жилья", placeholder: "Комфорт / Бизнес / Премиум" },
+  { key: "parking", label: "Паркинг", placeholder: "Подземный / Наземный / Нет" },
+  { key: "mortgage", label: "Ипотека", placeholder: "Семейная 6% / Военная / IT" },
+  { key: "installment", label: "Рассрочка", placeholder: "Есть / Нет / Условия" },
+]
+
+// Жилые новостройки: Таунхаус / Дуплекс
+const NEWBUILD_FIELDS_TOWNHOUSE = [
+  { key: "complex", label: "Название ЖК / КП", placeholder: "Парк Апрель / Лесной квартал" },
+  { key: "developer", label: "Застройщик", placeholder: "ГК Самолёт" },
+  { key: "delivery", label: "Срок сдачи", placeholder: "Q2 2026" },
+  { key: "floors_total", label: "Этажность дома", placeholder: "2 / 3" },
+  { key: "land_area", label: "Площадь участка (сот.)", placeholder: "3" },
+  { key: "wall_material", label: "Материал стен", placeholder: "Кирпич / Газобетон / Монолит" },
+  { key: "finishing", label: "Отделка", placeholder: "Чистовая / Предчистовая / Без отделки" },
+  { key: "parking", label: "Гараж / Паркинг", placeholder: "Встроенный гараж / Навес" },
+  { key: "bathroom", label: "Санузлов", placeholder: "2" },
+  { key: "chess", label: "Шахматка", placeholder: "Доступна" },
+  { key: "housing_class", label: "Класс жилья", placeholder: "Комфорт / Бизнес" },
+  { key: "infrastructure", label: "Инфраструктура посёлка", placeholder: "КПП, детская площадка, магазин" },
+  { key: "mortgage", label: "Ипотека", placeholder: "Семейная 6% / Военная" },
+  { key: "installment", label: "Рассрочка", placeholder: "Есть / Нет / Условия" },
+]
+
+// Жилые новостройки: Пентхаус
+const NEWBUILD_FIELDS_PENTHOUSE = [
+  { key: "complex", label: "Название ЖК", placeholder: "Башня Федерация / Monarch" },
+  { key: "developer", label: "Застройщик", placeholder: "Sminex / Capital Group" },
+  { key: "delivery", label: "Срок сдачи", placeholder: "Q4 2026" },
+  { key: "floor", label: "Этаж", placeholder: "47 (последний)" },
+  { key: "floors_total", label: "Этажей в доме", placeholder: "50" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "3.5" },
+  { key: "terrace", label: "Терраса", placeholder: "Панорамная, 80 м² / Нет" },
+  { key: "view", label: "Вид из окон", placeholder: "Панорама города / Река / Парк" },
+  { key: "housing_class", label: "Класс жилья", placeholder: "Премиум / Элит / De Luxe" },
+  { key: "finishing", label: "Отделка", placeholder: "Дизайнерская / Под ключ / Без отделки" },
+  { key: "concierge", label: "Консьерж-сервис", placeholder: "24/7 / Нет" },
+  { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Название УК" },
+  { key: "parking", label: "Паркинг", placeholder: "2 машиноместа в подземном" },
+  { key: "chess", label: "Шахматка", placeholder: "Доступна" },
+  { key: "mortgage", label: "Ипотека / Рассрочка", placeholder: "Рассрочка от застройщика" },
+]
+
+// Общий fallback для новостроек
 const NEWBUILD_FIELDS = [
   { key: "complex", label: "Название ЖК", placeholder: "Парк Апрель" },
   { key: "developer", label: "Застройщик", placeholder: "ГК Самолёт" },
@@ -1073,9 +1130,16 @@ export function getCategoryFields(catId: string, subtype?: string) {
   }
   if (catId === "newbuild") {
     if (!subtype) return NEWBUILD_FIELDS
+    // Коммерческие
     if (subtype.includes("Офис")) return NEWBUILD_COMMERCIAL_OFFICE_FIELDS
     if (subtype.includes("Стрит") || subtype.includes("ритейл")) return NEWBUILD_COMMERCIAL_RETAIL_FIELDS
-    if (subtype.includes("Апарт-отель") || subtype.includes("ГАБ")) return NEWBUILD_COMMERCIAL_APART_FIELDS
+    if (subtype.includes("Апарт-отель")) return NEWBUILD_COMMERCIAL_APART_FIELDS
+    // Жилые — пентхаус
+    if (subtype === "Пентхаус") return NEWBUILD_FIELDS_PENTHOUSE
+    // Жилые — таунхаус / дуплекс
+    if (["Таунхаус", "Дуплекс"].includes(subtype)) return NEWBUILD_FIELDS_TOWNHOUSE
+    // Жилые — квартира, студия, апартаменты, лофт
+    if (["Квартира в новостройке", "Студия", "Апартаменты", "Лофт"].includes(subtype)) return NEWBUILD_FIELDS_FLAT
     return NEWBUILD_FIELDS
   }
   if (catId === "commercial") {
