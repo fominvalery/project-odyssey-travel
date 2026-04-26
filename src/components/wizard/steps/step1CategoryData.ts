@@ -106,7 +106,7 @@ export const INVESTMENT_GROUPS = [
     label: "Земельные участки",
     desc: "Под застройку, коммерцию, ИЖС",
     icon: "Map",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e69647ce-c447-4cdb-b850-720ac16cbbc6.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e919abf3-3a33-4ef2-8c03-623c50f3aecd.jpg",
   },
   {
     id: "special",
