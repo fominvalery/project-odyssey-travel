@@ -137,7 +137,7 @@ export const COMMERCIAL_GROUPS = [
     label: "Склад / Произв.",
     desc: "Склад, логистика, промзона",
     icon: "Warehouse",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/17b020ab-c66f-445a-8a81-9f2954d40507.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/4c1878d7-0416-49d2-8d9c-91ef8ff80b41.jpg",
   },
   {
     id: "service",
