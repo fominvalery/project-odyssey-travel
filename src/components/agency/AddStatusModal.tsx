@@ -25,11 +25,12 @@ interface Props {
   open: boolean
   onClose: () => void
   onCreated?: () => void
+  onPreviewStatusChange?: (s: "basic" | "broker" | "agency") => void
 }
 
 type Mode = "choice" | "basic" | "broker" | "agency"
 
-export default function AddStatusModal({ open, onClose, onCreated }: Props) {
+export default function AddStatusModal({ open, onClose, onCreated, onPreviewStatusChange }: Props) {
   const { user, updateProfile } = useAuthContext()
   const navigate = useNavigate()
   const [mode, setMode] = useState<Mode>("choice")
@@ -49,17 +50,13 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
 
   const activateBasic = async () => {
     if (!user) return
+    // Супер-админ: только временное переключение UI, без изменения БД
     if (user.isSuperadmin) {
-      try {
-        await superadminApi.updateStatus(user.id, "basic")
-      } catch (e) {
-        toast({
-          title: "Ошибка",
-          description: e instanceof Error ? e.message : "Не удалось переключить",
-          variant: "destructive",
-        })
-        return
-      }
+      onPreviewStatusChange?.("basic")
+      toast({ title: "Режим просмотра: Базовый", description: "Данные не изменены" })
+      handleClose()
+      onCreated?.()
+      return
     }
     updateProfile({ status: "basic" })
     toast({ title: "Готово", description: "Базовый статус активирован" })
@@ -69,20 +66,12 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
 
   const upgradeBroker = async () => {
     if (!user) return
+    // Супер-админ: только временное переключение UI, без изменения БД
     if (user.isSuperadmin) {
-      try {
-        await superadminApi.updateStatus(user.id, "broker")
-        updateProfile({ status: "broker" })
-        toast({ title: "Готово", description: "Тариф Клуб активирован (супер-админ)" })
-        handleClose()
-        onCreated?.()
-      } catch (e) {
-        toast({
-          title: "Ошибка",
-          description: e instanceof Error ? e.message : "Не удалось переключить",
-          variant: "destructive",
-        })
-      }
+      onPreviewStatusChange?.("broker")
+      toast({ title: "Режим просмотра: Клуб", description: "Данные не изменены" })
+      handleClose()
+      onCreated?.()
       return
     }
     const returnUrl = `${window.location.origin}/dashboard`
@@ -113,6 +102,14 @@ export default function AddStatusModal({ open, onClose, onCreated }: Props) {
 
   const createAgency = async () => {
     if (!user) return
+    // Супер-админ: только временное переключение UI
+    if (user.isSuperadmin) {
+      onPreviewStatusChange?.("agency")
+      toast({ title: "Режим просмотра: Агентство", description: "Данные не изменены" })
+      handleClose()
+      onCreated?.()
+      return
+    }
     if (!form.name.trim()) {
       toast({ title: "Укажите название агентства", variant: "destructive" })
       return

@@ -267,6 +267,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
         open={statusModalOpen}
         onClose={() => setStatusModalOpen(false)}
         onCreated={reloadOrgs}
+        onPreviewStatusChange={onPreviewStatusChange}
       />
     </>
   )
