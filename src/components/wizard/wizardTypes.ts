@@ -128,7 +128,7 @@ export const CATEGORIES: CategoryItem[] = [
     group: "commercial_group",
     subtypes: [
       // Готовый арендный бизнес
-      "ГАБ (готовый арендный бизнес)", "Арендный бизнес", "Арендный поток",
+      "ГАБ (готовый арендный бизнес)", "Создание ГАБ", "ГАБ Субаренда",
       // Редевелопмент и девелопмент
       "Редевелопмент", "Девелоперский проект", "Реконструкция",
       // Земля
@@ -137,7 +137,7 @@ export const CATEGORIES: CategoryItem[] = [
       "Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию",
     ],
     subgroups: [
-      { label: "Готовый арендный бизнес", items: ["ГАБ (готовый арендный бизнес)", "Арендный бизнес", "Арендный поток"] },
+      { label: "Готовый арендный бизнес", items: ["ГАБ (готовый арендный бизнес)", "Создание ГАБ", "ГАБ Субаренда"] },
       { label: "Редевелопмент и девелопмент", items: ["Редевелопмент", "Девелоперский проект", "Реконструкция"] },
       { label: "Земельные участки", items: ["Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку"] },
       { label: "Специальные форматы", items: ["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"] },
@@ -297,6 +297,39 @@ const INVESTMENT_FIELDS_GAB = [
   { key: "class", label: "Класс объекта", placeholder: "A / B+ / B" },
   { key: "encumbrance_risk", label: "Риски / Обременения", placeholder: "Нет / Залог банка" },
   { key: "strategy", label: "Стратегия выхода", placeholder: "Перепродажа / Удержание" },
+]
+
+// ── Поля для Инвестиций: Создание ГАБ ───────────────────────────────────────
+const INVESTMENT_FIELDS_CREATE_GAB = [
+  { key: "deal_stage", label: "Стадия сделки", placeholder: "LOI подписан / ПД подписан / Ищем покупателя" },
+  { key: "tenant_interest", label: "Арендатор / Интересант", placeholder: "ООО Ромашка, торговля, ~150 м²" },
+  { key: "pre_agreement", label: "Формат преддоговора", placeholder: "LOI / Предварительный договор / Намерение" },
+  { key: "planned_rent", label: "Планируемая ставка аренды (₽/мес)", placeholder: "200 000" },
+  { key: "roi", label: "Прогнозный ROI (%)", placeholder: "12" },
+  { key: "yield", label: "Прогнозная доходность (%/год)", placeholder: "9" },
+  { key: "deal_timeline", label: "Срок закрытия сделки", placeholder: "2–3 мес. / После ДКП" },
+  { key: "dkp_terms", label: "Условия ДКП", placeholder: "Задаток 10%, расчёт при регистрации" },
+  { key: "object_type", label: "Тип объекта", placeholder: "Торговое / Офисное / Склад" },
+  { key: "condition", label: "Состояние объекта", placeholder: "Готово к въезду / Требует отделки" },
+  { key: "legal_status", label: "Юридический статус", placeholder: "Собственность / Аренда / Иное" },
+  { key: "encumbrance_risk", label: "Обременения / Риски", placeholder: "Нет / Залог банка" },
+]
+
+// ── Поля для Инвестиций: ГАБ Субаренда ──────────────────────────────────────
+const INVESTMENT_FIELDS_SUBLEASE_GAB = [
+  { key: "rent_base", label: "Основная ставка аренды (₽/мес)", placeholder: "100 000" },
+  { key: "rent_sub", label: "Ставка субаренды (₽/мес)", placeholder: "150 000" },
+  { key: "rent_spread", label: "Арендный спред / доход (₽/мес)", placeholder: "50 000 — рассчитывается автоматически" },
+  { key: "lease_term_years", label: "Срок договора аренды (лет)", placeholder: "10" },
+  { key: "lease_remaining", label: "Остаток срока (лет)", placeholder: "8" },
+  { key: "sublease_right", label: "Право субаренды подтверждено", placeholder: "Да, в договоре / Есть доп. соглашение" },
+  { key: "subtenant", label: "Субарендатор", placeholder: "ООО Ромашка / Ищем" },
+  { key: "total_income", label: "Прогнозный доход за срок (₽)", placeholder: "6 000 000 (50 тыс × 12 × 10 лет)" },
+  { key: "map_multiplier", label: "Множитель МАП (мес.)", placeholder: "12 / 18 / Другой" },
+  { key: "asset_price", label: "Стоимость актива (₽)", placeholder: "600 000 (МАП × множитель)" },
+  { key: "indexing", label: "Индексация аренды", placeholder: "5% в год / По CPI / Нет" },
+  { key: "assignment_terms", label: "Условия переуступки прав", placeholder: "Согласие арендодателя / Уведомление" },
+  { key: "encumbrance_risk", label: "Риски", placeholder: "Расторжение договора / Нет" },
 ]
 
 // ── Поля для Инвестиций: Редевелопмент / Девелопмент ────────────────────────
@@ -749,7 +782,9 @@ export function getCategoryFields(catId: string, subtype?: string) {
   }
   if (catId === "investment") {
     if (!subtype) return INVESTMENT_FIELDS
-    if (["ГАБ (готовый арендный бизнес)", "Арендный бизнес", "Арендный поток"].includes(subtype)) return INVESTMENT_FIELDS_GAB
+    if (subtype === "ГАБ (готовый арендный бизнес)") return INVESTMENT_FIELDS_GAB
+    if (subtype === "Создание ГАБ") return INVESTMENT_FIELDS_CREATE_GAB
+    if (subtype === "ГАБ Субаренда") return INVESTMENT_FIELDS_SUBLEASE_GAB
     if (["Редевелопмент", "Девелоперский проект", "Реконструкция"].includes(subtype)) return INVESTMENT_FIELDS_REDEVELOPMENT
     if (["Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку"].includes(subtype)) return INVESTMENT_FIELDS_LAND
     if (["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"].includes(subtype)) return INVESTMENT_FIELDS_SPECIAL

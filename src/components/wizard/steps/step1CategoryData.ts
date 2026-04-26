@@ -89,8 +89,8 @@ export const AUCTION_GROUPS = [
 export const INVESTMENT_GROUPS = [
   {
     id: "gab",
-    label: "ГАБ / Арендный бизнес",
-    desc: "Готовый поток, договор, арендатор",
+    label: "ГАБ",
+    desc: "Готовый, создание, субаренда",
     icon: "Banknote",
     bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
   },
