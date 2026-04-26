@@ -271,8 +271,69 @@ export default function MarketplaceFilters({
         )
       })()}
 
+      {/* Для Инвестиционной — группы + подтипы */}
+      {(() => {
+        if (activeCategory !== "Инвестиционная") return null
+        const GAB = ["ГАБ (готовый арендный бизнес)", "Арендный бизнес", "Арендный поток"]
+        const REDEV = ["Редевелопмент", "Девелоперский проект", "Реконструкция"]
+        const LAND = ["Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку"]
+        const SPECIAL = ["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"]
+        const activeGroup = GAB.includes(activeSubtype) ? "gab"
+          : REDEV.includes(activeSubtype) ? "redev"
+          : LAND.includes(activeSubtype) ? "land"
+          : SPECIAL.includes(activeSubtype) ? "special" : ""
+        const visibleSubtypes = activeGroup === "gab" ? GAB
+          : activeGroup === "redev" ? REDEV
+          : activeGroup === "land" ? LAND
+          : activeGroup === "special" ? SPECIAL
+          : [...GAB, ...REDEV, ...LAND]
+        const groups = [
+          { id: "gab", label: "ГАБ / Аренда", subtypes: GAB },
+          { id: "redev", label: "Редевелопмент", subtypes: REDEV },
+          { id: "land", label: "Земля", subtypes: LAND },
+          { id: "special", label: "Спец. форматы", subtypes: SPECIAL },
+        ]
+        return (
+          <>
+            <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {groups.map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => {
+                    if (activeGroup === g.id) onSubtypeChange("")
+                    else onSubtypeChange(g.subtypes[0])
+                  }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors shrink-0 border ${
+                    activeGroup === g.id
+                      ? "bg-amber-600 text-white border-amber-600"
+                      : "bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#262626] border-[#2a2a2a]"
+                  }`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {visibleSubtypes.map(st => (
+                <button
+                  key={st}
+                  onClick={() => onSubtypeChange(activeSubtype === st ? "" : st)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors shrink-0 ${
+                    activeSubtype === st
+                      ? "border-amber-500 bg-amber-500/15 text-amber-300"
+                      : "border-[#2a2a2a] bg-transparent text-gray-500 hover:text-gray-300 hover:border-[#3a3a3a]"
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </>
+        )
+      })()}
+
       {/* Подтипы для всех остальных категорий */}
-      {activeCategory !== "Новостройки" && activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
+      {activeCategory !== "Новостройки" && activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCategory !== "Инвестиционная" && activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
         <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {activeCatDef.subtypes.map(st => (
             <button
@@ -350,6 +411,55 @@ export default function MarketplaceFilters({
                 </div>
               </div>
             </div>
+
+            {/* Специальные фильтры для Инвестиционной */}
+            {activeCategory === "Инвестиционная" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Доходность от (%/год)</label>
+                    <Input value={extraFilters["yield"] ?? ""} onChange={e => onExtraFilterChange("yield", e.target.value)}
+                      placeholder="8"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-amber-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">ROI от (%)</label>
+                    <Input value={extraFilters["roi"] ?? ""} onChange={e => onExtraFilterChange("roi", e.target.value)}
+                      placeholder="10"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-amber-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Окупаемость до (лет)</label>
+                    <Input value={extraFilters["payback"] ?? ""} onChange={e => onExtraFilterChange("payback", e.target.value)}
+                      placeholder="12"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-amber-500" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Параметры актива</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {[
+                      { key: "encumbrance", val: "Нет", label: "Без обременений" },
+                      { key: "indexing", val: "Есть", label: "Индексация аренды" },
+                      { key: "permits", val: "Есть", label: "Разрешения есть" },
+                      { key: "tu", val: "Есть", label: "ТУ подключены" },
+                    ].map(f => (
+                      <button
+                        key={f.key}
+                        onClick={() => onExtraFilterChange(f.key, extraFilters[f.key] === f.val ? "" : f.val)}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                          extraFilters[f.key] === f.val
+                            ? "border-amber-500 bg-amber-500/15 text-amber-300"
+                            : "border-[#2a2a2a] bg-[#1a1a1a] text-gray-500 hover:text-gray-300"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Специальные фильтры для Коммерческой */}
             {activeCategory === "Коммерческая" && (
@@ -471,7 +581,7 @@ export default function MarketplaceFilters({
             )}
 
             {/* Характеристики категории (для всех остальных) */}
-            {activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCatFields.length > 0 && (
+            {activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCategory !== "Инвестиционная" && activeCatFields.length > 0 && (
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Характеристики</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">

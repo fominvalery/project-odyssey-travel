@@ -123,10 +123,25 @@ export const CATEGORIES: CategoryItem[] = [
   {
     id: "investment",
     label: "Инвестиции",
-    desc: "ROI, доходность, стратегия",
+    desc: "ГАБ, редевелопмент, земля, портфель",
     icon: "TrendingUp",
     group: "commercial_group",
-    subtypes: ["Арендный бизнес", "ГАБ (готовый арендный бизнес)", "Редевелопмент", "Земля под застройку"],
+    subtypes: [
+      // Готовый арендный бизнес
+      "ГАБ (готовый арендный бизнес)", "Арендный бизнес", "Арендный поток",
+      // Редевелопмент и девелопмент
+      "Редевелопмент", "Девелоперский проект", "Реконструкция",
+      // Земля
+      "Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку",
+      // Специальные форматы
+      "Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию",
+    ],
+    subgroups: [
+      { label: "Готовый арендный бизнес", items: ["ГАБ (готовый арендный бизнес)", "Арендный бизнес", "Арендный поток"] },
+      { label: "Редевелопмент и девелопмент", items: ["Редевелопмент", "Девелоперский проект", "Реконструкция"] },
+      { label: "Земельные участки", items: ["Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку"] },
+      { label: "Специальные форматы", items: ["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"] },
+    ],
   },
   // Курортная — НОВЫЙ РАЗДЕЛ
   {
@@ -253,7 +268,67 @@ export const RESIDENTIAL_RENT_FIELDS = [
 // ── Поля Жилой (общий fallback) ──────────────────────────────────────────────
 const RESIDENTIAL_FIELDS = RESIDENTIAL_URBAN_FIELDS
 
-// ── Поля для Инвестиций ──────────────────────────────────────────────────────
+// ── Поля для Инвестиций: ГАБ / Арендный бизнес ──────────────────────────────
+const INVESTMENT_FIELDS_GAB = [
+  { key: "roi", label: "ROI (%)", placeholder: "10" },
+  { key: "yield", label: "Доходность (%/год)", placeholder: "8.5" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "10" },
+  { key: "rent", label: "Арендный доход (₽/мес)", placeholder: "500 000" },
+  { key: "encumbrance", label: "Арендатор / Договор", placeholder: "Сбербанк, договор до 2028" },
+  { key: "lease_term", label: "Срок договора аренды", placeholder: "5 лет, остаток 3 года" },
+  { key: "indexing", label: "Индексация аренды", placeholder: "5% в год / По CPI" },
+  { key: "object_type", label: "Тип объекта", placeholder: "Торговое / Офисное / Склад" },
+  { key: "condition", label: "Состояние объекта", placeholder: "Готово / Требует ремонта" },
+  { key: "class", label: "Класс объекта", placeholder: "A / B+ / B" },
+  { key: "encumbrance_risk", label: "Риски / Обременения", placeholder: "Нет / Залог банка" },
+  { key: "strategy", label: "Стратегия выхода", placeholder: "Перепродажа / Удержание" },
+]
+
+// ── Поля для Инвестиций: Редевелопмент / Девелопмент ────────────────────────
+const INVESTMENT_FIELDS_REDEVELOPMENT = [
+  { key: "project_stage", label: "Стадия проекта", placeholder: "Концепция / Проект / Строительство" },
+  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "15 000" },
+  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "25" },
+  { key: "payback", label: "Срок реализации (лет)", placeholder: "3" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "200 000 000" },
+  { key: "revenue_model", label: "Модель монетизации", placeholder: "Продажа / Аренда / Смешанная" },
+  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Есть / Нет / В работе" },
+  { key: "permits", label: "Разрешения / ГПЗУ", placeholder: "Есть / В работе / Нет" },
+  { key: "urban_restrictions", label: "Ограничения застройки", placeholder: "ЗОУИТ, охранные зоны" },
+  { key: "partner", label: "Партнёр / Девелопер", placeholder: "Есть / Ищем" },
+  { key: "strategy", label: "Стратегия инвестирования", placeholder: "Fix & Flip / Долгосрочное удержание" },
+]
+
+// ── Поля для Инвестиций: Земельные участки ──────────────────────────────────
+const INVESTMENT_FIELDS_LAND = [
+  { key: "land_area", label: "Площадь участка (Га / сот.)", placeholder: "2.5 Га" },
+  { key: "land_use", label: "Вид разрешённого использования", placeholder: "Коммерция / ИЖС / Смешанное" },
+  { key: "cadastral", label: "Кадастровый номер", placeholder: "77:01:0001234:567" },
+  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Электро 500кВт, газ, вода" },
+  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "10 000" },
+  { key: "urban_restrictions", label: "Градостроительные ограничения", placeholder: "ЗОУИТ / Нет" },
+  { key: "road", label: "Подъезд / Дорога", placeholder: "Асфальт / Грунт" },
+  { key: "distance_city", label: "Удалённость от города (км)", placeholder: "15" },
+  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "30" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "50 000 000" },
+  { key: "strategy", label: "Стратегия", placeholder: "Продажа участка / Застройка / Аренда" },
+]
+
+// ── Поля для Инвестиций: Специальные форматы ────────────────────────────────
+const INVESTMENT_FIELDS_SPECIAL = [
+  { key: "roi", label: "ROI (%)", placeholder: "15" },
+  { key: "yield", label: "Доходность (%/год)", placeholder: "12" },
+  { key: "payback", label: "Срок окупаемости (лет)", placeholder: "7" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "100 000 000" },
+  { key: "share", label: "Доля / Объём сделки", placeholder: "25% / 100% / Пул" },
+  { key: "object_type", label: "Тип актива", placeholder: "Портфель / Доля / ГАБ" },
+  { key: "revenue_model", label: "Модель дохода", placeholder: "Аренда / Дивиденды / Прирост стоимости" },
+  { key: "strategy", label: "Стратегия выхода", placeholder: "IPO / Перепродажа / Удержание" },
+  { key: "encumbrance", label: "Обременения / Риски", placeholder: "Нет / Залог / Судебные споры" },
+  { key: "partner", label: "Партнёр / Соинвестор", placeholder: "Ищем / Есть" },
+]
+
+// ── Поля для Инвестиций (общий fallback) ─────────────────────────────────────
 const INVESTMENT_FIELDS = [
   { key: "roi", label: "ROI (%)", placeholder: "12" },
   { key: "yield", label: "Доходность (%/год)", placeholder: "8.5" },
@@ -608,7 +683,14 @@ export function getCategoryFields(catId: string, subtype?: string) {
     if (RESIDENTIAL_PREMIUM_SUBTYPES.includes(subtype)) return RESIDENTIAL_PREMIUM_FIELDS
     return RESIDENTIAL_URBAN_FIELDS
   }
-  if (catId === "investment") return INVESTMENT_FIELDS
+  if (catId === "investment") {
+    if (!subtype) return INVESTMENT_FIELDS
+    if (["ГАБ (готовый арендный бизнес)", "Арендный бизнес", "Арендный поток"].includes(subtype)) return INVESTMENT_FIELDS_GAB
+    if (["Редевелопмент", "Девелоперский проект", "Реконструкция"].includes(subtype)) return INVESTMENT_FIELDS_REDEVELOPMENT
+    if (["Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку"].includes(subtype)) return INVESTMENT_FIELDS_LAND
+    if (["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"].includes(subtype)) return INVESTMENT_FIELDS_SPECIAL
+    return INVESTMENT_FIELDS
+  }
   if (catId === "auction") return AUCTION_FIELDS
   if (catId === "newbuild") {
     if (!subtype) return NEWBUILD_FIELDS

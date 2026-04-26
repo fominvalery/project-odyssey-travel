@@ -40,6 +40,37 @@ const RESIDENTIAL_GROUPS = [
   },
 ]
 
+const INVESTMENT_GROUPS = [
+  {
+    id: "gab",
+    label: "ГАБ / Арендный бизнес",
+    desc: "Готовый поток, договор, арендатор",
+    icon: "Banknote",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+  },
+  {
+    id: "redevelopment",
+    label: "Редевелопмент",
+    desc: "Проект, реконструкция, девелопмент",
+    icon: "HardHat",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b50fb88-f4e7-44ec-8719-e0fd7f90acf6.jpg",
+  },
+  {
+    id: "land",
+    label: "Земельные участки",
+    desc: "Под застройку, коммерцию, ИЖС",
+    icon: "Map",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/af1636ce-1678-40e8-bfaf-e34e3c3e0013.jpg",
+  },
+  {
+    id: "special",
+    label: "Спец. форматы",
+    desc: "Портфель, доля, Sale & Leaseback",
+    icon: "Layers",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/17b020ab-c66f-445a-8a81-9f2954d40507.jpg",
+  },
+]
+
 const COMMERCIAL_GROUPS = [
   {
     id: "office",
@@ -131,17 +162,20 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
   const [newbuildGroup, setNewbuildGroup] = useState<"commercial" | "residential" | "">("")
   const [residentialGroup, setResidentialGroup] = useState<"urban" | "suburban" | "premium" | "">("")
   const [commercialGroup, setCommercialGroup] = useState<"office" | "retail" | "warehouse" | "service" | "mixed" | "">("")
+  const [investmentGroup, setInvestmentGroup] = useState<"gab" | "redevelopment" | "land" | "special" | "">("")
   const selectedCat = CATEGORIES.find(c => c.id === category)
   const isResort = category === "resort"
   const isNewbuild = category === "newbuild"
   const isResidential = category === "residential"
   const isCommercial = category === "commercial"
+  const isInvestment = category === "investment"
   const showDealType = DEAL_TYPE_CATEGORIES.includes(category)
   const subtypeRef = useRef<HTMLDivElement>(null)
   const dealTypeRef = useRef<HTMLDivElement>(null)
   const newbuildGroupRef = useRef<HTMLDivElement>(null)
   const residentialGroupRef = useRef<HTMLDivElement>(null)
   const commercialGroupRef = useRef<HTMLDivElement>(null)
+  const investmentGroupRef = useRef<HTMLDivElement>(null)
 
   function handleCategorySelect(id: string) {
     setCategory(id)
@@ -163,6 +197,11 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
       setTimeout(() => {
         commercialGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
+    } else if (id === "investment") {
+      setInvestmentGroup("")
+      setTimeout(() => {
+        investmentGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
     } else if (DEAL_TYPE_CATEGORIES.includes(id)) {
       setDealType("")
       setTimeout(() => {
@@ -173,6 +212,14 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
     }
+  }
+
+  function handleInvestmentGroupSelect(groupId: "gab" | "redevelopment" | "land" | "special") {
+    setInvestmentGroup(groupId)
+    setSubtype("")
+    setTimeout(() => {
+      subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 50)
   }
 
   function handleCommercialGroupSelect(groupId: "office" | "retail" | "warehouse" | "service" | "mixed") {
@@ -316,6 +363,80 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* Выбор группы для Инвестиций — 4 карточки */}
+      {isInvestment && (
+        <div ref={investmentGroupRef} className="space-y-3">
+          <p className="text-[11px] text-gray-500 uppercase tracking-widest">Тип инвестиционного объекта</p>
+          <div className="grid grid-cols-2 gap-3">
+            {INVESTMENT_GROUPS.map(g => {
+              const isActive = investmentGroup === g.id
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => handleInvestmentGroupSelect(g.id as "gab" | "redevelopment" | "land" | "special")}
+                  className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
+                    isActive ? "border-amber-500 shadow-lg shadow-amber-500/20" : "border-[#2a2a2a] hover:border-white/30"
+                  }`}
+                  style={{ minHeight: 120 }}
+                >
+                  <img src={g.bg} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 transition-all duration-300" style={{ background: isActive ? "rgba(120,53,15,0.68)" : "rgba(0,0,0,0.60)" }} />
+                  <div className="relative z-10 p-4 flex flex-col items-center justify-center h-full">
+                    <div className={`w-9 h-9 rounded-xl mb-2 flex items-center justify-center backdrop-blur-sm transition-all ${
+                      isActive ? "bg-amber-500/40 border border-amber-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
+                    }`}>
+                      <Icon name={g.icon as "Home"} fallback="TrendingUp" className={`h-4 w-4 ${isActive ? "text-amber-200" : "text-white/80"}`} />
+                    </div>
+                    <p className="font-bold text-white text-xs mb-0.5 drop-shadow">{g.label}</p>
+                    <p className={`text-[10px] leading-snug drop-shadow ${isActive ? "text-amber-200/80" : "text-white/50"}`}>{g.desc}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Подтипы для Инвестиций — после выбора группы */}
+      {isInvestment && investmentGroup && selectedCat?.subgroups && (
+        <div ref={subtypeRef} className="space-y-3">
+          {selectedCat.subgroups
+            .filter(sg => {
+              if (investmentGroup === "gab") return sg.label === "Готовый арендный бизнес"
+              if (investmentGroup === "redevelopment") return sg.label === "Редевелопмент и девелопмент"
+              if (investmentGroup === "land") return sg.label === "Земельные участки"
+              if (investmentGroup === "special") return sg.label === "Специальные форматы"
+              return false
+            })
+            .map(sg => (
+              <div key={sg.label}>
+                <p className="text-[11px] text-amber-400/70 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <span className="w-3 h-px bg-amber-500/40 inline-block"></span>
+                  {sg.label}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sg.items.map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setSubtype(st)}
+                      className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                        subtype === st
+                          ? "border-amber-500 bg-amber-500/15 text-amber-300"
+                          : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-[#3a3a3a] hover:text-white"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          {!subtype && (
+            <p className="text-[11px] text-gray-600">Выберите тип — поля формы подстроятся автоматически</p>
+          )}
         </div>
       )}
 
@@ -547,8 +668,8 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         </div>
       )}
 
-      {/* Выбор подтипа для НЕ курортных, НЕ новостроек, НЕ жилой, НЕ коммерции */}
-      {!isResort && !isNewbuild && !isResidential && !isCommercial && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
+      {/* Выбор подтипа для НЕ курортных, НЕ новостроек, НЕ жилой, НЕ коммерции, НЕ инвестиций */}
+      {!isResort && !isNewbuild && !isResidential && !isCommercial && !isInvestment && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
         <div ref={subtypeRef}>
           <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">
             Тип объекта — {selectedCat.label}
