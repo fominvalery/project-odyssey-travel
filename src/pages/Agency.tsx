@@ -107,11 +107,20 @@ export default function Agency() {
   const isRop = myRole === "rop"
 
   const isDirectorOrFounder = myRole === "director" || myRole === "founder"
+
+  // Список сотрудников для загрузки объектов (директор — все, РОП — свой отдел)
+  const employeesForObjects = isDirectorOrFounder
+    ? employees
+    : isRop
+      ? employees.filter(e => e.department_id === myDeptId)
+      : []
+
   const { objects, loading: loadingObjects, reload: reloadObjects } = useAgencyObjects({
     userId: user?.id ?? "",
     orgId: orgId ?? "",
     deptId: isRop ? myDeptId : null,
     role: isDirectorOrFounder ? "director" : isRop ? "rop" : "broker",
+    employees: employeesForObjects.length > 0 ? employeesForObjects : undefined,
   })
 
   useEffect(() => {

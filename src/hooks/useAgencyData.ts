@@ -34,9 +34,11 @@ interface UseAgencyDataOptions {
   deptId?: string | null
   /** Роль пользователя — определяет область видимости */
   role?: string | null
+  /** Список сотрудников для загрузки объектов по owner_id */
+  employees?: Array<{ user_id: string }>
 }
 
-export function useAgencyObjects({ userId, orgId, deptId, role }: UseAgencyDataOptions) {
+export function useAgencyObjects({ userId, orgId, deptId, role, employees }: UseAgencyDataOptions) {
   const [objects, setObjects] = useState<ObjectData[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -44,27 +46,36 @@ export function useAgencyObjects({ userId, orgId, deptId, role }: UseAgencyDataO
     if (!userId || !orgId) return
     setLoading(true)
     try {
-      let url: string
       if (role === "broker") {
         // Обычный сотрудник — только свои объекты
-        url = `${func2url.objects}?user_id=${encodeURIComponent(userId)}`
-      } else if (deptId) {
-        // РОП — объекты своего отдела
-        url = `${func2url.objects}?org_id=${encodeURIComponent(orgId)}&department_id=${encodeURIComponent(deptId)}`
+        const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`)
+        const data = await r.json()
+        setObjects(Array.isArray(data.objects) ? data.objects.map(mapFromServer) : [])
+      } else if (employees && employees.length > 0) {
+        // Директор/РОП — загружаем параллельно по owner_id каждого сотрудника
+        const results = await Promise.all(
+          employees.map(e =>
+            fetch(`${func2url.objects}?user_id=${encodeURIComponent(e.user_id)}`)
+              .then(r => r.json())
+              .then(d => Array.isArray(d.objects) ? d.objects.map(mapFromServer) : [])
+              .catch(() => [] as ObjectData[])
+          )
+        )
+        const allObjects = results.flat()
+        const unique = Array.from(new Map(allObjects.map(o => [o.id, o])).values())
+        setObjects(unique)
       } else {
-        // Директор/Учредитель — все объекты АН
-        url = `${func2url.objects}?org_id=${encodeURIComponent(orgId)}`
+        // Fallback — свои объекты
+        const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`)
+        const data = await r.json()
+        setObjects(Array.isArray(data.objects) ? data.objects.map(mapFromServer) : [])
       }
-      const r = await fetch(url)
-      const data = await r.json()
-      const arr = Array.isArray(data.objects) ? data.objects.map(mapFromServer) : []
-      setObjects(arr)
     } catch {
       setObjects([])
     } finally {
       setLoading(false)
     }
-  }, [userId, orgId, deptId, role])
+  }, [userId, orgId, deptId, role, employees])
 
   useEffect(() => { load() }, [load])
 
