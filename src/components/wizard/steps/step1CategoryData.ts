@@ -92,7 +92,7 @@ export const INVESTMENT_GROUPS = [
     label: "ГАБ",
     desc: "Готовый, создание, субаренда",
     icon: "Banknote",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/cb318daa-7151-4df5-9636-bae5cb5cd266.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/185e49e6-d78e-4f3c-91c1-ac0805fdf95e.jpg",
   },
   {
     id: "redevelopment",
