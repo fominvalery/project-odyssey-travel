@@ -18,6 +18,7 @@ PATCH  /                  — предложить смену статуса с�
 """
 import json
 import os
+import urllib.request
 
 import psycopg2
 
@@ -32,6 +33,15 @@ def get_conn():
     conn = psycopg2.connect(os.environ["DATABASE_URL"])
     schema = os.environ["MAIN_DB_SCHEMA"]
     return conn, schema
+
+
+def send_notification(notif_url: str, user_id: str, title: str, body: str):
+    try:
+        payload = json.dumps({"user_id": user_id, "type": "info", "title": title, "body": body}).encode()
+        req = urllib.request.Request(notif_url, data=payload, headers={"Content-Type": "application/json"}, method="POST")
+        urllib.request.urlopen(req, timeout=3)
+    except Exception:
+        pass
 
 
 def resp(status, body):
@@ -113,6 +123,7 @@ def handler(event: dict, context) -> dict:
 
     method = event.get("httpMethod", "GET")
     conn, schema = get_conn()
+    notif_url = "https://functions.poehali.dev/59063dd0-5097-4670-8e02-9ef4fc534d1d"
     cur = conn.cursor()
 
     try:
@@ -194,11 +205,21 @@ def handler(event: dict, context) -> dict:
             deal_row = cur.fetchone()
 
             conn.commit()
+
+            # Уведомление партнёру о новом предложении СЗ
+            deal = row_to_deal(deal_row)
+            if notif_url and partner_id:
+                send_notification(
+                    notif_url, partner_id,
+                    "🤝 Предложение совместной сделки",
+                    f"{deal['initiator_name']} предлагает совместную сделку: {deal['object_description'] or deal['transaction_type']}",
+                )
+
             return resp(
                 200,
                 {
                     "ok": True,
-                    "deal": row_to_deal(deal_row),
+                    "deal": deal,
                     "proposal": row_to_proposal(proposal_row),
                 },
             )
@@ -274,7 +295,26 @@ def handler(event: dict, context) -> dict:
             deal_row = cur.fetchone()
 
             conn.commit()
-            return resp(200, {"ok": True, "deal": row_to_deal(deal_row)})
+
+            # Уведомление инициатору об ответе на proposal
+            deal = row_to_deal(deal_row)
+            initiator_id = deal_row[1]
+            if notif_url and initiator_id and str(initiator_id) != str(user_id):
+                if response == "accept":
+                    action_text = "принял" if proposal_type == "create" else f"подтвердил смену статуса на «{new_status}»"
+                    send_notification(
+                        notif_url, str(initiator_id),
+                        "✅ Совместная сделка подтверждена",
+                        f"{deal['partner_name']} {action_text}: {deal['object_description'] or deal['transaction_type']}",
+                    )
+                else:
+                    send_notification(
+                        notif_url, str(initiator_id),
+                        "❌ Предложение отклонено",
+                        f"{deal['partner_name']} отклонил предложение по сделке: {deal['object_description'] or deal['transaction_type']}",
+                    )
+
+            return resp(200, {"ok": True, "deal": deal})
 
         # ── PATCH — предложить смену статуса ─────────────────────────────────
         if method == "PATCH":
@@ -314,6 +354,21 @@ def handler(event: dict, context) -> dict:
             )
             proposal_row = cur.fetchone()
             conn.commit()
+
+            # Уведомление второму участнику о предложении смены статуса
+            other_id = str(deal_check[2]) if str(deal_check[1]) == str(user_id) else str(deal_check[1])
+            if notif_url and other_id:
+                cur2 = conn.cursor()
+                cur2.execute(f"SELECT name FROM {schema}.users WHERE id = %s", (user_id,))
+                row_name = cur2.fetchone()
+                initiator_name = row_name[0] if row_name else "Партнёр"
+                cur2.close()
+                send_notification(
+                    notif_url, other_id,
+                    "🔄 Предложение изменить статус сделки",
+                    f"{initiator_name} предлагает изменить статус на «{new_status}»",
+                )
+
             return resp(200, {"ok": True, "proposal": row_to_proposal(proposal_row)})
 
         return resp(405, {"error": "method not allowed"})
