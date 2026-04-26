@@ -151,7 +151,7 @@ export const COMMERCIAL_GROUPS = [
     label: "Смешанные",
     desc: "ПСН, ОЗС, свободное назначение",
     icon: "LayoutGrid",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e9cd355a-ba3b-450c-8127-f972c6e68426.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/188cf437-81a5-4a1a-9456-14bd31c1bfde.jpg",
   },
 ]
 
