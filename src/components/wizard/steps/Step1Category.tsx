@@ -40,6 +40,44 @@ const RESIDENTIAL_GROUPS = [
   },
 ]
 
+const COMMERCIAL_GROUPS = [
+  {
+    id: "office",
+    label: "Офисная",
+    desc: "Офис, БЦ, коворкинг",
+    icon: "BriefcaseBusiness",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2b50fb88-f4e7-44ec-8719-e0fd7f90acf6.jpg",
+  },
+  {
+    id: "retail",
+    label: "Торговая",
+    desc: "Ритейл, магазин, ТЦ, шоурум",
+    icon: "ShoppingBag",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+  },
+  {
+    id: "warehouse",
+    label: "Склад / Произв.",
+    desc: "Склад, логистика, промзона",
+    icon: "Warehouse",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/17b020ab-c66f-445a-8a81-9f2954d40507.jpg",
+  },
+  {
+    id: "service",
+    label: "Сервис",
+    desc: "Ресторан, салон, медцентр",
+    icon: "UtensilsCrossed",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/af1636ce-1678-40e8-bfaf-e34e3c3e0013.jpg",
+  },
+  {
+    id: "mixed",
+    label: "Смешанные",
+    desc: "ПСН, ОЗС, свободное назначение",
+    icon: "LayoutGrid",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2e040e9f-00a8-40b1-801c-bd3442c7aafa.jpg",
+  },
+]
+
 const NEWBUILD_GROUPS = [
   {
     id: "commercial",
@@ -92,15 +130,18 @@ const RESORT_SUBTYPE_ICONS: Record<string, string> = {
 export function Step1Category({ category, setCategory, subtype, setSubtype, dealType, setDealType }: Step1Props) {
   const [newbuildGroup, setNewbuildGroup] = useState<"commercial" | "residential" | "">("")
   const [residentialGroup, setResidentialGroup] = useState<"urban" | "suburban" | "premium" | "">("")
+  const [commercialGroup, setCommercialGroup] = useState<"office" | "retail" | "warehouse" | "service" | "mixed" | "">("")
   const selectedCat = CATEGORIES.find(c => c.id === category)
   const isResort = category === "resort"
   const isNewbuild = category === "newbuild"
   const isResidential = category === "residential"
+  const isCommercial = category === "commercial"
   const showDealType = DEAL_TYPE_CATEGORIES.includes(category)
   const subtypeRef = useRef<HTMLDivElement>(null)
   const dealTypeRef = useRef<HTMLDivElement>(null)
   const newbuildGroupRef = useRef<HTMLDivElement>(null)
   const residentialGroupRef = useRef<HTMLDivElement>(null)
+  const commercialGroupRef = useRef<HTMLDivElement>(null)
 
   function handleCategorySelect(id: string) {
     setCategory(id)
@@ -116,6 +157,12 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
       setTimeout(() => {
         residentialGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
+    } else if (id === "commercial") {
+      setCommercialGroup("")
+      setDealType("")
+      setTimeout(() => {
+        commercialGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
     } else if (DEAL_TYPE_CATEGORIES.includes(id)) {
       setDealType("")
       setTimeout(() => {
@@ -126,6 +173,15 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
     }
+  }
+
+  function handleCommercialGroupSelect(groupId: "office" | "retail" | "warehouse" | "service" | "mixed") {
+    setCommercialGroup(groupId)
+    setSubtype("")
+    setDealType("")
+    setTimeout(() => {
+      dealTypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 50)
   }
 
   function handleResidentialGroupSelect(groupId: "urban" | "suburban" | "premium") {
@@ -229,8 +285,42 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         </div>
       )}
 
-      {/* Выбор типа сделки для Коммерции и Жилой (жилая — только после выбора группы) */}
-      {showDealType && (!isResidential || residentialGroup) && (
+      {/* Выбор группы для Коммерции — 5 карточек */}
+      {isCommercial && (
+        <div ref={commercialGroupRef} className="space-y-3">
+          <p className="text-[11px] text-gray-500 uppercase tracking-widest">Тип коммерческой недвижимости</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {COMMERCIAL_GROUPS.map(g => {
+              const isActive = commercialGroup === g.id
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => handleCommercialGroupSelect(g.id as "office" | "retail" | "warehouse" | "service" | "mixed")}
+                  className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
+                    isActive ? "border-violet-500 shadow-lg shadow-violet-500/20" : "border-[#2a2a2a] hover:border-white/30"
+                  }`}
+                  style={{ minHeight: 120 }}
+                >
+                  <img src={g.bg} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 transition-all duration-300" style={{ background: isActive ? "rgba(76,29,149,0.68)" : "rgba(0,0,0,0.60)" }} />
+                  <div className="relative z-10 p-4 flex flex-col items-center justify-center h-full">
+                    <div className={`w-9 h-9 rounded-xl mb-2 flex items-center justify-center backdrop-blur-sm transition-all ${
+                      isActive ? "bg-violet-500/40 border border-violet-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
+                    }`}>
+                      <Icon name={g.icon as "Home"} fallback="Building2" className={`h-4 w-4 ${isActive ? "text-violet-200" : "text-white/80"}`} />
+                    </div>
+                    <p className="font-bold text-white text-xs mb-0.5 drop-shadow">{g.label}</p>
+                    <p className={`text-[10px] leading-snug drop-shadow ${isActive ? "text-violet-200/80" : "text-white/50"}`}>{g.desc}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Выбор типа сделки (жилая и коммерция — только после выбора группы) */}
+      {showDealType && (!isResidential || residentialGroup) && (!isCommercial || commercialGroup) && (
         <div ref={dealTypeRef} className="rounded-2xl border border-[#2a2a2a] bg-[#0d0d0d] p-5">
           <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-4">Что планируете?</p>
           <div className="grid grid-cols-2 gap-3">
@@ -377,6 +467,47 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         </div>
       )}
 
+      {/* Выбор подтипа для Коммерции — после выбора группы и dealType */}
+      {isCommercial && commercialGroup && dealType && selectedCat?.subgroups && (
+        <div ref={subtypeRef} className="space-y-3">
+          {selectedCat.subgroups
+            .filter(sg => {
+              if (commercialGroup === "office") return sg.label === "Офисная недвижимость"
+              if (commercialGroup === "retail") return sg.label === "Торговая недвижимость"
+              if (commercialGroup === "warehouse") return sg.label === "Складская и производственная"
+              if (commercialGroup === "service") return sg.label === "Сервис и общепит"
+              if (commercialGroup === "mixed") return sg.label === "Смешанные и универсальные"
+              return false
+            })
+            .map(sg => (
+              <div key={sg.label}>
+                <p className="text-[11px] text-violet-400/70 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <span className="w-3 h-px bg-violet-500/40 inline-block"></span>
+                  {sg.label}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sg.items.map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setSubtype(st)}
+                      className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                        subtype === st
+                          ? "border-violet-500 bg-violet-500/15 text-violet-300"
+                          : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-[#3a3a3a] hover:text-white"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          {!subtype && (
+            <p className="text-[11px] text-gray-600">Выберите тип — поля формы подстроятся автоматически</p>
+          )}
+        </div>
+      )}
+
       {/* Выбор подтипа для Жилой — после выбора группы и dealType */}
       {isResidential && residentialGroup && dealType && selectedCat?.subgroups && (
         <div ref={subtypeRef} className="space-y-3">
@@ -416,8 +547,8 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         </div>
       )}
 
-      {/* Выбор подтипа для НЕ курортных, НЕ новостроек, НЕ жилой */}
-      {!isResort && !isNewbuild && !isResidential && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
+      {/* Выбор подтипа для НЕ курортных, НЕ новостроек, НЕ жилой, НЕ коммерции */}
+      {!isResort && !isNewbuild && !isResidential && !isCommercial && selectedCat?.subtypes && selectedCat.subtypes.length > 0 && (!showDealType || dealType) && (
         <div ref={subtypeRef}>
           <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-3">
             Тип объекта — {selectedCat.label}

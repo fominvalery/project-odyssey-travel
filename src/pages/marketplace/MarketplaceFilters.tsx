@@ -206,8 +206,73 @@ export default function MarketplaceFilters({
         )
       })()}
 
+      {/* Для Коммерческой — группы + подтипы */}
+      {(() => {
+        if (activeCategory !== "Коммерческая") return null
+        const OFFICE = ["Офис", "Бизнес-центр", "Офисное помещение", "Коворкинг", "Арендный офис"]
+        const RETAIL = ["Торговое помещение", "Street retail", "Магазин", "ТЦ / Торговый центр", "Торговая галерея", "Шоурум"]
+        const WAREHOUSE = ["Склад", "Логистический комплекс", "Производственное помещение", "Промышленная база", "Флекс-помещение", "Light industrial"]
+        const SERVICE = ["Ресторан", "Кафе", "Бар", "Салон красоты", "Медицинский центр", "Автосервис", "Автомойка"]
+        const MIXED = ["ПСН (свободное назначение)", "ОЗС (отдельно стоящее здание)", "Объект смешанного назначения"]
+        const activeGroup = OFFICE.includes(activeSubtype) ? "office"
+          : RETAIL.includes(activeSubtype) ? "retail"
+          : WAREHOUSE.includes(activeSubtype) ? "warehouse"
+          : SERVICE.includes(activeSubtype) ? "service"
+          : MIXED.includes(activeSubtype) ? "mixed" : ""
+        const visibleSubtypes = activeGroup === "office" ? OFFICE
+          : activeGroup === "retail" ? RETAIL
+          : activeGroup === "warehouse" ? WAREHOUSE
+          : activeGroup === "service" ? SERVICE
+          : activeGroup === "mixed" ? MIXED
+          : [...OFFICE, ...RETAIL, ...WAREHOUSE]
+        const groups = [
+          { id: "office", label: "Офисная", subtypes: OFFICE },
+          { id: "retail", label: "Торговая", subtypes: RETAIL },
+          { id: "warehouse", label: "Склад / Произв.", subtypes: WAREHOUSE },
+          { id: "service", label: "Сервис", subtypes: SERVICE },
+          { id: "mixed", label: "Смешанные", subtypes: MIXED },
+        ]
+        return (
+          <>
+            <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {groups.map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => {
+                    if (activeGroup === g.id) onSubtypeChange("")
+                    else onSubtypeChange(g.subtypes[0])
+                  }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors shrink-0 border ${
+                    activeGroup === g.id
+                      ? "bg-violet-600 text-white border-violet-600"
+                      : "bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#262626] border-[#2a2a2a]"
+                  }`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {visibleSubtypes.map(st => (
+                <button
+                  key={st}
+                  onClick={() => onSubtypeChange(activeSubtype === st ? "" : st)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors shrink-0 ${
+                    activeSubtype === st
+                      ? "border-violet-500 bg-violet-500/15 text-violet-300"
+                      : "border-[#2a2a2a] bg-transparent text-gray-500 hover:text-gray-300 hover:border-[#3a3a3a]"
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </>
+        )
+      })()}
+
       {/* Подтипы для всех остальных категорий */}
-      {activeCategory !== "Новостройки" && activeCategory !== "Жилая" && activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
+      {activeCategory !== "Новостройки" && activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
         <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {activeCatDef.subtypes.map(st => (
             <button
@@ -286,6 +351,58 @@ export default function MarketplaceFilters({
               </div>
             </div>
 
+            {/* Специальные фильтры для Коммерческой */}
+            {activeCategory === "Коммерческая" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Класс здания</label>
+                    <Input value={extraFilters["class"] ?? ""} onChange={e => onExtraFilterChange("class", e.target.value)}
+                      placeholder="A / B+ / B / C"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-violet-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Высота потолков от (м)</label>
+                    <Input value={extraFilters["ceiling"] ?? ""} onChange={e => onExtraFilterChange("ceiling", e.target.value)}
+                      placeholder="3.0"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-violet-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Состояние</label>
+                    <Input value={extraFilters["condition"] ?? ""} onChange={e => onExtraFilterChange("condition", e.target.value)}
+                      placeholder="Готово / Shell&Core"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-violet-500" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Инфраструктура</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {[
+                      { key: "parking", val: "Есть", label: "Парковка" },
+                      { key: "entrance", val: "Отдельный с улицы", label: "Вход с улицы" },
+                      { key: "frontage", val: "Есть", label: "Витрины" },
+                      { key: "elevator", val: "Есть", label: "Лифт" },
+                      { key: "ramp", val: "Есть", label: "Пандус" },
+                      { key: "wet_point", val: "Есть", label: "Мокрая точка" },
+                      { key: "railway", val: "Есть", label: "Ж/Д ветка" },
+                    ].map(f => (
+                      <button
+                        key={f.key}
+                        onClick={() => onExtraFilterChange(f.key, extraFilters[f.key] === f.val ? "" : f.val)}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                          extraFilters[f.key] === f.val
+                            ? "border-violet-500 bg-violet-500/15 text-violet-300"
+                            : "border-[#2a2a2a] bg-[#1a1a1a] text-gray-500 hover:text-gray-300"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Специальные фильтры для Жилой */}
             {(activeCategory === "Жилая") && (
               <div className="space-y-4">
@@ -354,7 +471,7 @@ export default function MarketplaceFilters({
             )}
 
             {/* Характеристики категории (для всех остальных) */}
-            {activeCategory !== "Жилая" && activeCatFields.length > 0 && (
+            {activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCatFields.length > 0 && (
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Характеристики</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">

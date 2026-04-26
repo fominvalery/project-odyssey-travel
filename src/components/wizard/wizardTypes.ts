@@ -96,10 +96,28 @@ export const CATEGORIES: CategoryItem[] = [
   {
     id: "commercial",
     label: "Коммерция",
-    desc: "Офисы, склады, ритейл",
+    desc: "Офисы, ритейл, склады, сервис",
     icon: "Building2",
     group: "commercial_group",
-    subtypes: ["Офис / БЦ", "Стрит-ритейл", "ОЗС (отдельно стоящее здание)", "Склад / Логистика", "Производство / Промзона", "Гостиница / Апарт-отель", "Земельный участок (ком.)", "ПСН (свободное назначение)"],
+    subtypes: [
+      // Офисная
+      "Офис", "Бизнес-центр", "Офисное помещение", "Коворкинг", "Арендный офис",
+      // Торговая
+      "Торговое помещение", "Street retail", "Магазин", "ТЦ / Торговый центр", "Торговая галерея", "Шоурум",
+      // Складская и производственная
+      "Склад", "Логистический комплекс", "Производственное помещение", "Промышленная база", "Флекс-помещение", "Light industrial",
+      // Сервис и общепит
+      "Ресторан", "Кафе", "Бар", "Салон красоты", "Медицинский центр", "Автосервис", "Автомойка",
+      // Смешанные
+      "ПСН (свободное назначение)", "ОЗС (отдельно стоящее здание)", "Объект смешанного назначения",
+    ],
+    subgroups: [
+      { label: "Офисная недвижимость", items: ["Офис", "Бизнес-центр", "Офисное помещение", "Коворкинг", "Арендный офис"] },
+      { label: "Торговая недвижимость", items: ["Торговое помещение", "Street retail", "Магазин", "ТЦ / Торговый центр", "Торговая галерея", "Шоурум"] },
+      { label: "Складская и производственная", items: ["Склад", "Логистический комплекс", "Производственное помещение", "Промышленная база", "Флекс-помещение", "Light industrial"] },
+      { label: "Сервис и общепит", items: ["Ресторан", "Кафе", "Бар", "Салон красоты", "Медицинский центр", "Автосервис", "Автомойка"] },
+      { label: "Смешанные и универсальные", items: ["ПСН (свободное назначение)", "ОЗС (отдельно стоящее здание)", "Объект смешанного назначения"] },
+    ],
   },
   // Инвестиции
   {
@@ -320,6 +338,99 @@ const COMMERCIAL_FIELDS_DEFAULT = [
   { key: "tenant", label: "Арендатор", placeholder: "Свободно / Действующий договор" },
 ]
 
+// ── Расширенные поля офисной недвижимости ────────────────────────────────────
+const COMMERCIAL_FIELDS_OFFICE_EXT = [
+  { key: "class", label: "Класс офиса", placeholder: "A / B+ / B / C" },
+  { key: "floor", label: "Этаж", placeholder: "5" },
+  { key: "floors_total", label: "Этажей в здании", placeholder: "16" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "3.0" },
+  { key: "layout", label: "Планировка", placeholder: "Open space / Кабинетная / Смешанная" },
+  { key: "workplaces", label: "Рабочих мест", placeholder: "30" },
+  { key: "condition", label: "Состояние", placeholder: "С отделкой / Shell&Core / Под ключ" },
+  { key: "furniture", label: "Мебель", placeholder: "Есть / Нет / Частично" },
+  { key: "reception", label: "Ресепшн", placeholder: "Общий / Отдельный / Нет" },
+  { key: "parking", label: "Парковка", placeholder: "30 м/м подземная" },
+  { key: "access", label: "Доступ", placeholder: "Круглосуточный / Пн-Пт 9-18" },
+  { key: "elevator", label: "Лифт", placeholder: "Есть / Нет / Грузовой" },
+  { key: "power", label: "Электромощность (кВт)", placeholder: "50" },
+  { key: "tenant", label: "Арендатор", placeholder: "Свободно / Действующий" },
+]
+
+// ── Расширенные поля торговой недвижимости ───────────────────────────────────
+const COMMERCIAL_FIELDS_RETAIL_EXT = [
+  { key: "floor", label: "Этаж", placeholder: "1 (первая линия)" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "4.5" },
+  { key: "frontage", label: "Витрина (м)", placeholder: "12" },
+  { key: "entrance", label: "Вход", placeholder: "Отдельный с улицы / Из ТЦ" },
+  { key: "trade_area", label: "Площадь торгового зала (м²)", placeholder: "150" },
+  { key: "traffic", label: "Трафик (чел/день)", placeholder: "5 000" },
+  { key: "neighbors", label: "Соседние арендаторы", placeholder: "Магнит, Сбер, аптека" },
+  { key: "zoning", label: "Зонирование", placeholder: "Торговый зал / Склад / Подсобка" },
+  { key: "wet_point", label: "Мокрая точка", placeholder: "Есть / Нет" },
+  { key: "condition", label: "Состояние", placeholder: "Готово к торговле / Требует отделки" },
+  { key: "parking", label: "Парковка", placeholder: "Есть / Нет" },
+  { key: "tenant", label: "Текущий арендатор", placeholder: "Свободно / Продуктовый ритейл" },
+]
+
+// ── Расширенные поля складской / производственной ────────────────────────────
+const COMMERCIAL_FIELDS_WAREHOUSE_EXT = [
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "12" },
+  { key: "gates", label: "Ворота", placeholder: "4 доктерных / Секционные" },
+  { key: "ramp", label: "Пандус", placeholder: "Есть / Нет" },
+  { key: "floor_load", label: "Нагрузка на пол (т/м²)", placeholder: "5" },
+  { key: "temp_regime", label: "Температурный режим", placeholder: "Отапливаемый / Холодный / Заморозка" },
+  { key: "power", label: "Электромощность (кВт)", placeholder: "200" },
+  { key: "railway", label: "Ж/Д ветка", placeholder: "Есть / Нет" },
+  { key: "truck_access", label: "Подъезд для фур", placeholder: "Да, 20-тонники / Нет" },
+  { key: "class", label: "Класс склада", placeholder: "A / B+ / B / C" },
+  { key: "gas", label: "Газ", placeholder: "Подведён / Нет" },
+  { key: "parking", label: "Парковка фур", placeholder: "20 мест" },
+  { key: "crane", label: "Кран-балка (т)", placeholder: "5 / Нет" },
+]
+
+// ── Поля сервиса и общепита ──────────────────────────────────────────────────
+const COMMERCIAL_FIELDS_SERVICE = [
+  { key: "floor", label: "Этаж", placeholder: "1" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "3.5" },
+  { key: "entrance", label: "Вход", placeholder: "Отдельный с улицы / Из здания" },
+  { key: "wet_point", label: "Мокрая точка", placeholder: "Есть / Нет" },
+  { key: "ventilation", label: "Вытяжная вентиляция", placeholder: "Есть / Нет / Проект" },
+  { key: "power", label: "Электромощность (кВт)", placeholder: "30" },
+  { key: "condition", label: "Состояние", placeholder: "Готово / Требует ремонта / Под ключ" },
+  { key: "traffic", label: "Трафик (чел/день)", placeholder: "3 000" },
+  { key: "frontage", label: "Витрина (м)", placeholder: "8" },
+  { key: "parking", label: "Парковка", placeholder: "Есть / Нет" },
+  { key: "neighbors", label: "Окружение", placeholder: "Жилой дом / ТЦ / Офисный центр" },
+  { key: "tenant", label: "Текущий арендатор", placeholder: "Свободно / Ресторан" },
+]
+
+// ── Поля аренды расширенные для Коммерции ────────────────────────────────────
+export const COMMERCIAL_RENT_FIELDS_RETAIL = [
+  { key: "floor", label: "Этаж", placeholder: "1" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "4.0" },
+  { key: "rent_price_sqm", label: "Ставка аренды (₽/м²/мес)", placeholder: "3 000" },
+  { key: "opex", label: "Коммунальные платежи", placeholder: "По счётчику / ~30 000 ₽" },
+  { key: "deposit", label: "Залог (мес.)", placeholder: "2" },
+  { key: "lease_term", label: "Минимальный срок аренды", placeholder: "11 мес. / 3 года" },
+  { key: "frontage", label: "Витрина (м)", placeholder: "10" },
+  { key: "entrance", label: "Вход", placeholder: "Отдельный / Из ТЦ" },
+  { key: "wet_point", label: "Мокрая точка", placeholder: "Есть / Нет" },
+  { key: "indexing", label: "Индексация", placeholder: "5% в год / По CPI" },
+]
+
+export const COMMERCIAL_RENT_FIELDS_WAREHOUSE = [
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "10" },
+  { key: "rent_price_sqm", label: "Ставка аренды (₽/м²/мес)", placeholder: "800" },
+  { key: "opex", label: "Эксплуатационные расходы (₽/м²)", placeholder: "150" },
+  { key: "deposit", label: "Залог (мес.)", placeholder: "2" },
+  { key: "lease_term", label: "Минимальный срок аренды", placeholder: "1 год / 3 года" },
+  { key: "gates", label: "Ворота", placeholder: "4 доктерных" },
+  { key: "ramp", label: "Пандус", placeholder: "Есть / Нет" },
+  { key: "temp_regime", label: "Температурный режим", placeholder: "Отапливаемый / Холодный" },
+  { key: "truck_access", label: "Подъезд для фур", placeholder: "Да / Нет" },
+  { key: "indexing", label: "Индексация", placeholder: "5% в год" },
+]
+
 const AUCTION_FIELDS = [
   { key: "etp", label: "ЭТП (площадка)", placeholder: "Торги.ру / МЭТС" },
   { key: "lot_number", label: "Номер лота", placeholder: "№ 12345" },
@@ -508,11 +619,15 @@ export function getCategoryFields(catId: string, subtype?: string) {
   }
   if (catId === "commercial") {
     if (!subtype) return COMMERCIAL_FIELDS_DEFAULT
-    if (subtype.includes("Офис") || subtype.includes("БЦ")) return COMMERCIAL_FIELDS_OFFICE
-    if (subtype.includes("Стрит") || subtype.includes("ритейл") || subtype.includes("ПСН")) return COMMERCIAL_FIELDS_RETAIL
-    if (subtype.includes("ОЗС")) return COMMERCIAL_FIELDS_OFFICE
-    if (subtype.includes("Склад") || subtype.includes("Логистика")) return COMMERCIAL_FIELDS_WAREHOUSE
-    if (subtype.includes("Производство") || subtype.includes("Промзона")) return COMMERCIAL_FIELDS_INDUSTRIAL
+    // Офисная группа
+    if (["Офис", "Бизнес-центр", "Офисное помещение", "Коворкинг", "Арендный офис"].includes(subtype)) return COMMERCIAL_FIELDS_OFFICE_EXT
+    // Торговая группа
+    if (["Торговое помещение", "Street retail", "Магазин", "ТЦ / Торговый центр", "Торговая галерея", "Шоурум"].includes(subtype)) return COMMERCIAL_FIELDS_RETAIL_EXT
+    // Складская и производственная
+    if (["Склад", "Логистический комплекс", "Производственное помещение", "Промышленная база", "Флекс-помещение", "Light industrial"].includes(subtype)) return COMMERCIAL_FIELDS_WAREHOUSE_EXT
+    // Сервис и общепит
+    if (["Ресторан", "Кафе", "Бар", "Салон красоты", "Медицинский центр", "Автосервис", "Автомойка"].includes(subtype)) return COMMERCIAL_FIELDS_SERVICE
+    // Смешанные
     return COMMERCIAL_FIELDS_DEFAULT
   }
   if (catId === "resort") {

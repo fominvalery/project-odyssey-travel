@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Icon from "@/components/ui/icon"
-import { CATEGORIES, getCategoryFields, RESIDENTIAL_RENT_FIELDS, COMMERCIAL_RENT_FIELDS_OFFICE, COMMERCIAL_RENT_FIELDS_DEFAULT } from "../wizardTypes"
+import { CATEGORIES, getCategoryFields, RESIDENTIAL_RENT_FIELDS, COMMERCIAL_RENT_FIELDS_OFFICE, COMMERCIAL_RENT_FIELDS_DEFAULT, COMMERCIAL_RENT_FIELDS_RETAIL, COMMERCIAL_RENT_FIELDS_WAREHOUSE } from "../wizardTypes"
 import type { WizardForm } from "../wizardTypes"
 
 function formatPrice(val: string): string {
@@ -33,10 +33,16 @@ interface Step3Props {
 const RESORT_FINANCE_KEYS = new Set(["occupancy", "avg_check", "annual_revenue", "yield", "payback", "entry_price", "revenue_model", "forecast_occupancy"])
 const RESORT_INFRA_KEYS = new Set(["pool", "spa", "restaurant", "beach", "parking", "conference"])
 
+const COMMERCIAL_OFFICE_SUBTYPES = ["Офис", "Бизнес-центр", "Офисное помещение", "Коворкинг", "Арендный офис"]
+const COMMERCIAL_RETAIL_SUBTYPES = ["Торговое помещение", "Street retail", "Магазин", "ТЦ / Торговый центр", "Торговая галерея", "Шоурум"]
+const COMMERCIAL_WAREHOUSE_SUBTYPES = ["Склад", "Логистический комплекс", "Производственное помещение", "Промышленная база", "Флекс-помещение", "Light industrial"]
+
 function getRentFields(category: string, subtype: string) {
   if (category === "residential") return RESIDENTIAL_RENT_FIELDS
   if (category === "commercial") {
-    if (subtype === "Офис / БЦ") return COMMERCIAL_RENT_FIELDS_OFFICE
+    if (COMMERCIAL_OFFICE_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_OFFICE
+    if (COMMERCIAL_RETAIL_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_RETAIL
+    if (COMMERCIAL_WAREHOUSE_SUBTYPES.includes(subtype)) return COMMERCIAL_RENT_FIELDS_WAREHOUSE
     return COMMERCIAL_RENT_FIELDS_DEFAULT
   }
   return []
