@@ -63,12 +63,18 @@ export default function DashboardMessages({
     } catch { /* ignore */ }
   }, [userId, onUnreadChange])
 
-  const loadMessages = useCallback(async (partnerId: string) => {
+  const loadMessages = useCallback(async (partnerId: string, scrollToBottom = false) => {
     try {
       const res = await fetch(`${AUTH_URL}?action=chat&chat_action=messages&user_id=${userId}&partner_id=${partnerId}`)
       const data = await res.json()
-      setMessages(Array.isArray(data.messages) ? data.messages : [])
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
+      const newMessages = Array.isArray(data.messages) ? data.messages : []
+      setMessages(prev => {
+        const hasNew = newMessages.length > prev.length
+        if (hasNew || scrollToBottom) {
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
+        }
+        return newMessages
+      })
     } catch { /* ignore */ }
   }, [userId])
 
@@ -131,7 +137,7 @@ export default function DashboardMessages({
     setActiveDialog(synthetic)
     setMobileView("chat")
     setShowJDForm(false)
-    loadMessages(openPartnerId)
+    loadMessages(openPartnerId, true)
     markRead(openPartnerId)
     onClearOpen?.()
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -155,7 +161,7 @@ export default function DashboardMessages({
     setActiveDialog(dialog)
     setMobileView("chat")
     setShowJDForm(false)
-    loadMessages(dialog.partner_id)
+    loadMessages(dialog.partner_id, true)
     markRead(dialog.partner_id)
   }
 
