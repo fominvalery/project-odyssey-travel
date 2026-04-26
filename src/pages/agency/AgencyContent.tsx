@@ -140,6 +140,19 @@ export default function AgencyContent({
             userId={user.id} orgId={orgId}
             deptId={isRop ? (myDeptId ?? undefined) : undefined}
             onReassignLead={isDirector ? (lead) => setReassigningLead(lead) : undefined}
+            employees={
+              (isDirector || isRop)
+                ? (isRop
+                    ? employees.filter(e => e.department_id === myDeptId)
+                    : employees
+                  ).map(e => ({ user_id: e.user_id, name: e.full_name }))
+                : undefined
+            }
+            departments={
+              isDirector
+                ? departments.map(d => ({ id: d.id, name: d.name }))
+                : undefined
+            }
           />
         )}
 

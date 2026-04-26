@@ -23,6 +23,8 @@ interface DashboardCRMProps {
   orgId?: string
   deptId?: string
   onReassignLead?: (lead: Lead) => void
+  employees?: Array<{ user_id: string; name: string }>
+  departments?: Array<{ id: string; name: string }>
 }
 
 // ── Канбан-колонка ─────────────────────────────────────────────────────────────
@@ -75,7 +77,7 @@ function KanbanColumn({ stage, color, bg, icon, leads, overdueIds, userId, onSta
 
 // ── Основной компонент ─────────────────────────────────────────────────────────
 
-export function DashboardCRM({ userId, orgId, deptId, onReassignLead }: DashboardCRMProps) {
+export function DashboardCRM({ userId, orgId, deptId, onReassignLead, employees, departments }: DashboardCRMProps) {
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(false)
   const [filterStage, setFilterStage] = useState<FunnelStage | "Все">("Все")
@@ -83,6 +85,8 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead }: Dashboar
   const [overdueIds, setOverdueIds] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<ViewMode>("kanban")
   const [createOpen, setCreateOpen] = useState(false)
+  const [filterDept, setFilterDept] = useState("")
+  const [filterEmployee, setFilterEmployee] = useState("")
 
   const loadLeads = useCallback(async () => {
     if (!userId) return
@@ -91,7 +95,14 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead }: Dashboar
       let url: string
       if (orgId) {
         url = `${func2url.leads}?org_id=${encodeURIComponent(orgId)}`
-        if (deptId) url += `&department_id=${encodeURIComponent(deptId)}`
+        // Приоритет: фильтр по сотруднику > фильтр по отделу > deptId из пропса
+        if (filterEmployee) {
+          url = `${func2url.leads}?owner_id=${encodeURIComponent(filterEmployee)}`
+        } else if (filterDept) {
+          url += `&department_id=${encodeURIComponent(filterDept)}`
+        } else if (deptId) {
+          url += `&department_id=${encodeURIComponent(deptId)}`
+        }
       } else {
         url = `${func2url.leads}?owner_id=${encodeURIComponent(userId)}`
       }
@@ -103,7 +114,7 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead }: Dashboar
     } finally {
       setLoading(false)
     }
-  }, [userId, orgId, deptId])
+  }, [userId, orgId, deptId, filterDept, filterEmployee])
 
   const loadOverdue = useCallback(async () => {
     if (!userId) return
@@ -220,6 +231,44 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead }: Dashboar
           className="pl-8 h-9 text-sm bg-[#111] border-[#1f1f1f] text-white placeholder:text-gray-600"
         />
       </div>
+
+      {/* Фильтры по отделу и сотруднику (только в ЛК АН) */}
+      {orgId && (employees?.length || departments?.length) ? (
+        <div className="flex flex-wrap gap-2 mb-4 max-w-4xl">
+          {departments && departments.length > 0 && (
+            <select
+              value={filterDept}
+              onChange={e => { setFilterDept(e.target.value); setFilterEmployee("") }}
+              className="rounded-xl bg-[#111] border border-[#1f1f1f] text-sm px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[160px]"
+            >
+              <option value="">Все отделы</option>
+              {departments.map(d => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+          )}
+          {employees && employees.length > 0 && (
+            <select
+              value={filterEmployee}
+              onChange={e => { setFilterEmployee(e.target.value); setFilterDept("") }}
+              className="rounded-xl bg-[#111] border border-[#1f1f1f] text-sm px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[180px]"
+            >
+              <option value="">Все сотрудники</option>
+              {employees.map(e => (
+                <option key={e.user_id} value={e.user_id}>{e.name}</option>
+              ))}
+            </select>
+          )}
+          {(filterDept || filterEmployee) && (
+            <button
+              onClick={() => { setFilterDept(""); setFilterEmployee("") }}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white px-3 py-2 rounded-xl hover:bg-[#1a1a1a] transition-colors"
+            >
+              <Icon name="X" className="h-3.5 w-3.5" /> Сбросить
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {/* Воронка — счётчики (только в режиме списка) */}
       {viewMode === "list" && (
