@@ -40,6 +40,37 @@ const RESIDENTIAL_GROUPS = [
   },
 ]
 
+const RESORT_GROUPS = [
+  {
+    id: "accommodation",
+    label: "Размещение",
+    desc: "Отель, апарт-отель, гостиница, глэмпинг",
+    icon: "Hotel",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/af1636ce-1678-40e8-bfaf-e34e3c3e0013.jpg",
+  },
+  {
+    id: "wellness",
+    label: "SPA и оздоровление",
+    desc: "Санаторий, SPA, Wellness, медкурорт",
+    icon: "Sparkles",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/d5483eb7-291b-489e-a47f-d29a366ea71d.jpg",
+  },
+  {
+    id: "nature",
+    label: "Загородный отдых",
+    desc: "База отдыха, эко-отель, кемпинг",
+    icon: "Trees",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/2e040e9f-00a8-40b1-801c-bd3442c7aafa.jpg",
+  },
+  {
+    id: "invest",
+    label: "Инвестиции",
+    desc: "ГАБ, земля, проект под строительство",
+    icon: "TrendingUp",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+  },
+]
+
 const AUCTION_GROUPS = [
   {
     id: "bankruptcy",
@@ -195,6 +226,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
   const [commercialGroup, setCommercialGroup] = useState<"office" | "retail" | "warehouse" | "service" | "mixed" | "">("")
   const [investmentGroup, setInvestmentGroup] = useState<"gab" | "redevelopment" | "land" | "special" | "">("")
   const [auctionGroup, setAuctionGroup] = useState<"bankruptcy" | "state" | "pledge" | "special" | "">("")
+  const [resortGroup, setResortGroup] = useState<"accommodation" | "wellness" | "nature" | "invest" | "">("")
   const selectedCat = CATEGORIES.find(c => c.id === category)
   const isResort = category === "resort"
   const isNewbuild = category === "newbuild"
@@ -210,6 +242,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
   const commercialGroupRef = useRef<HTMLDivElement>(null)
   const investmentGroupRef = useRef<HTMLDivElement>(null)
   const auctionGroupRef = useRef<HTMLDivElement>(null)
+  const resortGroupRef = useRef<HTMLDivElement>(null)
 
   function handleCategorySelect(id: string) {
     setCategory(id)
@@ -241,6 +274,11 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
       setTimeout(() => {
         auctionGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
+    } else if (id === "resort") {
+      setResortGroup("")
+      setTimeout(() => {
+        resortGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
     } else if (DEAL_TYPE_CATEGORIES.includes(id)) {
       setDealType("")
       setTimeout(() => {
@@ -251,6 +289,14 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 50)
     }
+  }
+
+  function handleResortGroupSelect(groupId: "accommodation" | "wellness" | "nature" | "invest") {
+    setResortGroup(groupId)
+    setSubtype("")
+    setTimeout(() => {
+      subtypeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 50)
   }
 
   function handleAuctionGroupSelect(groupId: "bankruptcy" | "state" | "pledge" | "special") {
@@ -640,35 +686,77 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
         </div>
       )}
 
-      {/* Выбор подтипа для Курортной — с подгруппами */}
-      {isResort && selectedCat?.subgroups && (
-        <div className="space-y-4" ref={subtypeRef}>
-          {selectedCat.subgroups.map(sg => (
-            <div key={sg.label}>
-              <p className="text-[11px] text-cyan-400/70 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <span className="w-3 h-px bg-cyan-500/40 inline-block"></span>
-                {sg.label}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {sg.items.map(st => (
-                  <button
-                    key={st}
-                    onClick={() => setSubtype(st)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border transition-all ${
-                      subtype === st
-                        ? "border-cyan-500 bg-cyan-500/15 text-cyan-300"
-                        : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-cyan-500/40 hover:text-white"
-                    }`}
-                  >
-                    <Icon name={(RESORT_SUBTYPE_ICONS[st] ?? "Building2") as "Building2"} fallback="Building2" className="h-3 w-3 shrink-0" />
-                    {st}
-                  </button>
-                ))}
+      {/* Выбор группы для Курортной — 4 карточки */}
+      {isResort && (
+        <div ref={resortGroupRef} className="space-y-3">
+          <p className="text-[11px] text-gray-500 uppercase tracking-widest">Тип курортного объекта</p>
+          <div className="grid grid-cols-2 gap-3">
+            {RESORT_GROUPS.map(g => {
+              const isActive = resortGroup === g.id
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => handleResortGroupSelect(g.id as "accommodation" | "wellness" | "nature" | "invest")}
+                  className={`relative rounded-2xl border overflow-hidden text-center transition-all duration-300 group ${
+                    isActive ? "border-cyan-500 shadow-lg shadow-cyan-500/20" : "border-[#2a2a2a] hover:border-white/30"
+                  }`}
+                  style={{ minHeight: 120 }}
+                >
+                  <img src={g.bg} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 transition-all duration-300" style={{ background: isActive ? "rgba(8,51,68,0.72)" : "rgba(0,0,0,0.60)" }} />
+                  <div className="relative z-10 p-4 flex flex-col items-center justify-center h-full">
+                    <div className={`w-9 h-9 rounded-xl mb-2 flex items-center justify-center backdrop-blur-sm transition-all ${
+                      isActive ? "bg-cyan-500/40 border border-cyan-400/50" : "bg-white/10 border border-white/15 group-hover:bg-white/15"
+                    }`}>
+                      <Icon name={g.icon as "Home"} fallback="Palmtree" className={`h-4 w-4 ${isActive ? "text-cyan-200" : "text-white/80"}`} />
+                    </div>
+                    <p className="font-bold text-white text-xs mb-0.5 drop-shadow">{g.label}</p>
+                    <p className={`text-[10px] leading-snug drop-shadow ${isActive ? "text-cyan-200/80" : "text-white/50"}`}>{g.desc}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Подтипы для Курортной — после выбора группы */}
+      {isResort && resortGroup && selectedCat?.subgroups && (
+        <div ref={subtypeRef} className="space-y-3">
+          {selectedCat.subgroups
+            .filter(sg => {
+              if (resortGroup === "accommodation") return sg.label === "Размещение"
+              if (resortGroup === "wellness") return sg.label === "Оздоровление и SPA"
+              if (resortGroup === "nature") return sg.label === "Загородный и eco-отдых"
+              if (resortGroup === "invest") return sg.label === "Инвестиции и проекты"
+              return false
+            })
+            .map(sg => (
+              <div key={sg.label}>
+                <p className="text-[11px] text-cyan-400/70 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <span className="w-3 h-px bg-cyan-500/40 inline-block"></span>
+                  {sg.label}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sg.items.map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setSubtype(st)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                        subtype === st
+                          ? "border-cyan-500 bg-cyan-500/15 text-cyan-300"
+                          : "border-[#1f1f1f] bg-[#111] text-gray-400 hover:border-cyan-500/40 hover:text-white"
+                      }`}
+                    >
+                      <Icon name={(RESORT_SUBTYPE_ICONS[st] ?? "Building2") as "Building2"} fallback="Building2" className="h-3 w-3 shrink-0" />
+                      {st}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           {!subtype && (
-            <p className="text-[11px] text-gray-600">Выберите тип курортного объекта — характеристики подберутся автоматически</p>
+            <p className="text-[11px] text-gray-600">Выберите тип — характеристики подберутся автоматически</p>
           )}
         </div>
       )}

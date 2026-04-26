@@ -389,8 +389,69 @@ export default function MarketplaceFilters({
         )
       })()}
 
+      {/* Для Курортной — группы + подтипы */}
+      {(() => {
+        if (activeCategory !== "Курортная") return null
+        const ACCOMMODATION = ["Апарт-отель", "Апарт-комплекс", "Гостиница", "Отель", "Бутик-отель", "Мини-отель", "Хостел", "Гостевой дом", "Глэмпинг"]
+        const WELLNESS = ["Санаторий", "Пансионат", "SPA-отель", "Wellness-отель", "Медицинский курорт"]
+        const NATURE = ["База отдыха", "Турбаза", "Эко-отель", "Курортный комплекс", "Виллы и коттеджи под аренду", "Загородный клуб", "Кемпинг / Автокемпинг"]
+        const INVEST = ["Объект под управление", "Земельный участок под курортный проект", "Инвестиционный проект под строительство", "Готовый арендный бизнес в курортной локации"]
+        const activeGroup = ACCOMMODATION.includes(activeSubtype) ? "accommodation"
+          : WELLNESS.includes(activeSubtype) ? "wellness"
+          : NATURE.includes(activeSubtype) ? "nature"
+          : INVEST.includes(activeSubtype) ? "invest" : ""
+        const visibleSubtypes = activeGroup === "accommodation" ? ACCOMMODATION
+          : activeGroup === "wellness" ? WELLNESS
+          : activeGroup === "nature" ? NATURE
+          : activeGroup === "invest" ? INVEST
+          : [...ACCOMMODATION, ...WELLNESS, ...NATURE]
+        const groups = [
+          { id: "accommodation", label: "Размещение", subtypes: ACCOMMODATION },
+          { id: "wellness", label: "SPA / Оздоровление", subtypes: WELLNESS },
+          { id: "nature", label: "Загородный отдых", subtypes: NATURE },
+          { id: "invest", label: "Инвестиции", subtypes: INVEST },
+        ]
+        return (
+          <>
+            <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {groups.map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => {
+                    if (activeGroup === g.id) onSubtypeChange("")
+                    else onSubtypeChange(g.subtypes[0])
+                  }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors shrink-0 border ${
+                    activeGroup === g.id
+                      ? "bg-cyan-700 text-white border-cyan-700"
+                      : "bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#262626] border-[#2a2a2a]"
+                  }`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {visibleSubtypes.map(st => (
+                <button
+                  key={st}
+                  onClick={() => onSubtypeChange(activeSubtype === st ? "" : st)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors shrink-0 ${
+                    activeSubtype === st
+                      ? "border-cyan-500 bg-cyan-500/15 text-cyan-300"
+                      : "border-[#2a2a2a] bg-transparent text-gray-500 hover:text-gray-300 hover:border-[#3a3a3a]"
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </>
+        )
+      })()}
+
       {/* Подтипы для всех остальных категорий */}
-      {activeCategory !== "Новостройки" && activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCategory !== "Инвестиционная" && activeCategory !== "С торгов" && activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
+      {activeCategory !== "Новостройки" && activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCategory !== "Инвестиционная" && activeCategory !== "С торгов" && activeCategory !== "Курортная" && activeCatDef?.subtypes && activeCatDef.subtypes.length > 0 && (
         <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {activeCatDef.subtypes.map(st => (
             <button
@@ -468,6 +529,57 @@ export default function MarketplaceFilters({
                 </div>
               </div>
             </div>
+
+            {/* Специальные фильтры для Курортной */}
+            {activeCategory === "Курортная" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Доходность от (%/год)</label>
+                    <Input value={extraFilters["yield"] ?? ""} onChange={e => onExtraFilterChange("yield", e.target.value)}
+                      placeholder="10"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-cyan-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Загрузка от (%)</label>
+                    <Input value={extraFilters["occupancy"] ?? ""} onChange={e => onExtraFilterChange("occupancy", e.target.value)}
+                      placeholder="60"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-cyan-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 block mb-1">Сезонность</label>
+                    <Input value={extraFilters["season"] ?? ""} onChange={e => onExtraFilterChange("season", e.target.value)}
+                      placeholder="Круглогодично / Лето"
+                      className="h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-600 focus-visible:ring-cyan-500" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Инфраструктура</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {[
+                      { key: "pool", val: "Есть", label: "Бассейн" },
+                      { key: "spa", val: "Есть", label: "SPA" },
+                      { key: "beach", val: "Собственный", label: "Пляж" },
+                      { key: "restaurant", val: "Есть", label: "Ресторан" },
+                      { key: "management_company", val: "Есть", label: "УК есть" },
+                      { key: "parking", val: "Есть", label: "Парковка" },
+                    ].map(f => (
+                      <button
+                        key={f.key}
+                        onClick={() => onExtraFilterChange(f.key, extraFilters[f.key] === f.val ? "" : f.val)}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                          extraFilters[f.key] === f.val
+                            ? "border-cyan-500 bg-cyan-500/15 text-cyan-300"
+                            : "border-[#2a2a2a] bg-[#1a1a1a] text-gray-500 hover:text-gray-300"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Специальные фильтры для С торгов */}
             {activeCategory === "С торгов" && (
@@ -686,7 +798,7 @@ export default function MarketplaceFilters({
             )}
 
             {/* Характеристики категории (для всех остальных) */}
-            {activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCategory !== "Инвестиционная" && activeCategory !== "С торгов" && activeCatFields.length > 0 && (
+            {activeCategory !== "Жилая" && activeCategory !== "Коммерческая" && activeCategory !== "Инвестиционная" && activeCategory !== "С торгов" && activeCategory !== "Курортная" && activeCatFields.length > 0 && (
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Характеристики</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
