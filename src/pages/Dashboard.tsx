@@ -8,7 +8,7 @@ import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import { DashboardCRM, DashboardReferral, DashboardProfile } from "@/components/dashboard/DashboardSections"
 import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
 import DashboardSupport from "@/components/dashboard/DashboardSupport"
-import DashboardClub from "@/components/dashboard/DashboardClub"
+import DashboardClub, { type Member as ClubMember } from "@/components/dashboard/DashboardClub"
 import DashboardMessages from "@/components/dashboard/DashboardMessages"
 import AiChatBubble from "@/components/AiChatBubble"
 import NotificationBell from "@/components/dashboard/NotificationBell"
@@ -82,6 +82,30 @@ export default function Dashboard() {
     setOpenPartnerAvatar(partnerAvatar)
     setOpenPartnerStatus(partnerStatus)
     setSection("messages")
+  }
+
+  async function handleAddToCRM(member: ClubMember) {
+    if (!user?.id) return
+    const nameParts = (member.name || "").split(" ")
+    const firstName = nameParts[0] || ""
+    const lastName = nameParts.slice(1).join(" ") || ""
+    await fetch(func2url.leads, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        owner_id: user.id,
+        name: firstName,
+        last_name: lastName,
+        phone: "",
+        email: "",
+        source: "Сеть Клуба",
+        stage: "Лид",
+        lead_type: "Партнёр Клуба",
+        object_title: member.specializations?.join(", ") || "",
+        message: member.bio || "",
+      }),
+    }).catch(() => null)
+    toast({ title: "Партнёр добавлен в CRM", description: `${member.name} теперь в вашей CRM как Партнёр Клуба` })
   }
   const [objects, setObjects] = useState<ObjectData[]>([])
   const [loadingObjects, setLoadingObjects] = useState(false)
@@ -354,7 +378,7 @@ export default function Dashboard() {
         )}
 
         {section === "club" && (
-          <DashboardClub userId={user.id} onMessage={handleOpenMessage} />
+          <DashboardClub userId={user.id} onMessage={handleOpenMessage} onAddToCRM={handleAddToCRM} />
         )}
 
         {section === "messages" && (

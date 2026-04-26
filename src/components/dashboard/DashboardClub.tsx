@@ -43,13 +43,14 @@ interface Member {
 interface Props {
   userId: string
   onMessage?: (partnerId: string, partnerName: string, partnerAvatar: string | null, partnerStatus: string) => void
+  onAddToCRM?: (member: Member) => void
 }
 
 function getInitials(name: string) {
   return name.split(" ").filter(Boolean).map(n => n[0]).join("").slice(0, 2).toUpperCase()
 }
 
-export default function DashboardClub({ userId, onMessage }: Props) {
+export default function DashboardClub({ userId, onMessage, onAddToCRM }: Props) {
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -186,7 +187,7 @@ export default function DashboardClub({ userId, onMessage }: Props) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(m => (
-            <MemberCard key={m.id} member={m} onMessage={onMessage} />
+            <MemberCard key={m.id} member={m} onMessage={onMessage} onAddToCRM={onAddToCRM} />
           ))}
         </div>
       )}
@@ -194,9 +195,12 @@ export default function DashboardClub({ userId, onMessage }: Props) {
   )
 }
 
-function MemberCard({ member: m, onMessage }: { member: Member; onMessage?: Props["onMessage"] }) {
+export type { Member }
+
+function MemberCard({ member: m, onMessage, onAddToCRM }: { member: Member; onMessage?: Props["onMessage"]; onAddToCRM?: Props["onAddToCRM"] }) {
   const initials = getInitials(m.name)
   const isAgency = m.status === "agency"
+  const [addedToCRM, setAddedToCRM] = useState(false)
 
   return (
     <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] hover:border-violet-500/30 transition-colors p-5 flex flex-col gap-4">
@@ -255,16 +259,35 @@ function MemberCard({ member: m, onMessage }: { member: Member; onMessage?: Prop
         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{m.bio}</p>
       )}
 
-      {/* Кнопка Написать */}
-      {onMessage && (
-        <button
-          onClick={() => onMessage(m.id, m.name || "Участник Клуба", m.avatar_url, m.status)}
-          className="mt-auto w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 text-violet-400 hover:text-violet-300 text-sm font-medium border border-violet-500/20 transition-colors"
-        >
-          <Icon name="MessageSquare" className="h-3.5 w-3.5" />
-          Написать
-        </button>
-      )}
+      {/* Кнопки действий */}
+      <div className="mt-auto flex flex-col gap-2">
+        {onMessage && (
+          <button
+            onClick={() => onMessage(m.id, m.name || "Участник Клуба", m.avatar_url, m.status)}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 text-violet-400 hover:text-violet-300 text-sm font-medium border border-violet-500/20 transition-colors"
+          >
+            <Icon name="MessageSquare" className="h-3.5 w-3.5" />
+            Написать
+          </button>
+        )}
+        {onAddToCRM && (
+          <button
+            disabled={addedToCRM}
+            onClick={() => {
+              onAddToCRM(m)
+              setAddedToCRM(true)
+            }}
+            className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium border transition-colors ${
+              addedToCRM
+                ? "bg-amber-500/10 text-amber-400 border-amber-500/20 cursor-default"
+                : "bg-[#1a1a1a] hover:bg-amber-500/10 text-gray-400 hover:text-amber-400 border-[#2a2a2a] hover:border-amber-500/20"
+            }`}
+          >
+            <Icon name={addedToCRM ? "Check" : "Star"} className="h-3.5 w-3.5" />
+            {addedToCRM ? "Добавлен в CRM" : "Добавить в CRM"}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

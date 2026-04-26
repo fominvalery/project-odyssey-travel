@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { type Lead, type FunnelStage, FUNNEL_STAGES, formatDate } from "./leadCard.types"
+import { type Lead, type FunnelStage, FUNNEL_STAGES, LEAD_TYPES, formatDate } from "./leadCard.types"
 import { LeadTasksDialog } from "./LeadTasksDialog"
 import { LeadExpandedBody } from "./LeadExpandedBody"
 
@@ -26,6 +26,10 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
   const [expanded, setExpanded] = useState(false)
   const stageInfo = FUNNEL_STAGES.find(s => s.stage === lead.stage) ?? FUNNEL_STAGES[0]
 
+  const leadTypeInfo = LEAD_TYPES.find(t => t.type === (lead.lead_type || "Клиент")) ?? LEAD_TYPES[0]
+  const fullName = [lead.name, lead.last_name].filter(Boolean).join(" ")
+  const initials = [lead.name, lead.last_name].filter(Boolean).map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"
+
   return (
     <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] overflow-hidden hover:border-[#2a2a2a] transition-colors">
       <div className="p-5 flex items-center gap-4">
@@ -35,19 +39,30 @@ export function LeadCard({ lead, ownerId, hasOverdue, onStageChange, onDelete, o
           onClick={() => setExpanded(v => !v)}
         >
           <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center shrink-0 text-sm font-bold text-gray-400">
-            {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold truncate">{lead.name || "Без имени"}</p>
-            <p className="text-xs text-gray-400">{lead.phone}</p>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {lead.object_title && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 truncate max-w-[180px]">
-                  {lead.object_title}
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-semibold truncate">{fullName || "Без имени"}</p>
+              {lead.lead_type && lead.lead_type !== "Клиент" && (
+                <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium border ${leadTypeInfo.bg} ${leadTypeInfo.color}`}>
+                  <Icon name={leadTypeInfo.icon as "Star"} className="h-2.5 w-2.5" />
+                  {lead.lead_type}
                 </span>
               )}
-              <span className="text-xs text-gray-500">· {lead.source}</span>
             </div>
+            <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+              <span>{lead.phone}</span>
+              <span className="text-gray-600">·</span>
+              <span className="text-gray-500">{lead.source}</span>
+            </div>
+            {lead.object_title && (
+              <div className="mt-1">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 truncate max-w-[180px] inline-block">
+                  {lead.object_title}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

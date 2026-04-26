@@ -1,4 +1,11 @@
 export type FunnelStage = "Лид" | "Подбор" | "Показ" | "Переговоры" | "Сделка" | "Отказ"
+export type LeadType = "Клиент" | "Партнёр Клуба" | "Брокер"
+
+export const LEAD_TYPES: { type: LeadType; color: string; bg: string; icon: string }[] = [
+  { type: "Клиент",        color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20",    icon: "User" },
+  { type: "Партнёр Клуба", color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20",  icon: "Star" },
+  { type: "Брокер",        color: "text-violet-400",  bg: "bg-violet-500/10 border-violet-500/20", icon: "Briefcase" },
+]
 
 export interface Lead {
   id: string
@@ -6,11 +13,13 @@ export interface Lead {
   object_id: string | null
   object_title: string
   name: string
+  last_name: string
   phone: string
   email: string
   message: string
   source: string
   stage: FunnelStage
+  lead_type: LeadType
   created_at: string
   // предпочтения клиента для автоподбора
   budget_from: number | null

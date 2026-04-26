@@ -3,7 +3,7 @@ import Icon from "@/components/ui/icon"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import func2url from "../../../backend/func2url.json"
-import { type Lead, type Comment, type LeadFile, formatDateTime, formatSize } from "./leadCard.types"
+import { type Lead, type Comment, type LeadFile, LEAD_TYPES, formatDateTime, formatSize } from "./leadCard.types"
 import { LeadMatches } from "./LeadMatches"
 import { LeadForm } from "./LeadForm"
 
@@ -178,6 +178,22 @@ export function LeadExpandedBody({ lead, ownerId, onDelete, onLeadUpdate }: Lead
             <a href={`mailto:${lead.email}`} className="text-white font-medium truncate hover:text-blue-400">{lead.email}</a>
           </div>
         )}
+        <div>
+          <p className="text-xs text-gray-500">Источник</p>
+          <p className="text-white font-medium">{lead.source || "—"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Тип контакта</p>
+          {(() => {
+            const t = LEAD_TYPES.find(t => t.type === (lead.lead_type || "Клиент")) ?? LEAD_TYPES[0]
+            return (
+              <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium border ${t.bg} ${t.color}`}>
+                <Icon name={t.icon as "Star"} className="h-3 w-3" />
+                {t.type}
+              </span>
+            )
+          })()}
+        </div>
       </div>
 
       {/* Объект */}

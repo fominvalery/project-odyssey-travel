@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import Icon from "@/components/ui/icon"
 import func2url from "../../../backend/func2url.json"
-import { type Lead, type FunnelStage, FUNNEL_STAGES } from "./leadCard.types"
+import { type Lead, type FunnelStage, type LeadType, FUNNEL_STAGES, LEAD_TYPES } from "./leadCard.types"
 
 const OBJECT_CATEGORIES = ["Офис", "Склад", "Торговый", "Производство", "Жилой", "Другое"]
 const OBJECT_TYPES = ["Продажа", "Аренда", "Субаренда", "ГАБ"]
@@ -25,11 +25,13 @@ interface LeadFormProps {
 
 interface FormState {
   name: string
+  last_name: string
   phone: string
   email: string
   message: string
   source: string
   stage: FunnelStage
+  lead_type: LeadType
   object_title: string
   preferred_category: string
   preferred_type: string
@@ -43,8 +45,8 @@ interface FormState {
 function toForm(lead?: Lead): FormState {
   if (!lead) {
     return {
-      name: "", phone: "", email: "", message: "",
-      source: "Ручное добавление", stage: "Лид",
+      name: "", last_name: "", phone: "", email: "", message: "",
+      source: "Ручное добавление", stage: "Лид", lead_type: "Клиент",
       object_title: "", preferred_category: "", preferred_type: "",
       preferred_city: "", budget_from: "", budget_to: "",
       area_from: "", area_to: "",
@@ -52,11 +54,13 @@ function toForm(lead?: Lead): FormState {
   }
   return {
     name: lead.name,
+    last_name: lead.last_name || "",
     phone: lead.phone,
     email: lead.email,
     message: lead.message,
     source: lead.source,
     stage: lead.stage,
+    lead_type: lead.lead_type || "Клиент",
     object_title: lead.object_title,
     preferred_category: lead.preferred_category || "",
     preferred_type: lead.preferred_type || "",
@@ -89,11 +93,13 @@ export function LeadForm({ ownerId, existing, onSave, onCancel }: LeadFormProps)
     const payload = {
       owner_id: ownerId,
       name: form.name.trim(),
+      last_name: form.last_name.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
       message: form.message.trim(),
       source: form.source.trim() || "Ручное добавление",
       stage: form.stage,
+      lead_type: form.lead_type,
       object_title: form.object_title.trim(),
       preferred_category: form.preferred_category,
       preferred_type: form.preferred_type,
@@ -134,6 +140,12 @@ export function LeadForm({ ownerId, existing, onSave, onCancel }: LeadFormProps)
             className={inputCls}
           />
           <Input
+            placeholder="Фамилия или название компании"
+            value={form.last_name}
+            onChange={e => set("last_name", e.target.value)}
+            className={inputCls}
+          />
+          <Input
             placeholder="Телефон *"
             type="tel"
             value={form.phone}
@@ -153,6 +165,24 @@ export function LeadForm({ ownerId, existing, onSave, onCancel }: LeadFormProps)
             onChange={e => set("source", e.target.value)}
             className={inputCls}
           />
+          <div>
+            <label className="text-[10px] text-gray-500 block mb-1">Тип контакта</label>
+            <div className="flex gap-1.5 flex-wrap">
+              {LEAD_TYPES.map(({ type, color, bg, icon }) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => set("lead_type", type)}
+                  className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full font-medium border transition-all ${
+                    form.lead_type === type ? `${bg} ${color}` : "bg-[#0d0d0d] border-[#1f1f1f] text-gray-500 hover:text-white"
+                  }`}
+                >
+                  <Icon name={icon} className="h-3 w-3" />
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

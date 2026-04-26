@@ -45,6 +45,8 @@ def row_to_lead(r):
         "preferred_category": r[17] or "",
         "org_id": str(r[18]) if len(r) > 18 and r[18] else None,
         "department_id": str(r[19]) if len(r) > 19 and r[19] else None,
+        "last_name": r[20] or "" if len(r) > 20 else "",
+        "lead_type": r[21] or "Клиент" if len(r) > 21 else "Клиент",
     }
 
 
@@ -57,7 +59,7 @@ SELECT_COLS = (
     "message, source, stage, created_at, "
     "budget_from, budget_to, area_from, area_to, "
     "preferred_type, preferred_city, preferred_category, "
-    "org_id, department_id"
+    "org_id, department_id, last_name, lead_type"
 )
 
 
@@ -83,13 +85,25 @@ def handler(event: dict, context) -> dict:
             object_id = body.get("object_id") or None
             org_id = body.get("org_id") or None
             dept_id = body.get("department_id") or None
+            last_name = (body.get("last_name") or "").strip()
+
+            # Автоопределение типа: если пришёл с маркетплейса и у него активная подписка клуба
+            lead_type = body.get("lead_type") or "Клиент"
+            sender_id = body.get("sender_id") or None
+            if sender_id and lead_type == "Клиент":
+                cur.execute(
+                    f"SELECT 1 FROM {schema}.club_subscriptions WHERE user_id=%s AND status='active' AND expires_at > NOW() LIMIT 1",
+                    (sender_id,),
+                )
+                if cur.fetchone():
+                    lead_type = "Партнёр Клуба"
 
             sql = (
                 "INSERT INTO " + schema + ".leads"
                 " (owner_id, object_id, object_title, name, phone, email, message, source, stage,"
                 "  budget_from, budget_to, area_from, area_to,"
-                "  preferred_type, preferred_city, preferred_category, org_id, department_id)"
-                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                "  preferred_type, preferred_city, preferred_category, org_id, department_id, last_name, lead_type)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 " RETURNING " + SELECT_COLS
             )
             cur.execute(sql, (
@@ -100,7 +114,7 @@ def handler(event: dict, context) -> dict:
                 body.get("budget_from") or None, body.get("budget_to") or None,
                 body.get("area_from") or None, body.get("area_to") or None,
                 body.get("preferred_type", ""), body.get("preferred_city", ""),
-                body.get("preferred_category", ""), org_id, dept_id,
+                body.get("preferred_category", ""), org_id, dept_id, last_name, lead_type,
             ))
             row = cur.fetchone()
             conn.commit()
@@ -161,11 +175,12 @@ def handler(event: dict, context) -> dict:
             cur.execute(
                 f"""
                 UPDATE {schema}.leads
-                SET stage = %s, message = %s, name = %s, phone = %s, email = %s,
+                SET stage = %s, message = %s, name = %s, last_name = %s, phone = %s, email = %s,
                     object_title = %s,
                     budget_from = %s, budget_to = %s,
                     area_from = %s, area_to = %s,
-                    preferred_type = %s, preferred_city = %s, preferred_category = %s
+                    preferred_type = %s, preferred_city = %s, preferred_category = %s,
+                    lead_type = %s
                 WHERE id = %s
                 RETURNING {SELECT_COLS}
                 """,
@@ -173,6 +188,7 @@ def handler(event: dict, context) -> dict:
                     body.get("stage", "Лид"),
                     body.get("message", ""),
                     body.get("name", ""),
+                    (body.get("last_name") or "").strip(),
                     body.get("phone", ""),
                     body.get("email", ""),
                     body.get("object_title", ""),
@@ -183,6 +199,7 @@ def handler(event: dict, context) -> dict:
                     body.get("preferred_type", ""),
                     body.get("preferred_city", ""),
                     body.get("preferred_category", ""),
+                    body.get("lead_type") or "Клиент",
                     lead_id,
                 ),
             )
