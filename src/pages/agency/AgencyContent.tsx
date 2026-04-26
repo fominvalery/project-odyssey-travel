@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { OrgFull, RoleCode, Employee, Department } from "@/lib/agencyApi"
 import { type ObjectData } from "@/components/AddObjectWizard"
 import type { Lead } from "@/components/dashboard/LeadCard"
@@ -91,6 +92,19 @@ export default function AgencyContent({
   setReassigningObject, setReassigningLead,
   roleLevelFn,
 }: Props) {
+  const [openPartnerId, setOpenPartnerId] = useState<string | null>(null)
+  const [openPartnerName, setOpenPartnerName] = useState<string | null>(null)
+  const [openPartnerAvatar, setOpenPartnerAvatar] = useState<string | null>(null)
+  const [openPartnerStatus, setOpenPartnerStatus] = useState<string | null>(null)
+
+  function handleOpenMessage(partnerId: string, partnerName: string, partnerAvatar: string | null, partnerStatus: string) {
+    setOpenPartnerId(partnerId)
+    setOpenPartnerName(partnerName)
+    setOpenPartnerAvatar(partnerAvatar)
+    setOpenPartnerStatus(partnerStatus)
+    setSection("messages")
+  }
+
   return (
     <main className="flex-1 overflow-auto pb-20 md:pb-0">
       <div className="sticky top-0 z-40 flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] bg-[#0a0a0a]/80 backdrop-blur-sm">
@@ -133,7 +147,7 @@ export default function AgencyContent({
         )}
 
         {section === "network" && (
-          <DashboardClub userId={user.id} onMessage={() => setSection("messages")} />
+          <DashboardClub userId={user.id} onMessage={handleOpenMessage} />
         )}
 
         {section === "joint-deals" && (
@@ -143,11 +157,16 @@ export default function AgencyContent({
         {section === "messages" && (
           <DashboardMessages
             userId={user.id}
-            openPartnerId={null}
-            openPartnerName={null}
-            openPartnerAvatar={null}
-            openPartnerStatus={null}
-            onClearOpen={() => {}}
+            openPartnerId={openPartnerId}
+            openPartnerName={openPartnerName}
+            openPartnerAvatar={openPartnerAvatar}
+            openPartnerStatus={openPartnerStatus}
+            onClearOpen={() => {
+              setOpenPartnerId(null)
+              setOpenPartnerName(null)
+              setOpenPartnerAvatar(null)
+              setOpenPartnerStatus(null)
+            }}
             onUnreadChange={() => {}}
           />
         )}
