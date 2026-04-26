@@ -54,10 +54,25 @@ export const CATEGORIES: CategoryItem[] = [
   {
     id: "residential",
     label: "Жилая",
-    desc: "Квартира, дом, таунхаус, апартаменты",
+    desc: "Квартира, дом, загородная, премиум",
     icon: "Home",
     group: "residential",
-    subtypes: ["Квартира", "Комната", "Дом / Коттедж", "Таунхаус", "Апартаменты", "Дача"],
+    subtypes: [
+      // Городская
+      "Квартира", "Студия", "Апартаменты", "Пентхаус", "Комната", "Многокомнатная квартира",
+      // Загородная
+      "Дом", "Коттедж", "Таунхаус", "Дуплекс", "Вилла", "Дача", "Частный дом", "Загородный дом", "Часть дома",
+      // Премиум
+      "Элитная квартира", "Премиум-жильё", "Резиденция", "Особняк",
+      // Земля
+      "Участок под жилую застройку", "Малоэтажный жилой дом",
+    ],
+    subgroups: [
+      { label: "Городская", items: ["Квартира", "Студия", "Апартаменты", "Пентхаус", "Комната", "Многокомнатная квартира"] },
+      { label: "Загородная", items: ["Дом", "Коттедж", "Таунхаус", "Дуплекс", "Вилла", "Дача", "Частный дом", "Загородный дом", "Часть дома"] },
+      { label: "Премиум", items: ["Элитная квартира", "Пентхаус", "Вилла", "Премиум-жильё", "Резиденция", "Особняк"] },
+      { label: "Земля и проекты", items: ["Участок под жилую застройку", "Малоэтажный жилой дом"] },
+    ],
   },
   // Новостройки
   {
@@ -136,33 +151,89 @@ export const CATEGORY_GROUPS = [
   { label: "Жилая недвижимость", ids: ["residential", "newbuild"] },
 ]
 
-// ── Поля аренды для Жилой ───────────────────────────────────────────────────
-export const RESIDENTIAL_RENT_FIELDS = [
-  { key: "rooms", label: "Количество комнат", placeholder: "3" },
-  { key: "floor", label: "Этаж", placeholder: "5" },
+// ── Поля Жилой: Городская (квартира, студия, апартаменты) ───────────────────
+const RESIDENTIAL_URBAN_FIELDS = [
+  { key: "rooms", label: "Количество комнат", placeholder: "2" },
+  { key: "living_area", label: "Жилая площадь (м²)", placeholder: "38" },
+  { key: "floor", label: "Этаж", placeholder: "7" },
   { key: "floors_total", label: "Этажей в доме", placeholder: "16" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "2.8" },
   { key: "building_type", label: "Тип дома", placeholder: "Монолит / Кирпич / Панель" },
-  { key: "condition", label: "Состояние", placeholder: "Евроремонт / Дизайнерский / Стандарт" },
-  { key: "bathroom", label: "Санузел", placeholder: "Раздельный / Совмещённый" },
-  { key: "balcony", label: "Балкон / Лоджия", placeholder: "Есть / Нет" },
-  { key: "furniture", label: "Мебель", placeholder: "Полностью меблирована / Частично / Без мебели" },
-  { key: "appliances", label: "Техника", placeholder: "Вся техника / Частично / Нет" },
-  { key: "pets", label: "Животные", placeholder: "Можно / Нельзя" },
-  { key: "deposit", label: "Залог (₽)", placeholder: "100 000" },
-  { key: "lease_term", label: "Срок аренды", placeholder: "Длительная / Посуточно / От 3 мес." },
+  { key: "build_year", label: "Год постройки", placeholder: "2018" },
+  { key: "condition", label: "Состояние / Ремонт", placeholder: "Евроремонт / Дизайнерский / Черновая" },
+  { key: "layout", label: "Планировка", placeholder: "Свободная / Раздельные комнаты / Студия" },
+  { key: "bathroom", label: "Санузел", placeholder: "Раздельный / Совмещённый / 2 санузла" },
+  { key: "balcony", label: "Балкон / Терраса", placeholder: "Балкон / Лоджия / Нет" },
+  { key: "view", label: "Вид из окон", placeholder: "Двор / Улица / Парк / Река" },
+  { key: "parking", label: "Парковка", placeholder: "Подземная / Наземная / Нет" },
+  { key: "elevator", label: "Лифт", placeholder: "Есть / Нет / Грузовой" },
+  { key: "housing_class", label: "Класс жилья", placeholder: "Эконом / Комфорт / Бизнес / Премиум" },
+  { key: "utilities", label: "Коммунальные платежи", placeholder: "~8 000 ₽/мес" },
 ]
 
-// ── Поля для Жилой ──────────────────────────────────────────────────────────
-const RESIDENTIAL_FIELDS = [
-  { key: "rooms", label: "Количество комнат", placeholder: "3" },
+// ── Поля Жилой: Загородная (дом, коттедж, дача) ─────────────────────────────
+const RESIDENTIAL_SUBURBAN_FIELDS = [
+  { key: "land_area", label: "Площадь участка (сот.)", placeholder: "15" },
+  { key: "floors_total", label: "Этажность дома", placeholder: "2" },
+  { key: "build_year", label: "Год постройки", placeholder: "2015" },
+  { key: "wall_material", label: "Материал стен", placeholder: "Кирпич / Брус / Газобетон / Каркас" },
+  { key: "condition", label: "Состояние", placeholder: "Жилое / Требует ремонта / Строится" },
+  { key: "heating", label: "Отопление", placeholder: "Газ / Электро / Дрова / Нет" },
+  { key: "gas", label: "Газ", placeholder: "Подведён / По улице / Нет" },
+  { key: "water", label: "Водоснабжение", placeholder: "Центральное / Скважина / Колодец" },
+  { key: "sewage", label: "Канализация", placeholder: "Центральная / Септик / Нет" },
+  { key: "electricity", label: "Электричество (кВт)", placeholder: "15 / 25 кВт" },
+  { key: "distance_city", label: "Удалённость от города (км)", placeholder: "30" },
+  { key: "road", label: "Дорога", placeholder: "Асфальт / Грунт / Круглогодичный доступ" },
+  { key: "infrastructure", label: "Инфраструктура участка", placeholder: "Баня, гараж, бассейн" },
+  { key: "parking", label: "Парковка / Гараж", placeholder: "Гараж / Навес / Открытая" },
+  { key: "bathroom", label: "Санузлов", placeholder: "2" },
+  { key: "housing_class", label: "Класс жилья", placeholder: "Эконом / Комфорт / Бизнес" },
+]
+
+// ── Поля Жилой: Премиум (пентхаус, вилла, особняк) ──────────────────────────
+const RESIDENTIAL_PREMIUM_FIELDS = [
+  { key: "rooms", label: "Количество комнат", placeholder: "5" },
+  { key: "living_area", label: "Жилая площадь (м²)", placeholder: "300" },
+  { key: "floor", label: "Этаж", placeholder: "25" },
+  { key: "floors_total", label: "Этажей в здании", placeholder: "30" },
+  { key: "ceiling", label: "Высота потолков (м)", placeholder: "3.5" },
+  { key: "housing_class", label: "Класс жилья", placeholder: "Премиум / Элит / De Luxe" },
+  { key: "condition", label: "Отделка", placeholder: "Дизайнерский ремонт / Под ключ / Авторский проект" },
+  { key: "view", label: "Вид из окон", placeholder: "Панорама города / Река / Парк" },
+  { key: "bathroom", label: "Санузлов", placeholder: "3" },
+  { key: "balcony", label: "Терраса / Балкон", placeholder: "Панорамная терраса / Нет" },
+  { key: "parking", label: "Парковка", placeholder: "2 машиноместа в подземном паркинге" },
+  { key: "security", label: "Охрана / Безопасность", placeholder: "Консьерж 24/7 / Видеонаблюдение" },
+  { key: "elevator", label: "Лифт", placeholder: "Лифт с выходом в квартиру" },
+  { key: "building_type", label: "Тип здания", placeholder: "Монолит / Клубный дом / Исторический" },
+  { key: "build_year", label: "Год постройки / Сдачи", placeholder: "2023" },
+  { key: "concierge", label: "Консьерж-сервис", placeholder: "Есть / Нет" },
+  { key: "utilities", label: "Коммунальные платежи", placeholder: "~50 000 ₽/мес" },
+]
+
+// ── Поля аренды для Жилой ───────────────────────────────────────────────────
+export const RESIDENTIAL_RENT_FIELDS = [
+  { key: "rooms", label: "Количество комнат", placeholder: "2" },
   { key: "floor", label: "Этаж", placeholder: "5" },
   { key: "floors_total", label: "Этажей в доме", placeholder: "16" },
-  { key: "building_type", label: "Тип дома", placeholder: "Монолит / Кирпич / Панель" },
-  { key: "condition", label: "Состояние", placeholder: "Евроремонт / Черновая / Без отделки" },
+  { key: "condition", label: "Состояние / Ремонт", placeholder: "Евроремонт / Дизайнерский / Стандарт" },
+  { key: "furniture", label: "Мебель", placeholder: "Полностью / Частично / Без мебели" },
+  { key: "appliances", label: "Техника", placeholder: "Вся / Частично / Нет" },
   { key: "bathroom", label: "Санузел", placeholder: "Раздельный / Совмещённый" },
   { key: "balcony", label: "Балкон / Лоджия", placeholder: "Есть / Нет" },
-  { key: "parking", label: "Парковка", placeholder: "Подземная / Наземная / Нет" },
+  { key: "parking", label: "Парковка", placeholder: "Есть / Нет" },
+  { key: "elevator", label: "Лифт", placeholder: "Есть / Нет" },
+  { key: "pets", label: "Животные", placeholder: "Можно / Нельзя" },
+  { key: "children", label: "Дети", placeholder: "Можно / Нельзя" },
+  { key: "deposit", label: "Залог (₽)", placeholder: "100 000" },
+  { key: "utilities", label: "Коммунальные платежи", placeholder: "Включены / По счётчику / ~8 000 ₽" },
+  { key: "lease_term", label: "Срок аренды", placeholder: "Длительная / Посуточно / От 3 мес." },
+  { key: "check_in", label: "Условия заселения", placeholder: "С 14:00 / Обсуждается" },
 ]
+
+// ── Поля Жилой (общий fallback) ──────────────────────────────────────────────
+const RESIDENTIAL_FIELDS = RESIDENTIAL_URBAN_FIELDS
 
 // ── Поля для Инвестиций ──────────────────────────────────────────────────────
 const INVESTMENT_FIELDS = [
@@ -416,8 +487,16 @@ const RESORT_INVEST_FIELDS = [
   { key: "management_company", label: "Управляющая компания", placeholder: "Есть / Планируется" },
 ]
 
+const RESIDENTIAL_SUBURBAN_SUBTYPES = ["Дом", "Коттедж", "Таунхаус", "Дуплекс", "Дача", "Частный дом", "Загородный дом", "Часть дома", "Участок под жилую застройку", "Малоэтажный жилой дом"]
+const RESIDENTIAL_PREMIUM_SUBTYPES = ["Вилла", "Пентхаус", "Элитная квартира", "Премиум-жильё", "Резиденция", "Особняк"]
+
 export function getCategoryFields(catId: string, subtype?: string) {
-  if (catId === "residential") return RESIDENTIAL_FIELDS
+  if (catId === "residential") {
+    if (!subtype) return RESIDENTIAL_URBAN_FIELDS
+    if (RESIDENTIAL_SUBURBAN_SUBTYPES.includes(subtype)) return RESIDENTIAL_SUBURBAN_FIELDS
+    if (RESIDENTIAL_PREMIUM_SUBTYPES.includes(subtype)) return RESIDENTIAL_PREMIUM_FIELDS
+    return RESIDENTIAL_URBAN_FIELDS
+  }
   if (catId === "investment") return INVESTMENT_FIELDS
   if (catId === "auction") return AUCTION_FIELDS
   if (catId === "newbuild") {
