@@ -6,7 +6,7 @@ import { useMyOrgs } from "@/hooks/useMyOrgs"
 import AddStatusModal from "@/components/agency/AddStatusModal"
 import { STATUS_LABELS } from "@/hooks/useAuth"
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "messages" | "profile" | "support"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "joint-deals" | "messages" | "profile" | "support"
 
 // Пункты меню для basic
 const basicNavItems = [
@@ -17,14 +17,15 @@ const basicNavItems = [
 
 // Полное меню для broker/agency
 const fullNavItems = [
-  { id: "dashboard",  label: "Дашборд",   icon: "LayoutDashboard" },
-  { id: "objects",    label: "Объекты",   icon: "Building2" },
-  { id: "crm",        label: "CRM",       icon: "Users" },
-  { id: "analytics",  label: "Аналитика", icon: "BarChart2" },
-  { id: "club",       label: "Сеть",      icon: "Zap" },
-  { id: "messages",   label: "Сообщения", icon: "MessageSquare" },
-  { id: "referral",   label: "Рефералы",  icon: "Gift" },
-  { id: "profile",    label: "Профиль",   icon: "User" },
+  { id: "dashboard",    label: "Дашборд",          icon: "LayoutDashboard" },
+  { id: "objects",      label: "Объекты",           icon: "Building2" },
+  { id: "crm",          label: "CRM",               icon: "Users" },
+  { id: "analytics",    label: "Аналитика",         icon: "BarChart2" },
+  { id: "club",         label: "Сеть",              icon: "Zap" },
+  { id: "joint-deals",  label: "Совместные сделки", icon: "Handshake" },
+  { id: "messages",     label: "Сообщения",         icon: "MessageSquare" },
+  { id: "referral",     label: "Рефералы",          icon: "Gift" },
+  { id: "profile",      label: "Профиль",           icon: "User" },
 ] as const
 
 interface Props {
@@ -60,17 +61,22 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
           {navItems.map((item) => {
             const isClub = item.id === "club"
             const isMessages = item.id === "messages"
+            const isJointDeals = item.id === "joint-deals"
             const isActive = section === item.id
             return (
               <button
                 key={item.id}
-                onClick={() => setSection(item.id)}
+                onClick={() => setSection(item.id as Section)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
                   isActive
-                    ? isClub || isMessages ? "bg-violet-600 text-white" : "bg-blue-600 text-white"
+                    ? isClub || isMessages || isJointDeals
+                      ? "bg-violet-600 text-white"
+                      : "bg-blue-600 text-white"
                     : isClub
                       ? "text-violet-400 hover:text-white hover:bg-violet-500/20 border border-violet-500/20"
-                      : "text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
+                      : isJointDeals
+                        ? "text-violet-400 hover:text-white hover:bg-violet-500/10"
+                        : "text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
                 }`}
               >
                 <Icon name={item.icon} className="h-4 w-4 shrink-0" />
@@ -201,8 +207,9 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
                 { id: "objects",   label: "Объекты",    icon: "Building2",       action: "section" },
                 { id: "crm",       label: "CRM",        icon: "Users",           action: "section" },
                 { id: "analytics", label: "Аналитика",  icon: "BarChart2",       action: "section" },
-                { id: "club",      label: "Сеть",       icon: "Zap",             action: "section" },
-                { id: "messages",  label: "Сообщения",  icon: "MessageSquare",   action: "section" },
+                { id: "club",        label: "Сеть",       icon: "Zap",             action: "section" },
+                { id: "joint-deals", label: "СЗ",        icon: "Handshake",       action: "section" },
+                { id: "messages",    label: "Сообщения",  icon: "MessageSquare",   action: "section" },
                 { id: "referral",  label: "Рефералы",   icon: "Gift",            action: "section" },
                 { id: "profile",   label: "Профиль",    icon: "User",            action: "section" },
                 { id: "marketplace", label: "Маркетплейс", icon: "Store",        action: "navigate" },

@@ -10,6 +10,7 @@ import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
 import DashboardSupport from "@/components/dashboard/DashboardSupport"
 import DashboardClub, { type Member as ClubMember } from "@/components/dashboard/DashboardClub"
 import DashboardMessages from "@/components/dashboard/DashboardMessages"
+import DashboardJointDeals from "@/components/dashboard/DashboardJointDeals"
 import AiChatBubble from "@/components/AiChatBubble"
 import NotificationBell from "@/components/dashboard/NotificationBell"
 import SubscriptionBadge from "@/components/dashboard/SubscriptionBadge"
@@ -19,7 +20,7 @@ import func2url from "../../backend/func2url.json"
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "messages" | "profile" | "support"
+type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "joint-deals" | "messages" | "profile" | "support"
 
 function mapFromServer(o: Record<string, unknown>): ObjectData {
   const ef = (o.extra_fields as Record<string, string>) ?? {}
@@ -379,6 +380,10 @@ export default function Dashboard() {
 
         {section === "club" && (
           <DashboardClub userId={user.id} onMessage={handleOpenMessage} onAddToCRM={handleAddToCRM} />
+        )}
+
+        {section === "joint-deals" && (
+          <DashboardJointDeals userId={user.id} />
         )}
 
         {section === "messages" && (

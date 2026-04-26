@@ -259,35 +259,16 @@ function MemberCard({ member: m, onMessage, onAddToCRM }: { member: Member; onMe
         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{m.bio}</p>
       )}
 
-      {/* Кнопки действий */}
-      <div className="mt-auto flex flex-col gap-2">
-        {onMessage && (
-          <button
-            onClick={() => onMessage(m.id, m.name || "Участник Клуба", m.avatar_url, m.status)}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 text-violet-400 hover:text-violet-300 text-sm font-medium border border-violet-500/20 transition-colors"
-          >
-            <Icon name="MessageSquare" className="h-3.5 w-3.5" />
-            Написать
-          </button>
-        )}
-        {onAddToCRM && (
-          <button
-            disabled={addedToCRM}
-            onClick={() => {
-              onAddToCRM(m)
-              setAddedToCRM(true)
-            }}
-            className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium border transition-colors ${
-              addedToCRM
-                ? "bg-amber-500/10 text-amber-400 border-amber-500/20 cursor-default"
-                : "bg-[#1a1a1a] hover:bg-amber-500/10 text-gray-400 hover:text-amber-400 border-[#2a2a2a] hover:border-amber-500/20"
-            }`}
-          >
-            <Icon name={addedToCRM ? "Check" : "Star"} className="h-3.5 w-3.5" />
-            {addedToCRM ? "Добавлен в CRM" : "Добавить в CRM"}
-          </button>
-        )}
-      </div>
+      {/* Кнопка Написать */}
+      {onMessage && (
+        <button
+          onClick={() => onMessage(m.id, m.name || "Участник Клуба", m.avatar_url, m.status)}
+          className="mt-auto w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 text-violet-400 hover:text-violet-300 text-sm font-medium border border-violet-500/20 transition-colors"
+        >
+          <Icon name="MessageSquare" className="h-3.5 w-3.5" />
+          Написать
+        </button>
+      )}
     </div>
   )
 }
