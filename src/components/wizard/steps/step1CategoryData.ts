@@ -92,7 +92,7 @@ export const INVESTMENT_GROUPS = [
     label: "ГАБ",
     desc: "Готовый, создание, субаренда",
     icon: "Banknote",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/cb318daa-7151-4df5-9636-bae5cb5cd266.jpg",
   },
   {
     id: "redevelopment",
@@ -106,7 +106,7 @@ export const INVESTMENT_GROUPS = [
     label: "Земельные участки",
     desc: "Под застройку, коммерцию, ИЖС",
     icon: "Map",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/af1636ce-1678-40e8-bfaf-e34e3c3e0013.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e69647ce-c447-4cdb-b850-720ac16cbbc6.jpg",
   },
   {
     id: "special",
