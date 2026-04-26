@@ -13,14 +13,14 @@ export const RESIDENTIAL_GROUPS = [
     label: "Загородная",
     desc: "Дом, коттедж, дача, таунхаус",
     icon: "TreePine",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/af1636ce-1678-40e8-bfaf-e34e3c3e0013.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/3e08af11-e5e3-456c-afd4-80500c34c08a.jpg",
   },
   {
     id: "premium",
     label: "Премиум",
     desc: "Вилла, пентхаус, особняк, элитная",
     icon: "Crown",
-    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/d4d2ef51-2ce7-4910-b6f6-cb1f59c36746.jpg",
   },
 ]
 
