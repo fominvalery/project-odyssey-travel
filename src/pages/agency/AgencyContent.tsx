@@ -131,7 +131,11 @@ export default function AgencyContent({
             objSearch={objSearch} setObjSearch={setObjSearch}
             userId={user.id} isBasic={false}
             onReassign={isDirector ? (obj) => setReassigningObject(obj) : undefined}
-            employees={isDirector ? employees.map(emp => ({ user_id: emp.user_id, name: emp.full_name })) : undefined}
+            employees={(isDirector || isRop)
+              ? (isRop ? employees.filter(e => e.department_id === myDeptId) : employees)
+                  .map(emp => ({ user_id: emp.user_id, name: emp.full_name }))
+              : undefined
+            }
           />
         )}
 
