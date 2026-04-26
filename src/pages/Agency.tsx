@@ -33,7 +33,7 @@ function canSee(role: RoleCode, minRole: RoleCode): boolean {
 }
 
 type AgencySection =
-  | "objects" | "crm" | "analytics" | "network" | "messages" | "profile"
+  | "objects" | "crm" | "analytics" | "network" | "joint-deals" | "messages" | "profile"
   | "card" | "employees" | "departments" | "deals" | "invites" | "reviews"
 
 interface MenuItem {
@@ -48,8 +48,9 @@ const MENU_ITEMS: MenuItem[] = [
   { id: "objects",     label: "Объекты",     icon: "Building2",     minRole: "broker",   group: "work" },
   { id: "crm",         label: "CRM",         icon: "Users",         minRole: "broker",   group: "work" },
   { id: "analytics",   label: "Аналитика",   icon: "BarChart2",     minRole: "rop",      group: "work" },
-  { id: "network",     label: "Сеть",        icon: "Zap",           minRole: "broker",   group: "work" },
-  { id: "messages",    label: "Сообщения",   icon: "MessageSquare", minRole: "broker",   group: "work" },
+  { id: "network",      label: "Сеть",              icon: "Zap",           minRole: "broker",   group: "work" },
+  { id: "joint-deals", label: "Совместные сделки", icon: "Handshake",     minRole: "broker",   group: "work" },
+  { id: "messages",    label: "Сообщения",         icon: "MessageSquare", minRole: "broker",   group: "work" },
   { id: "profile",     label: "Профиль",     icon: "User",          minRole: "broker",   group: "work" },
   { id: "card",        label: "Карточка АН", icon: "Building2",     minRole: "broker",   group: "agency" },
   { id: "employees",   label: "Команда",     icon: "Users",         minRole: "rop",      group: "agency" },

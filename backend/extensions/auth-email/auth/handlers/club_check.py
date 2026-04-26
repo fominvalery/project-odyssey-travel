@@ -21,4 +21,15 @@ def handle(event: dict, origin: str = '*') -> dict:
 
     is_club_member = status in ('broker', 'agency') or bool(is_superadmin)
 
-    return response(200, {'is_club_member': is_club_member}, origin)
+    membership_row = query_one(
+        f"SELECT 1 FROM {S}org_memberships WHERE user_id = {escape(user_id)} AND status = 'active' LIMIT 1"
+    )
+    is_agency_member = membership_row is not None
+
+    can_use_jd = is_club_member or is_agency_member or bool(is_superadmin)
+
+    return response(200, {
+        'is_club_member': is_club_member,
+        'is_agency_member': is_agency_member,
+        'can_use_jd': can_use_jd,
+    }, origin)

@@ -36,6 +36,7 @@ interface ProfileProps {
   onAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onAvatarCropped: (dataUrl: string) => void
   onStatusChange: (status: UserStatus) => void
+  forceShowClubFields?: boolean
 }
 
 const SPECIALIZATIONS = [
@@ -124,9 +125,9 @@ function SpecializationPicker({
   )
 }
 
-export function DashboardProfile({ user, initials, form, setForm, saved, onSave, onAvatarChange, onAvatarCropped }: ProfileProps) {
+export function DashboardProfile({ user, initials, form, setForm, saved, onSave, onAvatarChange, onAvatarCropped, forceShowClubFields }: ProfileProps) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const club = isBroker(user.status)
+  const club = isBroker(user.status) || !!forceShowClubFields
   const [cropSrc, setCropSrc] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
 

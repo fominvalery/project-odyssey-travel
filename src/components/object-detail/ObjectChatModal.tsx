@@ -60,7 +60,8 @@ export default function ObjectChatModal({
   const [phone, setPhone] = useState(() => localStorage.getItem("chat_client_phone") || "")
   const [needContact, setNeedContact] = useState(false)
   const [sending, setSending] = useState(false)
-  const [ownerIsClub, setOwnerIsClub] = useState(false)
+  const [ownerCanUseJD, setOwnerCanUseJD] = useState(false)
+  const [currentUserCanUseJD, setCurrentUserCanUseJD] = useState(false)
   const [showJointDealForm, setShowJointDealForm] = useState(false)
   const [jointSending, setJointSending] = useState(false)
   const [jointSuccess, setJointSuccess] = useState(false)
@@ -81,16 +82,23 @@ export default function ObjectChatModal({
     if (user?.phone && !phone) setPhone(user.phone)
   }, [user])
 
-  // Проверка статуса клуба владельца объекта
+  // Проверка can_use_jd для владельца объекта
   useEffect(() => {
     if (!ownerId) return
     fetch(`${AUTH_URL}?action=club-check&user_id=${ownerId}`)
       .then(r => r.json())
-      .then(d => setOwnerIsClub(d.is_club_member === true))
+      .then(d => setOwnerCanUseJD(d.can_use_jd === true))
       .catch(() => {})
   }, [ownerId])
 
-  const isCurrentUserClub = !!(user && (user.status === "broker" || user.status === "agency"))
+  // Проверяем can_use_jd для текущего пользователя
+  useEffect(() => {
+    if (!user?.id) return
+    fetch(`${AUTH_URL}?action=club-check&user_id=${user.id}`)
+      .then(r => r.json())
+      .then(d => setCurrentUserCanUseJD(d.can_use_jd === true))
+      .catch(() => {})
+  }, [user?.id])
 
   const loadMessages = useCallback(async () => {
     try {
@@ -135,7 +143,7 @@ export default function ObjectChatModal({
           owner_id: ownerId,
           object_title: objectTitle,
           sender_id: user?.id || null,
-          lead_type: isCurrentUserClub ? "Партнёр Клуба" : "Клиент",
+          lead_type: currentUserCanUseJD ? "Партнёр Клуба" : "Клиент",
         }),
       })
       const data = await res.json()
@@ -207,7 +215,7 @@ export default function ObjectChatModal({
             Чат объекта
           </div>
           <div className="flex items-center gap-2">
-            {isCurrentUserClub && ownerIsClub && user?.id !== ownerId && (
+            {currentUserCanUseJD && ownerCanUseJD && user?.id !== ownerId && (
               <button
                 onClick={() => setShowJointDealForm(true)}
                 className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 text-violet-400 border border-violet-500/20 transition-colors font-medium"

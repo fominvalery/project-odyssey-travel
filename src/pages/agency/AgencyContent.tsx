@@ -16,10 +16,11 @@ import DashboardObjects from "@/components/dashboard/DashboardObjects"
 import DashboardClub from "@/components/dashboard/DashboardClub"
 import DashboardMessages from "@/components/dashboard/DashboardMessages"
 import { DashboardProfile } from "@/components/dashboard/DashboardProfile"
+import DashboardJointDeals from "@/components/dashboard/DashboardJointDeals"
 import Icon from "@/components/ui/icon"
 
 type AgencySection =
-  | "objects" | "crm" | "analytics" | "network" | "messages" | "profile"
+  | "objects" | "crm" | "analytics" | "network" | "joint-deals" | "messages" | "profile"
   | "card" | "employees" | "departments" | "deals" | "invites" | "reviews"
 
 function canSee(roleLevel: (r: RoleCode) => number, role: RoleCode, minRole: RoleCode) {
@@ -135,6 +136,10 @@ export default function AgencyContent({
           <DashboardClub userId={user.id} onMessage={() => setSection("messages")} />
         )}
 
+        {section === "joint-deals" && (
+          <DashboardJointDeals userId={user.id} />
+        )}
+
         {section === "messages" && (
           <DashboardMessages
             userId={user.id}
@@ -161,6 +166,7 @@ export default function AgencyContent({
             }}
             onAvatarCropped={(d) => updateProfile({ avatar: d })}
             onStatusChange={(s) => updateProfile({ status: s })}
+            forceShowClubFields
           />
         )}
 
