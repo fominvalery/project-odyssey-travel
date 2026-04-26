@@ -169,7 +169,7 @@ export default function MarketplaceSubtypeBar({
   if (activeCategory === "Инвестиционная") {
     const GAB = ["ГАБ (готовый арендный бизнес)", "Создание ГАБ", "ГАБ Субаренда"]
     const REDEV = ["Редевелопмент", "Девелоперский проект", "Реконструкция"]
-    const LAND = ["Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку"]
+    const LAND = ["Земля под строительство МКД", "Земля под застройку (коммерция)", "Земля под жилую застройку", "Земля под коммерцию"]
     const SPECIAL = ["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"]
     const activeGroup = GAB.includes(activeSubtype) ? "gab"
       : REDEV.includes(activeSubtype) ? "redev"

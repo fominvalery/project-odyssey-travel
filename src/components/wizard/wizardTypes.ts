@@ -132,14 +132,14 @@ export const CATEGORIES: CategoryItem[] = [
       // Редевелопмент и девелопмент
       "Редевелопмент", "Девелоперский проект", "Реконструкция",
       // Земля
-      "Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку",
+      "Земля под строительство МКД", "Земля под застройку (коммерция)", "Земля под жилую застройку", "Земля под коммерцию",
       // Специальные форматы
       "Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию",
     ],
     subgroups: [
       { label: "Готовый арендный бизнес", items: ["ГАБ (готовый арендный бизнес)", "Создание ГАБ", "ГАБ Субаренда"] },
       { label: "Редевелопмент и девелопмент", items: ["Редевелопмент", "Девелоперский проект", "Реконструкция"] },
-      { label: "Земельные участки", items: ["Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку"] },
+      { label: "Земельные участки", items: ["Земля под строительство МКД", "Земля под застройку (коммерция)", "Земля под жилую застройку", "Земля под коммерцию"] },
       { label: "Специальные форматы", items: ["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"] },
     ],
   },
@@ -347,19 +347,82 @@ const INVESTMENT_FIELDS_REDEVELOPMENT = [
   { key: "strategy", label: "Стратегия инвестирования", placeholder: "Fix & Flip / Долгосрочное удержание" },
 ]
 
-// ── Поля для Инвестиций: Земельные участки ──────────────────────────────────
-const INVESTMENT_FIELDS_LAND = [
-  { key: "land_area", label: "Площадь участка (Га / сот.)", placeholder: "2.5 Га" },
-  { key: "land_use", label: "Вид разрешённого использования", placeholder: "Коммерция / ИЖС / Смешанное" },
+// ── Поля: Земля под строительство МКД ───────────────────────────────────────
+const INVESTMENT_FIELDS_LAND_MKD = [
+  { key: "land_area", label: "Площадь участка (Га / сот.)", placeholder: "1.2 Га" },
   { key: "cadastral", label: "Кадастровый номер", placeholder: "77:01:0001234:567" },
-  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Электро 500кВт, газ, вода" },
-  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "10 000" },
-  { key: "urban_restrictions", label: "Градостроительные ограничения", placeholder: "ЗОУИТ / Нет" },
-  { key: "road", label: "Подъезд / Дорога", placeholder: "Асфальт / Грунт" },
-  { key: "distance_city", label: "Удалённость от города (км)", placeholder: "15" },
-  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "30" },
-  { key: "entry_price", label: "Цена входа (₽)", placeholder: "50 000 000" },
-  { key: "strategy", label: "Стратегия", placeholder: "Продажа участка / Застройка / Аренда" },
+  { key: "land_use", label: "Текущий ВРИ", placeholder: "Под жилую застройку / Смешанное" },
+  { key: "gpzu", label: "ГПЗУ", placeholder: "Есть / В работе / Нет" },
+  { key: "max_floors", label: "Разрешённая этажность", placeholder: "20 этажей" },
+  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "25 000" },
+  { key: "planned_units", label: "Прогнозное кол-во квартир", placeholder: "300" },
+  { key: "housing_class", label: "Класс жилья", placeholder: "Комфорт / Бизнес / Премиум" },
+  { key: "rns", label: "Разрешение на строительство (РНС)", placeholder: "Есть / В работе / Нет" },
+  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Электро, газ, вода — есть" },
+  { key: "strategy", label: "Инвестиционная стратегия", placeholder: "Девелопмент и продажа квартир / Продажа участка с ГПЗУ / Совместный девелопмент" },
+  { key: "investment_horizon", label: "Горизонт инвестиции (лет)", placeholder: "3–5" },
+  { key: "forecast_revenue", label: "Прогнозная выручка от реализации (₽)", placeholder: "1 500 000 000" },
+  { key: "partner", label: "Партнёр-девелопер", placeholder: "Есть / Ищем" },
+  { key: "urban_restrictions", label: "Ограничения / ЗОУИТ", placeholder: "Нет / Охранная зона" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "150 000 000" },
+]
+
+// ── Поля: Земля под застройку (коммерческую) ────────────────────────────────
+const INVESTMENT_FIELDS_LAND_COMMERCIAL_BUILD = [
+  { key: "land_area", label: "Площадь участка (Га / сот.)", placeholder: "0.5 Га" },
+  { key: "cadastral", label: "Кадастровый номер", placeholder: "77:01:0001234:567" },
+  { key: "land_use", label: "Текущий ВРИ", placeholder: "Коммерческое использование" },
+  { key: "target_object", label: "Целевой объект застройки", placeholder: "БЦ / ТЦ / Склад / Производство / МФК" },
+  { key: "build_potential", label: "Потенциал застройки (м²)", placeholder: "8 000" },
+  { key: "gpzu", label: "ГПЗУ", placeholder: "Есть / В работе / Нет" },
+  { key: "tu", label: "Технические условия (ТУ)", placeholder: "Электро 500кВт, газ — есть" },
+  { key: "road", label: "Подъезд / Трафик", placeholder: "Первая линия / Асфальт / Фуры" },
+  { key: "strategy", label: "Инвестиционная стратегия", placeholder: "Строительство и ГАБ / Строительство и продажа / Перепродажа с ГПЗУ" },
+  { key: "investment_horizon", label: "Горизонт инвестиции (лет)", placeholder: "2–4" },
+  { key: "forecast_revenue", label: "Прогнозная стоимость после застройки (₽)", placeholder: "500 000 000" },
+  { key: "yield", label: "Прогнозная доходность (%)", placeholder: "25" },
+  { key: "urban_restrictions", label: "Ограничения застройки", placeholder: "ЗОУИТ / Нет" },
+  { key: "partner", label: "Партнёр / Девелопер", placeholder: "Есть / Ищем" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "80 000 000" },
+]
+
+// ── Поля: Земля под жилую застройку (ИЖС, деление) ──────────────────────────
+const INVESTMENT_FIELDS_LAND_RESIDENTIAL = [
+  { key: "land_area", label: "Площадь участка (Га / сот.)", placeholder: "5 Га" },
+  { key: "cadastral", label: "Кадастровый номер", placeholder: "50:01:0001234:567" },
+  { key: "land_category", label: "Категория земли", placeholder: "Земли населённых пунктов / С/Х назначения" },
+  { key: "land_use", label: "Текущий ВРИ", placeholder: "ИЖС / ЛПХ / С/Х" },
+  { key: "target_vri", label: "Целевой ВРИ", placeholder: "ИЖС / Малоэтажная застройка" },
+  { key: "vri_change_stage", label: "Стадия изменения ВРИ / категории", placeholder: "Не начато / В работе / Завершено" },
+  { key: "division_possible", label: "Возможность деления участка", placeholder: "Да, на 20 участков по 15 сот." },
+  { key: "plots_count", label: "Кол-во участков после деления", placeholder: "20" },
+  { key: "plot_area", label: "Площадь каждого участка (сот.)", placeholder: "15" },
+  { key: "strategy", label: "Инвестиционная стратегия", placeholder: "Деление и продажа / Смена ВРИ и перепродажа / Строительство домов на продажу / Удержание" },
+  { key: "forecast_revenue", label: "Прогнозная выручка (₽)", placeholder: "40 000 000 (20 участков × 2 млн)" },
+  { key: "investment_horizon", label: "Горизонт инвестиции (лет)", placeholder: "1–3" },
+  { key: "tu", label: "Коммуникации", placeholder: "Электро / Газ / Вода / Нет" },
+  { key: "road", label: "Подъезд / Дорога", placeholder: "Асфальт до участка / Грунт" },
+  { key: "distance_city", label: "Удалённость от города (км)", placeholder: "30" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "15 000 000" },
+]
+
+// ── Поля: Земля под коммерцию (аренда / продажа без застройки) ───────────────
+const INVESTMENT_FIELDS_LAND_COMMERCIAL = [
+  { key: "land_area", label: "Площадь участка (Га / сот.)", placeholder: "0.3 Га" },
+  { key: "cadastral", label: "Кадастровый номер", placeholder: "77:01:0001234:567" },
+  { key: "land_use", label: "Вид разрешённого использования", placeholder: "Торговля / Сервис / Смешанное" },
+  { key: "road", label: "Расположение / Трафик", placeholder: "Первая линия шоссе / 5 000 авт/день" },
+  { key: "visibility", label: "Видимость с дороги", placeholder: "Отличная / Хорошая / Ограниченная" },
+  { key: "division_possible", label: "Возможность деления / аренды частями", placeholder: "Да, от 500 м² / Нет" },
+  { key: "strategy", label: "Инвестиционная стратегия", placeholder: "Аренда участка / Строительство и ГАБ / Перепродажа / Смена ВРИ" },
+  { key: "vri_change_stage", label: "Стадия изменения ВРИ", placeholder: "Не требуется / В работе / Завершено" },
+  { key: "current_tenant", label: "Текущий арендатор", placeholder: "Свободно / АЗС / Стройрынок" },
+  { key: "rent_potential", label: "Потенциальный арендный доход (₽/мес)", placeholder: "200 000" },
+  { key: "yield", label: "Прогнозная доходность (%/год)", placeholder: "15" },
+  { key: "investment_horizon", label: "Горизонт инвестиции (лет)", placeholder: "3–7" },
+  { key: "tu", label: "Технические условия / Коммуникации", placeholder: "Электро есть / Газ по улице" },
+  { key: "urban_restrictions", label: "Ограничения / Обременения", placeholder: "Нет / ЗОУИТ / Аренда" },
+  { key: "entry_price", label: "Цена входа (₽)", placeholder: "25 000 000" },
 ]
 
 // ── Поля для Инвестиций: Специальные форматы ────────────────────────────────
@@ -786,7 +849,10 @@ export function getCategoryFields(catId: string, subtype?: string) {
     if (subtype === "Создание ГАБ") return INVESTMENT_FIELDS_CREATE_GAB
     if (subtype === "ГАБ Субаренда") return INVESTMENT_FIELDS_SUBLEASE_GAB
     if (["Редевелопмент", "Девелоперский проект", "Реконструкция"].includes(subtype)) return INVESTMENT_FIELDS_REDEVELOPMENT
-    if (["Земля под застройку", "Земля под коммерцию", "Земля под жилую застройку"].includes(subtype)) return INVESTMENT_FIELDS_LAND
+    if (subtype === "Земля под строительство МКД") return INVESTMENT_FIELDS_LAND_MKD
+    if (subtype === "Земля под застройку (коммерция)") return INVESTMENT_FIELDS_LAND_COMMERCIAL_BUILD
+    if (subtype === "Земля под жилую застройку") return INVESTMENT_FIELDS_LAND_RESIDENTIAL
+    if (subtype === "Земля под коммерцию") return INVESTMENT_FIELDS_LAND_COMMERCIAL
     if (["Портфель объектов", "Доля в бизнесе / объекте", "Sale & Leaseback", "Объект под реализацию"].includes(subtype)) return INVESTMENT_FIELDS_SPECIAL
     return INVESTMENT_FIELDS
   }
