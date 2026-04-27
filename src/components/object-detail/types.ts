@@ -56,4 +56,13 @@ export const FIELD_LABELS: Record<string, string> = {
   lease_from: "Аренда от",
   encumbrance: "Арендатор / обременение",
   deal_type: "",
+  ownership: "Форма собственности",
+  bidding_step: "Шаг торгов",
+  documents: "Документы",
+  land_area: "Площадь участка",
+  building_year: "Год постройки",
+  condition: "Состояние",
+  entrance: "Вход",
+  parking: "Парковка",
+  vat: "НДС",
 }
