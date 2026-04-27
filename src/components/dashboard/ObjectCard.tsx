@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import Icon from "@/components/ui/icon"
 import type { ObjectData } from "@/components/AddObjectWizard"
+import { formatPrice } from "@/lib/format"
 
 function OwnerBlock({
   extraFields,
@@ -185,7 +186,7 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwn
   const isArchived = ARCHIVE_STATUSES.includes(obj.status)
   const dealType = obj.extra_fields?.deal_type
   const isRent = dealType === "rent"
-  const priceLabel = isRent ? `${obj.price} ₽/мес` : obj.price ? `${obj.price} ₽` : "—"
+  const priceLabel = isRent ? `${formatPrice(obj.price)} ₽/мес` : obj.price ? `${formatPrice(obj.price)} ₽` : "—"
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
