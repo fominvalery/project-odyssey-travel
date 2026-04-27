@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import Icon from "@/components/ui/icon"
 import {
   DndContext,
@@ -94,8 +94,34 @@ interface SortablePhotoGridProps {
   onUploadingChange: (v: boolean) => void
 }
 
+const MAX_SIZE = 1600
+const QUALITY = 0.85
+const BATCH = 4
+
+async function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const scale = Math.min(1, MAX_SIZE / Math.max(img.width, img.height))
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement("canvas")
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext("2d")!
+      ctx.drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL("image/jpeg", QUALITY))
+    }
+    img.onerror = reject
+    img.src = url
+  })
+}
+
 export default function SortablePhotoGrid({ photos, uploadingPhoto, onPhotosChange, onUploadingChange }: SortablePhotoGridProps) {
   const photoInputRef = useRef<HTMLInputElement>(null)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -123,28 +149,39 @@ export default function SortablePhotoGrid({ photos, uploadingPhoto, onPhotosChan
     const files = Array.from(e.target.files || [])
     if (!files.length) return
     onUploadingChange(true)
+    setProgress({ done: 0, total: files.length })
     const uploadUrl = (func2url as Record<string, string>)["upload-photo"]
     const uploaded: string[] = []
-    for (const file of files) {
-      const reader = new FileReader()
-      const base64 = await new Promise<string>((resolve) => {
-        reader.onload = (ev) => resolve(ev.target?.result as string)
-        reader.readAsDataURL(file)
-      })
+    let done = 0
+
+    async function uploadOne(file: File): Promise<string | null> {
       try {
+        const base64 = await compressImage(file)
         const res = await fetch(uploadUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: base64, content_type: file.type }),
+          body: JSON.stringify({ image: base64, content_type: "image/jpeg" }),
         })
         const data = await res.json()
-        if (data.url) uploaded.push(data.url)
+        return data.url || null
       } catch {
-        // пропускаем файл при ошибке
+        return null
+      } finally {
+        done++
+        setProgress({ done, total: files.length })
       }
     }
+
+    // Загружаем батчами по BATCH файлов параллельно
+    for (let i = 0; i < files.length; i += BATCH) {
+      const batch = files.slice(i, i + BATCH)
+      const results = await Promise.all(batch.map(uploadOne))
+      results.forEach(url => { if (url) uploaded.push(url) })
+    }
+
     onPhotosChange([...photos, ...uploaded])
     onUploadingChange(false)
+    setProgress(null)
     if (photoInputRef.current) photoInputRef.current.value = ""
   }
 
@@ -206,14 +243,17 @@ export default function SortablePhotoGrid({ photos, uploadingPhoto, onPhotosChan
             <Icon name="ImagePlus" className="h-6 w-6 text-gray-500" />
           )}
           <span className="text-sm text-gray-500">
-            {uploadingPhoto ? "Загрузка..." : "Нажмите, чтобы добавить фото"}
+            {uploadingPhoto
+              ? progress ? `Загрузка ${progress.done} / ${progress.total}...` : "Загрузка..."
+              : "Нажмите, чтобы добавить фото"}
           </span>
           <span className="text-xs text-gray-600">JPG, PNG, WEBP до 10 МБ</span>
         </button>
       )}
       {uploadingPhoto && photos.length > 0 && (
         <p className="text-xs text-blue-400 flex items-center gap-1.5 mt-2">
-          <Icon name="Loader2" className="h-3 w-3 animate-spin" /> Загрузка фото...
+          <Icon name="Loader2" className="h-3 w-3 animate-spin" />
+          {progress ? `Загрузка ${progress.done} / ${progress.total}...` : "Загрузка фото..."}
         </p>
       )}
     </div>
