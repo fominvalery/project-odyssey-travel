@@ -3,6 +3,11 @@ const NUM_KEYS = new Set([
   "rent", "rent_price_sqm", "opex", "roi", "payback",
 ])
 
+const RUB_KEYS = new Set([
+  "start_price", "deposit", "bidding_step",
+  "rent", "rent_price_sqm", "opex",
+])
+
 export function formatNumber(value: string | number): string {
   const n = Number(String(value).replace(/\s/g, "").replace(",", "."))
   if (isNaN(n) || n === 0) return String(value)
@@ -10,7 +15,10 @@ export function formatNumber(value: string | number): string {
 }
 
 export function formatFieldValue(key: string, value: string): string {
-  if (NUM_KEYS.has(key)) return formatNumber(value)
+  if (NUM_KEYS.has(key)) {
+    const formatted = formatNumber(value)
+    return RUB_KEYS.has(key) ? `${formatted} ₽` : formatted
+  }
   return value
 }
 
