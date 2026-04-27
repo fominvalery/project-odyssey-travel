@@ -34,23 +34,30 @@ def handle(event: dict, origin: str = '*') -> dict:
         else:
             return error(403, 'Только участники Клуба', origin)
 
-    where_parts = ["status IN ('broker','agency')"]
+    extra_filters = []
     if city_filter:
-        where_parts.append(f"city ILIKE {escape('%' + city_filter + '%')}")
+        extra_filters.append(f"u.city ILIKE {escape('%' + city_filter + '%')}")
     if spec_filter:
-        where_parts.append(f"{escape(spec_filter)} = ANY(specializations)")
+        extra_filters.append(f"{escape(spec_filter)} = ANY(u.specializations)")
     if exp_filter:
-        where_parts.append(f"experience = {escape(exp_filter)}")
+        extra_filters.append(f"u.experience = {escape(exp_filter)}")
 
-    where_sql = " AND ".join(where_parts)
+    extra_sql = (" AND " + " AND ".join(extra_filters)) if extra_filters else ""
 
     rows = query(f"""
-        SELECT id, name, first_name, last_name, middle_name,
-               company, city, status, avatar_url,
-               specializations, bio, experience
-        FROM {S}users
-        WHERE {where_sql}
-        ORDER BY updated_at DESC NULLS LAST
+        SELECT DISTINCT u.id, u.name, u.first_name, u.last_name, u.middle_name,
+               u.company, u.city, u.status, u.avatar_url,
+               u.specializations, u.bio, u.experience
+        FROM {S}users u
+        WHERE (
+            u.status IN ('broker', 'agency')
+            OR EXISTS (
+                SELECT 1 FROM {S}org_memberships om
+                WHERE om.user_id = u.id AND om.status = 'active'
+            )
+        )
+        {extra_sql}
+        ORDER BY u.updated_at DESC NULLS LAST
         LIMIT 200
     """)
 
