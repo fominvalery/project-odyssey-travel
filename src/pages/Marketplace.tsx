@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { formatPrice } from "@/lib/format"
 import { Header } from "@/components/Header"
 import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
@@ -93,7 +94,7 @@ export default function Marketplace() {
             type: catLabel,
             subtype: ef.subtype ?? "",
             city: String(o.city ?? ""),
-            price: o.price ? `${o.price} ₽` : "—",
+            price: o.price ? `${formatPrice(String(o.price))} ₽` : "—",
             area: o.area ? `${o.area} м²` : "—",
             yield: (o.yield_percent as string) || "—",
             img: photos[0] || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
@@ -124,7 +125,7 @@ export default function Marketplace() {
             type: catLabel,
             subtype: ef.subtype ?? "",
             city: String(o.city ?? ""),
-            price: o.price ? `${o.price} ₽` : "—",
+            price: o.price ? `${formatPrice(String(o.price))} ₽` : "—",
             area: o.area ? `${o.area} м²` : "—",
             yield: (o.yield_percent as string) || "—",
             img: photos[0] || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
