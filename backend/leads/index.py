@@ -87,6 +87,16 @@ def handler(event: dict, context) -> dict:
             dept_id = body.get("department_id") or None
             last_name = (body.get("last_name") or "").strip()
 
+            # Автоподстановка org_id из членства если не передан
+            if not org_id:
+                cur.execute(
+                    f"SELECT organization_id FROM {schema}.org_memberships WHERE user_id=%s AND status='active' LIMIT 1",
+                    (owner_id,),
+                )
+                row_org = cur.fetchone()
+                if row_org:
+                    org_id = str(row_org[0])
+
             # Автоопределение типа: если пришёл с маркетплейса и у него активная подписка клуба
             lead_type = body.get("lead_type") or "Клиент"
             sender_id = body.get("sender_id") or None

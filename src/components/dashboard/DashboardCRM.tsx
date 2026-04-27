@@ -383,6 +383,7 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead, employees,
           </DialogHeader>
           <LeadForm
             ownerId={userId}
+            orgId={orgId}
             onSave={(lead) => {
               setLeads(prev => [lead, ...prev])
               setCreateOpen(false)
