@@ -68,20 +68,40 @@ function resolveStatus(rawStatus: string, rawPlan: string): UserStatus {
 }
 
 const STORAGE_KEY = "estatepro_user"
+const COOKIE_KEY = "estatepro_session"
+const COOKIE_DAYS = 365
+
+function saveCookie(value: string) {
+  const expires = new Date(Date.now() + COOKIE_DAYS * 864e5).toUTCString()
+  document.cookie = `${COOKIE_KEY}=${encodeURIComponent(value)};expires=${expires};path=/;SameSite=Lax`
+}
+
+function readCookie(): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${COOKIE_KEY}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function clearCookie() {
+  document.cookie = `${COOKIE_KEY}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+}
 
 export function useAuth() {
   const [user, setUser] = useState<UserProfile | null>(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_KEY) || readCookie()
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        // Миграция старых профилей: пересчитываем plan из status
         parsed.plan = planFromStatus(parsed.status || "basic")
         setUser(parsed)
+        // Если восстановили из cookie — дублируем в localStorage
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          localStorage.setItem(STORAGE_KEY, stored)
+        }
       } catch {
         localStorage.removeItem(STORAGE_KEY)
+        clearCookie()
       }
     }
   }, [])
@@ -152,7 +172,9 @@ export function useAuth() {
       if (data.refresh_token) {
         localStorage.setItem("estatepro_refresh_token", data.refresh_token)
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+      const profileJson = JSON.stringify(profile)
+      localStorage.setItem(STORAGE_KEY, profileJson)
+      saveCookie(profileJson)
       setUser(profile)
       return { ok: true }
     } catch {
@@ -166,7 +188,9 @@ export function useAuth() {
     if (updates.status !== undefined) {
       merged.plan = planFromStatus(updates.status)
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
+    const mergedJson = JSON.stringify(merged)
+    localStorage.setItem(STORAGE_KEY, mergedJson)
+    saveCookie(mergedJson)
     setUser(merged)
 
     // Сохраняем в БД если есть поля профиля
@@ -241,7 +265,9 @@ export function useAuth() {
         website: userData.website ?? local.website ?? '',
         subscriptionEndAt: userData.subscription_end_at ?? local.subscriptionEndAt ?? null,
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+      const updatedJson = JSON.stringify(updated)
+      localStorage.setItem(STORAGE_KEY, updatedJson)
+      saveCookie(updatedJson)
       setUser(updated)
     } catch {
       // ignore — оставляем локальные данные
@@ -250,6 +276,9 @@ export function useAuth() {
 
   function logout() {
     localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem("estatepro_access_token")
+    localStorage.removeItem("estatepro_refresh_token")
+    clearCookie()
     setUser(null)
   }
 
