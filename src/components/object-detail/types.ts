@@ -64,6 +64,7 @@ export const FIELD_LABELS: Record<string, string> = {
   condition: "Состояние",
   object_condition: "Состояние",
   entrance: "Вход",
+  access: "Доступ",
   parking: "Парковка",
   vat: "НДС",
   object_type: "Тип объекта",
@@ -78,4 +79,9 @@ export const FIELD_LABELS: Record<string, string> = {
   sewage: "Канализация",
   cadastral_number: "Кадастровый номер",
   lot_link: "Ссылка на лот",
+  owner_name: "Собственник",
+  owner_phone: "Телефон собственника",
+  owner_fee: "Комиссия собственника",
+  owner_comment: "Комментарий собственника",
+  tenant: "Арендатор",
 }
