@@ -51,7 +51,8 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
   const [statusModalOpen, setStatusModalOpen] = useState(false)
 
   const effectiveStatus = user.isSuperadmin && previewStatus ? previewStatus : user.status
-  const isBasic = user.isSuperadmin ? previewStatus === "basic" : (!user.status || user.status === "basic")
+  const isAgencyMember = orgs.length > 0
+  const isBasic = user.isSuperadmin ? previewStatus === "basic" : (!user.status || user.status === "basic") && !isAgencyMember
   const navItems = isBasic ? basicNavItems : fullNavItems
 
   return (

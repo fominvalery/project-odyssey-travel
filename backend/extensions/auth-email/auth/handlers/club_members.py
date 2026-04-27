@@ -22,8 +22,17 @@ def handle(event: dict, origin: str = '*') -> dict:
         return error(404, 'Пользователь не найден', origin)
 
     req_status, is_superadmin = row
+
+    # Проверяем членство в агентстве (сотрудники агентства тоже имеют доступ)
+    is_agency_member = False
     if req_status not in ('broker', 'agency') and not is_superadmin:
-        return error(403, 'Только участники Клуба', origin)
+        member_row = query_one(
+            f"SELECT 1 FROM {S}org_memberships WHERE user_id = {escape(requester_id)} AND status = 'active' LIMIT 1"
+        )
+        if member_row:
+            is_agency_member = True
+        else:
+            return error(403, 'Только участники Клуба', origin)
 
     where_parts = ["status IN ('broker','agency')"]
     if city_filter:
