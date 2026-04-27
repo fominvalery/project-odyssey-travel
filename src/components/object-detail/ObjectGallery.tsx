@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import Icon from "@/components/ui/icon"
 import { ObjectDetailData, FIELD_LABELS } from "./types"
+import { formatFieldValue } from "@/lib/format"
 
 interface ObjectGalleryProps {
   obj: ObjectDetailData
@@ -117,7 +118,7 @@ export default function ObjectGallery({ obj, activePhoto, setActivePhoto }: Obje
           {extraKeys.map(k => (
             <div key={k}>
               <p className="text-xs text-gray-500 mb-1">{FIELD_LABELS[k] ?? k}</p>
-              <p className="font-medium">{extra[k]}</p>
+              <p className="font-medium">{formatFieldValue(k, extra[k])}</p>
             </div>
           ))}
           {obj.area === "" && !obj.yield_percent && extraKeys.length === 0 && (

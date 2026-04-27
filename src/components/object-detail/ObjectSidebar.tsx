@@ -4,6 +4,7 @@ import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import { ObjectDetailData } from "./types"
 import { RegisterModal } from "@/components/RegisterModal"
+import { formatPrice } from "@/lib/format"
 
 interface ObjectSidebarProps {
   obj: ObjectDetailData
@@ -49,7 +50,7 @@ export default function ObjectSidebar({
         </div>
       )}
       <p className="text-xs text-gray-500 mb-1">{priceLabel}</p>
-      <p className="text-3xl font-bold mb-6">{obj.price ? `${obj.price}${priceSuffix}` : "По запросу"}</p>
+      <p className="text-3xl font-bold mb-6">{obj.price ? `${formatPrice(obj.price)}${priceSuffix}` : "По запросу"}</p>
 
       {obj.owner && (
         <div className="border-t border-[#1f1f1f] pt-5 mb-5">

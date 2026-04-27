@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import { UUID_RE } from "./marketplaceData"
 import type { MarketObject } from "./marketplaceData"
+import { formatPrice } from "@/lib/format"
 
 interface MarketplaceCardProps {
   obj: MarketObject
@@ -17,7 +18,7 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
   const units = ef?.units ?? ""
   const dealType = ef?.deal_type ?? ""
   const isRent = dealType === "rent"
-  const priceDisplay = isRent && obj.price !== "—" ? `${obj.price}/мес` : obj.price
+  const priceDisplay = isRent && obj.price !== "—" ? `${formatPrice(obj.price)}/мес` : formatPrice(obj.price)
 
   return (
     <div
@@ -112,7 +113,7 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
         {isResort && (
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-base font-bold text-white">{obj.price}</p>
+              <p className="text-base font-bold text-white">{formatPrice(obj.price)}</p>
               <p className="text-xs text-gray-500">{obj.area}</p>
             </div>
             {obj.yield !== "—" && !occupancy && (
