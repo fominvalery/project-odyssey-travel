@@ -142,7 +142,8 @@ export default function AgencyContent({
 
         {section === "crm" && orgId && (
           <DashboardCRM
-            userId={user.id} orgId={orgId}
+            userId={user.id}
+            orgId={isDirector || isRop ? orgId : undefined}
             deptId={isRop ? (myDeptId ?? undefined) : undefined}
             onReassignLead={isDirector ? (lead) => setReassigningLead(lead) : undefined}
             employees={
