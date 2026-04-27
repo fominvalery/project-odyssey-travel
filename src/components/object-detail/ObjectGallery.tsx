@@ -12,7 +12,7 @@ interface ObjectGalleryProps {
 export default function ObjectGallery({ obj, activePhoto, setActivePhoto }: ObjectGalleryProps) {
   const photos = obj.photos?.length ? obj.photos : []
   const extra = obj.extra_fields ?? {}
-  const HIDDEN_KEYS = new Set(["subtype", "deal_type"])
+  const HIDDEN_KEYS = new Set(["subtype", "deal_type", "owner_name", "owner_phone", "owner_fee", "owner_comment"])
   const extraKeys = Object.keys(extra).filter(k => extra[k] && extra[k].toString().trim() && !HIDDEN_KEYS.has(k))
 
   function prev() {
