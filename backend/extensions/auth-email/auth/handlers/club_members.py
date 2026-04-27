@@ -47,7 +47,7 @@ def handle(event: dict, origin: str = '*') -> dict:
     rows = query(f"""
         SELECT DISTINCT u.id, u.name, u.first_name, u.last_name, u.middle_name,
                u.company, u.city, u.status, u.avatar_url,
-               u.specializations, u.bio, u.experience
+               u.specializations, u.bio, u.experience, u.updated_at
         FROM {S}users u
         WHERE (
             u.status IN ('broker', 'agency')
@@ -65,7 +65,7 @@ def handle(event: dict, origin: str = '*') -> dict:
     for r in rows:
         (uid, name, first_name, last_name, middle_name,
          company, city, status, avatar_url,
-         specializations, bio, experience) = r
+         specializations, bio, experience, _updated_at) = r
 
         display_name = ' '.join(filter(None, [last_name, first_name, middle_name])) or name or ''
 
