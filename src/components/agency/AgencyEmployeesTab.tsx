@@ -31,6 +31,7 @@ interface Props {
   onChangeDepartment: (userId: string, deptId: string | null) => void
   onFireEmployee?: (userId: string) => Promise<void>
   onInvite?: () => void
+  loading?: boolean
 }
 
 function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -53,9 +54,21 @@ export default function AgencyEmployeesTab({
   isDirector, isFounder = false, isRop = false,
   currentUserId, myDeptId,
   onChangeRole, onChangeDepartment, onFireEmployee, onInvite,
+  loading,
 }: Props) {
   const [firingEmployee, setFiringEmployee] = useState<Employee | null>(null)
   const [firing, setFiring] = useState(false)
+
+  if (loading) return (
+    <div className="space-y-3 animate-pulse">
+      <div className="flex gap-2 flex-wrap">
+        {[0,1,2,3].map(i => <div key={i} className="h-7 w-20 rounded-full bg-white/10" />)}
+      </div>
+      {[0,1,2,3,4].map(i => (
+        <div key={i} className="h-16 rounded-2xl bg-white/5 border border-white/10" />
+      ))}
+    </div>
+  )
 
   const editableRoles: RoleCode[] = isFounder
     ? [...FOUNDER_ONLY_ROLES, ...BASE_EDITABLE_ROLES]

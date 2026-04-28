@@ -43,6 +43,7 @@ interface Props {
   isFounder: boolean
   employees: Employee[]
   departments: Department[]
+  loadingAgency: boolean
   deptFilter: string
   setDeptFilter: (v: string) => void
   objects: ObjectData[]
@@ -81,7 +82,7 @@ export default function AgencyContent({
   section, setSection,
   user, orgId, org, orgFull, setOrgFull,
   myRole, myDeptId, isRop, isDirector, isFounder,
-  employees, departments, deptFilter, setDeptFilter,
+  employees, departments, loadingAgency, deptFilter, setDeptFilter,
   objects, loadingObjects, editingObject, setEditingObject, setShowWizard, reloadObjects,
   catFilter, setCatFilter, statusFilter, setStatusFilter, objSearch, setObjSearch,
   handleDeleteObject, initials,
@@ -116,7 +117,7 @@ export default function AgencyContent({
         )}
       </div>
 
-      <div className="p-6 md:p-8">
+      <div key={section} className="p-6 md:p-8 animate-in fade-in duration-200">
         {section === "objects" && (
           <DashboardObjects
             objects={objects} loading={loadingObjects}
@@ -216,6 +217,7 @@ export default function AgencyContent({
         {section === "employees" && canSee(roleLevelFn, myRole, "rop") && (
           <AgencyEmployeesTab
             employees={employees} departments={departments}
+            loading={loadingAgency}
             deptFilter={deptFilter} setDeptFilter={setDeptFilter}
             isDirector={isDirector} isFounder={isFounder} isRop={isRop}
             currentUserId={user.id} myDeptId={myDeptId}
@@ -228,6 +230,7 @@ export default function AgencyContent({
         {section === "departments" && canSee(roleLevelFn, myRole, "director") && (
           <AgencyDepartmentsTab
             departments={departments} isDirector={isDirector}
+            loading={loadingAgency}
             onCreate={() => { setEditingDept(null); setDeptModalOpen(true) }}
             onEdit={(d) => { setEditingDept(d); setDeptModalOpen(true) }}
             onDelete={(d) => setDeletingDept(d)}
@@ -242,7 +245,7 @@ export default function AgencyContent({
         )}
 
         {section === "invites" && canSee(roleLevelFn, myRole, "rop") && (
-          <AgencyInvitesTab invites={invites} />
+          <AgencyInvitesTab invites={invites} loading={loadingAgency} />
         )}
 
         {section === "reviews" && orgId && (

@@ -90,6 +90,22 @@ export default function AgencyDealsTab({ userId, orgId, myRole, employees }: Pro
 
   const inputCls = "bg-[#0f0f0f] border-[#262626] text-white placeholder:text-gray-600 text-sm"
 
+  if (loading) return (
+    <div className="space-y-5 max-w-3xl animate-pulse">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[0,1,2,3].map(i => (
+          <div key={i} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-4 h-[72px]" />
+        ))}
+      </div>
+      <div className="flex gap-2">
+        {[0,1,2,3].map(i => <div key={i} className="h-8 w-20 rounded-xl bg-[#1a1a1a]" />)}
+      </div>
+      {[0,1,2,3].map(i => (
+        <div key={i} className="h-16 rounded-2xl bg-[#111] border border-[#1f1f1f]" />
+      ))}
+    </div>
+  )
+
   return (
     <div className="space-y-5 max-w-3xl">
       {/* Сводка */}
@@ -193,9 +209,7 @@ export default function AgencyDealsTab({ userId, orgId, myRole, employees }: Pro
       )}
 
       {/* Список сделок */}
-      {loading ? (
-        <div className="text-center py-12"><Icon name="Loader2" className="h-6 w-6 text-blue-400 animate-spin mx-auto" /></div>
-      ) : deals.length === 0 ? (
+      {deals.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
           <Icon name="FileText" className="h-10 w-10 mx-auto mb-3 opacity-30" />
           <p>Сделок пока нет</p>

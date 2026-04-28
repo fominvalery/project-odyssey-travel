@@ -16,7 +16,14 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function AgencyInvitesTab({ invites }: { invites: InviteRow[] }) {
+export function AgencyInvitesTab({ invites, loading }: { invites: InviteRow[]; loading?: boolean }) {
+  if (loading) return (
+    <Card className="bg-white/5 border-white/10 overflow-hidden animate-pulse">
+      <div className="divide-y divide-white/10">
+        {[0,1,2].map(i => <div key={i} className="h-16 p-4" />)}
+      </div>
+    </Card>
+  )
   return (
     <Card className="bg-white/5 border-white/10 overflow-hidden">
       {invites.length === 0 ? (

@@ -131,7 +131,11 @@ export default function AgencyReviewsTab({ orgId, userId, userName }: Props) {
 
       {/* Список */}
       {loading ? (
-        <div className="text-center py-12"><Icon name="Loader2" className="h-6 w-6 text-amber-400 animate-spin mx-auto" /></div>
+        <div className="space-y-3 animate-pulse">
+          {[0,1,2,3].map(i => (
+            <div key={i} className="h-20 rounded-2xl bg-[#111] border border-[#1f1f1f]" />
+          ))}
+        </div>
       ) : reviews.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
           <Icon name="Star" className="h-10 w-10 mx-auto mb-3 opacity-20" />

@@ -297,6 +297,7 @@ export default function Agency() {
         isFounder={isFounder}
         employees={employees}
         departments={departments}
+        loadingAgency={loading}
         deptFilter={deptFilter}
         setDeptFilter={setDeptFilter}
         objects={objects}

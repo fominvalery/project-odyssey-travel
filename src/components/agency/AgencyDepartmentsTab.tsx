@@ -6,6 +6,7 @@ import { Department } from "@/lib/agencyApi"
 interface Props {
   departments: Department[]
   isDirector: boolean
+  loading?: boolean
   onCreate: () => void
   onEdit: (dept: Department) => void
   onDelete: (dept: Department) => void
@@ -14,10 +15,18 @@ interface Props {
 export default function AgencyDepartmentsTab({
   departments,
   isDirector,
+  loading,
   onCreate,
   onEdit,
   onDelete,
 }: Props) {
+  if (loading) return (
+    <div className="space-y-3 animate-pulse">
+      {[0,1,2].map(i => (
+        <div key={i} className="h-20 rounded-2xl bg-white/5 border border-white/10" />
+      ))}
+    </div>
+  )
   return (
     <Card className="bg-white/5 border-white/10 p-4">
       <div className="flex items-center justify-between mb-3">
