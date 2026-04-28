@@ -75,13 +75,18 @@ export default function InviteModal({
   })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ url: string; autoJoined: boolean } | null>(null)
+  const [errors, setErrors] = useState<{ full_name?: string; email?: string }>({})
 
   const submit = async () => {
     if (!user) return
-    if (!form.full_name.trim() || !/^\S+@\S+\.\S+$/.test(form.email)) {
-      toast({ title: "Проверь ФИО и email", variant: "destructive" })
+    const newErrors: { full_name?: string; email?: string } = {}
+    if (!form.full_name.trim()) newErrors.full_name = "Введите ФИО"
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = "Введите корректный email"
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors)
       return
     }
+    setErrors({})
     setLoading(true)
     try {
       const res = await agencyApi.createInvite(user.id, orgId, {
@@ -120,33 +125,43 @@ export default function InviteModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Пригласить сотрудника</DialogTitle>
         </DialogHeader>
 
         {!result ? (
-          <div className="space-y-3">
+          <>
+          <div className="space-y-3 overflow-y-auto flex-1 pr-1">
             <div>
               <label className="text-sm font-medium mb-1 block">ФИО *</label>
               <Input
                 value={form.full_name}
-                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                onChange={(e) => { setForm({ ...form, full_name: e.target.value }); setErrors(p => ({ ...p, full_name: undefined })) }}
                 placeholder="Иванов Иван"
+                className={errors.full_name ? "border-red-500" : ""}
               />
+              {errors.full_name && <p className="text-xs text-red-500 mt-1">{errors.full_name}</p>}
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Email *</label>
               <Input
                 type="email"
+                inputMode="email"
+                autoComplete="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => { setForm({ ...form, email: e.target.value }); setErrors(p => ({ ...p, email: undefined })) }}
                 placeholder="ivanov@example.com"
+                className={errors.email ? "border-red-500" : ""}
               />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Телефон</label>
               <Input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder="+7 999 000-00-00"
@@ -197,10 +212,11 @@ export default function InviteModal({
                 )}
               </div>
             )}
-            <Button onClick={submit} disabled={loading} className="w-full mt-2">
-              {loading ? "Отправка..." : "Создать приглашение"}
-            </Button>
           </div>
+          <Button onClick={submit} disabled={loading} className="w-full mt-2 shrink-0">
+            {loading ? "Отправка..." : "Создать приглашение"}
+          </Button>
+          </>
         ) : (
           <div className="space-y-3">
             {result.autoJoined ? (
