@@ -233,19 +233,7 @@ export default function Agency() {
     />
   )
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex">
-      {sidebar}
-      <main className="flex-1 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-gray-400">
-          <Icon name="Loader2" className="h-6 w-6 animate-spin" />
-          <span>Загружаем кабинет...</span>
-        </div>
-      </main>
-    </div>
-  )
-
-  if (error || !org) return (
+  if (error && !loading) return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex">
       {sidebar}
       <main className="flex-1 flex items-center justify-center">
@@ -264,7 +252,28 @@ export default function Agency() {
     <div className="min-h-screen bg-[#0a0a0a] text-white flex">
       {sidebar}
 
-      {showWizard && (
+      {loading && (
+        <main className="flex-1 overflow-y-auto">
+          <div className="border-b border-white/10 bg-slate-950/80 backdrop-blur sticky top-0 z-30 h-[52px]" />
+          <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 space-y-6 animate-pulse">
+            <div className="h-9 w-64 bg-white/10 rounded-lg" />
+            <div className="h-4 w-40 bg-white/5 rounded" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[0,1,2,3].map(i => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-5 h-20" />
+              ))}
+            </div>
+            <div className="h-10 w-full bg-white/5 rounded-xl" />
+            <div className="space-y-3">
+              {[0,1,2,3].map(i => (
+                <div key={i} className="h-16 bg-white/5 rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </main>
+      )}
+
+      {!loading && showWizard && (
         <AddObjectWizard
           onClose={() => { setShowWizard(false); setEditingObject(null) }}
           onSave={(obj) => { void obj; reloadObjects(); setShowWizard(false) }}
@@ -273,7 +282,7 @@ export default function Agency() {
         />
       )}
 
-      <AgencyContent
+      {!loading && org && <AgencyContent
         section={section}
         setSection={setSection}
         user={user}
@@ -320,9 +329,9 @@ export default function Agency() {
         setReassigningObject={setReassigningObject}
         setReassigningLead={setReassigningLead}
         roleLevelFn={roleLevel}
-      />
+      />}
 
-      {orgId && (
+      {!loading && orgId && (
         <AgencyModals
           orgId={orgId}
           userId={user.id}
