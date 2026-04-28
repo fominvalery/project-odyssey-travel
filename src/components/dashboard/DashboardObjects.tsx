@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { GlowButton } from "@/components/ui/glow-button"
 import { Input } from "@/components/ui/input"
@@ -53,6 +53,7 @@ export default function DashboardObjects({
 }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showArchive, setShowArchive] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(6)
   const [archiveSearch, setArchiveSearch] = useState("")
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [employeeFilter, setEmployeeFilter] = useState("")
@@ -82,6 +83,11 @@ export default function DashboardObjects({
     const matchDept = !deptEmployeeIds || deptEmployeeIds.has(o.user_id)
     return matchCat && matchSt && matchSearch && matchEmployee && matchDept
   })
+
+  useEffect(() => { setVisibleCount(6) }, [catFilter, statusFilter, objSearch, employeeFilter, deptFilter])
+
+  const visibleFiltered = filtered.slice(0, visibleCount)
+  const hasMore = filtered.length > visibleCount
 
   const filteredArchive = archivedObjects.filter(o => {
     if (!archiveSearch) return true
@@ -408,23 +414,34 @@ export default function DashboardObjects({
             </Button>
           </div>
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map(obj => (
-              <ObjectCard
-                key={obj.id}
-                obj={obj}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onArchive={onArchive}
-                onSaveOwner={onSaveOwner}
-                onReassign={onReassign}
-                employeeName={employees?.find(e => e.user_id === obj.user_id)?.name}
-              />
-            ))}
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {visibleFiltered.map(obj => (
+                <ObjectCard
+                  key={obj.id}
+                  obj={obj}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onArchive={onArchive}
+                  onSaveOwner={onSaveOwner}
+                  onReassign={onReassign}
+                  employeeName={employees?.find(e => e.user_id === obj.user_id)?.name}
+                />
+              ))}
+            </div>
+            {hasMore && (
+              <button
+                onClick={() => setVisibleCount(v => v + 6)}
+                className="w-full py-3 rounded-2xl border border-[#1f1f1f] bg-[#111] text-gray-400 hover:text-white hover:border-blue-500/40 hover:bg-[#141414] transition-all text-sm font-medium"
+              >
+                Показать ещё {Math.min(6, filtered.length - visibleCount)} объектов
+                <span className="ml-2 text-gray-600">из {filtered.length - visibleCount} оставшихся</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {filtered.map(obj => (
+            {visibleFiltered.map(obj => (
               <div key={obj.id} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5 flex items-center justify-between gap-4 hover:border-blue-500/30 transition-colors">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                   <div className="w-11 h-11 rounded-xl bg-blue-900/30 flex items-center justify-center shrink-0 overflow-hidden">
@@ -479,6 +496,15 @@ export default function DashboardObjects({
                 </div>
               </div>
             ))}
+            {hasMore && (
+              <button
+                onClick={() => setVisibleCount(v => v + 6)}
+                className="w-full py-3 rounded-2xl border border-[#1f1f1f] bg-[#111] text-gray-400 hover:text-white hover:border-blue-500/40 hover:bg-[#141414] transition-all text-sm font-medium"
+              >
+                Показать ещё {Math.min(6, filtered.length - visibleCount)} объектов
+                <span className="ml-2 text-gray-600">из {filtered.length - visibleCount} оставшихся</span>
+              </button>
+            )}
           </div>
         )}
       </div>
