@@ -130,9 +130,9 @@ export default function Agency() {
     void reload()
   }, [user, orgId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (silent = false) => {
     if (!user || !orgId) return
-    setLoading(true); setError(null)
+    if (!silent) { setLoading(true); setError(null) }
     try {
       const [o, emp, inv, deps, full] = await Promise.all([
         agencyApi.getOrg(user.id, orgId),
@@ -143,18 +143,18 @@ export default function Agency() {
       ])
       setOrg(o as OrgSummary & { my_role: RoleCode })
       setOrgFull(full); setEmployees(emp); setInvites(inv); setDepartments(deps)
-    } catch (e) { setError(e instanceof Error ? e.message : "Ошибка") }
-    finally { setLoading(false) }
+    } catch (e) { if (!silent) setError(e instanceof Error ? e.message : "Ошибка") }
+    finally { if (!silent) setLoading(false) }
   }, [user, orgId])
 
   async function changeRole(targetUserId: string, role: RoleCode) {
     if (!user || !orgId) return
-    try { await agencyApi.updateEmployee(user.id, orgId, { user_id: targetUserId, role_code: role }); toast({ title: "Роль обновлена" }); reload() }
+    try { await agencyApi.updateEmployee(user.id, orgId, { user_id: targetUserId, role_code: role }); await reload(true); toast({ title: "Роль обновлена" }) }
     catch (e) { toast({ title: "Ошибка", description: (e as Error).message, variant: "destructive" }) }
   }
   async function changeDepartment(targetUserId: string, deptId: string | null) {
     if (!user || !orgId) return
-    try { await agencyApi.updateEmployee(user.id, orgId, { user_id: targetUserId, department_id: deptId }); toast({ title: "Отдел обновлён" }); reload() }
+    try { await agencyApi.updateEmployee(user.id, orgId, { user_id: targetUserId, department_id: deptId }); await reload(true); toast({ title: "Отдел обновлён" }) }
     catch (e) { toast({ title: "Ошибка", description: (e as Error).message, variant: "destructive" }) }
   }
 
