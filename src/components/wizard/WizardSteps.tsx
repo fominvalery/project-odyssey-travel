@@ -64,7 +64,13 @@ export function Step4Landing({ form, setForm, category, categoryFields, photos, 
           address: form.address,
           price: form.price,
           area: form.area,
-          extra_fields: categoryFields,
+          extra_fields: Object.fromEntries(
+            Object.entries(categoryFields).filter(([k]) =>
+              !["owner_name", "owner_phone", "owner_fee", "owner_comment",
+                "presentation_contact_name", "presentation_contact_phone",
+                "presentation_contact_company"].includes(k)
+            )
+          ),
           user_draft: form.description,
         }),
       }).then(r => r.json())

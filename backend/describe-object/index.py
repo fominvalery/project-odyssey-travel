@@ -27,8 +27,19 @@ def handler(event: dict, context) -> dict:
     address = body.get("address", "")
     price = body.get("price", "")
     area = body.get("area", "")
-    extra_fields = body.get("extra_fields", {})
+    PRIVATE_FIELDS = {"owner_name", "owner_phone", "owner_fee", "owner_comment",
+                      "presentation_contact_name", "presentation_contact_phone",
+                      "presentation_contact_company"}
+    extra_fields = {k: v for k, v in body.get("extra_fields", {}).items()
+                    if k not in PRIVATE_FIELDS}
     user_draft = (body.get("user_draft") or "").strip()
+
+    # Удаляем контактные данные из черновика перед отправкой в ИИ
+    import re
+    user_draft = re.sub(r'\+?[\d\s\-\(\)]{7,}', '', user_draft)
+    user_draft = re.sub(r'[\w.\-]+@[\w.\-]+\.\w+', '', user_draft)
+    user_draft = re.sub(r'https?://\S+', '', user_draft)
+    user_draft = user_draft.strip()
 
     # Формируем контекст об объекте
     facts = []
@@ -57,6 +68,7 @@ def handler(event: dict, context) -> dict:
     prompt = f"""Напиши развёрнутое продающее описание объекта недвижимости для маркетплейса.
 Объём: 4 абзаца, каждый 2-3 предложения. Деловой стиль, на русском. Разделяй абзацы пустой строкой.
 Без заголовков, без markdown, без списков.
+СТРОГО ЗАПРЕЩЕНО: упоминать имена людей, номера телефонов, email, ссылки и любые контактные данные.
 
 Структура:
 1) Общая суть и локация
