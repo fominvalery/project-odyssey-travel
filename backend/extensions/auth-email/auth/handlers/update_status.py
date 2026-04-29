@@ -20,13 +20,14 @@ def handle(event: dict, origin: str = '*') -> dict:
     except Exception:
         return error(400, 'Некорректный JSON', origin)
 
-    actor_id = str(body.get('actor_id', '')).strip()
+    # actor_id берём из заголовка — нельзя передать чужой ID
+    actor_id = str((event.get('headers') or {}).get('X-User-Id', '')).strip()
     target_id = str(body.get('user_id', '')).strip() or actor_id
     new_status = str(body.get('status', '')).strip().lower()
     new_level = body.get('referral_level')  # None если не передан
 
     if not actor_id:
-        return error(400, 'actor_id обязателен', origin)
+        return error(403, 'Доступ запрещён', origin)
 
     S = get_schema()
 

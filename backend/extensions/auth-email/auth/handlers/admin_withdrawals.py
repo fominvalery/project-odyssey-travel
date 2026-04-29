@@ -22,10 +22,11 @@ def handle(event: dict, origin: str = '*') -> dict:
     """Список заявок на вывод (GET) или смена статуса (POST) — только супер-админ."""
     method = event.get('httpMethod', 'GET').upper()
     params = event.get('queryStringParameters') or {}
-    actor_id = str(params.get('actor_id', '')).strip()
+    # actor_id берём из заголовка — нельзя передать чужой ID
+    actor_id = str((event.get('headers') or {}).get('X-User-Id', '')).strip()
 
     if not actor_id:
-        return error(400, 'actor_id обязателен', origin)
+        return error(403, 'Доступ запрещён', origin)
 
     S = get_schema()
 

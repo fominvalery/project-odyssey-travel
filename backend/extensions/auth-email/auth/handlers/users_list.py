@@ -38,11 +38,12 @@ def get_referral_level(count: int, override: str | None = None) -> dict:
 def handle(event: dict, origin: str = '*') -> dict:
     """Вернуть список пользователей с уровнями рефералов (только для супер-админа)."""
     params = event.get('queryStringParameters') or {}
-    actor_id = str(params.get('actor_id', '')).strip()
+    # actor_id берём из заголовка — нельзя передать чужой ID
+    actor_id = str((event.get('headers') or {}).get('X-User-Id', '')).strip()
     search = str(params.get('search', '')).strip().lower()
 
     if not actor_id:
-        return error(400, 'actor_id обязателен', origin)
+        return error(403, 'Доступ запрещён', origin)
 
     S = get_schema()
 

@@ -77,8 +77,8 @@ export const superadminApi = {
   async updateLevel(actorId: string, userId: string, referralLevel: string): Promise<void> {
     const res = await fetch(`${AUTH_URL}?action=update-status`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ actor_id: actorId, user_id: userId, referral_level: referralLevel }),
+      headers: { "Content-Type": "application/json", "X-User-Id": actorId },
+      body: JSON.stringify({ user_id: userId, referral_level: referralLevel }),
     })
     const raw = await res.text()
     const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
@@ -88,8 +88,8 @@ export const superadminApi = {
   async updateStatus(actorId: string, status: "basic" | "broker" | "agency", userId?: string): Promise<AdminUserPayload> {
     const res = await fetch(`${AUTH_URL}?action=update-status`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ actor_id: actorId, user_id: userId || actorId, status }),
+      headers: { "Content-Type": "application/json", "X-User-Id": actorId },
+      body: JSON.stringify({ user_id: userId || actorId, status }),
     })
     const raw = await res.text()
     const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
@@ -98,9 +98,11 @@ export const superadminApi = {
   },
 
   async listUsers(actorId: string, search = ""): Promise<AdminUser[]> {
-    const params = new URLSearchParams({ actor_id: actorId })
+    const params = new URLSearchParams()
     if (search) params.set("search", search)
-    const res = await fetch(`${AUTH_URL}?action=users-list&${params.toString()}`)
+    const res = await fetch(`${AUTH_URL}?action=users-list&${params.toString()}`, {
+      headers: { "X-User-Id": actorId },
+    })
     const raw = await res.text()
     const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
     if (!res.ok) throw new Error(data?.error || "Ошибка загрузки")
@@ -108,9 +110,11 @@ export const superadminApi = {
   },
 
   async listWithdrawals(actorId: string, statusFilter = ""): Promise<AdminWithdrawalsResponse> {
-    const params = new URLSearchParams({ actor_id: actorId })
+    const params = new URLSearchParams()
     if (statusFilter) params.set("status", statusFilter)
-    const res = await fetch(`${AUTH_URL}?action=admin-withdrawals&${params.toString()}`)
+    const res = await fetch(`${AUTH_URL}?action=admin-withdrawals&${params.toString()}`, {
+      headers: { "X-User-Id": actorId },
+    })
     const raw = await res.text()
     const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
     if (!res.ok) throw new Error(data?.error || "Ошибка загрузки")
@@ -118,9 +122,9 @@ export const superadminApi = {
   },
 
   async updateWithdrawalStatus(actorId: string, requestId: number, status: string): Promise<void> {
-    const res = await fetch(`${AUTH_URL}?action=admin-withdrawals&actor_id=${encodeURIComponent(actorId)}`, {
+    const res = await fetch(`${AUTH_URL}?action=admin-withdrawals`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-User-Id": actorId },
       body: JSON.stringify({ request_id: requestId, status }),
     })
     const raw = await res.text()
