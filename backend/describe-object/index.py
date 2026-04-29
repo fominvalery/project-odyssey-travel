@@ -27,7 +27,11 @@ def handler(event: dict, context) -> dict:
     address = body.get("address", "")
     price = body.get("price", "")
     area = body.get("area", "")
-    extra_fields = body.get("extra_fields", {})
+    PRIVATE_FIELDS = {"owner_name", "owner_phone", "owner_fee", "owner_comment",
+                      "presentation_contact_name", "presentation_contact_phone",
+                      "presentation_contact_company"}
+    extra_fields = {k: v for k, v in body.get("extra_fields", {}).items()
+                    if k not in PRIVATE_FIELDS}
     user_draft = (body.get("user_draft") or "").strip()
 
     # Формируем контекст об объекте
