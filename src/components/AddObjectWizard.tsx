@@ -214,7 +214,6 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             setForm={setForm}
             category={category}
             categoryFields={categoryFields}
-            dealType={dealType}
             photos={photos}
             uploadingPhoto={uploadingPhoto}
             onPhotosChange={setPhotos}

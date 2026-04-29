@@ -40,14 +40,13 @@ interface Step4LandingProps {
   setForm: (f: WizardForm) => void
   category: string
   categoryFields: Record<string, string>
-  dealType?: string
   photos: string[]
   uploadingPhoto: boolean
   onPhotosChange: (photos: string[]) => void
   onUploadingChange: (v: boolean) => void
 }
 
-export function Step4Landing({ form, setForm, category, categoryFields, dealType, photos, uploadingPhoto, onPhotosChange, onUploadingChange }: Step4LandingProps) {
+export function Step4Landing({ form, setForm, category, categoryFields, photos, uploadingPhoto, onPhotosChange, onUploadingChange }: Step4LandingProps) {
   const [generating, setGenerating] = useState(false)
   const [aiError, setAiError] = useState("")
 
@@ -60,19 +59,12 @@ export function Step4Landing({ form, setForm, category, categoryFields, dealType
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category,
-          deal_type: dealType ?? "",
           title: form.title,
           city: form.city,
           address: form.address,
           price: form.price,
           area: form.area,
-          extra_fields: Object.fromEntries(
-            Object.entries(categoryFields).filter(([k]) =>
-              !["owner_name", "owner_phone", "owner_fee", "owner_comment",
-                "presentation_contact_name", "presentation_contact_phone",
-                "presentation_contact_company"].includes(k)
-            )
-          ),
+          extra_fields: categoryFields,
           user_draft: form.description,
         }),
       }).then(r => r.json())
