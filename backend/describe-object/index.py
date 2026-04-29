@@ -127,6 +127,7 @@ def handler(event: dict, context) -> dict:
         reply = build_fallback_text(
             category=category, title=title, city=city, address=address,
             price=price, area=area, extra_fields=extra_fields, user_draft=user_draft,
+            deal_type=deal_type,
         )
 
     return {
@@ -136,56 +137,76 @@ def handler(event: dict, context) -> dict:
     }
 
 
-def build_fallback_text(category, title, city, address, price, area, extra_fields, user_draft):
+def build_fallback_text(category, title, city, address, price, area, extra_fields, user_draft, deal_type="продажа"):
     """Собирает развёрнутое описание из данных объекта без использования ИИ."""
+    is_rent = deal_type == "аренда"
     loc_parts = [p for p in [city, address] if p]
     loc = ", ".join(loc_parts) if loc_parts else "востребованной локации"
+    subtype = extra_fields.get("subtype", "")
+    obj_label = subtype or category or "объект"
 
-    p1_parts = []
-    if title:
-        p1_parts.append(f"{title} — объект категории «{category or 'коммерческая недвижимость'}», расположенный в {loc}.")
+    # Абзац 1 — суть и локация
+    if is_rent:
+        intro = f"Предлагается в аренду {obj_label.lower()} площадью {area} м²" if area else f"Предлагается в аренду {obj_label.lower()}"
     else:
-        p1_parts.append(f"Представляем объект категории «{category or 'коммерческая недвижимость'}» в {loc}.")
-    p1_parts.append("Удачное расположение обеспечивает стабильный трафик и доступ к основным транспортным узлам.")
-    p1 = " ".join(p1_parts)
+        intro = f"Продаётся {obj_label.lower()} площадью {area} м²" if area else f"Продаётся {obj_label.lower()}"
+    if loc_parts:
+        p1 = f"{intro}, расположенный по адресу {loc}. Объект находится в развитом районе с удобной транспортной доступностью."
+    else:
+        p1 = f"{intro}. Объект расположен в развитом районе с удобной транспортной доступностью."
 
+    # Абзац 2 — характеристики
     p2_parts = []
-    if area:
-        p2_parts.append(f"Общая площадь объекта составляет {area} м².")
     floor = extra_fields.get("floor")
     ceiling = extra_fields.get("ceiling")
+    condition = extra_fields.get("condition")
+    cls = extra_fields.get("class")
     if floor:
-        p2_parts.append(f"Расположен на {floor} этаже.")
+        p2_parts.append(f"Помещение расположено на {floor} этаже.")
     if ceiling:
         p2_parts.append(f"Высота потолков — {ceiling} м.")
-    subtype = extra_fields.get("subtype") or extra_fields.get("class")
-    if subtype:
-        p2_parts.append(f"Тип помещения: {subtype}.")
+    if cls:
+        p2_parts.append(f"Класс здания: {cls}.")
+    if condition:
+        p2_parts.append(f"Состояние: {condition}.")
     if not p2_parts:
-        p2_parts.append("Помещение имеет функциональную планировку и подходит под различные задачи бизнеса.")
+        p2_parts.append("Помещение имеет функциональную планировку, готово к использованию.")
     p2 = " ".join(p2_parts)
 
+    # Абзац 3 — преимущества под тип сделки
     p3_parts = []
-    yield_val = extra_fields.get("yield")
-    rent = extra_fields.get("rent")
-    roi = extra_fields.get("roi")
-    if rent:
-        p3_parts.append(f"Арендный доход составляет {rent} ₽ в месяц.")
-    if yield_val:
-        p3_parts.append(f"Доходность объекта — {yield_val}% годовых.")
-    if roi:
-        p3_parts.append(f"ROI на уровне {roi}%.")
-    if not p3_parts:
-        p3_parts.append("Объект обладает высоким коммерческим потенциалом и подходит как для собственного использования, так и для сдачи в аренду.")
-    p3_parts.append("Такое сочетание факторов делает его интересным инвестиционным активом.")
+    if is_rent:
+        deposit = extra_fields.get("deposit")
+        lease_term = extra_fields.get("lease_term")
+        if deposit:
+            p3_parts.append(f"Депозит — {deposit}.")
+        if lease_term:
+            p3_parts.append(f"Минимальный срок аренды: {lease_term}.")
+        if not p3_parts:
+            p3_parts.append("Объект подходит для размещения бизнеса любого формата — планировка легко адаптируется под задачи арендатора.")
+        p3_parts.append("Инфраструктура здания обеспечивает комфортные условия работы.")
+    else:
+        yield_val = extra_fields.get("yield")
+        roi = extra_fields.get("roi")
+        if yield_val:
+            p3_parts.append(f"Доходность объекта — {yield_val}% годовых.")
+        if roi:
+            p3_parts.append(f"ROI: {roi}%.")
+        if not p3_parts:
+            p3_parts.append("Объект подходит как для собственного бизнеса, так и для сдачи в аренду с первого дня.")
+        p3_parts.append("Ликвидная локация обеспечивает стабильный спрос.")
     p3 = " ".join(p3_parts)
 
+    # Абзац 4 — условия и CTA
     p4_parts = []
-    if price:
-        p4_parts.append(f"Цена объекта — {price} ₽.")
-    p4_parts.append("Готовы обсудить условия сделки, показать объект и предоставить полный пакет документов.")
-    p4_parts.append("Свяжитесь с нами для получения подробной информации и организации просмотра.")
+    if is_rent:
+        if price:
+            p4_parts.append(f"Арендная ставка — {price} ₽ в месяц.")
+        p4_parts.append("Готовы организовать показ и предоставить полный пакет документов по объекту.")
+    else:
+        if price:
+            p4_parts.append(f"Цена — {price} ₽.")
+        p4_parts.append("Возможно рассмотрение альтернативных условий сделки. Готовы к переговорам и организации просмотра.")
     p4 = " ".join(p4_parts)
 
-    result = "\n\n".join([p1, p2, p3, p4])
-    return result
+    return "\n\n".join([p1, p2, p3, p4])
