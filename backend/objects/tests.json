@@ -19,6 +19,19 @@
       "expectedStatus": 200
     },
     {
+      "name": "GET by user_id without X-User-Id header returns 403",
+      "method": "GET",
+      "path": "/?user_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 403
+    },
+    {
+      "name": "GET by user_id with wrong X-User-Id returns 403",
+      "method": "GET",
+      "path": "/?user_id=00000000-0000-0000-0000-000000000001",
+      "headers": { "X-User-Id": "00000000-0000-0000-0000-000000000002" },
+      "expectedStatus": 403
+    },
+    {
       "name": "DELETE without params",
       "method": "DELETE",
       "path": "/",
