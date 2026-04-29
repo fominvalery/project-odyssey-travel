@@ -115,7 +115,7 @@ def handler(event: dict, context) -> dict:
                 "temperature": 0.7,
             },
             headers=headers_ai,
-            timeout=25,
+            timeout=40,
         )
         data = r.json()
         reply = (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()
@@ -179,9 +179,9 @@ def build_fallback_text(category, title, city, address, price, area, extra_field
         deposit = extra_fields.get("deposit")
         lease_term = extra_fields.get("lease_term")
         if deposit:
-            p3_parts.append(f"Депозит — {deposit}.")
+            p3_parts.append(f"Депозит — {deposit} мес.")
         if lease_term:
-            p3_parts.append(f"Минимальный срок аренды: {lease_term}.")
+            p3_parts.append(f"Минимальный срок аренды: {lease_term} мес.")
         if not p3_parts:
             p3_parts.append("Объект подходит для размещения бизнеса любого формата — планировка легко адаптируется под задачи арендатора.")
         p3_parts.append("Инфраструктура здания обеспечивает комфортные условия работы.")
