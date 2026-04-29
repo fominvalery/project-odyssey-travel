@@ -65,11 +65,14 @@ def handler(event: dict, context) -> dict:
     if user_draft_clean:
         user_block = f"\n\nЧерновик/тезисы от пользователя (встрой их органично в текст, не выноси отдельным блоком):\n{user_draft_clean}"
 
-    # Определяем тип сделки и вид недвижимости для адаптации текста
-    deal_type = "аренда" if any(w in title.lower() + category.lower() for w in ["аренд", "снять", "сдать", "сдаём", "сдаем"]) else "продажа"
-    for k, v in extra_fields.items():
-        if isinstance(v, str) and any(w in v.lower() for w in ["аренд", "снять", "сдать"]):
-            deal_type = "аренда"
+    # Определяем тип сделки — сначала из явного поля, потом fallback по тексту
+    deal_type_raw = (body.get("deal_type") or "").lower().strip()
+    if "аренд" in deal_type_raw or deal_type_raw in ("rent", "аренда"):
+        deal_type = "аренда"
+    elif deal_type_raw in ("sale", "продажа", "продаж"):
+        deal_type = "продажа"
+    else:
+        deal_type = "аренда" if any(w in title.lower() + category.lower() for w in ["аренд", "снять", "сдать", "сдаём", "сдаем"]) else "продажа"
     deal_hint = "аренды" if deal_type == "аренда" else "покупки"
     deal_cta = "арендовать" if deal_type == "аренда" else "приобрести"
     deal_investor = "стабильный арендный доход" if deal_type == "аренда" else "выгодное вложение капитала"
