@@ -59,6 +59,11 @@ def handle(event: dict, origin: str = '*') -> dict:
     if not user_id:
         return error(400, 'user_id обязателен', origin)
 
+    # Проверяем что запрос делает сам владелец данных
+    caller_id = str((event.get('headers') or {}).get('X-User-Id', '')).strip()
+    if not caller_id or caller_id != user_id:
+        return error(403, 'Доступ запрещён', origin)
+
     S = get_schema()
 
     user = query_one(f"""
