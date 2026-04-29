@@ -1,9 +1,28 @@
 {
   "tests": [
     {
-      "name": "Forbidden without token",
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET без токена — ошибка 403",
       "method": "GET",
       "path": "/",
+      "expectedStatus": 403
+    },
+    {
+      "name": "GET с неверным токеном — ошибка 403",
+      "method": "GET",
+      "path": "/",
+      "headers": {"X-Admin-Token": "wrong-token-xyz"},
+      "expectedStatus": 403
+    },
+    {
+      "name": "DELETE без токена — ошибка 403",
+      "method": "DELETE",
+      "path": "/?id=00000000-0000-0000-0000-000000000001",
       "expectedStatus": 403
     }
   ]

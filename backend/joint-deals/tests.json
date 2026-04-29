@@ -7,14 +7,34 @@
       "expectedStatus": 200
     },
     {
-      "name": "GET без user_id — ожидаем 400",
+      "name": "GET без user_id — ошибка 400",
       "method": "GET",
       "path": "/",
       "expectedStatus": 400
     },
     {
-      "name": "POST без обязательных полей — ожидаем 400",
+      "name": "GET список СЗ пользователя — успех",
+      "method": "GET",
+      "path": "/?user_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST без обязательных полей — ошибка 400",
       "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "PUT без обязательных полей — ошибка 400",
+      "method": "PUT",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "PATCH без обязательных полей — ошибка 400",
+      "method": "PATCH",
       "path": "/",
       "body": {},
       "expectedStatus": 400

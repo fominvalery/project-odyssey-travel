@@ -7,22 +7,67 @@
       "expectedStatus": 200
     },
     {
-      "name": "GET comments without params",
+      "name": "GET comments без lead_id — ошибка 400",
       "method": "GET",
       "path": "/?kind=comments",
       "expectedStatus": 400
     },
     {
-      "name": "POST comment without body",
+      "name": "GET comments с lead_id и owner_id — успех",
+      "method": "GET",
+      "path": "/?kind=comments&lead_id=00000000-0000-0000-0000-000000000001&owner_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 200,
+      "expectedBody": {"comments": []},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET tasks с lead_id и owner_id — успех",
+      "method": "GET",
+      "path": "/?kind=tasks&lead_id=00000000-0000-0000-0000-000000000001&owner_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 200,
+      "expectedBody": {"tasks": []},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET files с lead_id и owner_id — успех",
+      "method": "GET",
+      "path": "/?kind=files&lead_id=00000000-0000-0000-0000-000000000001&owner_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 200,
+      "expectedBody": {"files": []},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET overdue — успех",
+      "method": "GET",
+      "path": "/?kind=overdue&owner_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 200,
+      "expectedBody": {"overdue_lead_ids": []},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST comment без body — ошибка 400",
       "method": "POST",
       "path": "/?kind=comments",
       "body": {},
       "expectedStatus": 400
     },
     {
-      "name": "Unknown kind",
+      "name": "POST task без body — ошибка 400",
+      "method": "POST",
+      "path": "/?kind=tasks",
+      "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Unknown kind — ошибка 400",
       "method": "GET",
       "path": "/?kind=unknown",
+      "expectedStatus": 400
+    },
+    {
+      "name": "DELETE без params — ошибка 400",
+      "method": "DELETE",
+      "path": "/?kind=comments",
       "expectedStatus": 400
     }
   ]

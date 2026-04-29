@@ -1,29 +1,86 @@
 {
   "tests": [
     {
-      "name": "Health check",
+      "name": "Health check — успех",
       "method": "GET",
       "path": "/?action=health",
-      "expectedStatus": 200
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
     },
     {
-      "name": "Unknown action",
+      "name": "Unknown action — ошибка 404",
       "method": "POST",
       "path": "/?action=unknown",
       "expectedStatus": 404
     },
     {
-      "name": "Update status without actor",
+      "name": "Login без email — ошибка 400",
+      "method": "POST",
+      "path": "/?action=login",
+      "body": {"password": "somepass"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login с неверными данными — ошибка 401",
+      "method": "POST",
+      "path": "/?action=login",
+      "body": {"email": "notexist_xyz@example.com", "password": "wrongpass"},
+      "expectedStatus": 401,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Register без обязательных полей — ошибка 400",
+      "method": "POST",
+      "path": "/?action=register",
+      "body": {"email": "test@example.com"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Refresh без токена — ошибка 400",
+      "method": "POST",
+      "path": "/?action=refresh",
+      "body": {},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Update status без X-User-Id — ошибка 403",
       "method": "POST",
       "path": "/?action=update-status",
       "body": {"status": "broker"},
-      "expectedStatus": 400
+      "expectedStatus": 403,
+      "bodyMatcher": "partial"
     },
     {
-      "name": "Users list without actor",
+      "name": "Users list без X-User-Id — ошибка 403",
       "method": "GET",
       "path": "/?action=users-list",
-      "expectedStatus": 400
+      "expectedStatus": 403,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Me без user_id — ошибка 400",
+      "method": "GET",
+      "path": "/?action=me",
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Referral stats без user_id — ошибка 400",
+      "method": "GET",
+      "path": "/?action=referral-stats",
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Referral stats с чужим user_id — ошибка 403",
+      "method": "GET",
+      "path": "/?action=referral-stats&user_id=00000000-0000-0000-0000-000000000001",
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000002"},
+      "expectedStatus": 403,
+      "bodyMatcher": "partial"
     }
   ]
 }

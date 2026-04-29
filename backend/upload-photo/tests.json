@@ -7,10 +7,18 @@
       "expectedStatus": 200
     },
     {
-      "name": "Missing image returns 400",
+      "name": "POST без image — ошибка 400",
       "method": "POST",
       "path": "/",
       "body": {},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST с невалидным base64 — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"image": "not-valid-base64!!!"},
       "expectedStatus": 400,
       "bodyMatcher": "partial"
     }

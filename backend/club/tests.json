@@ -1,10 +1,32 @@
 {
   "tests": [
     {
-      "name": "Club list - missing user_id",
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET без user_id — ошибка 400",
       "method": "GET",
       "path": "/",
       "expectedStatus": 400
+    },
+    {
+      "name": "GET список участников клуба — успех",
+      "method": "GET",
+      "path": "/?user_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 200,
+      "expectedBody": {"members": []},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET с фильтром по городу",
+      "method": "GET",
+      "path": "/?user_id=00000000-0000-0000-0000-000000000001&city=Москва",
+      "expectedStatus": 200,
+      "expectedBody": {"members": []},
+      "bodyMatcher": "partial"
     }
   ]
 }

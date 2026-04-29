@@ -1,16 +1,36 @@
 {
   "tests": [
     {
-      "name": "GET без параметров — ошибка",
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET без параметров — ошибка 400",
       "method": "GET",
       "path": "/",
       "expectedStatus": 400
     },
     {
-      "name": "OPTIONS CORS preflight",
-      "method": "OPTIONS",
-      "path": "/",
+      "name": "GET сообщения чата — успех",
+      "method": "GET",
+      "path": "/?object_id=00000000-0000-0000-0000-000000000001&session_id=test-session-123",
       "expectedStatus": 200
+    },
+    {
+      "name": "POST без body — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "POST без object_id — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"session_id": "test", "text": "Привет"},
+      "expectedStatus": 400
     }
   ]
 }

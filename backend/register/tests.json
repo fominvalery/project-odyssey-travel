@@ -7,10 +7,26 @@
       "expectedStatus": 200
     },
     {
-      "name": "Missing password returns 400",
+      "name": "POST без пароля — ошибка 400",
       "method": "POST",
       "path": "/",
       "body": {"name": "Test User", "email": "test@example.com", "phone": "+70000000000"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST без email — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"name": "Test User", "password": "secret123"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST без имени — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"email": "newuser@example.com", "password": "secret123"},
       "expectedStatus": 400,
       "bodyMatcher": "partial"
     }

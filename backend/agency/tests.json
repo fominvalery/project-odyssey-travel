@@ -7,7 +7,7 @@
       "expectedStatus": 200
     },
     {
-      "name": "Unauthorized without X-User-Id",
+      "name": "GET без X-User-Id — ошибка 401",
       "method": "GET",
       "path": "/?action=list_my_orgs",
       "expectedStatus": 401,
@@ -15,19 +15,43 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "Unknown action returns 400",
+      "name": "GET список организаций — успех",
+      "method": "GET",
+      "path": "/?action=list_my_orgs",
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001"},
+      "expectedStatus": 200,
+      "expectedBody": {"orgs": []},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Unknown action — ошибка 400",
       "method": "GET",
       "path": "/?action=unknown_xyz",
-      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000000"},
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001"},
       "expectedStatus": 400
     },
     {
-      "name": "fire_employee without user_id returns 400",
+      "name": "fire_employee без user_id — ошибка 400",
       "method": "POST",
       "path": "/?action=fire_employee",
-      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000000", "X-Org-Id": "00000000-0000-0000-0000-000000000000"},
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001", "X-Org-Id": "00000000-0000-0000-0000-000000000001"},
       "body": {},
       "expectedStatus": 400
+    },
+    {
+      "name": "invite_employee без email — ошибка 400",
+      "method": "POST",
+      "path": "/?action=invite_employee",
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001", "X-Org-Id": "00000000-0000-0000-0000-000000000001"},
+      "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "GET данные несуществующей организации — ошибка 404",
+      "method": "GET",
+      "path": "/?action=get_org&org_id=00000000-0000-0000-0000-000000000099",
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001"},
+      "expectedStatus": 404
     }
   ]
 }
