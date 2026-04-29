@@ -20,7 +20,7 @@ def make_headers(origin: str = '*', set_cookie: Optional[str] = None) -> dict:
     headers = {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id',
         'Access-Control-Allow-Credentials': 'true',
         'Content-Type': 'application/json'
     }
