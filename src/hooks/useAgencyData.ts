@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import func2url from "../../backend/func2url.json"
 import type { ObjectData } from "@/components/AddObjectWizard"
 
-// Маппинг объекта с сервера — такой же как в Dashboard.tsx
 function mapFromServer(o: Record<string, unknown>): ObjectData {
   const ef = (o.extra_fields as Record<string, string>) ?? {}
   return {
@@ -30,31 +29,33 @@ function mapFromServer(o: Record<string, unknown>): ObjectData {
 interface UseAgencyDataOptions {
   userId: string
   orgId: string
-  /** Для РОП — фильтровать по отделу */
   deptId?: string | null
-  /** Роль пользователя — определяет область видимости */
   role?: string | null
-  /** Список сотрудников для загрузки объектов по owner_id */
   employees?: Array<{ user_id: string }>
 }
 
 export function useAgencyObjects({ userId, orgId, deptId, role, employees }: UseAgencyDataOptions) {
   const [objects, setObjects] = useState<ObjectData[]>([])
   const [loading, setLoading] = useState(true)
+  const isFirstLoad = useRef(true)
 
-  const load = useCallback(async () => {
+  // Стабилизируем employees через ключ — новый массив с теми же id не вызовет перезапуск
+  const employeesKey = employees ? employees.map(e => e.user_id).sort().join(",") : ""
+  const employeesRef = useRef(employees)
+  employeesRef.current = employees
+
+  const load = useCallback(async (silent = false) => {
     if (!userId || !orgId) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
+      const emps = employeesRef.current
       if (role === "broker") {
-        // Обычный сотрудник — только свои объекты
         const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`)
         const data = await r.json()
         setObjects(Array.isArray(data.objects) ? data.objects.map(mapFromServer) : [])
-      } else if (employees && employees.length > 0) {
-        // Директор/РОП — загружаем параллельно по owner_id каждого сотрудника
+      } else if (emps && emps.length > 0) {
         const results = await Promise.all(
-          employees.map(e =>
+          emps.map(e =>
             fetch(`${func2url.objects}?user_id=${encodeURIComponent(e.user_id)}`)
               .then(r => r.json())
               .then(d => Array.isArray(d.objects) ? d.objects.map(mapFromServer) : [])
@@ -65,7 +66,6 @@ export function useAgencyObjects({ userId, orgId, deptId, role, employees }: Use
         const unique = Array.from(new Map(allObjects.map(o => [o.id, o])).values())
         setObjects(unique)
       } else {
-        // Fallback — свои объекты
         const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`)
         const data = await r.json()
         setObjects(Array.isArray(data.objects) ? data.objects.map(mapFromServer) : [])
@@ -75,9 +75,15 @@ export function useAgencyObjects({ userId, orgId, deptId, role, employees }: Use
     } finally {
       setLoading(false)
     }
-  }, [userId, orgId, deptId, role, employees])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, orgId, deptId, role, employeesKey])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    // Первая загрузка — показываем loading, повторные (при смене роли/отдела) — тихо
+    const silent = !isFirstLoad.current
+    isFirstLoad.current = false
+    load(silent)
+  }, [load])
 
-  return { objects, loading, reload: load }
+  return { objects, loading, reload: (s?: boolean) => load(s) }
 }
