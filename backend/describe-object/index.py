@@ -65,11 +65,17 @@ def handler(event: dict, context) -> dict:
     if user_draft:
         user_block = f"\n\nДополнительная информация от пользователя:\n{user_draft}"
 
+    # Определяем точный тип объекта для ограничения ИИ
+    subtype = extra_fields.get("subtype", "")
+    obj_type_label = subtype or category or "помещение"
+
     prompt = f"""Напиши развёрнутое продающее описание объекта недвижимости для маркетплейса.
 Объём: 4 абзаца, каждый 2-3 предложения. Деловой стиль, на русском. Разделяй абзацы пустой строкой.
 Без заголовков, без markdown, без списков.
+
+ТИП ОБЪЕКТА: «{obj_type_label}» — используй только это слово для обозначения объекта. Не заменяй его другими словами.
+СТРОГО ЗАПРЕЩЕНО: называть объект «квартира», «апартаменты», «комната», «жильё» или любым другим типом кроме указанного выше.
 СТРОГО ЗАПРЕЩЕНО: упоминать имена людей, номера телефонов, email, ссылки и любые контактные данные.
-СТРОГО ЗАПРЕЩЕНО: называть объект типом который не указан в данных (не пиши "квартира", "апартаменты" и т.п. если в данных указан офис или другой тип).
 
 Структура:
 1) Общая суть и локация
@@ -91,16 +97,25 @@ def handler(event: dict, context) -> dict:
         r = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             json={
-                "model": "google/gemini-2.0-flash-exp:free",
+                "model": "openrouter/free",
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 900,
-                "temperature": 0.7,
+                "max_tokens": 700,
+                "temperature": 0.5,
             },
             headers=headers_ai,
             timeout=22,
         )
         data = r.json()
         reply = (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()
+
+        # Постобработка: заменяем слова-галлюцинации на правильный тип объекта
+        if reply and obj_type_label:
+            import re
+            wrong_types = ["квартира", "квартиры", "квартире", "квартиру", "квартирой",
+                           "апартаменты", "апартаментов", "апартаментах",
+                           "комната", "комнаты", "комнате", "жильё", "жилье"]
+            for wrong in wrong_types:
+                reply = re.sub(rf'\b{wrong}\b', obj_type_label.lower(), reply, flags=re.IGNORECASE)
     except Exception:
         pass
 
