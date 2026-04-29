@@ -185,6 +185,4 @@ def build_fallback_text(category, title, city, address, price, area, extra_field
     p4 = " ".join(p4_parts)
 
     result = "\n\n".join([p1, p2, p3, p4])
-    if user_draft:
-        result = f"{user_draft}\n\n{result}"
     return result
