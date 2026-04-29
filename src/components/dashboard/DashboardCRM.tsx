@@ -99,9 +99,9 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead, employees,
         if (filterEmployee) {
           targetEmployees = employees.filter(e => e.user_id === filterEmployee)
         } else if (filterDept) {
-          targetEmployees = employees.filter(e => e.department_id === filterDept)
+          targetEmployees = employees.filter(e => e.department_id === filterDept || e.user_id === userId)
         } else if (deptId) {
-          targetEmployees = employees.filter(e => e.department_id === deptId)
+          targetEmployees = employees.filter(e => e.department_id === deptId || e.user_id === userId)
         }
 
         // Загружаем лиды параллельно для каждого сотрудника
