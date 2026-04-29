@@ -106,7 +106,16 @@ def handler(event: dict, context) -> dict:
                 }
                 return resp(200, {"object": obj})
 
+            caller_id = (event.get("headers") or {}).get("X-User-Id", "")
+
             if org_id:
+                # Проверяем что caller_id является членом этой организации
+                cur.execute(
+                    f"SELECT 1 FROM {schema}.org_memberships WHERE user_id=%s AND organization_id=%s AND status='active' LIMIT 1",
+                    (caller_id, org_id),
+                )
+                if not cur.fetchone():
+                    return resp(403, {"error": "forbidden"})
                 if dept_id:
                     cur.execute(
                         "SELECT " + SELECT_COLS + " FROM " + schema + ".objects"
@@ -125,6 +134,9 @@ def handler(event: dict, context) -> dict:
             archive = params.get("archive")
 
             if user_id:
+                # Пользователь может запрашивать только свои объекты
+                if not caller_id or str(caller_id) != str(user_id):
+                    return resp(403, {"error": "forbidden"})
                 cur.execute(
                     "SELECT " + SELECT_COLS + " FROM " + schema + ".objects"
                     " WHERE user_id = %s ORDER BY created_at DESC",

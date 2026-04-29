@@ -136,8 +136,17 @@ def handler(event: dict, context) -> dict:
             owner_id = params.get("owner_id")
             org_id = params.get("org_id")
             dept_id = params.get("department_id")
+            # Текущий пользователь из заголовка (обязателен для доступа к чужим данным)
+            caller_id = (event.get("headers") or {}).get("X-User-Id", "")
 
             if org_id:
+                # Проверяем что caller_id является членом этой организации
+                cur.execute(
+                    f"SELECT 1 FROM {schema}.org_memberships WHERE user_id=%s AND organization_id=%s AND status='active' LIMIT 1",
+                    (caller_id, org_id),
+                )
+                if not cur.fetchone():
+                    return resp(403, {"error": "forbidden"})
                 if dept_id:
                     cur.execute(
                         "SELECT " + SELECT_COLS + " FROM " + schema + ".leads"
@@ -155,6 +164,10 @@ def handler(event: dict, context) -> dict:
 
             if not owner_id:
                 return resp(400, {"error": "owner_id or org_id required"})
+
+            # Пользователь может запрашивать только свои лиды
+            if not caller_id or str(caller_id) != str(owner_id):
+                return resp(403, {"error": "forbidden"})
 
             cur.execute(
                 "SELECT " + SELECT_COLS + " FROM " + schema + ".leads"

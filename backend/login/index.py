@@ -42,7 +42,8 @@ def handler(event, context) -> dict:
     cur = conn.cursor()
 
     cur.execute(
-        f"SELECT id, name, email, phone, company, plan, status, avatar_url, password_hash FROM {schema}.users WHERE email = '{email}'"
+        f"SELECT id, name, email, phone, company, plan, status, avatar_url, password_hash FROM {schema}.users WHERE email = %s",
+        (email,)
     )
     row = cur.fetchone()
     cur.close()

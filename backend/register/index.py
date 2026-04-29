@@ -50,7 +50,7 @@ def handler(event, context) -> dict:
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
 
-    cur.execute(f"SELECT id FROM {schema}.users WHERE email = '{email}'")
+    cur.execute(f"SELECT id FROM {schema}.users WHERE email = %s", (email,))
     existing = cur.fetchone()
     if existing:
         cur.close()
