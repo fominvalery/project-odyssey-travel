@@ -133,7 +133,7 @@ export default function AgencyContent({
             userId={user.id} isBasic={false}
             onReassign={isDirector ? (obj) => setReassigningObject(obj) : undefined}
             employees={(isDirector || isRop)
-              ? (isRop ? employees.filter(e => e.department_id === myDeptId) : employees)
+              ? (isRop ? employees.filter(e => e.department_id === myDeptId || e.user_id === user.id) : employees)
                   .map(emp => ({ user_id: emp.user_id, name: emp.full_name, department_id: emp.department_id ?? undefined }))
               : undefined
             }
@@ -149,10 +149,12 @@ export default function AgencyContent({
             onReassignLead={isDirector ? (lead) => setReassigningLead(lead) : undefined}
             employees={
               (isDirector || isRop)
-                ? (isRop
-                    ? employees.filter(e => e.department_id === myDeptId)
-                    : employees
-                  ).map(e => ({ user_id: e.user_id, name: e.full_name }))
+                ? (() => {
+                    const list: Employee[] = isRop
+                      ? employees.filter(e => e.department_id === myDeptId || e.user_id === user.id)
+                      : employees
+                    return list.map(e => ({ user_id: e.user_id, name: e.full_name }))
+                  })()
                 : undefined
             }
             departments={
