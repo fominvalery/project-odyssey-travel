@@ -293,7 +293,7 @@ def list_employees(user_id, org_id, qs=None):
             "SELECT u.id AS user_id, u.name AS full_name, u.email, u.phone, u.avatar_url, "
             "m.role_code, m.department_id, m.status, m.joined_at "
             "FROM org_memberships m JOIN users u ON u.id=m.user_id "
-            "WHERE m.organization_id=%s"
+            "WHERE m.organization_id=%s AND m.status='active'"
         )
         params = [org_id]
 
