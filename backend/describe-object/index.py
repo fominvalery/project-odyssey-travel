@@ -106,10 +106,10 @@ def handler(event: dict, context) -> dict:
         r = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             json={
-                "model": "openrouter/free",
+                "model": "google/gemini-2.0-flash-exp:free",
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 700,
-                "temperature": 0.75,
+                "max_tokens": 900,
+                "temperature": 0.7,
             },
             headers=headers_ai,
             timeout=25,
