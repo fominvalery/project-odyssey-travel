@@ -104,10 +104,11 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead, employees,
           targetEmployees = employees.filter(e => e.department_id === deptId || e.user_id === userId)
         }
 
+        const h = { "X-User-Id": userId }
         // Загружаем лиды параллельно для каждого сотрудника
         const results = await Promise.all(
           targetEmployees.map(e =>
-            fetch(`${func2url.leads}?owner_id=${encodeURIComponent(e.user_id)}`)
+            fetch(`${func2url.leads}?owner_id=${encodeURIComponent(e.user_id)}`, { headers: h })
               .then(r => r.json())
               .then(d => Array.isArray(d.leads) ? (d.leads as Lead[]) : [])
               .catch(() => [] as Lead[])
@@ -123,12 +124,12 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead, employees,
         if (filterEmployee) url = `${func2url.leads}?owner_id=${encodeURIComponent(filterEmployee)}`
         else if (filterDept) url += `&department_id=${encodeURIComponent(filterDept)}`
         else if (deptId) url += `&department_id=${encodeURIComponent(deptId)}`
-        const r = await fetch(url)
+        const r = await fetch(url, { headers: { "X-User-Id": userId } })
         const data = await r.json()
         setLeads(Array.isArray(data.leads) ? (data.leads as Lead[]) : [])
       } else {
         // Личная CRM
-        const r = await fetch(`${func2url.leads}?owner_id=${encodeURIComponent(userId)}`)
+        const r = await fetch(`${func2url.leads}?owner_id=${encodeURIComponent(userId)}`, { headers: { "X-User-Id": userId } })
         const data = await r.json()
         setLeads(Array.isArray(data.leads) ? (data.leads as Lead[]) : [])
       }

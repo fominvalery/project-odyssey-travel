@@ -49,14 +49,15 @@ export function useAgencyObjects({ userId, orgId, deptId, role, employees }: Use
     if (!silent) setLoading(true)
     try {
       const emps = employeesRef.current
+      const headers = { "X-User-Id": userId }
       if (role === "broker") {
-        const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`)
+        const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`, { headers })
         const data = await r.json()
         setObjects(Array.isArray(data.objects) ? data.objects.map(mapFromServer) : [])
       } else if (emps && emps.length > 0) {
         const results = await Promise.all(
           emps.map(e =>
-            fetch(`${func2url.objects}?user_id=${encodeURIComponent(e.user_id)}`)
+            fetch(`${func2url.objects}?user_id=${encodeURIComponent(e.user_id)}`, { headers })
               .then(r => r.json())
               .then(d => Array.isArray(d.objects) ? d.objects.map(mapFromServer) : [])
               .catch(() => [] as ObjectData[])
@@ -66,7 +67,7 @@ export function useAgencyObjects({ userId, orgId, deptId, role, employees }: Use
         const unique = Array.from(new Map(allObjects.map(o => [o.id, o])).values())
         setObjects(unique)
       } else {
-        const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`)
+        const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`, { headers })
         const data = await r.json()
         setObjects(Array.isArray(data.objects) ? data.objects.map(mapFromServer) : [])
       }

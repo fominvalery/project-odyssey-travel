@@ -134,9 +134,18 @@ def handler(event: dict, context) -> dict:
             archive = params.get("archive")
 
             if user_id:
-                # Пользователь может запрашивать только свои объекты
-                if not caller_id or str(caller_id) != str(user_id):
+                # Разрешаем: сам пользователь ИЛИ коллега по организации
+                if not caller_id:
                     return resp(403, {"error": "forbidden"})
+                if str(caller_id) != str(user_id):
+                    cur.execute(
+                        f"SELECT 1 FROM {schema}.org_memberships om1"
+                        f" JOIN {schema}.org_memberships om2 ON om1.organization_id = om2.organization_id"
+                        f" WHERE om1.user_id = %s AND om2.user_id = %s AND om1.status='active' AND om2.status='active' LIMIT 1",
+                        (caller_id, user_id),
+                    )
+                    if not cur.fetchone():
+                        return resp(403, {"error": "forbidden"})
                 cur.execute(
                     "SELECT " + SELECT_COLS + " FROM " + schema + ".objects"
                     " WHERE user_id = %s ORDER BY created_at DESC",

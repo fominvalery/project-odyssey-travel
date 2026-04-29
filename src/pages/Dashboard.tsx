@@ -172,7 +172,9 @@ export default function Dashboard() {
   const loadObjects = useCallback(async (userId: string) => {
     setLoadingObjects(true)
     try {
-      const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`)
+      const r = await fetch(`${func2url.objects}?user_id=${encodeURIComponent(userId)}`, {
+        headers: { "X-User-Id": userId },
+      })
       const data = await r.json()
       const arr = Array.isArray(data.objects) ? data.objects.map(mapFromServer) : []
       setObjects(arr)
