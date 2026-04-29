@@ -69,6 +69,7 @@ def handler(event: dict, context) -> dict:
 Объём: 4 абзаца, каждый 2-3 предложения. Деловой стиль, на русском. Разделяй абзацы пустой строкой.
 Без заголовков, без markdown, без списков.
 СТРОГО ЗАПРЕЩЕНО: упоминать имена людей, номера телефонов, email, ссылки и любые контактные данные.
+СТРОГО ЗАПРЕЩЕНО: называть объект типом который не указан в данных (не пиши "квартира", "апартаменты" и т.п. если в данных указан офис или другой тип).
 
 Структура:
 1) Общая суть и локация
@@ -90,10 +91,10 @@ def handler(event: dict, context) -> dict:
         r = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             json={
-                "model": "openrouter/free",
+                "model": "google/gemini-2.0-flash-exp:free",
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 700,
-                "temperature": 0.75,
+                "max_tokens": 900,
+                "temperature": 0.7,
             },
             headers=headers_ai,
             timeout=22,
