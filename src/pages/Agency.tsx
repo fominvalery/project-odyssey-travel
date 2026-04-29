@@ -201,7 +201,7 @@ export default function Agency() {
 
   async function handleDeleteObject(id: string) {
     if (!user?.id || !confirm("Удалить объект?")) return
-    try { await fetch(`${func2url.objects}?id=${encodeURIComponent(id)}&user_id=${encodeURIComponent(user.id)}`, { method: "DELETE" }); reloadObjects() }
+    try { await fetch(`${func2url.objects}?id=${encodeURIComponent(id)}&user_id=${encodeURIComponent(user.id)}`, { method: "DELETE", headers: { "X-User-Id": user.id } }); reloadObjects() }
     catch (e) { void e }
   }
 
