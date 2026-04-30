@@ -242,37 +242,26 @@ def get_org_full(user_id, org_id):
         if not m:
             return _cors({'error': 'Нет доступа'}, 403)
         cur.execute(
-            "SELECT id, name, inn, logo_url, description, admin_id, created_at, "
-            "city, website, telegram_username, vk_username, specializations, "
-            "bio, experience, license_number, founded_year, is_public, "
-            "agents_count, deals_count, rating "
-            "FROM organizations WHERE id=%s",
+            "SELECT o.id, o.name, o.inn, o.logo_url, o.description, o.admin_id, o.created_at, "
+            "o.city, o.website, o.telegram_username, o.vk_username, o.specializations, "
+            "o.bio, o.experience, o.license_number, o.founded_year, o.is_public, "
+            "(SELECT COUNT(*) FROM org_memberships WHERE organization_id=o.id AND status='active') AS agents_count, "
+            "(SELECT COUNT(*) FROM agency_deals WHERE organization_id=o.id AND status='closed') AS deals_count, "
+            "ROUND(AVG(r.rating)::numeric, 2) AS rating, "
+            "COUNT(r.id) AS review_count "
+            "FROM organizations o "
+            "LEFT JOIN agency_reviews r ON r.organization_id = o.id "
+            "WHERE o.id=%s "
+            "GROUP BY o.id",
             (org_id,),
         )
         org = cur.fetchone()
         if not org:
             return _cors({'error': 'Не найдено'}, 404)
-        # Реальный счётчик агентов
-        cur.execute(
-            "SELECT COUNT(*) AS cnt FROM org_memberships WHERE organization_id=%s AND status='active'",
-            (org_id,),
-        )
-        org['agents_count'] = cur.fetchone()['cnt']
-        # Счётчик сделок
-        cur.execute(
-            "SELECT COUNT(*) AS cnt FROM agency_deals WHERE organization_id=%s AND status='closed'",
-            (org_id,),
-        )
-        org['deals_count'] = cur.fetchone()['cnt']
-        # Рейтинг
-        cur.execute(
-            "SELECT ROUND(AVG(rating)::numeric, 2) AS avg_rating, COUNT(*) AS review_count "
-            "FROM agency_reviews WHERE organization_id=%s",
-            (org_id,),
-        )
-        rev = cur.fetchone()
-        org['rating'] = float(rev['avg_rating'] or 0)
-        org['review_count'] = int(rev['review_count'] or 0)
+        org['rating'] = float(org['rating'] or 0)
+        org['review_count'] = int(org['review_count'] or 0)
+        org['agents_count'] = int(org['agents_count'] or 0)
+        org['deals_count'] = int(org['deals_count'] or 0)
         org['my_role'] = m['role_code']
         org['my_role_title'] = ROLE_TITLES.get(m['role_code'], m['role_code'])
         return _cors(org)

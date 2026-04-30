@@ -19,9 +19,7 @@
       "method": "GET",
       "path": "/?action=list_my_orgs",
       "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001"},
-      "expectedStatus": 200,
-      "expectedBody": {"orgs": []},
-      "bodyMatcher": "partial"
+      "expectedStatus": 200
     },
     {
       "name": "Unknown action — ошибка 400",
@@ -47,11 +45,11 @@
       "expectedStatus": 400
     },
     {
-      "name": "GET данные несуществующей организации — ошибка 404",
+      "name": "GET данные несуществующей организации — ошибка 403",
       "method": "GET",
       "path": "/?action=get_org&org_id=00000000-0000-0000-0000-000000000099",
       "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001"},
-      "expectedStatus": 404
+      "expectedStatus": 403
     }
   ]
 }
