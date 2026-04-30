@@ -1,6 +1,6 @@
 # Документация безопасности — Кабинет-24
 
-Последнее обновление: 2026-04-29
+Последнее обновление: 2026-04-30
 
 ---
 
@@ -79,6 +79,14 @@
 |---|---|---|---|
 | 7 | Контакты собственника попадали в запрос к ИИ | `describe-object/index.py`, `WizardSteps.tsx` | ✅ Исправлено |
 | 8 | `X-User-Id` не был разрешён в CORS заголовках auth-функции | `auth/utils/http.py` | ✅ Исправлено |
+| 9 | Фронтенд не передавал `X-User-Id` при запросе referral-stats — данные не загружались | `DashboardSections.tsx` | ✅ Исправлено |
+
+### Известные ограничения (не критично)
+
+| # | Описание | Файл | Приоритет |
+|---|---|---|---|
+| A | `update-profile`, `chat`, `club-check` не проверяют X-User-Id на бэкенде — авторизация через user_id в теле | `auth/handlers/` | Средний |
+| B | `lead-extras` не проверяет X-User-Id — авторизация через owner_id в параметрах | `lead-extras/index.py` | Средний |
 
 ---
 
@@ -113,8 +121,17 @@ presentation_contact_name, presentation_contact_phone, presentation_contact_comp
 |---|---|---|
 | objects | 7 | GET без X-User-Id → 403, GET с чужим X-User-Id → 403 |
 | leads | 6 | GET без X-User-Id → 403, GET с чужим X-User-Id → 403 |
-| login | 3 | Неверные данные → 401 |
-| register | 2 | Отсутствие пароля → 400 |
+| lead-extras | 10 | GET без lead_id → 400, DELETE без params → 400 |
+| joint-deals | 6 | GET без user_id → 400, PUT/PATCH без полей → 400 |
+| object-chat | 5 | GET без params → 400, POST без object_id → 400 |
+| admin | 4 | GET/DELETE без токена → 403, неверный токен → 403 |
+| agency | 7 | GET без X-User-Id → 401, неизвестный action → 400 |
+| login | 5 | Неверные данные → 401, несуществующий email → 401 |
+| register | 4 | Отсутствие полей → 400 |
+| upload-photo | 3 | Невалидный base64 → 400 |
+| auth-email-auth | 12 | Referral stats без X-User-Id → 403, чужой user_id → 403 |
+| notifications | 4 | GET без user_id → 400 |
+| club | 4 | GET без user_id → 400 |
 | describe-object | 2 | OPTIONS preflight, POST генерация |
 
 ---
