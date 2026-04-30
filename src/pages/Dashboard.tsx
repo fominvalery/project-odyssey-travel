@@ -1,22 +1,26 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, lazy, Suspense } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuthContext } from "@/context/AuthContext"
 import { type ObjectData } from "@/components/AddObjectWizard"
+import type { Member as ClubMember } from "@/components/dashboard/DashboardClub"
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar"
-import DashboardHome from "@/components/dashboard/DashboardHome"
-import DashboardObjects from "@/components/dashboard/DashboardObjects"
-import { DashboardCRM, DashboardReferral, DashboardProfile } from "@/components/dashboard/DashboardSections"
-import DashboardAnalytics from "@/components/dashboard/DashboardAnalytics"
-import DashboardSupport from "@/components/dashboard/DashboardSupport"
-import DashboardClub, { type Member as ClubMember } from "@/components/dashboard/DashboardClub"
-import DashboardMessages from "@/components/dashboard/DashboardMessages"
-import DashboardJointDeals from "@/components/dashboard/DashboardJointDeals"
-import AiChatBubble from "@/components/AiChatBubble"
 import NotificationBell from "@/components/dashboard/NotificationBell"
 import SubscriptionBadge from "@/components/dashboard/SubscriptionBadge"
-import { ClubPayDialog } from "@/components/pricing/ClubPayDialog"
 import { useToast } from "@/hooks/use-toast"
 import func2url from "../../backend/func2url.json"
+
+const DashboardHome = lazy(() => import("@/components/dashboard/DashboardHome"))
+const DashboardObjects = lazy(() => import("@/components/dashboard/DashboardObjects"))
+const DashboardAnalytics = lazy(() => import("@/components/dashboard/DashboardAnalytics"))
+const DashboardSupport = lazy(() => import("@/components/dashboard/DashboardSupport"))
+const DashboardMessages = lazy(() => import("@/components/dashboard/DashboardMessages"))
+const DashboardJointDeals = lazy(() => import("@/components/dashboard/DashboardJointDeals"))
+const AiChatBubble = lazy(() => import("@/components/AiChatBubble"))
+const ClubPayDialog = lazy(() => import("@/components/pricing/ClubPayDialog").then(m => ({ default: m.ClubPayDialog })))
+const DashboardCRM = lazy(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardCRM })))
+const DashboardReferral = lazy(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardReferral })))
+const DashboardProfile = lazy(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardProfile })))
+const DashboardClub = lazy(() => import("@/components/dashboard/DashboardClub").then(m => ({ default: m.default })))
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 
@@ -319,101 +323,104 @@ export default function Dashboard() {
           <SubscriptionBadge user={user} onRenew={() => setShowRenewDialog(true)} />
           <NotificationBell userId={user.id} />
         </div>
-        <ClubPayDialog open={showRenewDialog} onClose={() => setShowRenewDialog(false)} />
-        {section === "dashboard" && (
-          <DashboardHome user={user} objects={objects} />
-        )}
+        <Suspense fallback={null}>
+          <ClubPayDialog open={showRenewDialog} onClose={() => setShowRenewDialog(false)} />
+          {section === "dashboard" && (
+            <DashboardHome user={user} objects={objects} />
+          )}
 
-        {section === "objects" && (
-          <DashboardObjects
-            objects={objects}
-            loading={loadingObjects}
-            showWizard={showWizard}
-            setShowWizard={setShowWizard}
-            editingObject={editingObject}
-            onEdit={handleEditObject}
-            onDelete={handleDeleteObject}
-            onArchive={handleArchiveObject}
-            onRestore={handleRestoreObject}
-            onSaveOwner={handleSaveOwner}
-            onWizardSaved={handleWizardSaved}
-            onWizardClose={handleWizardClose}
-            catFilter={catFilter}
-            setCatFilter={setCatFilter}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            objSearch={objSearch}
-            setObjSearch={setObjSearch}
-            userId={user.id}
-            isBasic={isBasic}
-            listingsUsed={user.listingsUsed ?? objects.length}
-            listingsExtra={user.listingsExtra ?? 0}
-            userEmail={user.email}
-            userName={user.name}
-            // userId пробрасывается через userId выше
-          />
-        )}
+          {section === "objects" && (
+            <DashboardObjects
+              objects={objects}
+              loading={loadingObjects}
+              showWizard={showWizard}
+              setShowWizard={setShowWizard}
+              editingObject={editingObject}
+              onEdit={handleEditObject}
+              onDelete={handleDeleteObject}
+              onArchive={handleArchiveObject}
+              onRestore={handleRestoreObject}
+              onSaveOwner={handleSaveOwner}
+              onWizardSaved={handleWizardSaved}
+              onWizardClose={handleWizardClose}
+              catFilter={catFilter}
+              setCatFilter={setCatFilter}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              objSearch={objSearch}
+              setObjSearch={setObjSearch}
+              userId={user.id}
+              isBasic={isBasic}
+              listingsUsed={user.listingsUsed ?? objects.length}
+              listingsExtra={user.listingsExtra ?? 0}
+              userEmail={user.email}
+              userName={user.name}
+            />
+          )}
 
-        {section === "crm" && <DashboardCRM userId={user.id} />}
+          {section === "crm" && <DashboardCRM userId={user.id} />}
 
-        {section === "analytics" && (
-          <DashboardAnalytics objects={objects} />
-        )}
+          {section === "analytics" && (
+            <DashboardAnalytics objects={objects} />
+          )}
 
-        {section === "referral" && <DashboardReferral userId={user.id} />}
+          {section === "referral" && <DashboardReferral userId={user.id} />}
 
-        {section === "profile" && (
-          <DashboardProfile
-            user={user}
-            initials={initials}
-            form={form}
-            setForm={setForm}
-            saved={saved}
-            onSave={handleSave}
-            onAvatarChange={handleAvatarChange}
-            onAvatarCropped={async (dataUrl) => {
-              updateProfile({ avatar: dataUrl })
-              try {
-                const uploadRes = await fetch(func2url["upload-photo"], {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ image_base64: dataUrl, folder: "avatars" }),
-                }).then(r => r.json())
-                if (uploadRes.url) {
-                  updateProfile({ avatar: uploadRes.url })
+          {section === "profile" && (
+            <DashboardProfile
+              user={user}
+              initials={initials}
+              form={form}
+              setForm={setForm}
+              saved={saved}
+              onSave={handleSave}
+              onAvatarChange={handleAvatarChange}
+              onAvatarCropped={async (dataUrl) => {
+                updateProfile({ avatar: dataUrl })
+                try {
+                  const uploadRes = await fetch(func2url["upload-photo"], {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ image_base64: dataUrl, folder: "avatars" }),
+                  }).then(r => r.json())
+                  if (uploadRes.url) {
+                    updateProfile({ avatar: uploadRes.url })
+                  }
+                } catch {
+                  // оставляем base64 локально
                 }
-              } catch {
-                // оставляем base64 локально
-              }
-            }}
-            onStatusChange={(status) => updateProfile({ status })}
-          />
-        )}
+              }}
+              onStatusChange={(status) => updateProfile({ status })}
+            />
+          )}
 
-        {section === "club" && (
-          <DashboardClub userId={user.id} onMessage={handleOpenMessage} onAddToCRM={handleAddToCRM} />
-        )}
+          {section === "club" && (
+            <DashboardClub userId={user.id} onMessage={handleOpenMessage} onAddToCRM={handleAddToCRM} />
+          )}
 
-        {section === "joint-deals" && (
-          <DashboardJointDeals userId={user.id} />
-        )}
+          {section === "joint-deals" && (
+            <DashboardJointDeals userId={user.id} />
+          )}
 
-        {section === "messages" && (
-          <DashboardMessages
-            userId={user.id}
-            openPartnerId={openPartnerId}
-            openPartnerName={openPartnerName}
-            openPartnerAvatar={openPartnerAvatar}
-            openPartnerStatus={openPartnerStatus}
-            onClearOpen={() => { setOpenPartnerId(null); setOpenPartnerName(null); setOpenPartnerAvatar(null); setOpenPartnerStatus(null) }}
-            onUnreadChange={setUnreadMessages}
-          />
-        )}
+          {section === "messages" && (
+            <DashboardMessages
+              userId={user.id}
+              openPartnerId={openPartnerId}
+              openPartnerName={openPartnerName}
+              openPartnerAvatar={openPartnerAvatar}
+              openPartnerStatus={openPartnerStatus}
+              onClearOpen={() => { setOpenPartnerId(null); setOpenPartnerName(null); setOpenPartnerAvatar(null); setOpenPartnerStatus(null) }}
+              onUnreadChange={setUnreadMessages}
+            />
+          )}
 
-        {section === "support" && <DashboardSupport />}
+          {section === "support" && <DashboardSupport />}
+        </Suspense>
       </main>
 
-      {section !== "support" && <AiChatBubble />}
+      <Suspense fallback={null}>
+        {section !== "support" && <AiChatBubble />}
+      </Suspense>
     </div>
   )
 }
