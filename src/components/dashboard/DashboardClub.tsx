@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { Input } from "@/components/ui/input"
@@ -58,8 +58,14 @@ export default function DashboardClub({ userId, onMessage, onAddToCRM }: Props) 
   const [expFilter, setExpFilter] = useState("")
   const [cityFilter, setCityFilter] = useState("")
 
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
-    loadMembers()
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      loadMembers()
+    }, 400)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [specFilter, expFilter, cityFilter])
 

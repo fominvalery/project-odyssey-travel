@@ -153,7 +153,7 @@ export default function DashboardMessages({
       loadDialogs()
       loadPendingProposals()
       if (activeDialog) loadMessages(activeDialog.partner_id)
-    }, 5000)
+    }, 30000)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [activeDialog, loadDialogs, loadMessages, loadPendingProposals])
 
