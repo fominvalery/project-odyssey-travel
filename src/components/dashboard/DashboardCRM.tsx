@@ -92,44 +92,19 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead, employees,
     if (!userId) return
     setLoading(true)
     try {
-      // В режиме АН — загружаем лиды по owner_id каждого сотрудника
-      if (orgId && employees && employees.length > 0) {
-        // Определяем каких сотрудников показывать
-        let targetEmployees = employees
-        if (filterEmployee) {
-          targetEmployees = employees.filter(e => e.user_id === filterEmployee)
-        } else if (filterDept) {
-          targetEmployees = employees.filter(e => e.department_id === filterDept || e.user_id === userId)
-        } else if (deptId) {
-          targetEmployees = employees.filter(e => e.department_id === deptId || e.user_id === userId)
-        }
-
-        const h = { "X-User-Id": userId }
-        // Загружаем лиды параллельно для каждого сотрудника
-        const results = await Promise.all(
-          targetEmployees.map(e =>
-            fetch(`${func2url.leads}?owner_id=${encodeURIComponent(e.user_id)}`, { headers: h })
-              .then(r => r.json())
-              .then(d => Array.isArray(d.leads) ? (d.leads as Lead[]) : [])
-              .catch(() => [] as Lead[])
-          )
-        )
-        const allLeads = results.flat()
-        // Убираем дубли по id
-        const unique = Array.from(new Map(allLeads.map(l => [l.id, l])).values())
-        setLeads(unique)
-      } else if (orgId) {
-        // Нет списка сотрудников — fallback на org_id
+      const h = { "X-User-Id": userId }
+      if (orgId) {
+        // Один запрос на всё агентство, фильтрация на фронте
         let url = `${func2url.leads}?org_id=${encodeURIComponent(orgId)}`
         if (filterEmployee) url = `${func2url.leads}?owner_id=${encodeURIComponent(filterEmployee)}`
         else if (filterDept) url += `&department_id=${encodeURIComponent(filterDept)}`
         else if (deptId) url += `&department_id=${encodeURIComponent(deptId)}`
-        const r = await fetch(url, { headers: { "X-User-Id": userId } })
+        const r = await fetch(url, { headers: h })
         const data = await r.json()
         setLeads(Array.isArray(data.leads) ? (data.leads as Lead[]) : [])
       } else {
         // Личная CRM
-        const r = await fetch(`${func2url.leads}?owner_id=${encodeURIComponent(userId)}`, { headers: { "X-User-Id": userId } })
+        const r = await fetch(`${func2url.leads}?owner_id=${encodeURIComponent(userId)}`, { headers: h })
         const data = await r.json()
         setLeads(Array.isArray(data.leads) ? (data.leads as Lead[]) : [])
       }
@@ -138,7 +113,7 @@ export function DashboardCRM({ userId, orgId, deptId, onReassignLead, employees,
     } finally {
       setLoading(false)
     }
-  }, [userId, orgId, deptId, filterDept, filterEmployee, employees])
+  }, [userId, orgId, deptId, filterDept, filterEmployee])
 
   const loadOverdue = useCallback(async () => {
     if (!userId) return
