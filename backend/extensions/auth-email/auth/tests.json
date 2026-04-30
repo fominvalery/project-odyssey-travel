@@ -81,6 +81,13 @@
       "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000002"},
       "expectedStatus": 403,
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Referral stats без X-User-Id — ошибка 403",
+      "method": "GET",
+      "path": "/?action=referral-stats&user_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 403,
+      "bodyMatcher": "partial"
     }
   ]
 }

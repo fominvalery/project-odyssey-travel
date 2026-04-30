@@ -31,9 +31,11 @@ export function DashboardReferral({ userId }: ReferralProps) {
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([])
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(false)
 
+  const authHeaders = { "X-User-Id": userId }
+
   useEffect(() => {
     if (!userId) return
-    fetch(`${AUTH_URL}?action=referral-stats&user_id=${encodeURIComponent(userId)}`)
+    fetch(`${AUTH_URL}?action=referral-stats&user_id=${encodeURIComponent(userId)}`, { headers: authHeaders })
       .then(r => r.text())
       .then(raw => {
         const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
@@ -46,7 +48,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
   useEffect(() => {
     if (activeTab !== "withdrawals" || !userId || withdrawals.length > 0) return
     setWithdrawalsLoading(true)
-    fetch(`${AUTH_URL}?action=withdrawal-history&user_id=${encodeURIComponent(userId)}`)
+    fetch(`${AUTH_URL}?action=withdrawal-history&user_id=${encodeURIComponent(userId)}`, { headers: authHeaders })
       .then(r => r.text())
       .then(raw => {
         const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
@@ -59,7 +61,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
   const refreshWithdrawals = () => {
     if (!userId) return
     setWithdrawalsLoading(true)
-    fetch(`${AUTH_URL}?action=withdrawal-history&user_id=${encodeURIComponent(userId)}`)
+    fetch(`${AUTH_URL}?action=withdrawal-history&user_id=${encodeURIComponent(userId)}`, { headers: authHeaders })
       .then(r => r.text())
       .then(raw => {
         const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
