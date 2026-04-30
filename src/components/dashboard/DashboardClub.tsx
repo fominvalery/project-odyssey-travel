@@ -4,6 +4,7 @@ import Icon from "@/components/ui/icon"
 import { Input } from "@/components/ui/input"
 import { STATUS_LABELS } from "@/hooks/useAuth"
 import func2url from "../../../backend/func2url.json"
+import { cacheGet, cacheSet, TTL } from "@/lib/cache"
 
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 
@@ -76,9 +77,18 @@ export default function DashboardClub({ userId, onMessage, onAddToCRM }: Props) 
       if (cityFilter) params.set("city", cityFilter)
       if (specFilter) params.set("specialization", specFilter)
       if (expFilter) params.set("experience", expFilter)
+      const cacheKey = `club_members:${params.toString()}`
+      const cached = cacheGet<Member[]>(cacheKey)
+      if (cached) {
+        setMembers(cached)
+        setLoading(false)
+        return
+      }
       const res = await fetch(`${AUTH_URL}?${params}`)
       const data = await res.json()
-      setMembers(Array.isArray(data.members) ? data.members : [])
+      const members = Array.isArray(data.members) ? data.members : []
+      cacheSet(cacheKey, members, TTL.MIN_5)
+      setMembers(members)
     } catch {
       setMembers([])
     } finally {

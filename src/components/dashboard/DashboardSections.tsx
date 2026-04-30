@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react"
 import Icon from "@/components/ui/icon"
 import func2url from "../../../backend/func2url.json"
 import { ReferralStats, WithdrawalRequest } from "@/components/referral/referralTypes"
+import { cacheGet, cacheSet, TTL } from "@/lib/cache"
 import DashboardReferralHeader from "@/components/referral/DashboardReferralHeader"
 import DashboardReferralStats from "@/components/referral/DashboardReferralStats"
 import DashboardReferralTabs from "@/components/referral/DashboardReferralTabs"
@@ -35,11 +36,14 @@ export function DashboardReferral({ userId }: ReferralProps) {
 
   useEffect(() => {
     if (!userId) return
+    const cacheKey = `referral_stats:${userId}`
+    const cached = cacheGet<ReferralStats>(cacheKey)
+    if (cached) { setStats(cached); setLoading(false); return }
     fetch(`${AUTH_URL}?action=referral-stats&user_id=${encodeURIComponent(userId)}`, { headers: authHeaders })
       .then(r => r.text())
       .then(raw => {
         const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
-        if (data && !data.error) setStats(data)
+        if (data && !data.error) { setStats(data); cacheSet(cacheKey, data, TTL.MIN_30) }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -47,12 +51,15 @@ export function DashboardReferral({ userId }: ReferralProps) {
 
   useEffect(() => {
     if (activeTab !== "withdrawals" || !userId || withdrawals.length > 0) return
+    const cacheKey = `withdrawal_history:${userId}`
+    const cached = cacheGet<WithdrawalRequest[]>(cacheKey)
+    if (cached) { setWithdrawals(cached); return }
     setWithdrawalsLoading(true)
     fetch(`${AUTH_URL}?action=withdrawal-history&user_id=${encodeURIComponent(userId)}`, { headers: authHeaders })
       .then(r => r.text())
       .then(raw => {
         const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
-        if (data?.requests) setWithdrawals(data.requests)
+        if (data?.requests) { setWithdrawals(data.requests); cacheSet(cacheKey, data.requests, TTL.HOUR_1) }
       })
       .catch(() => {})
       .finally(() => setWithdrawalsLoading(false))
