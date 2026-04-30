@@ -1,0 +1,39 @@
+{
+  "tests": [
+    {
+      "name": "GET — метод не поддерживается",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 405,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST без body — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST с неизвестным event типом — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"event": "unknown.event", "object": {"id": "test-payment-id"}},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST без payment_id — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"event": "payment.succeeded", "object": {}},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

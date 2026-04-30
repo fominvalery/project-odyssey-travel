@@ -1,0 +1,46 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST без body — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST с невалидной суммой — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"amount": -100, "email": "test@test.com", "return_url": "https://example.com"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST с невалидным email — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"amount": 100, "email": "not-an-email", "return_url": "https://example.com"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST с http return_url — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"amount": 100, "email": "test@test.com", "return_url": "http://example.com"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
