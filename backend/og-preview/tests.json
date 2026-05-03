@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET без id — HTML с редиректом",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET с несуществующим id — HTML с редиректом",
+      "method": "GET",
+      "path": "/?id=00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 200
+    }
+  ]
+}
