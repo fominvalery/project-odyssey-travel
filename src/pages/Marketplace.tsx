@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Helmet } from "react-helmet-async"
 import { formatPrice } from "@/lib/format"
 import { Header } from "@/components/Header"
 import Icon from "@/components/ui/icon"
@@ -185,6 +186,19 @@ export default function Marketplace() {
 
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
+      <Helmet>
+        <title>Кабинет 24 — Каталог коммерческой и инвестиционной недвижимости</title>
+        <meta name="description" content="Каталог объектов недвижимости: коммерческая, инвестиционная, новостройки, курортная и жилая. Готовый бизнес, офисы, склады, торговые помещения от собственников и брокеров." />
+        <meta name="keywords" content="коммерческая недвижимость, инвестиционная недвижимость, готовый бизнес, аренда офиса, продажа помещений, курортная недвижимость, новостройки" />
+        <link rel="canonical" href={typeof window !== "undefined" ? window.location.origin + "/marketplace" : ""} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Кабинет 24 — Каталог коммерческой и инвестиционной недвижимости" />
+        <meta property="og:description" content="Каталог объектов недвижимости: коммерческая, инвестиционная, новостройки, курортная и жилая. От собственников и брокеров." />
+        <meta property="og:url" content={typeof window !== "undefined" ? window.location.origin + "/marketplace" : ""} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Кабинет 24 — Каталог коммерческой и инвестиционной недвижимости" />
+        <meta name="twitter:description" content="Каталог объектов недвижимости: коммерческая, инвестиционная, новостройки, курортная и жилая." />
+      </Helmet>
       <Header />
 
       <section className="px-4 md:px-8 pt-8 pb-16 max-w-7xl mx-auto">
