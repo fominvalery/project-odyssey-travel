@@ -139,7 +139,7 @@ export default function ObjectDetail() {
             {shareOpen && (
               <ShareDialog
                 title={obj.title}
-                url={`${func2url["og-preview"]}?id=${obj.id}`}
+                url={typeof window !== "undefined" ? window.location.href : ""}
                 onClose={() => setShareOpen(false)}
               />
             )}

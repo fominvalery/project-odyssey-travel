@@ -436,7 +436,7 @@ export default function Marketplace() {
       {shareTarget && (
         <ShareDialog
           title={shareTarget.title}
-          url={`${func2url["og-preview"]}?id=${shareTarget.id}`}
+          url={`${window.location.origin}/object/${shareTarget.id}`}
           onClose={() => setShareTarget(null)}
         />
       )}
