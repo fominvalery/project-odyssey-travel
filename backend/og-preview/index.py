@@ -23,27 +23,39 @@ def is_bot(user_agent: str) -> bool:
     return any(b in ua for b in bots)
 
 
-def make_html(obj_id: str, title: str, description: str, image: str, price: str, address: str) -> str:
+def html_escape(s: str) -> str:
+    return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def make_html(obj_id: str, title: str, description: str, image: str, price: str, address: str, self_url: str) -> str:
     full_title = title
     if price:
         full_title += f" · {price}"
 
     meta_desc = description[:200] if description else address or "Коммерческая недвижимость на Кабинет-24"
 
+    full_title = html_escape(full_title)
+    meta_desc = html_escape(meta_desc)
+    image = html_escape(image)
+    self_url = html_escape(self_url)
+    target_url = f"{SITE_URL}/object/{obj_id}"
+
     return f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url={SITE_URL}/object/{obj_id}">
+  <meta http-equiv="refresh" content="0; url={target_url}">
   <title>{full_title}</title>
   <meta name="description" content="{meta_desc}">
+  <link rel="canonical" href="{target_url}">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{SITE_URL}/preview/{obj_id}">
+  <meta property="og:url" content="{self_url}">
   <meta property="og:title" content="{full_title}">
   <meta property="og:description" content="{meta_desc}">
   <meta property="og:image" content="{image}">
+  <meta property="og:image:secure_url" content="{image}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="Кабинет-24">
@@ -54,9 +66,11 @@ def make_html(obj_id: str, title: str, description: str, image: str, price: str,
   <meta name="twitter:title" content="{full_title}">
   <meta name="twitter:description" content="{meta_desc}">
   <meta name="twitter:image" content="{image}">
+
+  <script>setTimeout(function(){{location.href='{target_url}';}}, 0);</script>
 </head>
 <body>
-  <p>Перенаправление на <a href="{SITE_URL}/object/{obj_id}">{full_title}</a>...</p>
+  <p>Перенаправление на <a href="{target_url}">{full_title}</a>...</p>
 </body>
 </html>"""
 
@@ -107,7 +121,11 @@ def handler(event: dict, context) -> dict:
 
     image = photos[0] if photos else f"{SITE_URL}/og-default.jpg"
 
-    html = make_html(obj_id, title, description, image, price, address)
+    headers_in = event.get("headers") or {}
+    host = headers_in.get("Host") or headers_in.get("host") or "functions.poehali.dev"
+    self_url = f"https://{host}/?id={obj_id}"
+
+    html = make_html(obj_id, title, description, image, price, address, self_url)
 
     return {
         "statusCode": 200,
