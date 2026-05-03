@@ -34,3 +34,4 @@ User-agent: YandexBot
 Allow: /
 
 Sitemap: https://kabinet-24.ru/sitemap.xml
+Sitemap: https://functions.poehali.dev/c4b163d7-529a-4f34-ad1a-6464007a59d8
