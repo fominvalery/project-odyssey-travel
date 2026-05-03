@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
+import { getObjectShareUrl } from "@/lib/shareUrl"
 import ObjectGallery from "@/components/object-detail/ObjectGallery"
 import ObjectMap from "@/components/object-detail/ObjectMap"
 import ObjectSidebar from "@/components/object-detail/ObjectSidebar"
@@ -169,7 +170,7 @@ export default function ObjectDetail() {
             {shareOpen && (
               <ShareDialog
                 title={obj.title}
-                url={typeof window !== "undefined" ? window.location.href : ""}
+                url={getObjectShareUrl(obj.id)}
                 onClose={() => setShareOpen(false)}
               />
             )}

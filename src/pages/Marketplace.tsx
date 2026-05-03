@@ -4,6 +4,7 @@ import { formatPrice } from "@/lib/format"
 import { Header } from "@/components/Header"
 import Icon from "@/components/ui/icon"
 import ShareDialog from "@/components/ShareDialog"
+import { getObjectShareUrl } from "@/lib/shareUrl"
 import { Footer } from "@/components/Footer"
 import func2url from "../../backend/func2url.json"
 import { getCategoryFields, CAT_ID_MAP, CATEGORIES as WIZ_CATEGORIES } from "@/components/wizard/wizardTypes"
@@ -450,7 +451,7 @@ export default function Marketplace() {
       {shareTarget && (
         <ShareDialog
           title={shareTarget.title}
-          url={`${window.location.origin}/object/${shareTarget.id}`}
+          url={getObjectShareUrl(shareTarget.id)}
           onClose={() => setShareTarget(null)}
         />
       )}
