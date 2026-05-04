@@ -43,6 +43,7 @@ function objectStatusColor(s: string) {
 
 export default function DashboardHome({ user, objects }: Props) {
   const [leads, setLeads] = useState<Lead[]>([])
+  const [viewsTotal, setViewsTotal] = useState<number>(0)
 
   useEffect(() => {
     const uid = user?.id
@@ -55,6 +56,24 @@ export default function DashboardHome({ user, objects }: Props) {
       .catch(() => setLeads([]))
   }, [user?.id])
 
+  useEffect(() => {
+    const ids = objects.map((o) => o.id).filter(Boolean)
+    if (ids.length === 0) {
+      setViewsTotal(0)
+      return
+    }
+    const url = (func2url as Record<string, string>)["analytics"]
+    if (!url) return
+    fetch(`${url}?action=views&ids=${ids.join(",")}`)
+      .then((r) => (r.ok ? r.json() : { counts: {} }))
+      .then((d) => {
+        const counts = (d?.counts ?? {}) as Record<string, number>
+        const total = Object.values(counts).reduce((a, b) => a + (Number(b) || 0), 0)
+        setViewsTotal(total)
+      })
+      .catch(() => setViewsTotal(0))
+  }, [objects])
+
   const dealsCount = leads.filter((l) => DEAL_STAGES.some((d) => (l.stage || "").toLowerCase().includes(d.toLowerCase()))).length
   const lastObjects = [...objects].slice(0, 3)
   const lastLeads = [...leads]
@@ -64,6 +83,7 @@ export default function DashboardHome({ user, objects }: Props) {
   const stats = [
     { label: "Объектов", value: String(objects.length), icon: "Building2", color: "text-blue-400" },
     { label: "Лидов", value: String(leads.length), icon: "Users", color: "text-emerald-400" },
+    { label: "Просмотров", value: viewsTotal.toLocaleString("ru-RU"), icon: "Eye", color: "text-violet-400" },
     { label: "Сделок", value: String(dealsCount), icon: "Handshake", color: "text-amber-400" },
   ]
 
@@ -74,7 +94,7 @@ export default function DashboardHome({ user, objects }: Props) {
         Тариф: <span className="text-blue-400 font-medium">{STATUS_LABELS[user.status as keyof typeof STATUS_LABELS] ?? user.status}</span>
       </p>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
             <Icon name={stat.icon as "Building2"} className={`h-5 w-5 mb-3 ${stat.color}`} />
