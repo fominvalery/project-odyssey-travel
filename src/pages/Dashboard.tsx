@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react"
+import { useState, useEffect, useCallback, lazy, Suspense, type ComponentType } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuthContext } from "@/context/AuthContext"
 import { type ObjectData } from "@/components/AddObjectWizard"
@@ -9,18 +9,42 @@ import SubscriptionBadge from "@/components/dashboard/SubscriptionBadge"
 import { useToast } from "@/hooks/use-toast"
 import func2url from "../../backend/func2url.json"
 
-const DashboardHome = lazy(() => import("@/components/dashboard/DashboardHome"))
-const DashboardObjects = lazy(() => import("@/components/dashboard/DashboardObjects"))
-const DashboardAnalytics = lazy(() => import("@/components/dashboard/DashboardAnalytics"))
-const DashboardSupport = lazy(() => import("@/components/dashboard/DashboardSupport"))
-const DashboardMessages = lazy(() => import("@/components/dashboard/DashboardMessages"))
-const DashboardJointDeals = lazy(() => import("@/components/dashboard/DashboardJointDeals"))
-const AiChatBubble = lazy(() => import("@/components/AiChatBubble"))
-const ClubPayDialog = lazy(() => import("@/components/pricing/ClubPayDialog").then(m => ({ default: m.ClubPayDialog })))
-const DashboardCRM = lazy(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardCRM })))
-const DashboardReferral = lazy(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardReferral })))
-const DashboardProfile = lazy(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardProfile })))
-const DashboardClub = lazy(() => import("@/components/dashboard/DashboardClub").then(m => ({ default: m.default })))
+// Авто-перезагрузка при провале динамического импорта (устаревший чанк после деплоя)
+function lazyWithRetry<T extends ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(async () => {
+    try {
+      return await factory()
+    } catch (err) {
+      const msg = String((err as Error)?.message || "")
+      if (
+        /Failed to fetch dynamically imported module|Importing a module script failed|ChunkLoadError/i.test(msg)
+      ) {
+        const flag = "__chunk_reload__"
+        if (!sessionStorage.getItem(flag)) {
+          sessionStorage.setItem(flag, "1")
+          window.location.reload()
+          return new Promise<{ default: T }>(() => {})
+        }
+      }
+      throw err
+    }
+  })
+}
+
+const DashboardHome = lazyWithRetry(() => import("@/components/dashboard/DashboardHome"))
+const DashboardObjects = lazyWithRetry(() => import("@/components/dashboard/DashboardObjects"))
+const DashboardAnalytics = lazyWithRetry(() => import("@/components/dashboard/DashboardAnalytics"))
+const DashboardSupport = lazyWithRetry(() => import("@/components/dashboard/DashboardSupport"))
+const DashboardMessages = lazyWithRetry(() => import("@/components/dashboard/DashboardMessages"))
+const DashboardJointDeals = lazyWithRetry(() => import("@/components/dashboard/DashboardJointDeals"))
+const AiChatBubble = lazyWithRetry(() => import("@/components/AiChatBubble"))
+const ClubPayDialog = lazyWithRetry(() => import("@/components/pricing/ClubPayDialog").then(m => ({ default: m.ClubPayDialog })))
+const DashboardCRM = lazyWithRetry(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardCRM })))
+const DashboardReferral = lazyWithRetry(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardReferral })))
+const DashboardProfile = lazyWithRetry(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardProfile })))
+const DashboardClub = lazyWithRetry(() => import("@/components/dashboard/DashboardClub").then(m => ({ default: m.default })))
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 
