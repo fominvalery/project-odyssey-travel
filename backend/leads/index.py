@@ -87,15 +87,18 @@ def handler(event: dict, context) -> dict:
             dept_id = body.get("department_id") or None
             last_name = (body.get("last_name") or "").strip()
 
-            # Автоподстановка org_id из членства если не передан
-            if not org_id:
+            # Автоподстановка org_id и department_id из членства если не переданы
+            if not org_id or not dept_id:
                 cur.execute(
-                    f"SELECT organization_id FROM {schema}.org_memberships WHERE user_id=%s AND status='active' LIMIT 1",
+                    f"SELECT organization_id, department_id FROM {schema}.org_memberships WHERE user_id=%s AND status='active' LIMIT 1",
                     (owner_id,),
                 )
                 row_org = cur.fetchone()
                 if row_org:
-                    org_id = str(row_org[0])
+                    if not org_id and row_org[0]:
+                        org_id = str(row_org[0])
+                    if not dept_id and row_org[1]:
+                        dept_id = str(row_org[1])
 
             # Автоопределение типа: если пришёл с маркетплейса и у него активная подписка клуба
             lead_type = body.get("lead_type") or "Клиент"
@@ -148,10 +151,21 @@ def handler(event: dict, context) -> dict:
                 if not cur.fetchone():
                     return resp(403, {"error": "forbidden"})
                 if dept_id:
+                    # РОП видит лидов своего отдела: либо у лида проставлен department_id,
+                    # либо владелец лида состоит в этом отделе
                     cur.execute(
-                        "SELECT " + SELECT_COLS + " FROM " + schema + ".leads"
-                        " WHERE org_id = %s AND department_id = %s ORDER BY created_at DESC",
-                        (org_id, dept_id),
+                        "SELECT " + SELECT_COLS + " FROM " + schema + ".leads l"
+                        " WHERE l.org_id = %s AND ("
+                        "   l.department_id = %s"
+                        "   OR EXISTS ("
+                        "     SELECT 1 FROM " + schema + ".org_memberships om"
+                        "     WHERE om.user_id = l.owner_id"
+                        "       AND om.organization_id = %s"
+                        "       AND om.department_id = %s"
+                        "       AND om.status = 'active'"
+                        "   )"
+                        " ) ORDER BY l.created_at DESC",
+                        (org_id, dept_id, org_id, dept_id),
                     )
                 else:
                     cur.execute(
