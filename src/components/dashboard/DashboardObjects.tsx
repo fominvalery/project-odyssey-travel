@@ -59,6 +59,7 @@ export default function DashboardObjects({
   const [employeeFilter, setEmployeeFilter] = useState("")
   const [deptFilter, setDeptFilter] = useState("")
   const [viewsByObject, setViewsByObject] = useState<Record<string, number>>({})
+  const [leadsCount, setLeadsCount] = useState(0)
 
   useEffect(() => {
     const ids = objects.map(o => String(o.id)).filter(Boolean)
@@ -76,6 +77,24 @@ export default function DashboardObjects({
       })
       .catch(() => {})
   }, [objects])
+
+  useEffect(() => {
+    if (!userId) {
+      setLeadsCount(0)
+      return
+    }
+    const url = (func2url as Record<string, string>)["leads"]
+    if (!url) return
+    fetch(`${url}?owner_id=${userId}`, { headers: { "X-User-Id": userId } })
+      .then(r => (r.ok ? r.json() : { leads: [] }))
+      .then(d => {
+        const leads = Array.isArray(d?.leads) ? d.leads : []
+        const objectIds = new Set(objects.map(o => String(o.id)))
+        const linked = leads.filter((l: { object_id?: string | null }) => l.object_id && objectIds.has(String(l.object_id)))
+        setLeadsCount(linked.length)
+      })
+      .catch(() => setLeadsCount(0))
+  }, [userId, objects])
 
   const canAddListing = !isBasic || (listingsUsed < FREE_LIMIT + listingsExtra)
 
@@ -154,7 +173,12 @@ export default function DashboardObjects({
           />
         )}
 
-        <ObjectsStats activeObjects={activeObjects} archivedObjects={archivedObjects} />
+        <ObjectsStats
+          activeObjects={activeObjects}
+          archivedObjects={archivedObjects}
+          viewsByObject={viewsByObject}
+          leadsCount={leadsCount}
+        />
 
         <ObjectsFilters
           catFilter={catFilter} setCatFilter={setCatFilter}

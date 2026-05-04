@@ -4,14 +4,43 @@ import { type ObjectData } from "@/components/AddObjectWizard"
 interface Props {
   activeObjects: ObjectData[]
   archivedObjects: ObjectData[]
+  viewsByObject?: Record<string, number>
+  leadsCount?: number
 }
 
-export default function ObjectsStats({ activeObjects, archivedObjects }: Props) {
+export default function ObjectsStats({ activeObjects, archivedObjects, viewsByObject = {}, leadsCount = 0 }: Props) {
+  const inWorkCount = activeObjects.filter(o => o.status === "Активен").length
+  const viewsTotal = activeObjects.reduce((sum, o) => sum + (Number(viewsByObject[String(o.id)]) || 0), 0)
+
   const stats = [
-    { icon: "Briefcase", label: "Объектов в работе", sub: "Активные лоты", value: activeObjects.filter(o => o.status === "Активен").length, color: "text-blue-400" },
-    { icon: "TrendingUp", label: "Инвест-портфель", sub: "Суммарная стоимость", value: "0 ₽", color: "text-emerald-400" },
-    { icon: "Gavel", label: "Активные торги", sub: "Предстоящие аукционы", value: activeObjects.filter(o => o.category === "auction").length, color: "text-amber-400" },
-    { icon: "Archive", label: "В архиве", sub: "Продано / Сдано", value: archivedObjects.length, color: "text-orange-400" },
+    {
+      icon: "Briefcase",
+      label: "Объектов в работе",
+      sub: "Активные лоты",
+      value: inWorkCount,
+      color: "text-blue-400",
+    },
+    {
+      icon: "Eye",
+      label: "Просмотров всего",
+      sub: "По всем объектам",
+      value: viewsTotal.toLocaleString("ru-RU"),
+      color: "text-violet-400",
+    },
+    {
+      icon: "Users",
+      label: "Лидов по объектам",
+      sub: "Заявки от клиентов",
+      value: leadsCount,
+      color: "text-emerald-400",
+    },
+    {
+      icon: "Archive",
+      label: "В архиве",
+      sub: "Продано / Сдано",
+      value: archivedObjects.length,
+      color: "text-orange-400",
+    },
   ]
 
   return (
