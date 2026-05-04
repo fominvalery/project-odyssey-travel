@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import { toast } from "@/hooks/use-toast"
 import { STATUS_LABELS } from "@/hooks/useAuth"
+import SuperAdminExpiry from "@/components/admin/SuperAdminExpiry"
 
-type MainTab = "users" | "withdrawals"
+type MainTab = "users" | "withdrawals" | "expiry"
 
 const STATUS_COLORS: Record<string, string> = {
   basic:  "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
@@ -208,6 +209,7 @@ export default function SuperAdmin() {
           {([
             { id: "users" as const,       icon: "Users",      label: "Пользователи",   count: users.length },
             { id: "withdrawals" as const,  icon: "ArrowDownToLine", label: "Вывод средств", count: pendingCount, badge: pendingCount > 0 },
+            { id: "expiry" as const,      icon: "Clock",      label: "Сроки",          count: 0 },
           ]).map((t) => (
             <button
               key={t.id}
@@ -469,6 +471,11 @@ export default function SuperAdmin() {
               )}
             </div>
           </div>
+        )}
+
+        {/* === Раздел: Сроки размещения === */}
+        {mainTab === "expiry" && user?.id && (
+          <SuperAdminExpiry actorId={user.id} />
         )}
       </div>
     </div>
