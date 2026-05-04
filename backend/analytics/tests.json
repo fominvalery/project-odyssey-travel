@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET metrics without params",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400
+    },
+    {
+      "name": "POST track without object_id",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "POST track with non-existent object",
+      "method": "POST",
+      "path": "/",
+      "body": { "object_id": "00000000-0000-0000-0000-000000000000" },
+      "expectedStatus": 404
+    },
+    {
+      "name": "GET views with empty ids returns empty",
+      "method": "GET",
+      "path": "/?action=views&ids=",
+      "expectedStatus": 200
+    }
+  ]
+}

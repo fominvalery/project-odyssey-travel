@@ -84,6 +84,23 @@ export default function ObjectDetail() {
       .finally(() => setLoading(false))
   }, [id])
 
+  useEffect(() => {
+    if (!obj?.id) return
+    if (user?.id && obj.user_id && user.id === obj.user_id) return
+    const key = `view_tracked_${obj.id}`
+    if (sessionStorage.getItem(key)) return
+    sessionStorage.setItem(key, "1")
+    fetch(func2url.analytics, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        object_id: obj.id,
+        viewer_id: user?.id || null,
+        source: "detail",
+      }),
+    }).catch(() => {})
+  }, [obj?.id, obj?.user_id, user?.id])
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#0a0a0a]">

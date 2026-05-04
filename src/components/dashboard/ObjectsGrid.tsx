@@ -18,13 +18,14 @@ interface Props {
   onReassign?: (obj: ObjectData) => void
   onAddObject: () => void
   employees?: Array<{ user_id: string; name: string; department_id?: string }>
+  viewsByObject?: Record<string, number>
 }
 
 export default function ObjectsGrid({
   loading, viewMode,
   filtered, visibleFiltered, hasMore, visibleCount,
   onShowMore, onEdit, onDelete, onArchive, onSaveOwner, onReassign,
-  onAddObject, employees,
+  onAddObject, employees, viewsByObject,
 }: Props) {
   if (loading) {
     return (
@@ -71,6 +72,7 @@ export default function ObjectsGrid({
               onSaveOwner={onSaveOwner}
               onReassign={onReassign}
               employeeName={employees?.find(e => e.user_id === obj.user_id)?.name}
+              viewsCount={viewsByObject?.[String(obj.id)] ?? 0}
             />
           ))}
         </div>

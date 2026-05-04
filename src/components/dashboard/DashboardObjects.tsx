@@ -7,6 +7,7 @@ import ObjectsArchive from "./ObjectsArchive"
 import ObjectsStats from "./ObjectsStats"
 import ObjectsFilters from "./ObjectsFilters"
 import ObjectsGrid from "./ObjectsGrid"
+import func2url from "../../../backend/func2url.json"
 
 const FREE_LIMIT = 3
 const ARCHIVE_STATUSES = ["Продан", "Сдан"]
@@ -57,6 +58,24 @@ export default function DashboardObjects({
   const [visibleCount, setVisibleCount] = useState(6)
   const [employeeFilter, setEmployeeFilter] = useState("")
   const [deptFilter, setDeptFilter] = useState("")
+  const [viewsByObject, setViewsByObject] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    const ids = objects.map(o => String(o.id)).filter(Boolean)
+    if (ids.length === 0) {
+      setViewsByObject({})
+      return
+    }
+    const url = `${func2url.analytics}?action=views&ids=${encodeURIComponent(ids.join(","))}`
+    fetch(url)
+      .then(r => r.json())
+      .then(d => {
+        if (d && typeof d === "object" && d.counts && typeof d.counts === "object") {
+          setViewsByObject(d.counts as Record<string, number>)
+        }
+      })
+      .catch(() => {})
+  }, [objects])
 
   const canAddListing = !isBasic || (listingsUsed < FREE_LIMIT + listingsExtra)
 
@@ -164,6 +183,7 @@ export default function DashboardObjects({
           onReassign={onReassign}
           onAddObject={handleAddObject}
           employees={employees}
+          viewsByObject={viewsByObject}
         />
       </div>
     </>

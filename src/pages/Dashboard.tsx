@@ -361,7 +361,7 @@ export default function Dashboard() {
           {section === "crm" && <DashboardCRM userId={user.id} />}
 
           {section === "analytics" && (
-            <DashboardAnalytics objects={objects} />
+            <DashboardAnalytics objects={objects} userId={user.id} />
           )}
 
           {section === "referral" && <DashboardReferral userId={user.id} />}

@@ -155,6 +155,7 @@ interface ObjectCardProps {
   onSaveOwner?: (id: string, fields: Record<string, string>) => void
   onReassign?: (obj: ObjectData) => void
   employeeName?: string
+  viewsCount?: number
 }
 
 const BADGE_BY_TYPE: Record<string, { label: string; color: string; icon: string }> = {
@@ -177,7 +178,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 const ARCHIVE_STATUSES = ["Продан", "Сдан"]
 
-export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner, onReassign, employeeName }: ObjectCardProps) {
+export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner, onReassign, employeeName, viewsCount }: ObjectCardProps) {
   const [showArchiveMenu, setShowArchiveMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const photo = obj.photos && obj.photos.length > 0 ? obj.photos[0] : null
@@ -248,9 +249,17 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwn
             {obj.subtype}
           </span>
         )}
-        <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-3">
-          <Icon name="MapPin" className="h-3.5 w-3.5 text-violet-400" />
-          {obj.city || "Город не указан"}
+        <div className="flex items-center justify-between gap-2 text-gray-400 text-xs mb-3">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Icon name="MapPin" className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+            <span className="truncate">{obj.city || "Город не указан"}</span>
+          </div>
+          {typeof viewsCount === "number" && (
+            <div className="flex items-center gap-1 text-gray-500 shrink-0" title="Просмотров">
+              <Icon name="Eye" className="h-3.5 w-3.5 text-blue-400" />
+              <span>{viewsCount}</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-end justify-between mb-4 mt-auto">
