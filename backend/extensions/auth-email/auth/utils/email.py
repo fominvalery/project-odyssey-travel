@@ -2,8 +2,12 @@
 import os
 import secrets
 import smtplib
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def is_email_enabled() -> bool:
@@ -16,8 +20,11 @@ def generate_code() -> str:
     return str(secrets.randbelow(900000) + 100000)
 
 
-def send_email(to_email: str, subject: str, html_body: str, text_body: str) -> bool:
-    """Send email via SMTP (Gmail by default)."""
+def send_email(to_email: str, subject: str, html_body: str, text_body: str) -> tuple[bool, str]:
+    """Send email via SMTP (Gmail by default).
+
+    Returns (success, error_message). error_message пустая если success=True.
+    """
     smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
     smtp_port = int(os.environ.get('SMTP_PORT', '587'))
     smtp_user = os.environ.get('SMTP_USER', '')
@@ -25,24 +32,53 @@ def send_email(to_email: str, subject: str, html_body: str, text_body: str) -> b
     smtp_from = os.environ.get('SMTP_FROM', smtp_user)
 
     if not smtp_user or not smtp_password:
-        return False
+        msg = 'SMTP не настроен (нет SMTP_USER/SMTP_PASSWORD)'
+        logger.warning(f'[EMAIL] {msg}')
+        return False, msg
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = smtp_from
-    msg['To'] = to_email
+    msg_obj = MIMEMultipart('alternative')
+    msg_obj['Subject'] = subject
+    msg_obj['From'] = smtp_from
+    msg_obj['To'] = to_email
 
-    msg.attach(MIMEText(text_body, 'plain', 'utf-8'))
-    msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+    msg_obj.attach(MIMEText(text_body, 'plain', 'utf-8'))
+    msg_obj.attach(MIMEText(html_body, 'html', 'utf-8'))
 
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
-            server.sendmail(smtp_from, to_email, msg.as_string())
-        return True
-    except (smtplib.SMTPException, OSError):
-        return False
+            server.sendmail(smtp_from, to_email, msg_obj.as_string())
+        logger.info(f'[EMAIL] OK -> {to_email} | subject="{subject}" | host={smtp_host}:{smtp_port}')
+        return True, ''
+    except smtplib.SMTPAuthenticationError as e:
+        err = f'SMTP auth error: {e.smtp_code} {e.smtp_error!r}'
+        logger.error(f'[EMAIL] FAIL -> {to_email} | {err}')
+        return False, err
+    except smtplib.SMTPRecipientsRefused as e:
+        err = f'Recipient refused: {e.recipients!r}'
+        logger.error(f'[EMAIL] FAIL -> {to_email} | {err}')
+        return False, err
+    except smtplib.SMTPSenderRefused as e:
+        err = f'Sender refused: {e.smtp_code} {e.smtp_error!r}'
+        logger.error(f'[EMAIL] FAIL -> {to_email} | {err}')
+        return False, err
+    except smtplib.SMTPDataError as e:
+        err = f'SMTP data error (возможно лимит/спам-фильтр): {e.smtp_code} {e.smtp_error!r}'
+        logger.error(f'[EMAIL] FAIL -> {to_email} | {err}')
+        return False, err
+    except smtplib.SMTPException as e:
+        err = f'SMTP error: {type(e).__name__}: {e!r}'
+        logger.error(f'[EMAIL] FAIL -> {to_email} | {err}')
+        return False, err
+    except OSError as e:
+        err = f'Network/OS error: {type(e).__name__}: {e!r}'
+        logger.error(f'[EMAIL] FAIL -> {to_email} | {err}')
+        return False, err
+    except Exception as e:
+        err = f'Unexpected error: {type(e).__name__}: {e!r}'
+        logger.exception(f'[EMAIL] FAIL -> {to_email} | {err}')
+        return False, err
 
 
 def _base_template(title: str, content: str) -> str:
@@ -89,8 +125,8 @@ def _base_template(title: str, content: str) -> str:
 </html>"""
 
 
-def send_verification_code(to_email: str, code: str) -> bool:
-    """Send email verification code."""
+def send_verification_code(to_email: str, code: str) -> tuple[bool, str]:
+    """Send email verification code. Returns (success, error_message)."""
     subject = "Кабинет-24: Код подтверждения email"
 
     content = """
@@ -114,8 +150,8 @@ def send_verification_code(to_email: str, code: str) -> bool:
     return send_email(to_email, subject, html_body, text_body)
 
 
-def send_password_reset_code(to_email: str, code: str) -> bool:
-    """Send password reset code."""
+def send_password_reset_code(to_email: str, code: str) -> tuple[bool, str]:
+    """Send password reset code. Returns (success, error_message)."""
     subject = "Кабинет-24: Сброс пароля"
 
     content = """

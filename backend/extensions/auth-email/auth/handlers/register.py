@@ -26,9 +26,14 @@ def _send_verification_code(user_id: int, email: str, S: str) -> dict:
         VALUES ({escape(user_id)}, {escape(code)}, {escape(expires_at)}, {escape(now)})
     """)
 
-    if send_verification_code(email, code):
+    ok, err = send_verification_code(email, code)
+    if ok:
         return {'message': 'Код подтверждения отправлен на email', 'sent': True}
-    return {'message': 'Не удалось отправить код', 'sent': False}
+    return {
+        'message': 'Не удалось отправить письмо. Попробуйте запросить код повторно через минуту или используйте «Забыл пароль».',
+        'sent': False,
+        'smtp_error': err,
+    }
 
 
 def handle(event: dict, origin: str = '*') -> dict:

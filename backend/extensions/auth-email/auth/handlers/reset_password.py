@@ -52,10 +52,11 @@ def handle(event: dict, origin: str = '*') -> dict:
 
             # Send code via email if SMTP configured
             if is_email_enabled():
-                if send_password_reset_code(email, reset_code):
+                ok, _err = send_password_reset_code(email, reset_code)
+                if ok:
                     return response(200, {'message': response_msg}, origin)
                 else:
-                    return response(200, {'message': 'Не удалось отправить код'}, origin)
+                    return response(200, {'message': 'Не удалось отправить письмо. Попробуйте через минуту.'}, origin)
             else:
                 # Return code in response for development
                 return response(200, {
