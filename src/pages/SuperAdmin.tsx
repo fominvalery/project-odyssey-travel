@@ -10,6 +10,7 @@ import { STATUS_LABELS } from "@/hooks/useAuth"
 import SuperAdminExpiry from "@/components/admin/SuperAdminExpiry"
 
 type MainTab = "users" | "withdrawals" | "expiry"
+type UsersFilter = "all" | "unverified"
 
 const STATUS_COLORS: Record<string, string> = {
   basic:  "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
@@ -52,6 +53,8 @@ export default function SuperAdmin() {
   const [usersLoading, setUsersLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [levelDropdown, setLevelDropdown] = useState<string | null>(null)
+  const [usersFilter, setUsersFilter] = useState<UsersFilter>("all")
+  const [verifyingId, setVerifyingId] = useState<string | null>(null)
   const levelDropdownRef = useRef<HTMLDivElement>(null)
 
   // Withdrawals tab state
@@ -170,7 +173,25 @@ export default function SuperAdmin() {
     }
   }
 
+  const verifyEmailManually = async (targetId: string, email: string) => {
+    if (!user?.id) return
+    if (!confirm(`Подтвердить email пользователя ${email} вручную?\n\nПосле этого он сможет войти в систему даже без письма.`)) return
+    setVerifyingId(targetId)
+    try {
+      await superadminApi.verifyEmailManually(user.id, targetId)
+      setUsers((prev) => prev.map((u) => u.id === targetId ? { ...u, email_verified: true } : u))
+      toast({ title: "Готово", description: `Email ${email} подтверждён` })
+    } catch (e) {
+      toast({ title: "Ошибка", description: e instanceof Error ? e.message : "Не удалось подтвердить", variant: "destructive" })
+    } finally {
+      setVerifyingId(null)
+    }
+  }
+
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); loadUsers(search.trim()) }
+
+  const unverifiedCount = users.filter((u) => !u.email_verified).length
+  const filteredUsers = usersFilter === "unverified" ? users.filter((u) => !u.email_verified) : users
 
   const handleFilterChange = (f: string) => {
     setStatusFilter(f)
@@ -234,7 +255,7 @@ export default function SuperAdmin() {
         {/* === Раздел: Пользователи === */}
         {mainTab === "users" && (
           <div>
-            <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+            <form onSubmit={handleSearch} className="flex gap-2 mb-3">
               <div className="relative flex-1">
                 <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                 <Input value={search} onChange={(e) => setSearch(e.target.value)}
@@ -246,14 +267,41 @@ export default function SuperAdmin() {
               </Button>
             </form>
 
+            {/* Фильтр по статусу регистрации */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setUsersFilter("all")}
+                className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                  usersFilter === "all"
+                    ? "bg-blue-500/15 text-blue-300 border-blue-500/30"
+                    : "border-[#2a2a2a] text-gray-500 hover:text-white hover:border-gray-500"
+                }`}>
+                Все ({users.length})
+              </button>
+              <button
+                onClick={() => setUsersFilter("unverified")}
+                className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all flex items-center gap-1.5 ${
+                  usersFilter === "unverified"
+                    ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                    : "border-[#2a2a2a] text-gray-500 hover:text-white hover:border-gray-500"
+                }`}>
+                <Icon name="MailWarning" size={12} />
+                Незавершённая регистрация
+                {unverifiedCount > 0 && (
+                  <span className="bg-amber-500/20 text-amber-300 px-1.5 py-0 rounded-full">{unverifiedCount}</span>
+                )}
+              </button>
+            </div>
+
             <div className="rounded-xl border border-[#1f1f1f] bg-[#0d0d0d] overflow-hidden">
               {usersLoading && users.length === 0 ? (
                 <div className="p-10 text-center text-gray-500">
                   <Icon name="Loader2" size={20} className="animate-spin mx-auto mb-2" />Загрузка…
                 </div>
-              ) : users.length === 0 ? (
+              ) : filteredUsers.length === 0 ? (
                 <div className="p-10 text-center text-gray-500">
-                  <Icon name="Users" size={20} className="mx-auto mb-2 opacity-50" />Пользователей не найдено
+                  <Icon name={usersFilter === "unverified" ? "CheckCircle2" : "Users"} size={20} className="mx-auto mb-2 opacity-50" />
+                  {usersFilter === "unverified" ? "Все пользователи подтвердили email" : "Пользователей не найдено"}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -268,7 +316,7 @@ export default function SuperAdmin() {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map((u) => (
+                      {filteredUsers.map((u) => (
                         <tr key={u.id} className="border-t border-[#1f1f1f] hover:bg-[#111]">
                           <td className="px-4 py-3">
                             <div className="font-medium flex items-center gap-1.5">
@@ -280,8 +328,27 @@ export default function SuperAdmin() {
                             {u.company && <div className="text-xs text-gray-500">{u.company}</div>}
                           </td>
                           <td className="px-4 py-3">
-                            <div className="text-xs text-gray-300">{u.email}</div>
+                            <div className="text-xs text-gray-300 flex items-center gap-1.5 flex-wrap">
+                              <span>{u.email}</span>
+                              {!u.email_verified && (
+                                <span className="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase font-semibold flex items-center gap-1">
+                                  <Icon name="MailWarning" size={10} />
+                                  не подтв.
+                                </span>
+                              )}
+                            </div>
                             {u.phone && <div className="text-xs text-gray-500">{u.phone}</div>}
+                            {!u.email_verified && (
+                              <button
+                                onClick={() => verifyEmailManually(u.id, u.email)}
+                                disabled={verifyingId === u.id}
+                                className="mt-1.5 text-[11px] px-2 py-1 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-colors flex items-center gap-1 disabled:opacity-50">
+                                {verifyingId === u.id
+                                  ? <Icon name="Loader2" size={10} className="animate-spin" />
+                                  : <Icon name="CheckCircle2" size={10} />}
+                                Подтвердить email
+                              </button>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-1 flex-wrap">

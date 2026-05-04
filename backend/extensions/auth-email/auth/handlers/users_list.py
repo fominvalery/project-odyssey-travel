@@ -62,6 +62,7 @@ def handle(event: dict, origin: str = '*') -> dict:
         SELECT u.id, u.email, u.name, u.phone, u.company, u.plan, u.status,
                u.is_superadmin, u.listings_used, u.listings_extra,
                u.created_at, u.last_login_at, u.referral_level,
+               u.email_verified,
                COUNT(r.id) AS referral_count
         FROM {S}users u
         LEFT JOIN {S}referrals r ON r.referrer_id = u.id
@@ -75,7 +76,7 @@ def handle(event: dict, origin: str = '*') -> dict:
     for row in rows:
         uid, email, name, phone, company, plan, status, is_superadmin, \
             listings_used, listings_extra, created_at, last_login_at, \
-            referral_level_override, referral_count = row
+            referral_level_override, email_verified, referral_count = row
 
         ref_count = int(referral_count or 0)
         level = get_referral_level(ref_count, referral_level_override)
@@ -95,6 +96,7 @@ def handle(event: dict, origin: str = '*') -> dict:
             'last_login_at': last_login_at.isoformat() if last_login_at else None,
             'referral_count': ref_count,
             'referral_level': level,
+            'email_verified': bool(email_verified),
         })
 
     return response(200, {'users': users, 'total': len(users)}, origin)

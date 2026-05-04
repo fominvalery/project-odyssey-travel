@@ -23,6 +23,7 @@ export interface AdminUser {
   last_login_at: string | null
   referral_count: number
   referral_level: ReferralLevel
+  email_verified: boolean
 }
 
 export interface AdminWithdrawal {
@@ -130,5 +131,16 @@ export const superadminApi = {
     const raw = await res.text()
     const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
     if (!res.ok) throw new Error(data?.error || "Ошибка обновления")
+  },
+
+  async verifyEmailManually(actorId: string, userId: string): Promise<void> {
+    const res = await fetch(`${AUTH_URL}?action=admin-verify-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-User-Id": actorId },
+      body: JSON.stringify({ user_id: userId }),
+    })
+    const raw = await res.text()
+    const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+    if (!res.ok) throw new Error(data?.error || "Не удалось подтвердить email")
   },
 }

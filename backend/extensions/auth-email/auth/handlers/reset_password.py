@@ -92,10 +92,13 @@ def handle(event: dict, origin: str = '*') -> dict:
         if not token_record:
             return error(400, 'Неверный или истёкший код', origin)
 
-        # Update password
+        # Update password + auto-verify email (если человек получил код из письма — значит email его)
         new_password_hash = hash_password(new_password)
         execute(f"""
-            UPDATE {S}users SET password_hash = {escape(new_password_hash)}, updated_at = {escape(now)}
+            UPDATE {S}users
+            SET password_hash = {escape(new_password_hash)},
+                email_verified = TRUE,
+                updated_at = {escape(now)}
             WHERE id = {escape(user_id)}
         """)
 
