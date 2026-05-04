@@ -350,7 +350,11 @@ export default function Dashboard() {
         <Suspense fallback={null}>
           <ClubPayDialog open={showRenewDialog} onClose={() => setShowRenewDialog(false)} />
           {section === "dashboard" && (
-            <DashboardHome user={user} objects={objects} />
+            <DashboardHome
+              user={user}
+              objects={objects}
+              onNavigateSection={(target) => setSection(target)}
+            />
           )}
 
           {section === "objects" && (

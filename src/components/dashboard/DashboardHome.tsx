@@ -16,6 +16,7 @@ interface Lead {
 interface Props {
   user: { id?: string; name: string; status: string }
   objects: ObjectData[]
+  onNavigateSection?: (target: "objects" | "crm" | "analytics") => void
 }
 
 const DEAL_STAGES = ["Закрыт", "won", "closed", "deal", "Сделка", "Завершён", "Договор"]
@@ -41,7 +42,7 @@ function objectStatusColor(s: string) {
   return "bg-gray-500/10 text-gray-400"
 }
 
-export default function DashboardHome({ user, objects }: Props) {
+export default function DashboardHome({ user, objects, onNavigateSection }: Props) {
   const [leads, setLeads] = useState<Lead[]>([])
   const [viewsTotal, setViewsTotal] = useState<number>(0)
 
@@ -80,11 +81,12 @@ export default function DashboardHome({ user, objects }: Props) {
     .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
     .slice(0, 3)
 
+  const go = (t: "objects" | "crm" | "analytics") => () => onNavigateSection?.(t)
   const stats = [
-    { label: "Объектов", value: String(objects.length), icon: "Building2", color: "text-blue-400" },
-    { label: "Лидов", value: String(leads.length), icon: "Users", color: "text-emerald-400" },
-    { label: "Просмотров", value: viewsTotal.toLocaleString("ru-RU"), icon: "Eye", color: "text-violet-400" },
-    { label: "Сделок", value: String(dealsCount), icon: "Handshake", color: "text-amber-400" },
+    { label: "Объектов", value: String(objects.length), icon: "Building2", color: "text-blue-400", onClick: go("objects") },
+    { label: "Лидов", value: String(leads.length), icon: "Users", color: "text-emerald-400", onClick: go("crm") },
+    { label: "Просмотров", value: viewsTotal.toLocaleString("ru-RU"), icon: "Eye", color: "text-violet-400", onClick: go("analytics") },
+    { label: "Сделок", value: String(dealsCount), icon: "Handshake", color: "text-amber-400", onClick: go("crm") },
   ]
 
   return (
@@ -95,13 +97,32 @@ export default function DashboardHome({ user, objects }: Props) {
       </p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
-            <Icon name={stat.icon as "Building2"} className={`h-5 w-5 mb-3 ${stat.color}`} />
-            <p className="text-2xl font-bold">{stat.value}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
-          </div>
-        ))}
+        {stats.map((stat) => {
+          const clickable = !!onNavigateSection
+          return (
+            <button
+              key={stat.label}
+              type="button"
+              onClick={clickable ? stat.onClick : undefined}
+              disabled={!clickable}
+              className={`text-left rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 transition group relative ${
+                clickable
+                  ? "cursor-pointer hover:border-[#2a2a2a] hover:bg-[#141414]"
+                  : "cursor-default"
+              }`}
+            >
+              <Icon name={stat.icon as "Building2"} className={`h-5 w-5 mb-3 ${stat.color}`} />
+              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+              {clickable && (
+                <Icon
+                  name="ArrowUpRight"
+                  className="absolute top-4 right-4 h-3.5 w-3.5 text-gray-600 group-hover:text-white transition"
+                />
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
