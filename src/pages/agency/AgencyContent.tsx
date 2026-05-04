@@ -138,6 +138,7 @@ export default function AgencyContent({
               : undefined
             }
             departments={isDirector ? departments.map(d => ({ id: d.id, name: d.name })) : undefined}
+            onNavigateSection={(target) => setSection(target)}
           />
         )}
 
