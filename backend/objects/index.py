@@ -177,6 +177,20 @@ def handler(event: dict, context) -> dict:
             org_id = body.get("org_id") or None
             dept_id = body.get("department_id") or None
 
+            # Автоподстановка org_id и department_id из членства владельца
+            if user_id and (not org_id or not dept_id):
+                cur.execute(
+                    f"SELECT organization_id, department_id FROM {schema}.org_memberships"
+                    " WHERE user_id=%s AND status='active' LIMIT 1",
+                    (user_id,),
+                )
+                row_org = cur.fetchone()
+                if row_org:
+                    if not org_id and row_org[0]:
+                        org_id = str(row_org[0])
+                    if not dept_id and row_org[1]:
+                        dept_id = str(row_org[1])
+
             sql = (
                 "INSERT INTO " + schema + ".objects"
                 " (user_id, category, type, title, city, address, price, area,"
