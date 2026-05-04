@@ -847,17 +847,46 @@ def org_analytics(user_id, org_id):
         )
         lead_total = cur.fetchone()
 
+        # Лиды и сделки по источникам
+        cur.execute(
+            "SELECT COALESCE(NULLIF(TRIM(source), ''), 'Другое') AS source, "
+            "COUNT(*) AS total, "
+            "SUM(CASE WHEN stage='Сделка' THEN 1 ELSE 0 END) AS deals "
+            "FROM leads WHERE org_id=%s "
+            "GROUP BY COALESCE(NULLIF(TRIM(source), ''), 'Другое') "
+            "ORDER BY total DESC",
+            (org_id,),
+        )
+        leads_by_source = cur.fetchall()
+
+        # Просмотры по объектам агентства
+        cur.execute(
+            "SELECT COUNT(*) AS views FROM object_views v "
+            "WHERE v.object_id IN (SELECT id FROM objects WHERE org_id=%s)",
+            (org_id,),
+        )
+        views_total = cur.fetchone()
+
         return _cors({
             'summary': {
                 'total_objects': int(obj_total['total_objects'] or 0),
                 'published_objects': int(obj_total['published_objects'] or 0),
                 'total_leads': int(lead_total['total_leads'] or 0),
                 'total_deals': int(lead_total['total_deals'] or 0),
+                'total_views': int(views_total['views'] or 0) if views_total else 0,
             },
             'dept_objects': list(dept_objects),
             'dept_leads': list(dept_leads),
             'top_by_objects': list(top_by_objects),
             'top_by_leads': list(top_by_leads),
+            'leads_by_source': [
+                {
+                    'source': r['source'],
+                    'total': int(r['total'] or 0),
+                    'deals': int(r['deals'] or 0),
+                }
+                for r in leads_by_source
+            ],
         })
 
 

@@ -3,6 +3,7 @@ import Icon from "@/components/ui/icon"
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  PieChart, Pie, Cell,
 } from "recharts"
 import { type ObjectData } from "@/components/AddObjectWizard"
 import func2url from "../../../backend/func2url.json"
@@ -16,6 +17,12 @@ interface ActivityPoint {
   лиды: number
 }
 
+interface SourceItem {
+  source: string
+  total: number
+  deals: number
+}
+
 interface Metrics {
   views: number
   leads: number
@@ -24,6 +31,7 @@ interface Metrics {
   objects: number
   conversion: number
   activity: ActivityPoint[]
+  by_source: SourceItem[]
 }
 
 interface Props {
@@ -34,8 +42,13 @@ interface Props {
 }
 
 const EMPTY: Metrics = {
-  views: 0, leads: 0, requests: 0, deals: 0, objects: 0, conversion: 0, activity: [],
+  views: 0, leads: 0, requests: 0, deals: 0, objects: 0, conversion: 0, activity: [], by_source: [],
 }
+
+const SOURCE_COLORS = [
+  "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b",
+  "#ec4899", "#06b6d4", "#f43f5e", "#a3a3a3",
+]
 
 export default function DashboardAnalytics({ objects, userId, orgId, departmentId }: Props) {
   const [period, setPeriod] = useState<Period>("30")
@@ -67,6 +80,7 @@ export default function DashboardAnalytics({ objects, userId, orgId, departmentI
             objects: d.objects ?? objects.length,
             conversion: d.conversion || 0,
             activity: d.activity,
+            by_source: Array.isArray(d.by_source) ? d.by_source : [],
           })
         }
       })
@@ -251,6 +265,108 @@ export default function DashboardAnalytics({ objects, userId, orgId, departmentI
           </ResponsiveContainer>
         </div>
       )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+        <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5">
+          <h2 className="font-semibold mb-1 flex items-center gap-2">
+            <Icon name="PieChart" className="h-4 w-4 text-violet-400" />
+            Откуда приходят лиды
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">Распределение заявок по источникам за {period} дн.</p>
+          {data.by_source.length === 0 ? (
+            <div className="h-[220px] flex items-center justify-center text-sm text-gray-500">
+              Нет данных по источникам
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart>
+                <Pie
+                  data={data.by_source.map((s, i) => ({
+                    name: s.source,
+                    value: s.total,
+                    fill: SOURCE_COLORS[i % SOURCE_COLORS.length],
+                  }))}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={85}
+                  paddingAngle={2}
+                  stroke="#0a0a0a"
+                >
+                  {data.by_source.map((_, i) => (
+                    <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ background: "#141414", border: "1px solid #262626", borderRadius: 12, fontSize: 12, color: "#fff" }}
+                  formatter={(v: number, name: string) => {
+                    const total = data.by_source.reduce((s, x) => s + x.total, 0)
+                    const pct = total > 0 ? Math.round((v / total) * 1000) / 10 : 0
+                    return [`${v} (${pct}%)`, name]
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  wrapperStyle={{ fontSize: 11, color: "#9ca3af" }}
+                  iconType="circle"
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        <div className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-5">
+          <h2 className="font-semibold mb-1 flex items-center gap-2">
+            <Icon name="Trophy" className="h-4 w-4 text-emerald-400" />
+            Сделки по источникам
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">Какие каналы реально продают</p>
+          {data.by_source.filter(s => s.deals > 0).length === 0 ? (
+            <div className="h-[220px] flex items-center justify-center text-sm text-gray-500">
+              Сделок ещё не было
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart>
+                <Pie
+                  data={data.by_source
+                    .filter(s => s.deals > 0)
+                    .map((s, i) => ({
+                      name: s.source,
+                      value: s.deals,
+                      fill: SOURCE_COLORS[i % SOURCE_COLORS.length],
+                    }))}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={85}
+                  paddingAngle={2}
+                  stroke="#0a0a0a"
+                />
+                <Tooltip
+                  contentStyle={{ background: "#141414", border: "1px solid #262626", borderRadius: 12, fontSize: 12, color: "#fff" }}
+                  formatter={(v: number, name: string) => {
+                    const total = data.by_source.reduce((s, x) => s + x.deals, 0)
+                    const pct = total > 0 ? Math.round((v / total) * 1000) / 10 : 0
+                    return [`${v} (${pct}%)`, name]
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  wrapperStyle={{ fontSize: 11, color: "#9ca3af" }}
+                  iconType="circle"
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
 
     </div>
   )

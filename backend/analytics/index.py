@@ -225,6 +225,29 @@ def handler(event: dict, context) -> dict:
                 "лиды": leads_by_day.get(day_str, 0),
             })
 
+        # Лиды по источникам за период
+        by_source = []
+        try:
+            cur.execute(
+                f"SELECT COALESCE(NULLIF(TRIM(source), ''), 'Другое') AS src,"
+                f" COUNT(*) AS total,"
+                f" SUM(CASE WHEN stage='Сделка' THEN 1 ELSE 0 END) AS deals"
+                f" FROM {schema}.leads l"
+                f" WHERE {lead_filter} AND l.created_at >= %s"
+                f" GROUP BY COALESCE(NULLIF(TRIM(source), ''), 'Другое')"
+                f" ORDER BY total DESC",
+                lead_args + (since,),
+            )
+            for src, total, deals in cur.fetchall():
+                by_source.append({
+                    "source": src,
+                    "total": int(total or 0),
+                    "deals": int(deals or 0),
+                })
+        except Exception:
+            conn.rollback()
+            by_source = []
+
         return resp(200, {
             "period": period,
             "views": total_views,
@@ -234,6 +257,7 @@ def handler(event: dict, context) -> dict:
             "objects": objects_count,
             "conversion": conversion,
             "activity": activity,
+            "by_source": by_source,
         })
 
     except Exception as e:

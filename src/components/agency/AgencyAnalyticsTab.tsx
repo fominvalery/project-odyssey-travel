@@ -15,6 +15,7 @@ import {
 } from "recharts"
 import { agencyApi, OrgAnalytics, ROLE_TITLES } from "@/lib/agencyApi"
 import { useAuthContext } from "@/context/AuthContext"
+import SourcesAndFunnel from "@/components/analytics/SourcesAndFunnel"
 
 interface Props {
   orgId: string
@@ -100,7 +101,7 @@ export default function AgencyAnalyticsTab({ orgId }: Props) {
     )
   }
 
-  const { summary, dept_objects, dept_leads, top_by_objects, top_by_leads } = data
+  const { summary, dept_objects, dept_leads, top_by_objects, top_by_leads, leads_by_source } = data
 
   // Данные для графика объектов по отделам
   const deptChartObjects = dept_objects.map((d, i) => ({
@@ -266,6 +267,15 @@ export default function AgencyAnalyticsTab({ orgId }: Props) {
           </Card>
         </div>
       )}
+
+      {/* Источники и воронка */}
+      <SourcesAndFunnel
+        sources={leads_by_source ?? []}
+        views={summary.total_views ?? 0}
+        leads={summary.total_leads}
+        deals={summary.total_deals}
+        title="Агентство"
+      />
 
       {/* Топ сотрудников */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

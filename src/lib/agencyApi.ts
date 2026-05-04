@@ -306,17 +306,25 @@ export interface EmployeeStat {
   deals_count?: number
 }
 
+export interface SourceStat {
+  source: string
+  total: number
+  deals: number
+}
+
 export interface OrgAnalytics {
   summary: {
     total_objects: number
     published_objects: number
     total_leads: number
     total_deals: number
+    total_views?: number
   }
   dept_objects: DeptObjectStat[]
   dept_leads: DeptLeadStat[]
   top_by_objects: EmployeeStat[]
   top_by_leads: EmployeeStat[]
+  leads_by_source?: SourceStat[]
 }
 
 export interface OrgFull {
