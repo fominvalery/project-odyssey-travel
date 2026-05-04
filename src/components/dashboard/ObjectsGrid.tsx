@@ -16,6 +16,7 @@ interface Props {
   onArchive?: (id: string, status: "Продан" | "Сдан") => void
   onSaveOwner?: (id: string, fields: Record<string, string>) => void
   onReassign?: (obj: ObjectData) => void
+  onExtend?: (id: string) => void
   onAddObject: () => void
   employees?: Array<{ user_id: string; name: string; department_id?: string }>
   viewsByObject?: Record<string, number>
@@ -24,7 +25,7 @@ interface Props {
 export default function ObjectsGrid({
   loading, viewMode,
   filtered, visibleFiltered, hasMore, visibleCount,
-  onShowMore, onEdit, onDelete, onArchive, onSaveOwner, onReassign,
+  onShowMore, onEdit, onDelete, onArchive, onSaveOwner, onReassign, onExtend,
   onAddObject, employees, viewsByObject,
 }: Props) {
   if (loading) {
@@ -71,6 +72,7 @@ export default function ObjectsGrid({
               onArchive={onArchive}
               onSaveOwner={onSaveOwner}
               onReassign={onReassign}
+              onExtend={onExtend}
               employeeName={employees?.find(e => e.user_id === obj.user_id)?.name}
               viewsCount={viewsByObject?.[String(obj.id)] ?? 0}
             />

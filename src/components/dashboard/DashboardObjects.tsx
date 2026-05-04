@@ -7,6 +7,7 @@ import ObjectsArchive from "./ObjectsArchive"
 import ObjectsStats from "./ObjectsStats"
 import ObjectsFilters from "./ObjectsFilters"
 import ObjectsGrid from "./ObjectsGrid"
+import ObjectCard from "./ObjectCard"
 import func2url from "../../../backend/func2url.json"
 
 const FREE_LIMIT = 3
@@ -57,6 +58,7 @@ export default function DashboardObjects({
 }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showArchive, setShowArchive] = useState(false)
+  const [showExpired, setShowExpired] = useState(false)
   const [visibleCount, setVisibleCount] = useState(6)
   const [employeeFilter, setEmployeeFilter] = useState("")
   const [deptFilter, setDeptFilter] = useState("")
@@ -105,8 +107,37 @@ export default function DashboardObjects({
     setShowWizard(true)
   }
 
-  const activeObjects = objects.filter(o => !ARCHIVE_STATUSES.includes(o.status))
+  async function handleExtend(id: string) {
+    if (!userId) return
+    try {
+      const res = await fetch(func2url.objects, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "extend", id, user_id: userId }),
+      })
+      if (res.status === 402) {
+        // Нет свободных слотов — открываем баннер оплаты
+        const banner = document.getElementById("listings-banner-pay")
+        banner?.scrollIntoView({ behavior: "smooth", block: "center" })
+        alert("Нет свободных слотов. Оплатите пакет объявлений, чтобы продлить.")
+        return
+      }
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.object) {
+          onWizardSaved(data.object)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const isExpiredObj = (o: ObjectData) => !!o.auto_unpublished
   const archivedObjects = objects.filter(o => ARCHIVE_STATUSES.includes(o.status))
+  const expiredObjects = objects.filter(o => !ARCHIVE_STATUSES.includes(o.status) && isExpiredObj(o))
+  const activeObjects = objects.filter(o => !ARCHIVE_STATUSES.includes(o.status) && !isExpiredObj(o))
+  const requiresPaymentObjects = activeObjects.filter(o => o.requires_payment)
 
   const deptEmployeeIds = deptFilter && employees
     ? new Set(employees.filter(e => e.department_id === deptFilter).map(e => e.user_id))
@@ -144,6 +175,43 @@ export default function DashboardObjects({
     )
   }
 
+  if (showExpired) {
+    return (
+      <div className="p-6 md:p-8 max-w-7xl">
+        <button
+          onClick={() => setShowExpired(false)}
+          className="text-sm text-gray-400 hover:text-white mb-4 flex items-center gap-1.5"
+        >
+          <Icon name="ArrowLeft" className="h-4 w-4" />
+          Назад к объектам
+        </button>
+        <h1 className="text-2xl font-bold mb-1">Истекшие объявления</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Эти объявления автоматически сняты с публикации. Продлите их, чтобы вернуть в работу.
+        </p>
+        {expiredObjects.length === 0 ? (
+          <div className="rounded-2xl border border-[#1f1f1f] bg-[#111] py-20 text-center">
+            <Icon name="CheckCircle2" className="h-12 w-12 text-emerald-500/60 mx-auto mb-4" />
+            <p className="text-gray-400 font-medium">Истёкших объявлений нет</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {expiredObjects.map((obj) => (
+              <ObjectCard
+                key={obj.id}
+                obj={obj}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onSaveOwner={onSaveOwner}
+                onExtend={handleExtend}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <>
       {showWizard && (
@@ -165,14 +233,45 @@ export default function DashboardObjects({
         </div>
 
         {isBasic && (
-          <ListingsBanner
-            listingsUsed={listingsUsed}
-            listingsExtra={listingsExtra}
-            userEmail={userEmail}
-            userName={userName}
-            userId={userId}
-            onAddListingClick={handleAddObject}
-          />
+          <div id="listings-banner-pay">
+            <ListingsBanner
+              listingsUsed={listingsUsed}
+              listingsExtra={listingsExtra}
+              userEmail={userEmail}
+              userName={userName}
+              userId={userId}
+              onAddListingClick={handleAddObject}
+            />
+          </div>
+        )}
+
+        {requiresPaymentObjects.length > 0 && (
+          <div className="mb-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <Icon name="CreditCard" className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-amber-200 text-sm">
+                  {requiresPaymentObjects.length} объявлений требуют оплаты
+                </p>
+                <p className="text-xs text-amber-300/70 mt-0.5">
+                  После окончания подписки Клуба эти объекты активны ещё 3 дня. Продлите Клуб или купите пакет объявлений.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {expiredObjects.length > 0 && (
+          <button
+            onClick={() => setShowExpired(true)}
+            className="mb-5 w-full rounded-2xl border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 p-3 flex items-center justify-between gap-3 transition-colors"
+          >
+            <span className="flex items-center gap-2 text-sm text-red-300">
+              <Icon name="AlertCircle" className="h-4 w-4" />
+              {expiredObjects.length} объявлений истекли — продлите чтобы вернуть в каталог
+            </span>
+            <Icon name="ArrowRight" className="h-4 w-4 text-red-400" />
+          </button>
         )}
 
         <ObjectsStats
@@ -216,6 +315,7 @@ export default function DashboardObjects({
           onArchive={onArchive}
           onSaveOwner={onSaveOwner}
           onReassign={onReassign}
+          onExtend={handleExtend}
           onAddObject={handleAddObject}
           employees={employees}
           viewsByObject={viewsByObject}

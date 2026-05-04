@@ -22,7 +22,7 @@ CORS = {
 SELECT_COLS = (
     "id, user_id, category, type, title, city, address, price, "
     "area, description, yield_percent, extra_fields, status, published, created_at, photos, "
-    "presentation_url, org_id, department_id"
+    "presentation_url, org_id, department_id, expires_at, requires_payment, auto_unpublished"
 )
 
 
@@ -59,7 +59,32 @@ def row_to_obj(r, private=False):
         "presentation_url": r[16] or None,
         "org_id": str(r[17]) if r[17] else None,
         "department_id": str(r[18]) if r[18] else None,
+        "expires_at": r[19].isoformat() if r[19] else None,
+        "requires_payment": bool(r[20]) if len(r) > 20 else False,
+        "auto_unpublished": bool(r[21]) if len(r) > 21 else False,
     }
+
+
+def get_user_status(cur, schema, user_id):
+    """Возвращает текущий статус пользователя ('basic' | 'broker' | 'agency' | ...)."""
+    if not user_id:
+        return "basic"
+    try:
+        cur.execute(
+            f"SELECT COALESCE(status, 'basic') FROM {schema}.users WHERE id=%s",
+            (user_id,),
+        )
+        r = cur.fetchone()
+        return (r[0] if r else "basic") or "basic"
+    except Exception:
+        return "basic"
+
+
+def calc_expires_for_user(status):
+    """Возвращает SQL-выражение для expires_at в зависимости от тарифа."""
+    if status in ("broker", "agency"):
+        return None
+    return "NOW() + INTERVAL '30 days'"
 
 
 def resp(status, body):
@@ -132,6 +157,7 @@ def handler(event: dict, context) -> dict:
                 return resp(200, {"objects": [row_to_obj(r) for r in rows]})
 
             archive = params.get("archive")
+            expired_view = params.get("expired")
 
             if user_id:
                 # Разрешаем: сам пользователь ИЛИ коллега по организации
@@ -159,7 +185,10 @@ def handler(event: dict, context) -> dict:
             else:
                 cur.execute(
                     "SELECT " + SELECT_COLS + " FROM " + schema + ".objects"
-                    " WHERE published = true AND status = %s ORDER BY created_at DESC",
+                    " WHERE published = true AND status = %s"
+                    " AND auto_unpublished = false"
+                    " AND (expires_at IS NULL OR expires_at > NOW())"
+                    " ORDER BY created_at DESC",
                     ("Активен",),
                 )
 
@@ -171,6 +200,83 @@ def handler(event: dict, context) -> dict:
         # ---------- POST ----------
         if method == "POST":
             body = json.loads(event.get("body") or "{}")
+            action = body.get("action")
+
+            # Продление объявления на 30 дней
+            if action == "extend":
+                obj_id = body.get("id")
+                user_id = body.get("user_id")
+                if not obj_id or not user_id:
+                    return resp(400, {"error": "id and user_id required"})
+                cur.execute(
+                    f"SELECT user_id, expires_at, requires_payment FROM {schema}.objects WHERE id=%s",
+                    (obj_id,),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return resp(404, {"error": "not found"})
+                if str(row[0]) != str(user_id):
+                    return resp(403, {"error": "forbidden"})
+
+                user_status = get_user_status(cur, schema, user_id)
+                # Брокер/Агентство — снять ограничение полностью
+                if user_status in ("broker", "agency"):
+                    cur.execute(
+                        f"UPDATE {schema}.objects SET expires_at=NULL,"
+                        " requires_payment=FALSE, auto_unpublished=FALSE,"
+                        " published=TRUE, expiry_notified_at=NULL"
+                        " WHERE id=%s RETURNING " + SELECT_COLS,
+                        (obj_id,),
+                    )
+                    conn.commit()
+                    return resp(200, {"ok": True, "object": row_to_obj(cur.fetchone())})
+
+                # Базовый: проверим наличие бесплатных слотов или extra
+                cur.execute(
+                    f"SELECT COALESCE(listings_used,0), COALESCE(listings_extra,0)"
+                    f" FROM {schema}.users WHERE id=%s",
+                    (user_id,),
+                )
+                u = cur.fetchone()
+                used = int(u[0] or 0) if u else 0
+                extra_paid = int(u[1] or 0) if u else 0
+                FREE_LIMIT = 3
+                free_left = max(0, FREE_LIMIT - used)
+                has_slot = free_left > 0 or extra_paid > 0
+
+                if not has_slot:
+                    return resp(402, {
+                        "error": "no_free_slots",
+                        "message": "Нет свободных слотов для продления — оплатите пакет объявлений",
+                    })
+
+                # Списываем слот: если есть бесплатные — увеличиваем used, иначе тратим extra
+                if free_left > 0:
+                    cur.execute(
+                        f"UPDATE {schema}.users SET listings_used = COALESCE(listings_used,0) + 1 WHERE id=%s",
+                        (user_id,),
+                    )
+                else:
+                    cur.execute(
+                        f"UPDATE {schema}.users SET listings_extra = GREATEST(0, COALESCE(listings_extra,0) - 1) WHERE id=%s",
+                        (user_id,),
+                    )
+
+                # Продление: с даты истечения, либо с now() если уже истёк
+                cur.execute(
+                    f"UPDATE {schema}.objects SET"
+                    " expires_at = CASE"
+                    "   WHEN expires_at IS NULL OR expires_at < NOW() THEN NOW() + INTERVAL '30 days'"
+                    "   ELSE expires_at + INTERVAL '30 days'"
+                    " END,"
+                    " requires_payment=FALSE, auto_unpublished=FALSE, published=TRUE,"
+                    " expiry_notified_at=NULL"
+                    f" WHERE id=%s RETURNING " + SELECT_COLS,
+                    (obj_id,),
+                )
+                conn.commit()
+                return resp(200, {"ok": True, "object": row_to_obj(cur.fetchone())})
+
             user_id = body.get("user_id") or None
             extra = json.dumps(body.get("extra_fields", {}))
             photos = body.get("photos") or []
@@ -191,12 +297,16 @@ def handler(event: dict, context) -> dict:
                     if not dept_id and row_org[1]:
                         dept_id = str(row_org[1])
 
+            user_status = get_user_status(cur, schema, user_id)
+            expires_expr = calc_expires_for_user(user_status)
+            expires_sql = expires_expr if expires_expr else "NULL"
+
             sql = (
                 "INSERT INTO " + schema + ".objects"
                 " (user_id, category, type, title, city, address, price, area,"
                 "  description, yield_percent, extra_fields, status, published, photos,"
-                "  presentation_url, org_id, department_id)"
-                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s)"
+                "  presentation_url, org_id, department_id, expires_at)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s," + expires_sql + ")"
                 " RETURNING " + SELECT_COLS
             )
             cur.execute(sql, (

@@ -17,6 +17,10 @@ export interface ObjectData {
   user_id?: string | null
   extra_fields?: Record<string, string>
   presentation_url?: string | null
+  expires_at?: string | null
+  requires_payment?: boolean
+  auto_unpublished?: boolean
+  created_at?: string
 }
 
 export interface WizardForm {

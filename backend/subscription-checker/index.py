@@ -127,9 +127,36 @@ def handler(event: dict, context) -> dict:
                     updated_at = NOW()
                 WHERE id = %s
             """, (str(user_id),))
+
+            # Проставляем сроки объектам по правилу: топ-3 свежих → 30 дней,
+            # остальные → 3 дня + флаг requires_payment
+            try:
+                cur.execute(f"""
+                    WITH ranked AS (
+                        SELECT id, ROW_NUMBER() OVER (ORDER BY created_at DESC) AS rn
+                        FROM {S}objects
+                        WHERE user_id = %s AND published = TRUE AND status = 'Активен'
+                    )
+                    UPDATE {S}objects o
+                    SET expires_at = CASE
+                            WHEN r.rn <= 3 THEN NOW() + INTERVAL '30 days'
+                            ELSE NOW() + INTERVAL '3 days'
+                        END,
+                        requires_payment = CASE
+                            WHEN r.rn <= 3 THEN FALSE
+                            ELSE TRUE
+                        END,
+                        auto_unpublished = FALSE,
+                        expiry_notified_at = NULL
+                    FROM ranked r
+                    WHERE o.id = r.id
+                """, (str(user_id),))
+            except Exception:
+                conn.rollback()
+
             create_notification(cur, S, str(user_id),
                 'Подписка Клуб деактивирована',
-                'Срок действия вашей подписки истёк. Аккаунт переведён на тариф Basic. Продлите подписку, чтобы восстановить доступ.',
+                'Срок действия подписки истёк. 3 свежих объекта останутся активны 30 дней, остальные — 3 дня. Продлите подписку или оплатите пакет объявлений.',
                 'warning')
             send_email(email,
                 'Подписка Клуб деактивирована — Кабинет-24',
@@ -221,6 +248,67 @@ def handler(event: dict, context) -> dict:
                 f'Подписка Клуб истекает {end_str}. Продлите: {site_url}'
             )
             results['notified_4d'] += 1
+
+    # ───── Объявления: уведомления за 3 дня и автоснятие истёкших ─────
+    results['object_expiring_soon'] = 0
+    results['object_auto_unpublished'] = 0
+
+    # Уведомление за 3 дня (один раз)
+    try:
+        cur.execute(f"""
+            SELECT o.id, o.title, o.user_id, u.email, u.name
+            FROM {S}objects o
+            JOIN {S}users u ON u.id = o.user_id
+            WHERE o.expires_at IS NOT NULL
+              AND o.published = TRUE
+              AND o.auto_unpublished = FALSE
+              AND o.expires_at BETWEEN NOW() AND NOW() + INTERVAL '3 days'
+              AND (o.expiry_notified_at IS NULL OR o.expiry_notified_at < NOW() - INTERVAL '7 days')
+        """)
+        for obj_id, title, owner_id, owner_email, owner_name in cur.fetchall():
+            create_notification(cur, S, str(owner_id),
+                'Объявление истекает через 3 дня',
+                f'«{title or "Без названия"}» — продлите, чтобы оно осталось в каталоге.',
+                'warning')
+            if owner_email:
+                send_email(owner_email,
+                    'Объявление истекает через 3 дня — Кабинет-24',
+                    build_email_html(
+                        'Объявление истекает через 3 дня',
+                        'Скоро объявление будет снято',
+                        f'Ваше объявление «{title or "Без названия"}» истекает через 3 дня. Продлите его в личном кабинете, чтобы оно осталось активным.',
+                        site_url,
+                        'Перейти в кабинет'
+                    ),
+                    f'Объявление "{title}" истекает через 3 дня. Продлите: {site_url}'
+                )
+            cur.execute(
+                f"UPDATE {S}objects SET expiry_notified_at = NOW() WHERE id = %s",
+                (str(obj_id),),
+            )
+            results['object_expiring_soon'] += 1
+    except Exception:
+        conn.rollback()
+
+    # Автоснятие истёкших с публикации
+    try:
+        cur.execute(f"""
+            UPDATE {S}objects
+            SET auto_unpublished = TRUE, published = FALSE
+            WHERE expires_at IS NOT NULL
+              AND expires_at < NOW()
+              AND auto_unpublished = FALSE
+              AND status NOT IN ('Продан', 'Сдан')
+            RETURNING id, user_id, title
+        """)
+        for obj_id, owner_id, title in cur.fetchall():
+            create_notification(cur, S, str(owner_id),
+                'Объявление снято с публикации',
+                f'«{title or "Без названия"}» больше не отображается в каталоге. Продлите его, чтобы вернуть в работу.',
+                'warning')
+            results['object_auto_unpublished'] += 1
+    except Exception:
+        conn.rollback()
 
     conn.commit()
     cur.close()

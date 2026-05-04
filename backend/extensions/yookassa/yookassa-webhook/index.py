@@ -178,11 +178,33 @@ def handler(event, context):
                         qty_row = cur.fetchone()
                         qty = int(qty_row[0]) if qty_row else 0
                         if qty > 0:
+                            # Сначала автоматически продлеваем объекты с requires_payment=TRUE
+                            # на 30 дней, тратя купленные слоты
                             cur.execute(f"""
-                                UPDATE {S}users
-                                SET listings_extra = listings_extra + %s
-                                WHERE id = %s
-                            """, (qty, order_user_id))
+                                WITH to_extend AS (
+                                    SELECT id FROM {S}objects
+                                    WHERE user_id = %s AND requires_payment = TRUE
+                                    ORDER BY created_at DESC
+                                    LIMIT %s
+                                )
+                                UPDATE {S}objects o
+                                SET expires_at = NOW() + INTERVAL '30 days',
+                                    requires_payment = FALSE,
+                                    auto_unpublished = FALSE,
+                                    published = TRUE,
+                                    expiry_notified_at = NULL
+                                FROM to_extend t
+                                WHERE o.id = t.id
+                                RETURNING o.id
+                            """, (order_user_id, qty))
+                            extended_count = len(cur.fetchall() or [])
+                            remaining = qty - extended_count
+                            if remaining > 0:
+                                cur.execute(f"""
+                                    UPDATE {S}users
+                                    SET listings_extra = listings_extra + %s
+                                    WHERE id = %s
+                                """, (remaining, order_user_id))
                     elif order_type == 'subscription' and order_user_id:
                         # Активируем тариф Клуб: plan = 'pro', status = 'broker'
                         # Берём количество месяцев из метаданных платежа
@@ -207,6 +229,17 @@ def handler(event, context):
                                 subscription_end_at = %s, grace_period_end_at = %s
                             WHERE id = %s AND is_superadmin = false
                         """, (now, new_end.isoformat(), grace_end.isoformat(), order_user_id))
+
+                        # Активация Клуба — снимаем срок и флаг оплаты со всех объектов
+                        cur.execute(f"""
+                            UPDATE {S}objects
+                            SET expires_at = NULL,
+                                requires_payment = FALSE,
+                                auto_unpublished = FALSE,
+                                published = CASE WHEN status = 'Активен' THEN TRUE ELSE published END,
+                                expiry_notified_at = NULL
+                            WHERE user_id = %s
+                        """, (order_user_id,))
 
                         # Начисляем реферальную комиссию рефереру
                         try:

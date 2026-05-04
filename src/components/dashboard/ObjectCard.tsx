@@ -154,8 +154,17 @@ interface ObjectCardProps {
   onArchive?: (id: string, status: "Продан" | "Сдан") => void
   onSaveOwner?: (id: string, fields: Record<string, string>) => void
   onReassign?: (obj: ObjectData) => void
+  onExtend?: (id: string) => void
   employeeName?: string
   viewsCount?: number
+}
+
+function daysUntil(iso?: string | null): number | null {
+  if (!iso) return null
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return null
+  const ms = t - Date.now()
+  return Math.ceil(ms / (1000 * 60 * 60 * 24))
 }
 
 const BADGE_BY_TYPE: Record<string, { label: string; color: string; icon: string }> = {
@@ -178,13 +187,17 @@ const STATUS_STYLE: Record<string, string> = {
 
 const ARCHIVE_STATUSES = ["Продан", "Сдан"]
 
-export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner, onReassign, employeeName, viewsCount }: ObjectCardProps) {
+export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwner, onReassign, onExtend, employeeName, viewsCount }: ObjectCardProps) {
   const [showArchiveMenu, setShowArchiveMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const photo = obj.photos && obj.photos.length > 0 ? obj.photos[0] : null
   const badge = BADGE_BY_TYPE[obj.type] ?? { label: obj.type, color: "bg-[#1f1f1f]", icon: "Tag" }
   const statusCls = STATUS_STYLE[obj.status] ?? "bg-[#1f1f1f] text-gray-400 border-[#2a2a2a]"
   const isArchived = ARCHIVE_STATUSES.includes(obj.status)
+  const daysLeft = daysUntil(obj.expires_at)
+  const isExpired = obj.auto_unpublished || (daysLeft !== null && daysLeft <= 0)
+  const isExpiringSoon = !isExpired && daysLeft !== null && daysLeft <= 7
+  const requiresPayment = !!obj.requires_payment
   const dealType = obj.extra_fields?.deal_type
   const isRent = dealType === "rent"
   const priceLabel = isRent ? `${formatPrice(obj.price)} ₽/мес` : obj.price ? `${formatPrice(obj.price)} ₽` : "—"
@@ -261,6 +274,38 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwn
             </div>
           )}
         </div>
+
+        {(isExpired || isExpiringSoon || requiresPayment) && !isArchived && (
+          <div
+            className={`mb-3 flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-[11px] font-medium border ${
+              isExpired
+                ? "bg-red-500/10 text-red-300 border-red-500/30"
+                : requiresPayment
+                  ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                  : "bg-yellow-500/10 text-yellow-300 border-yellow-500/30"
+            }`}
+          >
+            <span className="flex items-center gap-1.5 min-w-0 truncate">
+              <Icon
+                name={isExpired ? "AlertCircle" : requiresPayment ? "CreditCard" : "Clock"}
+                className="h-3 w-3 shrink-0"
+              />
+              {isExpired
+                ? "Истекло — снято с публикации"
+                : requiresPayment
+                  ? `Требует оплаты · ${daysLeft} дн.`
+                  : `Истекает через ${daysLeft} дн.`}
+            </span>
+            {onExtend && (
+              <button
+                onClick={() => onExtend(String(obj.id))}
+                className="shrink-0 underline underline-offset-2 hover:no-underline"
+              >
+                Продлить
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="flex items-end justify-between mb-4 mt-auto">
           <div>
