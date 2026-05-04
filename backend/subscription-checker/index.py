@@ -128,31 +128,44 @@ def handler(event: dict, context) -> dict:
                 WHERE id = %s
             """, (str(user_id),))
 
-            # Проставляем сроки объектам по правилу: топ-3 свежих → 30 дней,
-            # остальные → 3 дня + флаг requires_payment
+            # Проверяем — не является ли пользователь активным членом организации.
+            # Если да — он продолжает работать в АН, объекты не урезаем.
             try:
                 cur.execute(f"""
-                    WITH ranked AS (
-                        SELECT id, ROW_NUMBER() OVER (ORDER BY created_at DESC) AS rn
-                        FROM {S}objects
-                        WHERE user_id = %s AND published = TRUE AND status = 'Активен'
-                    )
-                    UPDATE {S}objects o
-                    SET expires_at = CASE
-                            WHEN r.rn <= 3 THEN NOW() + INTERVAL '30 days'
-                            ELSE NOW() + INTERVAL '3 days'
-                        END,
-                        requires_payment = CASE
-                            WHEN r.rn <= 3 THEN FALSE
-                            ELSE TRUE
-                        END,
-                        auto_unpublished = FALSE,
-                        expiry_notified_at = NULL
-                    FROM ranked r
-                    WHERE o.id = r.id
+                    SELECT 1 FROM {S}org_memberships
+                    WHERE user_id = %s AND status = 'active' LIMIT 1
                 """, (str(user_id),))
+                in_org = cur.fetchone() is not None
             except Exception:
                 conn.rollback()
+                in_org = False
+
+            # Проставляем сроки объектам по правилу: топ-3 свежих → 30 дней,
+            # остальные → 3 дня + флаг requires_payment. Только если НЕ в организации.
+            if not in_org:
+                try:
+                    cur.execute(f"""
+                        WITH ranked AS (
+                            SELECT id, ROW_NUMBER() OVER (ORDER BY created_at DESC) AS rn
+                            FROM {S}objects
+                            WHERE user_id = %s AND published = TRUE AND status = 'Активен'
+                        )
+                        UPDATE {S}objects o
+                        SET expires_at = CASE
+                                WHEN r.rn <= 3 THEN NOW() + INTERVAL '30 days'
+                                ELSE NOW() + INTERVAL '3 days'
+                            END,
+                            requires_payment = CASE
+                                WHEN r.rn <= 3 THEN FALSE
+                                ELSE TRUE
+                            END,
+                            auto_unpublished = FALSE,
+                            expiry_notified_at = NULL
+                        FROM ranked r
+                        WHERE o.id = r.id
+                    """, (str(user_id),))
+                except Exception:
+                    conn.rollback()
 
             create_notification(cur, S, str(user_id),
                 'Подписка Клуб деактивирована',

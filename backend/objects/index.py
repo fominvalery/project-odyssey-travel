@@ -66,10 +66,19 @@ def row_to_obj(r, private=False):
 
 
 def get_user_status(cur, schema, user_id):
-    """Возвращает текущий статус пользователя ('basic' | 'broker' | 'agency' | ...)."""
+    """Возвращает эффективный статус пользователя.
+    Если пользователь — активный член организации, считаем его 'agency' (безлимит).
+    Иначе берём users.status."""
     if not user_id:
         return "basic"
     try:
+        cur.execute(
+            f"SELECT 1 FROM {schema}.org_memberships"
+            f" WHERE user_id=%s AND status='active' LIMIT 1",
+            (user_id,),
+        )
+        if cur.fetchone():
+            return "agency"
         cur.execute(
             f"SELECT COALESCE(status, 'basic') FROM {schema}.users WHERE id=%s",
             (user_id,),
