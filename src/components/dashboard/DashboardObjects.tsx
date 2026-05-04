@@ -40,6 +40,7 @@ interface Props {
   onReassign?: (obj: import("@/components/AddObjectWizard").ObjectData) => void
   employees?: Array<{ user_id: string; name: string; department_id?: string }>
   departments?: Array<{ id: string; name: string }>
+  onNavigateSection?: (target: "analytics" | "crm") => void
 }
 
 export default function DashboardObjects({
@@ -52,6 +53,7 @@ export default function DashboardObjects({
   onArchive, onRestore, onSaveOwner, onReassign,
   employees,
   departments,
+  onNavigateSection,
 }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showArchive, setShowArchive] = useState(false)
@@ -178,6 +180,15 @@ export default function DashboardObjects({
           archivedObjects={archivedObjects}
           viewsByObject={viewsByObject}
           leadsCount={leadsCount}
+          onNavigate={onNavigateSection}
+          onResetFilters={() => {
+            setCatFilter("Все")
+            setStatusFilter("Все")
+            setObjSearch("")
+            setEmployeeFilter("")
+            setDeptFilter("")
+          }}
+          onShowArchive={() => setShowArchive(true)}
         />
 
         <ObjectsFilters

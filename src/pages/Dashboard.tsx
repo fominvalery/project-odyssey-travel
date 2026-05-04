@@ -379,6 +379,7 @@ export default function Dashboard() {
               listingsExtra={user.listingsExtra ?? 0}
               userEmail={user.email}
               userName={user.name}
+              onNavigateSection={(target) => setSection(target)}
             />
           )}
 
