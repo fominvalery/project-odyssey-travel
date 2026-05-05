@@ -32,6 +32,18 @@
       "expectedStatus": 403
     },
     {
+      "name": "GET object by id returns 200",
+      "method": "GET",
+      "path": "/?id=e08f69e0-09f7-4092-a822-58aeb170229b",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET object by unknown id returns 404",
+      "method": "GET",
+      "path": "/?id=00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404
+    },
+    {
       "name": "DELETE without params",
       "method": "DELETE",
       "path": "/",
