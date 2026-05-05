@@ -122,6 +122,7 @@ def handler(event: dict, context) -> dict:
                     "SELECT o.id, o.user_id, o.category, o.type, o.title, o.city, o.address, o.price,"
                     " o.area, o.description, o.yield_percent, o.extra_fields, o.status, o.published,"
                     " o.created_at, o.photos, o.presentation_url, o.org_id, o.department_id,"
+                    " o.expires_at, o.requires_payment, o.auto_unpublished,"
                     " u.name, u.phone, u.company, u.avatar_url"
                     " FROM " + schema + ".objects o"
                     " LEFT JOIN " + schema + ".users u ON u.id = o.user_id"
@@ -131,12 +132,12 @@ def handler(event: dict, context) -> dict:
                 row = cur.fetchone()
                 if not row:
                     return resp(404, {"error": "not found"})
-                obj = row_to_obj(row[:19])
+                obj = row_to_obj(row[:22])
                 obj["owner"] = {
-                    "name": row[19] or "",
-                    "phone": row[20] or "",
-                    "company": row[21] or "",
-                    "avatar_url": row[22] or "",
+                    "name": row[22] or "",
+                    "phone": row[23] or "",
+                    "company": row[24] or "",
+                    "avatar_url": row[25] or "",
                 }
                 return resp(200, {"object": obj})
 
