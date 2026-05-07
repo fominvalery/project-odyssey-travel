@@ -164,30 +164,35 @@ function pageSpecs(data: PresentationContent): string {
 
       <div style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:3px;margin-bottom:12px;">ХАРАКТЕРИСТИКИ</div>
       <h2 style="font-size:34px;font-weight:700;color:#fff;margin:0 0 6px;line-height:1.15;letter-spacing:-0.5px;">Ключевые параметры</h2>
-      <div style="width:48px;height:3px;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:2px;margin-bottom:32px;"></div>
+      <div style="width:48px;height:3px;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:2px;margin-bottom:28px;"></div>
 
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:32px;">
-        ${specs.map(([label, value], i) => `
-          <div style="display:flex;justify-content:space-between;padding:16px 24px;${i > 0 ? "border-top:1px solid rgba(255,255,255,0.06);" : ""}${i % 2 === 1 ? "background:rgba(255,255,255,0.02);" : ""}">
-            <div style="font-size:13px;color:rgba(255,255,255,0.5);">${escapeHtml(label)}</div>
-            <div style="font-size:13px;font-weight:700;color:#fff;">${escapeHtml(value)}</div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:28px;">
+        ${specs.map(([k, v], i) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 24px;${i < specs.length - 1 ? "border-bottom:1px solid rgba(255,255,255,0.06);" : ""}background:${i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)"};">
+            <div style="font-size:13px;color:#94a3b8;font-weight:500;">${escapeHtml(k)}</div>
+            <div style="font-size:16px;color:#fff;font-weight:700;">${escapeHtml(v)}</div>
           </div>
         `).join("")}
       </div>
 
-      ${data.investment_appeal ? `
-        <div style="background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(236,72,153,0.10));border:1px solid rgba(139,92,246,0.3);border-radius:16px;padding:24px;position:relative;">
-          <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#8b5cf6,#ec4899);border-radius:4px 0 0 4px;"></div>
-          <div style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:3px;margin-bottom:12px;margin-left:12px;">ИНВЕСТИЦИОННАЯ ПРИВЛЕКАТЕЛЬНОСТЬ</div>
-          <div style="font-size:14.5px;line-height:1.65;color:#cbd5e1;margin-left:12px;">${escapeHtml(data.investment_appeal)}</div>
-        </div>
-      ` : ""}
+      <div style="background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(236,72,153,0.10));border:1px solid rgba(167,139,250,0.3);border-radius:16px;padding:24px 28px;position:relative;">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#8b5cf6,#ec4899);border-radius:4px 0 0 4px;"></div>
+        <div style="font-size:11px;font-weight:700;color:#a78bfa;letter-spacing:2.5px;margin-bottom:10px;">ИНВЕСТИЦИОННАЯ ПРИВЛЕКАТЕЛЬНОСТЬ</div>
+        <div style="font-size:14.5px;line-height:1.65;color:#f1f5f9;">${escapeHtml(data.investment_appeal)}</div>
+      </div>
     </div>
   `
 }
 
 function pageClosing(data: PresentationContent): string {
-  const reasons = data.why_buy?.slice(0, 5) || []
+  const reasons = (data.why_buy && data.why_buy.length > 0 ? data.why_buy : [
+    "Удобное расположение",
+    "Прозрачные документы",
+    "Потенциал роста стоимости",
+    "Возможность быстрого выхода на сделку",
+    "Профессиональная поддержка",
+  ]).slice(0, 5)
+
   return `
     <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a0f3d 0%,#2d1b69 50%,#4c1d95 100%);padding:64px 56px;box-sizing:border-box;position:relative;">
       <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#ec4899,#8b5cf6);"></div>
@@ -222,6 +227,7 @@ function pageClosing(data: PresentationContent): string {
 async function renderHtmlToCanvas(html: string): Promise<HTMLCanvasElement> {
   const container = createPageContainer()
   container.innerHTML = html
+  // Ждём загрузки всех img
   await Promise.all(
     Array.from(container.querySelectorAll("img")).map(img =>
       (img as HTMLImageElement).complete
@@ -244,27 +250,10 @@ async function renderHtmlToCanvas(html: string): Promise<HTMLCanvasElement> {
   return canvas
 }
 
-async function urlToDataUrl(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = "anonymous"
-    img.onload = () => {
-      const canvas = document.createElement("canvas")
-      const maxSize = 1400
-      const r = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight))
-      canvas.width = Math.round(img.naturalWidth * r)
-      canvas.height = Math.round(img.naturalHeight * r)
-      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height)
-      resolve(canvas.toDataURL("image/jpeg", 0.88))
-    }
-    img.onerror = reject
-    img.src = url
-  })
-}
-
 async function buildDoc(data: PresentationContent, photos: string[]): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true })
 
+  // Предзагружаем фото в dataURL чтобы background-image гарантированно отрендерился
   const preloadedPhotos: string[] = []
   for (const url of photos.slice(0, 5)) {
     try {
@@ -292,13 +281,29 @@ async function buildDoc(data: PresentationContent, photos: string[]): Promise<js
   return doc
 }
 
-function sanitizeFilename(name: string): string {
-  return name.replace(/[^a-zA-Zа-яА-Я0-9\s_-]/g, "").trim().replace(/\s+/g, "_").slice(0, 60) || "presentation"
+async function urlToDataUrl(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    img.onload = () => {
+      const canvas = document.createElement("canvas")
+      const maxSize = 1400
+      const r = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight))
+      canvas.width = Math.round(img.naturalWidth * r)
+      canvas.height = Math.round(img.naturalHeight * r)
+      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL("image/jpeg", 0.88))
+    }
+    img.onerror = reject
+    img.src = url
+  })
 }
 
 export async function buildPdf(data: PresentationContent, photoUrls: string[]): Promise<void> {
   const doc = await buildDoc(data, photoUrls)
-  doc.save(`${sanitizeFilename(data.object_title || data.headline)}.pdf`)
+  const safeName = (data.object_title || "presentation")
+    .replace(/[^a-zA-Zа-яА-Я0-9\s]/g, "").trim().replace(/\s+/g, "_")
+  doc.save(`${safeName || "presentation"}.pdf`)
 }
 
 export async function buildPdfBase64(data: PresentationContent, photoUrls: string[]): Promise<string> {
