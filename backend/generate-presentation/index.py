@@ -121,13 +121,15 @@ def handler(event: dict, context) -> dict:
             json={
                 "model": "openrouter/free",
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 900,
+                "max_tokens": 700,
                 "temperature": 0.6,
             },
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            timeout=18,
+            timeout=(5, 15),
         )
         result = response.json()
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException, ValueError):
+        result = {}
     except Exception:
         result = {}
 
