@@ -113,9 +113,20 @@ def handler(event: dict, context) -> dict:
 
 Язык — русский, деловой тон. Только JSON, ничего лишнего."""
 
-    # AI-генерация отключена из-за нестабильности соединения с OpenRouter.
-    # Используется детерминированный шаблон на основе данных объекта (см. fallback ниже).
-    result = {}
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        json={
+            "model": "openrouter/free",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 900,
+            "temperature": 0.6,
+        },
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        timeout=30,
+    )
+
+    result = response.json()
 
     try:
         raw = ((result.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
