@@ -64,7 +64,7 @@ export function Step5Presentation({ form, setForm, category, categoryFields, pho
       if (r.presentation) {
         setGenerating(false)
         setDownloading(true)
-        const { buildPdf, buildPdfBase64 } = await import("../generatePdf.tsx")
+        const { buildPdf, buildPdfBase64 } = await import("../generatePdf")
 
         // Скачиваем локально
         await buildPdf(r.presentation, photos)
