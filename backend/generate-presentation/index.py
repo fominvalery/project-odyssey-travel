@@ -114,19 +114,22 @@ def handler(event: dict, context) -> dict:
 Язык — русский, деловой тон. Только JSON, ничего лишнего."""
 
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        json={
-            "model": "openrouter/free",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 900,
-            "temperature": 0.6,
-        },
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        timeout=30,
-    )
-
-    result = response.json()
+    result = {}
+    try:
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            json={
+                "model": "openrouter/free",
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 900,
+                "temperature": 0.6,
+            },
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            timeout=18,
+        )
+        result = response.json()
+    except Exception:
+        result = {}
 
     try:
         raw = ((result.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
