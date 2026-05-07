@@ -11,22 +11,24 @@ import {
 } from "@react-pdf/renderer"
 
 Font.register({
-  family: "Inter",
+  family: "Roboto",
   fonts: [
     {
-      src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff",
+      src: "https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/files/roboto-cyrillic-400-normal.woff2",
       fontWeight: 400,
     },
     {
-      src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiJ-Ek-_EeA.woff",
+      src: "https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/files/roboto-cyrillic-700-normal.woff2",
       fontWeight: 700,
     },
     {
-      src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuDyfAZ9hiJ-Ek-_EeA.woff",
-      fontWeight: 800,
+      src: "https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/files/roboto-cyrillic-900-normal.woff2",
+      fontWeight: 900,
     },
   ],
 })
+
+Font.registerHyphenationCallback(word => [word])
 
 export interface HighlightItem {
   icon?: string
@@ -78,7 +80,7 @@ const SLATE = "#cbd5e1"
 const PURPLE_LIGHT = "#a78bfa"
 
 const s = StyleSheet.create({
-  page: { fontFamily: "Inter", backgroundColor: BG_DARK, color: WHITE },
+  page: { fontFamily: "Roboto", backgroundColor: BG_DARK, color: WHITE },
 
   // Cover
   coverPage: { position: "relative", width: "100%", height: "100%" },
@@ -431,8 +433,32 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Zа-яА-Я0-9\s_-]/g, "").trim().replace(/\s+/g, "_").slice(0, 60) || "presentation"
 }
 
+async function urlToBase64(url: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    img.onload = () => {
+      const canvas = document.createElement("canvas")
+      const maxSize = 1200
+      const r = Math.min(1, maxSize / Math.max(img.naturalWidth || 1, img.naturalHeight || 1))
+      canvas.width = Math.round((img.naturalWidth || 800) * r)
+      canvas.height = Math.round((img.naturalHeight || 600) * r)
+      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL("image/jpeg", 0.85))
+    }
+    img.onerror = () => resolve("")
+    img.src = url + (url.includes("?") ? "&" : "?") + "_t=" + Date.now()
+  })
+}
+
+async function preparePhotos(photoUrls: string[]): Promise<string[]> {
+  const results = await Promise.all(photoUrls.slice(0, 5).map(url => urlToBase64(url)))
+  return results.filter(Boolean)
+}
+
 export async function buildPdf(data: PresentationContent, photoUrls: string[]): Promise<void> {
-  const blob = await pdf(<PresentationDocument data={data} photos={photoUrls} />).toBlob()
+  const photos = await preparePhotos(photoUrls)
+  const blob = await pdf(<PresentationDocument data={data} photos={photos} />).toBlob()
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
@@ -442,7 +468,8 @@ export async function buildPdf(data: PresentationContent, photoUrls: string[]): 
 }
 
 export async function buildPdfBase64(data: PresentationContent, photoUrls: string[]): Promise<string> {
-  const blob = await pdf(<PresentationDocument data={data} photos={photoUrls} />).toBlob()
+  const photos = await preparePhotos(photoUrls)
+  const blob = await pdf(<PresentationDocument data={data} photos={photos} />).toBlob()
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {
