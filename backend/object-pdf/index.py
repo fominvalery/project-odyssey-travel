@@ -28,22 +28,72 @@ CORS = {
 PAGE_W, PAGE_H = A4
 MARGIN = 40
 
-FONT_URL_REGULAR = "https://cdn.poehali.dev/files/dejavu-sans.ttf"
+FONT_S3_KEY = "fonts/DejaVuSans.ttf"
+FONT_SOURCES = [
+    "https://github.com/prawnpdf/prawn/raw/master/data/fonts/DejaVuSans.ttf",
+    "https://raw.githubusercontent.com/prawnpdf/prawn/master/data/fonts/DejaVuSans.ttf",
+    "https://sourceforge.net/projects/dejavu/files/dejavu/2.37/dejavu-fonts-ttf-2.37.zip/download",
+]
 FONT_REGISTERED = False
 
 
+def _s3_client():
+    return boto3.client(
+        "s3",
+        endpoint_url="https://bucket.poehali.dev",
+        aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+    )
+
+
+def _download(url: str) -> bytes:
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return r.read()
+
+
 def ensure_font():
-    """Регистрирует шрифт с кириллицей. Если CDN недоступен — Helvetica."""
+    """Регистрирует DejaVu Sans (кириллица). Кешируется в S3 и /tmp."""
     global FONT_REGISTERED
     if FONT_REGISTERED:
         return "DejaVu"
-    try:
-        font_path = "/tmp/dejavu.ttf"
-        if not os.path.exists(font_path):
-            req = urllib.request.Request(FONT_URL_REGULAR, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=10) as r:
+
+    font_path = "/tmp/dejavu.ttf"
+
+    if not (os.path.exists(font_path) and os.path.getsize(font_path) > 100000):
+        s3 = _s3_client()
+        loaded = False
+        try:
+            obj = s3.get_object(Bucket="files", Key=FONT_S3_KEY)
+            data = obj["Body"].read()
+            if len(data) > 100000:
                 with open(font_path, "wb") as f:
-                    f.write(r.read())
+                    f.write(data)
+                loaded = True
+        except Exception:
+            pass
+
+        if not loaded:
+            data = b""
+            for src in FONT_SOURCES[:2]:
+                try:
+                    candidate = _download(src)
+                    if len(candidate) > 100000 and candidate[:4] in (b"\x00\x01\x00\x00", b"OTTO", b"true"):
+                        data = candidate
+                        break
+                except Exception:
+                    continue
+            if len(data) < 100000:
+                return "Helvetica"
+            with open(font_path, "wb") as f:
+                f.write(data)
+            try:
+                s3.put_object(Bucket="files", Key=FONT_S3_KEY, Body=data,
+                              ContentType="font/ttf")
+            except Exception:
+                pass
+
+    try:
         pdfmetrics.registerFont(TTFont("DejaVu", font_path))
         FONT_REGISTERED = True
         return "DejaVu"
@@ -271,5 +321,17 @@ def handler(event: dict, context) -> dict:
 
     pdf = build_pdf(obj)
     url = upload_to_s3(pdf, object_id)
+
+    try:
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cur = conn.cursor()
+        safe_url = url.replace("'", "''")
+        cur.execute(f"UPDATE objects SET presentation_url = '{safe_url}' WHERE id = '{object_id}'")
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception:
+        pass
+
     return {"statusCode": 200, "headers": CORS,
             "body": json.dumps({"pdf_url": url}, ensure_ascii=False)}

@@ -104,7 +104,7 @@ export default function ObjectSidebar({
         </div>
       )}
 
-      {obj.presentation_url ? (
+      {obj.presentation_url && (
         <a
           href={obj.presentation_url}
           target="_blank"
@@ -114,31 +114,6 @@ export default function ObjectSidebar({
           <Icon name="FileDown" className="h-4 w-4" />
           Скачать презентацию PDF
         </a>
-      ) : (
-        <button
-          onClick={async () => {
-            const btn = document.activeElement as HTMLButtonElement | null
-            if (btn) btn.disabled = true
-            try {
-              const r = await fetch("https://functions.poehali.dev/51bbb9bd-859a-4dca-a25a-1924778fa0b2", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ object_id: obj.id }),
-              })
-              const data = await r.json()
-              if (data.pdf_url) window.open(data.pdf_url, "_blank")
-              else alert("Не удалось создать PDF")
-            } catch {
-              alert("Ошибка сети")
-            } finally {
-              if (btn) btn.disabled = false
-            }
-          }}
-          className="flex items-center justify-center gap-2 w-full rounded-xl bg-violet-600/15 hover:bg-violet-600/25 border border-violet-500/30 text-violet-300 hover:text-violet-200 py-2.5 text-sm font-medium transition-all mb-2 disabled:opacity-50"
-        >
-          <Icon name="FileDown" className="h-4 w-4" />
-          Создать PDF презентацию
-        </button>
       )}
 
       <button
