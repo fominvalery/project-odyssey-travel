@@ -713,13 +713,16 @@ def build_pdf(obj: dict) -> bytes:
 
 
 def upload_to_s3(pdf_bytes: bytes, object_id: str) -> str:
+    import time
     s3 = boto3.client(
         "s3",
         endpoint_url="https://bucket.poehali.dev",
         aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
         aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
     )
-    key = f"presentations/{object_id or uuid.uuid4().hex}/object.pdf"
+    # Уникальное имя файла — обходим кеш браузера и CDN
+    version = int(time.time())
+    key = f"presentations/{object_id or uuid.uuid4().hex}/object_{version}.pdf"
     s3.put_object(
         Bucket="files",
         Key=key,
@@ -763,7 +766,7 @@ def handler(event: dict, context) -> dict:
         return {"statusCode": 404, "headers": CORS,
                 "body": json.dumps({"error": "object not found"})}
 
-    # Перезаписываем pdf_options если пришли в body
+    # ВСЕГДА используем опции из текущего запроса (если переданы), игнорируя кеш в БД
     incoming_opts = body.get("pdf_options")
     if isinstance(incoming_opts, dict):
         obj["pdf_options"] = incoming_opts
@@ -777,6 +780,9 @@ def handler(event: dict, context) -> dict:
             conn.close()
         except Exception:
             pass
+    else:
+        # Если опции не переданы вообще — выключаем все доп.блоки
+        obj["pdf_options"] = {}
 
     obj["user"] = fetch_user(obj.get("user_id", ""))
 
