@@ -28,6 +28,92 @@ CORS = {
 PAGE_W, PAGE_H = A4
 MARGIN = 40
 
+# Подписи полей extra_fields на русском
+FIELD_LABELS = {
+    "deal_type": "Тип сделки", "subtype": "Подтип", "type": "Тип",
+    "floor": "Этаж", "floors_total": "Этажей в здании",
+    "ceiling": "Высота потолков, м", "rooms": "Комнат",
+    "living_area": "Жилая площадь, м²", "land_area": "Площадь участка",
+    "build_year": "Год постройки", "building_type": "Тип здания",
+    "condition": "Состояние", "layout": "Планировка",
+    "bathroom": "Санузел", "balcony": "Балкон/Лоджия",
+    "view": "Вид из окон", "parking": "Парковка", "elevator": "Лифт",
+    "housing_class": "Класс жилья", "class": "Класс объекта",
+    "utilities": "Коммунальные платежи", "wall_material": "Материал стен",
+    "heating": "Отопление", "gas": "Газ", "water": "Водоснабжение",
+    "sewage": "Канализация", "electricity": "Электричество",
+    "security": "Охрана", "concierge": "Консьерж",
+    "land_category": "Категория земли", "cadastral": "Кадастровый номер",
+    "permits": "Разрешения", "snp": "СНТ/КП",
+    "total_area": "Общая площадь, м²",
+    "management_company": "Управляющая компания",
+    "terrace": "Терраса", "finishing": "Отделка", "mortgage": "Ипотека",
+    "furniture": "Мебель", "appliances": "Техника",
+    "pets": "Животные", "children": "Дети",
+    "deposit": "Залог", "lease_term": "Срок аренды",
+    "check_in": "Условия заселения", "wifi": "WiFi",
+    "avg_check": "Средний чек", "min_nights": "Минимум ночей",
+    "occupancy": "Загрузка, %", "self_checkin": "Самозаезд",
+    "workplaces": "Рабочих мест", "reception": "Ресепшн",
+    "access": "Доступ", "power": "Электромощность, кВт",
+    "tenant": "Арендатор", "frontage": "Витрина, м",
+    "entrance": "Вход", "traffic": "Трафик, чел/день",
+    "wet_point": "Мокрая точка", "ventilation": "Вентиляция",
+    "gates": "Ворота", "ramp": "Пандус",
+    "floor_load": "Нагрузка на пол, т/м²",
+    "temp_regime": "Температурный режим",
+    "railway": "Ж/Д ветка", "crane": "Кран-балка, т",
+    "truck_access": "Подъезд для фур", "neighbors": "Окружение",
+    "rent_price_sqm": "Ставка аренды, ₽/м²/мес",
+    "opex": "Эксплуатационные расходы",
+    "lease_from": "Аренда от, м²", "indexing": "Индексация",
+    "owner_fee": "Комиссия", "deal_stage": "Стадия сделки",
+    "yield": "Доходность, %/год", "roi": "ROI, %",
+    "payback": "Срок окупаемости, лет",
+    "rent": "Арендный доход, ₽/мес",
+    "strategy": "Стратегия", "encumbrance": "Обременения",
+    "complex": "Комплекс", "developer": "Застройщик",
+    "delivery": "Срок сдачи", "corpus": "Корпус/секция",
+    "units": "Юнитов",
+}
+
+CATEGORY_LABELS = {
+    "commercial": "Коммерческая недвижимость",
+    "residential": "Жилая недвижимость",
+    "investment": "Инвестиционный объект",
+    "newbuild": "Новостройка",
+    "resort": "Курортная недвижимость",
+    "auction": "Торги/аукцион",
+    "land": "Земельный участок",
+}
+
+VALUE_LABELS = {
+    "rent": "Аренда", "sale": "Продажа", "sublease": "Субаренда",
+    "investment": "Инвестиция", "shortterm": "Посуточная аренда",
+}
+
+
+def label_for_key(k: str) -> str:
+    return FIELD_LABELS.get(k, k.replace("_", " ").capitalize())
+
+
+def label_for_value(v) -> str:
+    if isinstance(v, str):
+        return VALUE_LABELS.get(v, v)
+    return str(v)
+
+
+def fmt_price(v: str) -> str:
+    """Превращает '684000' в '684 000 руб'."""
+    if not v:
+        return ""
+    digits = "".join(ch for ch in str(v) if ch.isdigit())
+    if not digits:
+        return f"{v} руб"
+    n = int(digits)
+    grouped = f"{n:,}".replace(",", " ")
+    return f"{grouped} руб"
+
 FONT_S3_KEY = "fonts/DejaVuSans.ttf"
 FONT_SOURCES = [
     "https://github.com/prawnpdf/prawn/raw/master/data/fonts/DejaVuSans.ttf",
@@ -176,12 +262,13 @@ def build_pdf(obj: dict) -> bytes:
     c.setFont(font, 24)
     c.drawString(MARGIN, PAGE_H - 90, obj.get("title", "Объект"))
     c.setFont(font, 14)
-    subtitle = " · ".join([x for x in [obj.get("category"), obj.get("city")] if x])
+    cat_label = CATEGORY_LABELS.get(obj.get("category", ""), obj.get("category", ""))
+    subtitle = " · ".join([x for x in [cat_label, obj.get("city")] if x])
     if subtitle:
         c.drawString(MARGIN, PAGE_H - 120, subtitle)
     if obj.get("price"):
         c.setFont(font, 18)
-        c.drawString(MARGIN, PAGE_H - 160, f"Цена: {obj['price']} ₽")
+        c.drawString(MARGIN, PAGE_H - 160, f"Цена: {fmt_price(obj['price'])}")
 
     c.setFillColorRGB(0, 0, 0)
     y = PAGE_H - 240
@@ -208,14 +295,16 @@ def build_pdf(obj: dict) -> bytes:
     c.setFont(font, 11)
     specs = []
     if obj.get("area"):          specs.append(("Площадь", f"{obj['area']} м²"))
-    if obj.get("price"):         specs.append(("Цена", f"{obj['price']} ₽"))
+    if obj.get("price"):         specs.append(("Цена", fmt_price(obj["price"])))
     if obj.get("yield_percent"): specs.append(("Доходность", f"{obj['yield_percent']}%"))
     if obj.get("address"):       specs.append(("Адрес", obj["address"]))
     if obj.get("city"):          specs.append(("Город", obj["city"]))
-    if obj.get("category"):      specs.append(("Категория", obj["category"]))
+    if obj.get("category"):
+        specs.append(("Категория", CATEGORY_LABELS.get(obj["category"], obj["category"])))
     for k, v in (obj.get("extra_fields") or {}).items():
-        if v:
-            specs.append((str(k), str(v)))
+        if v in (None, "", [], {}):
+            continue
+        specs.append((label_for_key(str(k)), label_for_value(v)))
 
     for k, v in specs:
         if y < MARGIN + 60:
