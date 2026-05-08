@@ -513,17 +513,69 @@ def build_pdf(obj: dict) -> bytes:
             map_bytes = fetch_static_map(coords[0], coords[1])
             if map_bytes:
                 new_page(c, font, contact_text)
-                c.setFont(font, 18)
-                c.drawString(MARGIN, TOP_AREA - 24, "Расположение")
-                c.setFont(font, 11)
-                c.drawString(MARGIN, TOP_AREA - 44, map_addr[:120])
+
+                # Заголовок
+                c.setFillColorRGB(0, 0, 0)
+                c.setFont(font, 22)
+                c.drawString(MARGIN, TOP_AREA - 30, "Расположение")
+
+                # Адрес крупно
+                ly = TOP_AREA - 60
+                c.setFont(font, 14)
+                c.drawString(MARGIN, ly, (obj.get("address") or "")[:90])
+                ly -= 20
+
+                # Город · Категория
+                city_line = " · ".join([x for x in [
+                    obj.get("city"),
+                    CATEGORY_LABELS.get(obj.get("category", ""), obj.get("category", ""))
+                ] if x])
+                if city_line:
+                    c.setFont(font, 11)
+                    c.setFillColorRGB(0.4, 0.4, 0.4)
+                    c.drawString(MARGIN, ly, city_line[:100])
+                    c.setFillColorRGB(0, 0, 0)
+                    ly -= 22
+
+                # Краткий текст о локации (первое предложение из описания)
+                desc = (obj.get("description") or "").strip()
+                if desc:
+                    sentences = desc.replace("\n", " ").split(". ")
+                    short = ". ".join(sentences[:2]).strip()
+                    if short and not short.endswith("."):
+                        short += "."
+                    c.setFont(font, 10)
+                    c.setFillColorRGB(0.25, 0.25, 0.25)
+                    words = short.split()
+                    line = ""
+                    max_w = PAGE_W - 2 * MARGIN
+                    text_lines = 0
+                    for w in words:
+                        cand = (line + " " + w).strip()
+                        if c.stringWidth(cand, font, 10) <= max_w:
+                            line = cand
+                        else:
+                            c.drawString(MARGIN, ly, line)
+                            ly -= 14
+                            line = w
+                            text_lines += 1
+                            if text_lines >= 4:
+                                line = ""
+                                break
+                    if line:
+                        c.drawString(MARGIN, ly, line)
+                        ly -= 14
+                    c.setFillColorRGB(0, 0, 0)
+
+                # Карта снизу
                 try:
                     img = ImageReader(io.BytesIO(map_bytes))
-                    map_top = TOP_AREA - 60
+                    map_top = ly - 15
                     map_h = map_top - BOT_AREA - 20
-                    c.drawImage(img, MARGIN, BOT_AREA + 20,
-                                PAGE_W - 2 * MARGIN, map_h,
-                                preserveAspectRatio=True, anchor="c", mask='auto')
+                    if map_h > 200:
+                        c.drawImage(img, MARGIN, BOT_AREA + 20,
+                                    PAGE_W - 2 * MARGIN, map_h,
+                                    preserveAspectRatio=True, anchor="c", mask='auto')
                 except Exception:
                     pass
 
