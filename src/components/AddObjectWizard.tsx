@@ -48,13 +48,64 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
   const [presentationUrl, setPresentationUrl] = useState<string | null>(initial?.presentation_url ?? null)
   const [photos, setPhotos] = useState<string[]>(initial?.photos ?? [])
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [draftId, setDraftId] = useState<string | undefined>(
+    initial?.id ? String(initial.id) : undefined
+  )
+  const [autoSaving, setAutoSaving] = useState(false)
 
   function handleCategoryField(key: string, value: string) {
     setCategoryFields(prev => ({ ...prev, [key]: value }))
   }
 
-  function handleNext() {
+  async function ensureDraftSaved(): Promise<string | undefined> {
+    if (draftId) return draftId
+    const cat = CATEGORIES.find(c => c.id === category)
+    const enrichedFields = {
+      ...categoryFields,
+      ...(subtype ? { subtype } : {}),
+      ...(dealType ? { deal_type: dealType } : {}),
+      ...ownerFields,
+    }
+    const payload = {
+      user_id: userId ?? "",
+      category,
+      type: cat?.label ?? category,
+      subtype,
+      title: form.title || "Новый объект",
+      city: form.city,
+      address: form.address,
+      price: form.price,
+      area: form.area,
+      yield_percent: categoryFields["yield"] ?? "",
+      description: form.description,
+      extra_fields: enrichedFields,
+      status: "Активен",
+      published: false,
+      photos,
+    }
+    setAutoSaving(true)
+    try {
+      const res = await fetch(func2url.objects, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      const newId = data?.object?.id ? String(data.object.id) : undefined
+      if (newId) setDraftId(newId)
+      return newId
+    } catch {
+      return undefined
+    } finally {
+      setAutoSaving(false)
+    }
+  }
+
+  async function handleNext() {
     if (step === 0 && !category) return
+    if (step === 3 && !draftId) {
+      await ensureDraftSaved()
+    }
     setStep(s => Math.min(s + 1, STEPS.length - 1))
   }
 
@@ -92,10 +143,12 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
 
     setSaving(true)
     try {
+      const useUpdate = isEditing || Boolean(draftId)
+      const targetId = isEditing ? initial!.id : draftId
       const res = await fetch(func2url.objects, {
-        method: isEditing ? "PUT" : "POST",
+        method: useUpdate ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isEditing ? { ...payload, id: initial!.id } : payload),
+        body: JSON.stringify(useUpdate ? { ...payload, id: targetId } : payload),
       })
       const data = await res.json()
       const server = data.object as Record<string, unknown> | undefined
@@ -227,7 +280,7 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
             category={category}
             categoryFields={categoryFields}
             photos={photos}
-            objectId={initial ? String(initial.id) : undefined}
+            objectId={draftId}
             onPresentationReady={(url) => setPresentationUrl(url)}
           />
         )}
@@ -255,10 +308,12 @@ export function AddObjectWizard({ onClose, onSave, userId, initial }: AddObjectW
           {step < 6 ? (
             <Button
               onClick={handleNext}
-              disabled={step === 0 && !category}
+              disabled={(step === 0 && !category) || autoSaving}
               className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40"
             >
-              {step === 5 ? (
+              {autoSaving ? (
+                <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Сохранение...</>
+              ) : step === 5 ? (
                 <><Icon name="Lock" className="h-4 w-4 mr-2" />Данные собственника</>
               ) : (
                 <>Далее <Icon name="ArrowRight" className="h-4 w-4 ml-2" /></>
