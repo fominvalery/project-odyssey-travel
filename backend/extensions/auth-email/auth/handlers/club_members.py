@@ -51,6 +51,8 @@ def handle(event: dict, origin: str = '*') -> dict:
         FROM {S}users u
         WHERE (
             u.status IN ('broker', 'agency')
+            OR u.is_superadmin = true
+            OR u.subscription_end_at > NOW()
             OR EXISTS (
                 SELECT 1 FROM {S}org_memberships om
                 WHERE om.user_id = u.id AND om.status = 'active'
