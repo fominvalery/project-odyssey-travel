@@ -195,7 +195,7 @@ def fetch_object(object_id: str) -> dict:
         cur = conn.cursor()
         cur.execute(
             "SELECT id, category, type, title, city, address, price, area, description, "
-            "yield_percent, extra_fields, photos "
+            "yield_percent, extra_fields, photos, user_id, pdf_options "
             f"FROM objects WHERE id = '{object_id}'"
         )
         row = cur.fetchone()
@@ -215,9 +215,42 @@ def fetch_object(object_id: str) -> dict:
             "yield_percent": row[9] or "",
             "extra_fields": row[10] or {},
             "photos": list(row[11] or []),
+            "user_id": str(row[12]) if row[12] else "",
+            "pdf_options": row[13] or {},
         }
     finally:
         conn.close()
+
+
+def fetch_user(user_id: str) -> dict:
+    if not user_id:
+        return {}
+    try:
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT name, phone, company, avatar_url, bio, experience, "
+            "specializations, first_name, last_name, middle_name, email "
+            f"FROM users WHERE id = '{user_id}'"
+        )
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            return {}
+        full_name = " ".join([x for x in [row[8] or "", row[7] or "", row[9] or ""] if x]).strip()
+        return {
+            "name": full_name or row[0] or "",
+            "phone": row[1] or "",
+            "company": row[2] or "",
+            "avatar_url": row[3] or "",
+            "bio": row[4] or "",
+            "experience": row[5] or "",
+            "specializations": list(row[6] or []),
+            "email": row[10] or "",
+        }
+    except Exception:
+        return {}
 
 
 def download_image(url: str) -> bytes:
@@ -286,48 +319,96 @@ def draw_wrapped(c, text, x, y, max_width, font, size, leading):
     return y
 
 
+BRAND_R, BRAND_G, BRAND_B = 0.1, 0.15, 0.3  # тёмно-синий
+STRIP_H = 56  # ~2 см полоса
+TOP_AREA = PAGE_H - STRIP_H  # верхняя граница рабочей зоны на обычных страницах
+BOT_AREA = STRIP_H            # нижняя граница рабочей зоны
+
+
+def draw_strips(c, font, contact_text: str = ""):
+    """Рисует верхнюю и нижнюю цветные полосы."""
+    c.setFillColorRGB(BRAND_R, BRAND_G, BRAND_B)
+    c.rect(0, PAGE_H - STRIP_H, PAGE_W, STRIP_H, stroke=0, fill=1)
+    c.rect(0, 0, PAGE_W, STRIP_H, stroke=0, fill=1)
+    if contact_text:
+        c.setFillColorRGB(1, 1, 1)
+        c.setFont(font, 11)
+        c.drawCentredString(PAGE_W / 2, STRIP_H / 2 - 4, contact_text[:140])
+    c.setFillColorRGB(0, 0, 0)
+
+
+def new_page(c, font, contact_text: str = ""):
+    c.showPage()
+    draw_strips(c, font, contact_text)
+
+
 def build_pdf(obj: dict) -> bytes:
     font = ensure_font()
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
 
-    # ── Обложка ─────────────────────────────────────────────────────────
-    c.setFillColorRGB(0.1, 0.15, 0.3)
-    c.rect(0, PAGE_H - 200, PAGE_W, 200, stroke=0, fill=1)
+    opts = obj.get("pdf_options") or {}
+    show_contacts = bool(opts.get("show_contacts"))
+    show_card = bool(opts.get("show_card"))
+    user = obj.get("user") or {}
+
+    contact_text = ""
+    if show_contacts and user:
+        parts = []
+        if user.get("name"):    parts.append(user["name"])
+        if user.get("phone"):   parts.append(user["phone"])
+        if user.get("company"): parts.append(user["company"])
+        contact_text = "  ·  ".join(parts)
+
+    # ── ОБЛОЖКА ────────────────────────────────────────────────────────
+    HEADER_H = 170
+    FOOTER_H = STRIP_H  # 2 см
+
+    # Верхняя цветная зона с заголовком
+    c.setFillColorRGB(BRAND_R, BRAND_G, BRAND_B)
+    c.rect(0, PAGE_H - HEADER_H, PAGE_W, HEADER_H, stroke=0, fill=1)
     c.setFillColorRGB(1, 1, 1)
-    c.setFont(font, 24)
-    c.drawString(MARGIN, PAGE_H - 90, obj.get("title", "Объект"))
-    c.setFont(font, 14)
+    c.setFont(font, 22)
+    c.drawString(MARGIN, PAGE_H - 60, (obj.get("title") or "Объект")[:60])
+    c.setFont(font, 13)
     cat_label = CATEGORY_LABELS.get(obj.get("category", ""), obj.get("category", ""))
     subtitle = " · ".join([x for x in [cat_label, obj.get("city")] if x])
     if subtitle:
-        c.drawString(MARGIN, PAGE_H - 120, subtitle)
+        c.drawString(MARGIN, PAGE_H - 90, subtitle[:80])
     if obj.get("price"):
-        c.setFont(font, 18)
-        c.drawString(MARGIN, PAGE_H - 160, f"Цена: {fmt_price(obj['price'])}")
+        c.setFont(font, 17)
+        c.drawString(MARGIN, PAGE_H - 130, f"Цена: {fmt_price(obj['price'])}")
 
-    c.setFillColorRGB(0, 0, 0)
-    y = PAGE_H - 240
-
-    # ── Главное фото ────────────────────────────────────────────────────
+    # Главное фото на всю ширину между header и footer
     photos = obj.get("photos") or []
+    photo_top = PAGE_H - HEADER_H - 10
+    photo_bottom = FOOTER_H + 10
     if photos:
         img_data = download_image(photos[0])
         if img_data:
             try:
                 img = ImageReader(io.BytesIO(img_data))
-                img_w = PAGE_W - 2 * MARGIN
-                img_h = 280
-                c.drawImage(img, MARGIN, y - img_h, img_w, img_h,
+                c.drawImage(img, 0, photo_bottom, PAGE_W, photo_top - photo_bottom,
                             preserveAspectRatio=True, anchor="c", mask='auto')
-                y -= img_h + 20
             except Exception:
                 pass
 
-    # ── Характеристики ──────────────────────────────────────────────────
-    c.setFont(font, 16)
+    # Нижняя цветная полоса
+    c.setFillColorRGB(BRAND_R, BRAND_G, BRAND_B)
+    c.rect(0, 0, PAGE_W, FOOTER_H, stroke=0, fill=1)
+    if contact_text:
+        c.setFillColorRGB(1, 1, 1)
+        c.setFont(font, 11)
+        c.drawCentredString(PAGE_W / 2, FOOTER_H / 2 - 4, contact_text[:140])
+    c.setFillColorRGB(0, 0, 0)
+
+    # ── СТРАНИЦА: ХАРАКТЕРИСТИКИ + ОПИСАНИЕ ────────────────────────────
+    new_page(c, font, contact_text)
+    y = TOP_AREA - 30
+    c.setFillColorRGB(0, 0, 0)
+    c.setFont(font, 18)
     c.drawString(MARGIN, y, "Характеристики")
-    y -= 25
+    y -= 28
     c.setFont(font, 11)
     specs = []
     if obj.get("area"):          specs.append(("Площадь", f"{obj['area']} м²"))
@@ -343,43 +424,59 @@ def build_pdf(obj: dict) -> bytes:
         specs.append((label_for_key(str(k)), label_for_value(v)))
 
     for k, v in specs:
-        if y < MARGIN + 60:
-            c.showPage()
-            y = PAGE_H - MARGIN
+        if y < BOT_AREA + 30:
+            new_page(c, font, contact_text)
+            y = TOP_AREA - 30
             c.setFont(font, 11)
         c.drawString(MARGIN, y, f"{k}:")
-        c.drawString(MARGIN + 130, y, str(v)[:80])
+        c.drawString(MARGIN + 150, y, str(v)[:80])
         y -= 16
 
     y -= 15
-
-    # ── Описание ────────────────────────────────────────────────────────
     if obj.get("description"):
-        if y < 200:
-            c.showPage()
-            y = PAGE_H - MARGIN
-        c.setFont(font, 16)
+        if y < BOT_AREA + 120:
+            new_page(c, font, contact_text)
+            y = TOP_AREA - 30
+        c.setFont(font, 18)
         c.drawString(MARGIN, y, "Описание")
-        y -= 22
-        y = draw_wrapped(c, obj["description"], MARGIN, y, PAGE_W - 2 * MARGIN, font, 11, 15)
+        y -= 24
+        c.setFont(font, 11)
+        words = (obj["description"] or "").split()
+        line = ""
+        max_w = PAGE_W - 2 * MARGIN
+        for w in words:
+            cand = (line + " " + w).strip()
+            if c.stringWidth(cand, font, 11) <= max_w:
+                line = cand
+            else:
+                c.drawString(MARGIN, y, line)
+                y -= 15
+                line = w
+                if y < BOT_AREA + 30:
+                    new_page(c, font, contact_text)
+                    y = TOP_AREA - 30
+                    c.setFont(font, 11)
+        if line:
+            c.drawString(MARGIN, y, line)
 
-    # ── Доп фото на новых страницах (до 25, по 4 на страницу) ──────────
+    # ── ФОТОГАЛЕРЕЯ (до 25 фото, по 4 на страницу) ─────────────────────
     extras = photos[1:25]
     if extras:
         cell_w = (PAGE_W - 2 * MARGIN - 15) / 2
-        cell_h = 220
+        gallery_top = TOP_AREA - 30
+        cell_h = (gallery_top - BOT_AREA - 30 - 15) / 2
         positions = [
-            (MARGIN, PAGE_H - MARGIN - 30 - cell_h),
-            (MARGIN + cell_w + 15, PAGE_H - MARGIN - 30 - cell_h),
-            (MARGIN, PAGE_H - MARGIN - 30 - 2 * cell_h - 15),
-            (MARGIN + cell_w + 15, PAGE_H - MARGIN - 30 - 2 * cell_h - 15),
+            (MARGIN, gallery_top - cell_h),
+            (MARGIN + cell_w + 15, gallery_top - cell_h),
+            (MARGIN, gallery_top - 2 * cell_h - 15),
+            (MARGIN + cell_w + 15, gallery_top - 2 * cell_h - 15),
         ]
         for i, url in enumerate(extras):
             slot = i % 4
             if slot == 0:
-                c.showPage()
-                c.setFont(font, 16)
-                c.drawString(MARGIN, PAGE_H - MARGIN, "Фотогалерея")
+                new_page(c, font, contact_text)
+                c.setFont(font, 18)
+                c.drawString(MARGIN, TOP_AREA - 24, "Фотогалерея")
             data = download_image(url)
             if not data:
                 continue
@@ -391,27 +488,134 @@ def build_pdf(obj: dict) -> bytes:
             except Exception:
                 continue
 
-    # ── Карта расположения ─────────────────────────────────────────────
+    # ── КАРТА РАСПОЛОЖЕНИЯ ─────────────────────────────────────────────
     map_addr = obj.get("address") or obj.get("city") or ""
     if map_addr:
         coords = geocode(map_addr)
         if coords:
             map_bytes = fetch_static_map(coords[0], coords[1])
             if map_bytes:
-                c.showPage()
-                c.setFont(font, 16)
-                c.drawString(MARGIN, PAGE_H - MARGIN, "Расположение")
+                new_page(c, font, contact_text)
+                c.setFont(font, 18)
+                c.drawString(MARGIN, TOP_AREA - 24, "Расположение")
                 c.setFont(font, 11)
-                c.drawString(MARGIN, PAGE_H - MARGIN - 22, map_addr[:120])
+                c.drawString(MARGIN, TOP_AREA - 44, map_addr[:120])
                 try:
                     img = ImageReader(io.BytesIO(map_bytes))
-                    map_w = PAGE_W - 2 * MARGIN
-                    map_h = 480
-                    c.drawImage(img, MARGIN, PAGE_H - MARGIN - 60 - map_h,
-                                map_w, map_h, preserveAspectRatio=True,
-                                anchor="c", mask='auto')
+                    map_top = TOP_AREA - 60
+                    map_h = map_top - BOT_AREA - 20
+                    c.drawImage(img, MARGIN, BOT_AREA + 20,
+                                PAGE_W - 2 * MARGIN, map_h,
+                                preserveAspectRatio=True, anchor="c", mask='auto')
                 except Exception:
                     pass
+
+    # ── ВИЗИТКА ─────────────────────────────────────────────────────────
+    if show_card and user and (user.get("name") or user.get("phone")):
+        new_page(c, font, contact_text)
+        cy = TOP_AREA - 40
+        c.setFont(font, 22)
+        c.drawString(MARGIN, cy, "Ваш персональный менеджер")
+        cy -= 40
+
+        # Аватар слева
+        avatar_size = 140
+        avatar_x = MARGIN
+        avatar_y = cy - avatar_size
+        if user.get("avatar_url"):
+            ad = download_image(user["avatar_url"])
+            if ad:
+                try:
+                    img = ImageReader(io.BytesIO(ad))
+                    c.drawImage(img, avatar_x, avatar_y, avatar_size, avatar_size,
+                                preserveAspectRatio=True, anchor="c", mask='auto')
+                except Exception:
+                    pass
+
+        # Текст справа от аватара
+        tx = avatar_x + avatar_size + 25
+        ty = cy - 5
+        c.setFont(font, 18)
+        c.drawString(tx, ty, (user.get("name") or "")[:60])
+        ty -= 26
+        if user.get("company"):
+            c.setFont(font, 13)
+            c.setFillColorRGB(0.4, 0.4, 0.4)
+            c.drawString(tx, ty, user["company"][:60])
+            c.setFillColorRGB(0, 0, 0)
+            ty -= 20
+        if user.get("phone"):
+            c.setFont(font, 13)
+            c.drawString(tx, ty, f"Тел: {user['phone']}")
+            ty -= 18
+        if user.get("email"):
+            c.setFont(font, 11)
+            c.drawString(tx, ty, user["email"][:50])
+            ty -= 16
+
+        cy = avatar_y - 30
+
+        # Специализации
+        specs_list = user.get("specializations") or []
+        if specs_list:
+            c.setFont(font, 14)
+            c.drawString(MARGIN, cy, "Специализация")
+            cy -= 20
+            c.setFont(font, 11)
+            for s in specs_list[:8]:
+                if cy < BOT_AREA + 40:
+                    break
+                c.drawString(MARGIN + 10, cy, f"• {s}")
+                cy -= 16
+            cy -= 10
+
+        # Опыт
+        if user.get("experience"):
+            if cy > BOT_AREA + 60:
+                c.setFont(font, 14)
+                c.drawString(MARGIN, cy, "Опыт")
+                cy -= 20
+                c.setFont(font, 11)
+                exp_words = user["experience"].split()
+                line = ""
+                max_w = PAGE_W - 2 * MARGIN
+                for w in exp_words:
+                    cand = (line + " " + w).strip()
+                    if c.stringWidth(cand, font, 11) <= max_w:
+                        line = cand
+                    else:
+                        c.drawString(MARGIN, cy, line)
+                        cy -= 15
+                        line = w
+                        if cy < BOT_AREA + 30:
+                            line = ""
+                            break
+                if line and cy > BOT_AREA + 30:
+                    c.drawString(MARGIN, cy, line)
+                    cy -= 15
+
+        # Био
+        if user.get("bio") and cy > BOT_AREA + 60:
+            c.setFont(font, 14)
+            c.drawString(MARGIN, cy, "О себе")
+            cy -= 20
+            c.setFont(font, 11)
+            bio_words = user["bio"].split()
+            line = ""
+            max_w = PAGE_W - 2 * MARGIN
+            for w in bio_words:
+                cand = (line + " " + w).strip()
+                if c.stringWidth(cand, font, 11) <= max_w:
+                    line = cand
+                else:
+                    c.drawString(MARGIN, cy, line)
+                    cy -= 15
+                    line = w
+                    if cy < BOT_AREA + 30:
+                        line = ""
+                        break
+            if line and cy > BOT_AREA + 30:
+                c.drawString(MARGIN, cy, line)
 
     c.showPage()
     c.save()
@@ -468,6 +672,23 @@ def handler(event: dict, context) -> dict:
     if not obj:
         return {"statusCode": 404, "headers": CORS,
                 "body": json.dumps({"error": "object not found"})}
+
+    # Перезаписываем pdf_options если пришли в body
+    incoming_opts = body.get("pdf_options")
+    if isinstance(incoming_opts, dict):
+        obj["pdf_options"] = incoming_opts
+        try:
+            conn = psycopg2.connect(os.environ["DATABASE_URL"])
+            cur = conn.cursor()
+            opts_json = json.dumps(incoming_opts).replace("'", "''")
+            cur.execute(f"UPDATE objects SET pdf_options = '{opts_json}'::jsonb WHERE id = '{object_id}'")
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception:
+            pass
+
+    obj["user"] = fetch_user(obj.get("user_id", ""))
 
     pdf = build_pdf(obj)
     url = upload_to_s3(pdf, object_id)

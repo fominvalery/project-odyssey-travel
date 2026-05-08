@@ -1,0 +1,1 @@
+ALTER TABLE objects ADD COLUMN IF NOT EXISTS pdf_options jsonb NOT NULL DEFAULT '{}'::jsonb;

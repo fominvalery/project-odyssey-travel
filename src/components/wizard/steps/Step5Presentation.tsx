@@ -18,6 +18,8 @@ export function Step5Presentation({ form, photos, objectId, onPresentationReady 
   const [status, setStatus] = useState<"idle" | "ready" | "error">("idle")
   const [errorMsg, setErrorMsg] = useState("")
   const [pdfUrl, setPdfUrl] = useState("")
+  const [showContacts, setShowContacts] = useState(true)
+  const [showCard, setShowCard] = useState(false)
 
   async function handleGenerate() {
     if (!objectId) {
@@ -33,7 +35,10 @@ export function Step5Presentation({ form, photos, objectId, onPresentationReady 
       const r = await fetch(func2url["object-pdf"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ object_id: objectId }),
+        body: JSON.stringify({
+          object_id: objectId,
+          pdf_options: { show_contacts: showContacts, show_card: showCard },
+        }),
       }).then(r => r.json())
 
       if (r.pdf_url) {
@@ -64,12 +69,12 @@ export function Step5Presentation({ form, photos, objectId, onPresentationReady 
 
       <div className="rounded-xl border border-[#1f1f1f] bg-[#0d0d0d] p-4">
         <p className="text-xs text-gray-500 mb-3 uppercase tracking-wider">Что войдёт в PDF</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 mb-4">
           {[
             { icon: "FileText", label: "Заголовок и описание", ok: Boolean(form.title || form.description) },
             { icon: "BarChart2", label: "Характеристики объекта", ok: Boolean(form.price || form.area) },
-            { icon: "Image", label: `Фото (до 5 из ${photos.length})`, ok: photos.length > 0 },
-            { icon: "MapPin", label: "Адрес и локация", ok: Boolean(form.address || form.city) },
+            { icon: "Image", label: `Фото (до 25 из ${photos.length})`, ok: photos.length > 0 },
+            { icon: "MapPin", label: "Адрес и карта", ok: Boolean(form.address || form.city) },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-2 text-xs">
               <span className={item.ok ? "text-emerald-400" : "text-gray-600"}>
@@ -78,6 +83,42 @@ export function Step5Presentation({ form, photos, objectId, onPresentationReady 
               <span className={item.ok ? "text-gray-300" : "text-gray-600"}>{item.label}</span>
             </div>
           ))}
+        </div>
+
+        <div className="border-t border-[#1f1f1f] pt-3 space-y-2">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Дополнительные блоки</p>
+
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={showContacts}
+              onChange={e => setShowContacts(e.target.checked)}
+              className="mt-1 accent-violet-500"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 text-sm text-gray-200 group-hover:text-white transition">
+                <Icon name="Phone" className="h-4 w-4 text-violet-400" />
+                Добавить мои контакты
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Имя · Телефон · Компания в нижней полосе на каждой странице (берём из профиля)</p>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={showCard}
+              onChange={e => setShowCard(e.target.checked)}
+              className="mt-1 accent-violet-500"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 text-sm text-gray-200 group-hover:text-white transition">
+                <Icon name="UserCircle" className="h-4 w-4 text-violet-400" />
+                Добавить визитку с фото
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Отдельная страница: фото, ФИО, компания, специализации, опыт, описание (берём из профиля)</p>
+            </div>
+          </label>
         </div>
       </div>
 
