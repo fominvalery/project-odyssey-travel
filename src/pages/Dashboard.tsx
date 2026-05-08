@@ -154,24 +154,7 @@ export default function Dashboard() {
     if (user?.id) refreshProfile()
   }, [])
 
-  // Одноразовая миграция: если аватар в localStorage — base64, заливаем в S3
-  useEffect(() => {
-    if (!user?.id || !user?.avatar) return
-    if (!user.avatar.startsWith("data:")) return
-    const migrationKey = `avatar_migrated_${user.id}`
-    if (localStorage.getItem(migrationKey)) return
-    localStorage.setItem(migrationKey, "1")
-    ;(async () => {
-      try {
-        const res = await fetch((func2url as Record<string, string>)["upload-photo"], {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: user.avatar }),
-        }).then(r => r.json())
-        if (res.url) updateProfile({ avatar: res.url })
-      } catch { /* noop */ }
-    })()
-  }, [user?.id])
+
 
   // Проверяем возврат после оплаты ЮКассы
   useEffect(() => {
