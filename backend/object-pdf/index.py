@@ -458,23 +458,44 @@ def build_pdf(obj: dict) -> bytes:
         c.drawString(MARGIN, y, "Описание")
         y -= 24
         c.setFont(font, 11)
-        words = (obj["description"] or "").split()
-        line = ""
         max_w = PAGE_W - 2 * MARGIN
-        for w in words:
-            cand = (line + " " + w).strip()
-            if c.stringWidth(cand, font, 11) <= max_w:
-                line = cand
-            else:
-                c.drawString(MARGIN, y, line)
-                y -= 15
-                line = w
+        # Разбиваем на абзацы по переносам строк
+        paragraphs = (obj["description"] or "").replace("\r\n", "\n").replace("\r", "\n").split("\n")
+        for p_idx, paragraph in enumerate(paragraphs):
+            paragraph = paragraph.strip()
+            if not paragraph:
+                # Пустая строка — отступ между абзацами
+                y -= 8
                 if y < BOT_AREA + 30:
                     new_page(c, font, contact_text)
                     y = TOP_AREA - 30
                     c.setFont(font, 11)
-        if line:
-            c.drawString(MARGIN, y, line)
+                continue
+            words = paragraph.split()
+            line = ""
+            for w in words:
+                cand = (line + " " + w).strip()
+                if c.stringWidth(cand, font, 11) <= max_w:
+                    line = cand
+                else:
+                    c.drawString(MARGIN, y, line)
+                    y -= 15
+                    line = w
+                    if y < BOT_AREA + 30:
+                        new_page(c, font, contact_text)
+                        y = TOP_AREA - 30
+                        c.setFont(font, 11)
+            if line:
+                c.drawString(MARGIN, y, line)
+                y -= 15
+                line = ""
+            # Отступ между абзацами (если это не последний)
+            if p_idx < len(paragraphs) - 1:
+                y -= 6
+                if y < BOT_AREA + 30:
+                    new_page(c, font, contact_text)
+                    y = TOP_AREA - 30
+                    c.setFont(font, 11)
 
     # ── ФОТОГАЛЕРЕЯ (до 25 фото, по 4 на страницу) ─────────────────────
     extras = photos[1:25]
