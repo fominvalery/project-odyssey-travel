@@ -33,6 +33,9 @@ def handle(event: dict, origin: str = '*') -> dict:
     for field in allowed:
         val = body.get(field)
         if val is not None:
+            # Не сохраняем base64 напрямую в БД — только CDN-ссылки
+            if field == 'avatar_url' and str(val).startswith('data:'):
+                continue
             set_parts.append(f"{field} = {escape(str(val))}")
 
     # specializations — массив

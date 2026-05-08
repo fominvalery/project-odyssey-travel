@@ -19,6 +19,7 @@ import DashboardMessages from "@/components/dashboard/DashboardMessages"
 import { DashboardProfile } from "@/components/dashboard/DashboardProfile"
 import DashboardJointDeals from "@/components/dashboard/DashboardJointDeals"
 import Icon from "@/components/ui/icon"
+import func2url from "../../../backend/func2url.json"
 
 type AgencySection =
   | "objects" | "crm" | "analytics" | "network" | "joint-deals" | "messages" | "profile"
@@ -207,7 +208,18 @@ export default function AgencyContent({
               r.onload = (ev) => updateProfile({ avatar: ev.target?.result as string })
               r.readAsDataURL(f)
             }}
-            onAvatarCropped={(d) => updateProfile({ avatar: d })}
+            onAvatarCropped={async (dataUrl) => {
+              try {
+                const res = await fetch((func2url as Record<string, string>)["upload-photo"], {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ image: dataUrl }),
+                }).then(r => r.json())
+                if (res.url) updateProfile({ avatar: res.url })
+              } catch {
+                // noop
+              }
+            }}
             onStatusChange={(s) => updateProfile({ status: s })}
             forceShowClubFields
           />
