@@ -8,6 +8,7 @@ import os
 import io
 import uuid
 import urllib.request
+import urllib.parse
 
 import boto3
 import psycopg2
@@ -228,6 +229,41 @@ def download_image(url: str) -> bytes:
         return b""
 
 
+def geocode(address: str):
+    """OSM Nominatim → (lat, lon) или None."""
+    try:
+        q = urllib.parse.quote(address)
+        url = f"https://nominatim.openstreetmap.org/search?q={q}&format=json&limit=1"
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "realty-pdf-bot/1.0 (realty-app@poehali.dev)"
+        })
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        if not data:
+            return None
+        return float(data[0]["lat"]), float(data[0]["lon"])
+    except Exception:
+        return None
+
+
+def fetch_static_map(lat: float, lon: float) -> bytes:
+    """Статическая карта OSM с меткой."""
+    sources = [
+        f"https://staticmap.openstreetmap.de/staticmap.php?center={lat},{lon}&zoom=15&size=720x480&markers={lat},{lon},red",
+        f"https://static-maps.yandex.ru/1.x/?ll={lon},{lat}&z=15&l=map&size=600,450&pt={lon},{lat},pm2rdm",
+    ]
+    for src in sources:
+        try:
+            req = urllib.request.Request(src, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=12) as r:
+                data = r.read()
+            if len(data) > 2000:
+                return data
+        except Exception:
+            continue
+    return b""
+
+
 def draw_wrapped(c, text, x, y, max_width, font, size, leading):
     c.setFont(font, size)
     words = (text or "").split()
@@ -327,12 +363,9 @@ def build_pdf(obj: dict) -> bytes:
         y -= 22
         y = draw_wrapped(c, obj["description"], MARGIN, y, PAGE_W - 2 * MARGIN, font, 11, 15)
 
-    # ── Доп фото на новой странице ──────────────────────────────────────
-    extras = photos[1:5]
+    # ── Доп фото на новых страницах (до 25, по 4 на страницу) ──────────
+    extras = photos[1:25]
     if extras:
-        c.showPage()
-        c.setFont(font, 16)
-        c.drawString(MARGIN, PAGE_H - MARGIN, "Фотогалерея")
         cell_w = (PAGE_W - 2 * MARGIN - 15) / 2
         cell_h = 220
         positions = [
@@ -341,16 +374,44 @@ def build_pdf(obj: dict) -> bytes:
             (MARGIN, PAGE_H - MARGIN - 30 - 2 * cell_h - 15),
             (MARGIN + cell_w + 15, PAGE_H - MARGIN - 30 - 2 * cell_h - 15),
         ]
-        for url, (px, py) in zip(extras, positions):
+        for i, url in enumerate(extras):
+            slot = i % 4
+            if slot == 0:
+                c.showPage()
+                c.setFont(font, 16)
+                c.drawString(MARGIN, PAGE_H - MARGIN, "Фотогалерея")
             data = download_image(url)
             if not data:
                 continue
+            px, py = positions[slot]
             try:
                 img = ImageReader(io.BytesIO(data))
                 c.drawImage(img, px, py, cell_w, cell_h,
                             preserveAspectRatio=True, anchor="c", mask='auto')
             except Exception:
                 continue
+
+    # ── Карта расположения ─────────────────────────────────────────────
+    map_addr = obj.get("address") or obj.get("city") or ""
+    if map_addr:
+        coords = geocode(map_addr)
+        if coords:
+            map_bytes = fetch_static_map(coords[0], coords[1])
+            if map_bytes:
+                c.showPage()
+                c.setFont(font, 16)
+                c.drawString(MARGIN, PAGE_H - MARGIN, "Расположение")
+                c.setFont(font, 11)
+                c.drawString(MARGIN, PAGE_H - MARGIN - 22, map_addr[:120])
+                try:
+                    img = ImageReader(io.BytesIO(map_bytes))
+                    map_w = PAGE_W - 2 * MARGIN
+                    map_h = 480
+                    c.drawImage(img, MARGIN, PAGE_H - MARGIN - 60 - map_h,
+                                map_w, map_h, preserveAspectRatio=True,
+                                anchor="c", mask='auto')
+                except Exception:
+                    pass
 
     c.showPage()
     c.save()
