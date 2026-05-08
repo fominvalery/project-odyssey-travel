@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Demo PDF without object_id",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 200,
+      "expectedBody": {"demo": true},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
