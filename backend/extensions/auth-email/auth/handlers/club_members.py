@@ -47,7 +47,8 @@ def handle(event: dict, origin: str = '*') -> dict:
 
         rows = query(f"""
             SELECT DISTINCT u.id, u.name, u.first_name, u.last_name, u.middle_name,
-                   u.company, u.city, u.status, u.avatar_url,
+                   u.company, u.city, u.status,
+                   CASE WHEN u.avatar_url IS NOT NULL AND u.avatar_url NOT LIKE 'data:%' THEN u.avatar_url ELSE NULL END,
                    u.specializations, u.bio, u.experience, u.updated_at
             FROM {S}users u
             WHERE (
