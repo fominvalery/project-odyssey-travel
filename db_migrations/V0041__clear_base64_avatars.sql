@@ -1,0 +1,1 @@
+UPDATE t_p32045231_project_odyssey_trav.users SET avatar_url = NULL WHERE avatar_url LIKE 'data:%';
