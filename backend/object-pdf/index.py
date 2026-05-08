@@ -94,6 +94,21 @@ VALUE_LABELS = {
 }
 
 
+# Закрытые поля — НИКОГДА не попадают в PDF (видны только владельцу в ЛК)
+PRIVATE_KEYS = {
+    "owner_name", "owner_phone", "owner_fee", "owner_comment",
+    "owner_email", "owner_telegram", "owner_motivation",
+    "presentation_contact_name", "presentation_contact_phone",
+    "presentation_contact_company",
+    "agent_fee", "broker_fee", "commission", "commission_percent",
+    "internal_note", "internal_notes", "private_note", "private_notes",
+    "seller_motivation", "urgency_reason", "discount_reason",
+}
+
+# Технические поля — скрываем из вывода характеристик
+HIDDEN_KEYS = PRIVATE_KEYS | {"subtype", "deal_type"}
+
+
 def label_for_key(k: str) -> str:
     return FIELD_LABELS.get(k, k.replace("_", " ").capitalize())
 
@@ -420,6 +435,8 @@ def build_pdf(obj: dict) -> bytes:
         specs.append(("Категория", CATEGORY_LABELS.get(obj["category"], obj["category"])))
     for k, v in (obj.get("extra_fields") or {}).items():
         if v in (None, "", [], {}):
+            continue
+        if str(k).lower() in HIDDEN_KEYS:
             continue
         specs.append((label_for_key(str(k)), label_for_value(v)))
 
