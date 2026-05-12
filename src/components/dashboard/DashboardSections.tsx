@@ -36,14 +36,12 @@ export function DashboardReferral({ userId }: ReferralProps) {
 
   useEffect(() => {
     if (!userId) return
-    const cacheKey = `referral_stats:${userId}`
-    const cached = cacheGet<ReferralStats>(cacheKey)
-    if (cached) { setStats(cached); setLoading(false); return }
+    setLoading(true)
     fetch(`${AUTH_URL}?action=referral-stats&user_id=${encodeURIComponent(userId)}`, { headers: authHeaders })
       .then(r => r.text())
       .then(raw => {
         const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
-        if (data && !data.error) { setStats(data); cacheSet(cacheKey, data, TTL.MIN_30) }
+        if (data && !data.error) { setStats(data) }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
