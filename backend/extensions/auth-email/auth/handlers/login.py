@@ -45,7 +45,9 @@ def handle(event: dict, origin: str = '*') -> dict:
                 return error(429, f'Слишком много попыток. Повторите через {remaining // 60 + 1} мин.', origin)
 
     user = query_one(f"""
-        SELECT id, email, name, password_hash, email_verified, phone, company, plan, status, avatar_url, is_superadmin
+        SELECT id, email, name, password_hash, email_verified, phone, company, plan, status, avatar_url, is_superadmin,
+               first_name, last_name, middle_name, city, specializations, bio, experience,
+               telegram_username, vk_username, max_username, website, subscription_end_at
         FROM {S}users WHERE email = {escape(email)}
     """)
 
@@ -54,7 +56,9 @@ def handle(event: dict, origin: str = '*') -> dict:
     if not user:
         return error(401, auth_error_msg, origin)
 
-    user_id, user_email, user_name, stored_hash, email_verified, user_phone, user_company, user_plan, user_status, user_avatar, user_is_superadmin = user
+    (user_id, user_email, user_name, stored_hash, email_verified, user_phone, user_company, user_plan, user_status, user_avatar, user_is_superadmin,
+     first_name, last_name, middle_name, city, specializations, bio, experience,
+     telegram_username, vk_username, max_username, website, subscription_end_at) = user
 
     if not verify_password(password, stored_hash):
         now = datetime.utcnow().isoformat()
@@ -106,6 +110,18 @@ def handle(event: dict, origin: str = '*') -> dict:
             'status': user_status or 'basic',
             'avatar_url': user_avatar,
             'email_verified': email_verified,
-            'is_superadmin': bool(user_is_superadmin)
+            'is_superadmin': bool(user_is_superadmin),
+            'first_name': first_name or '',
+            'last_name': last_name or '',
+            'middle_name': middle_name or '',
+            'city': city or '',
+            'specializations': list(specializations) if specializations else [],
+            'bio': bio or '',
+            'experience': experience or '',
+            'telegram_username': telegram_username or '',
+            'vk_username': vk_username or '',
+            'max_username': max_username or '',
+            'website': website or '',
+            'subscription_end_at': subscription_end_at.isoformat() if subscription_end_at else None,
         }
     }, origin)
