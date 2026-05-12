@@ -40,10 +40,13 @@ export function DashboardReferral({ userId }: ReferralProps) {
     fetch(`${AUTH_URL}?action=referral-stats&user_id=${encodeURIComponent(userId)}`, { headers: authHeaders })
       .then(r => r.text())
       .then(raw => {
+        console.log('[referral-stats] raw response:', raw.slice(0, 300))
         const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+        console.log('[referral-stats] parsed:', data)
         if (data && !data.error) { setStats(data) }
+        else { console.warn('[referral-stats] error from backend:', data) }
       })
-      .catch(() => {})
+      .catch((e) => { console.error('[referral-stats] fetch error:', e) })
       .finally(() => setLoading(false))
   }, [userId])
 
