@@ -275,23 +275,24 @@ def handler(event, context):
                                     cnt_row = cur.fetchone()
                                     ref_count = int(cnt_row[0]) if cnt_row else 0
 
-                                    # Определяем % комиссии
+                                    # Определяем % комиссии (1-я, 2-я, 3-я линии)
+                                    # Алиас старого названия → новое
+                                    if level_override == 'Адвокат':
+                                        level_override = 'Лидер'
+
                                     LEVEL_MAP = {
-                                        'Адвокат': (10, 2), 'Амбасадор': (10, 0),
-                                        'Бизнес': (7, 0), 'Партнёр': (7, 0), 'Друг': (5, 0),
+                                        'Лидер':     (15, 10, 5),
+                                        'Амбасадор': (15,  5, 0),
+                                        'Бизнес':    (15,  5, 0),
+                                        'Партнёр':   (15,  5, 0),
+                                        'Друг':      (15,  5, 0),
                                     }
                                     if level_override and level_override in LEVEL_MAP:
-                                        pct1, pct2 = LEVEL_MAP[level_override]
+                                        pct1, pct2, pct3 = LEVEL_MAP[level_override]
                                     elif ref_count >= 100:
-                                        pct1, pct2 = 10, 2
-                                    elif ref_count >= 30:
-                                        pct1, pct2 = 10, 0
-                                    elif ref_count >= 10:
-                                        pct1, pct2 = 7, 0
-                                    elif ref_count >= 3:
-                                        pct1, pct2 = 7, 0
+                                        pct1, pct2, pct3 = 15, 10, 5
                                     else:
-                                        pct1, pct2 = 5, 0
+                                        pct1, pct2, pct3 = 15, 5, 0
 
                                     commission1 = round(payment_amount * pct1 / 100, 2)
 
@@ -304,7 +305,8 @@ def handler(event, context):
                                         """, (referrer_id, order_user_id, 'commission_line1', commission1,
                                               f'Комиссия {pct1}% за оплату тарифа ({payment_amount} ₽)', order_id))
 
-                                    # Комиссия 2-й линии (для Адвоката)
+                                    # Комиссия 2-й линии
+                                    referrer2_id = None
                                     if pct2 > 0:
                                         cur.execute(f"""
                                             SELECT referrer_id FROM {S}referrals WHERE referred_id = %s
@@ -320,6 +322,23 @@ def handler(event, context):
                                                     VALUES (%s, %s, %s, %s, %s, %s)
                                                 """, (referrer2_id, order_user_id, 'commission_line2', commission2,
                                                       f'Комиссия 2-й линии {pct2}% за оплату тарифа ({payment_amount} ₽)', order_id))
+
+                                    # Комиссия 3-й линии (только для Лидера)
+                                    if pct3 > 0 and referrer2_id is not None:
+                                        cur.execute(f"""
+                                            SELECT referrer_id FROM {S}referrals WHERE referred_id = %s
+                                        """, (referrer2_id,))
+                                        ref3_row = cur.fetchone()
+                                        if ref3_row:
+                                            referrer3_id = ref3_row[0]
+                                            commission3 = round(payment_amount * pct3 / 100, 2)
+                                            if commission3 > 0:
+                                                cur.execute(f"""
+                                                    INSERT INTO {S}referral_bonuses
+                                                        (referrer_id, referred_id, bonus_type, amount, description, order_id)
+                                                    VALUES (%s, %s, %s, %s, %s, %s)
+                                                """, (referrer3_id, order_user_id, 'commission_line3', commission3,
+                                                      f'Комиссия 3-й линии {pct3}% за оплату тарифа ({payment_amount} ₽)', order_id))
                         except Exception:
                             pass  # комиссия не критична
 

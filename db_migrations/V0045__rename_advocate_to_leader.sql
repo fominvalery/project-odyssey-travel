@@ -1,0 +1,1 @@
+UPDATE t_p32045231_project_odyssey_trav.users SET referral_level = 'Лидер' WHERE referral_level = 'Адвокат';

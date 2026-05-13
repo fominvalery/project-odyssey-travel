@@ -4,32 +4,38 @@ from utils.http import response, error
 
 
 LEVEL_THRESHOLDS = [
-    (100, "Адвокат",   5, "rose",    10, 2),
-    (30,  "Амбасадор", 4, "amber",   10, 0),
-    (10,  "Бизнес",    3, "violet",   7, 0),
-    (3,   "Партнёр",   2, "emerald",  7, 0),
-    (1,   "Друг",      1, "blue",     5, 0),
+    (100, "Лидер",     5, "rose",    15, 10, 5),
+    (30,  "Амбасадор", 4, "amber",   15,  5, 0),
+    (10,  "Бизнес",    3, "violet",  15,  5, 0),
+    (3,   "Партнёр",   2, "emerald", 15,  5, 0),
+    (1,   "Друг",      1, "blue",    15,  5, 0),
 ]
 
+# Старое имя "Адвокат" мигрировано в "Лидер" — оставляем алиас для обратной совместимости
+LEVEL_ALIASES = {"Адвокат": "Лидер"}
+
 # Маппинг имени уровня → параметры (для ручного override супер-админом)
-LEVEL_BY_NAME = {name: (level, color, pct1, pct2) for _, name, level, color, pct1, pct2 in LEVEL_THRESHOLDS}
+LEVEL_BY_NAME = {name: (level, color, pct1, pct2, pct3) for _, name, level, color, pct1, pct2, pct3 in LEVEL_THRESHOLDS}
 
 
 def get_level(count: int, override: str | None) -> dict:
     # Если супер-админ вручную задал уровень — берём его параметры, игнорируя count
+    if override:
+        override = LEVEL_ALIASES.get(override, override)
     if override and override in LEVEL_BY_NAME:
-        level, color, pct1, pct2 = LEVEL_BY_NAME[override]
+        level, color, pct1, pct2, pct3 = LEVEL_BY_NAME[override]
         return {
             "name": override,
             "level": level,
             "color": color,
             "commission1": pct1,
             "commission2": pct2,
+            "commission3": pct3,
             "withdrawal": level >= 3,
         }
 
     # Иначе — считаем по количеству рефералов (минимум — Друг)
-    for min_refs, name, level, color, pct1, pct2 in LEVEL_THRESHOLDS:
+    for min_refs, name, level, color, pct1, pct2, pct3 in LEVEL_THRESHOLDS:
         if count >= min_refs:
             return {
                 "name": name,
@@ -37,6 +43,7 @@ def get_level(count: int, override: str | None) -> dict:
                 "color": color,
                 "commission1": pct1,
                 "commission2": pct2,
+                "commission3": pct3,
                 "withdrawal": level >= 3,
             }
 
@@ -45,8 +52,9 @@ def get_level(count: int, override: str | None) -> dict:
         "name": "Друг",
         "level": 1,
         "color": "blue",
-        "commission1": 5,
-        "commission2": 0,
+        "commission1": 15,
+        "commission2": 5,
+        "commission3": 0,
         "withdrawal": False,
     }
 
@@ -141,13 +149,35 @@ def handle(event: dict, origin: str = '*') -> dict:
     """)
     line2_payments = float(line2_sum_row[0]) if line2_sum_row else 0.0
 
+    # Рефералы 3-й линии (рефералы рефералов рефералов)
+    line3_count_row = query_one(f"""
+        SELECT COUNT(*) FROM {S}referrals r3
+        JOIN {S}referrals r2 ON r2.referred_id = r3.referrer_id
+        JOIN {S}referrals r1 ON r1.referred_id = r2.referrer_id
+        WHERE r1.referrer_id = {escape(user_id)}
+    """)
+    line3_count = int(line3_count_row[0]) if line3_count_row else 0
+
+    # Сумма платежей рефералов 3-й линии
+    line3_sum_row = query_one(f"""
+        SELECT COALESCE(SUM(o.amount), 0)
+        FROM {S}referrals r1
+        JOIN {S}referrals r2 ON r2.referrer_id = r1.referred_id
+        JOIN {S}referrals r3 ON r3.referrer_id = r2.referred_id
+        JOIN {S}orders o ON CAST(o.user_id AS TEXT) = CAST(r3.referred_id AS TEXT)
+        WHERE r1.referrer_id = {escape(user_id)} AND o.status = 'succeeded'
+    """)
+    line3_payments = float(line3_sum_row[0]) if line3_sum_row else 0.0
+
     # Начисления комиссии (считаем после определения уровня)
     level = get_level(referral_count, level_override)
     pct1 = level["commission1"] / 100
     pct2 = level["commission2"] / 100
+    pct3 = level.get("commission3", 0) / 100
     earned_line1 = round(line1_payments * pct1, 2)
     earned_line2 = round(line2_payments * pct2, 2)
-    earned_total = round(earned_line1 + earned_line2, 2)
+    earned_line3 = round(line3_payments * pct3, 2)
+    earned_total = round(earned_line1 + earned_line2 + earned_line3, 2)
 
     # Бонусы за первые объекты рефералов
     bonuses_row = query_one(f"""
@@ -218,6 +248,7 @@ def handle(event: dict, origin: str = '*') -> dict:
         "conversion": conversion,
         "earned_line1": earned_line1,
         "earned_line2": earned_line2,
+        "earned_line3": earned_line3,
         "earned_total": earned_total,
         "bonus_total": bonus_total,
         "bonus_count": bonus_count,
@@ -226,6 +257,8 @@ def handle(event: dict, origin: str = '*') -> dict:
         "balance": balance,
         "line1_payments": line1_payments,
         "line2_payments": line2_payments,
+        "line3_payments": line3_payments,
+        "line3_count": line3_count,
         "clicks_total": clicks_total,
         "clicks_week": clicks_week,
         "level": level,

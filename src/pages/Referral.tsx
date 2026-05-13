@@ -9,37 +9,37 @@ import { Footer } from "@/components/Footer"
 const levels = [
   {
     name: "Друг", refs: "1–2 рефералов",
-    cashback1: "5%", cashback2: null,
+    cashback1: "15%", cashback2: "5%",
     icon: "UserPlus", bg: "bg-[#0f1a2e]", iconColor: "text-blue-400", iconBg: "bg-blue-500/20",
     perks: ["Реферальная ссылка", "Бонус 10 токенов за регистрацию", "20 бонусов за первый объект реферала"],
     badge: { label: "Копилка бонусов", color: "bg-[#1a2a3a] text-blue-300 border border-blue-500/30" },
   },
   {
     name: "Партнёр", refs: "3–9 рефералов",
-    cashback1: "7%", cashback2: null,
+    cashback1: "15%", cashback2: "5%",
     icon: "Users", bg: "bg-[#0f1f18]", iconColor: "text-emerald-400", iconBg: "bg-emerald-500/20",
-    perks: ["Повышенный кэшбэк 7%", "Приоритетная поддержка", "Доступ к закрытому Telegram-чату"],
+    perks: ["Кэшбэк 15% + 5% со 2-й линии", "Приоритетная поддержка", "Доступ к закрытому Telegram-чату"],
     badge: { label: "Копилка бонусов", color: "bg-[#1a2a3a] text-blue-300 border border-blue-500/30" },
   },
   {
     name: "Бизнес-партнёр", refs: "10–29 рефералов",
-    cashback1: "7%", cashback2: null,
+    cashback1: "15%", cashback2: "5%",
     icon: "Target", bg: "bg-[#1a0f2e]", iconColor: "text-violet-400", iconBg: "bg-violet-500/20",
     perks: ["Вывод средств открыт", "Персональный менеджер", "Со-брендинг материалы"],
     badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
   },
   {
     name: "Амбассадор", refs: "30–99 рефералов",
-    cashback1: "10%", cashback2: null,
+    cashback1: "15%", cashback2: "5%",
     icon: "Award", bg: "bg-[#1f1800]", iconColor: "text-amber-400", iconBg: "bg-amber-500/20",
-    perks: ["Кэшбэк 10%", "Значок амбассадора в профиле", "Ранний доступ к новым функциям"],
+    perks: ["Кэшбэк 15% + 5% со 2-й линии", "Значок амбассадора в профиле", "Ранний доступ к новым функциям"],
     badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
   },
   {
-    name: "Адвокат бренда", refs: "100+ рефералов",
-    cashback1: "10%", cashback2: "2%",
+    name: "Лидер", refs: "100+ рефералов",
+    cashback1: "15%", cashback2: "10%", cashback3: "5%",
     icon: "Gem", bg: "bg-[#1f0a0a]", iconColor: "text-rose-400", iconBg: "bg-rose-500/20",
-    perks: ["10% с 1-й линии + 2% со 2-й", "VIP-статус и эксклюзивные условия", "Участие в развитии продукта"],
+    perks: ["15% с 1-й линии + 10% со 2-й + 5% с 3-й", "VIP-статус и эксклюзивные условия", "Участие в развитии продукта"],
     badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
   },
 ]
@@ -131,7 +131,7 @@ export default function Referral() {
             {[
               { icon: "Zap", title: "Пассивный доход", desc: "Зарабатывайте на каждом платеже приглашённых — без дополнительных усилий" },
               { icon: "Shield", title: "Прозрачная аналитика", desc: "Отслеживайте рефералов, начисления и выплаты в реальном времени" },
-              { icon: "Crown", title: "Пятиуровневая система", desc: "Растите от «Друга» до «Адвоката бренда» — на высших уровнях доход и со второй линии" },
+              { icon: "Crown", title: "Пятиуровневая система", desc: "Растите от «Друга» до «Лидера» — на высших уровнях доход со 2-й и 3-й линии" },
               { icon: "Star", title: "Бонусы за активность", desc: "10 токенов за регистрацию реферала и 20 бонусов за его первый объект" },
               { icon: "BadgeCheck", title: "Статус и признание", desc: "Значок амбассадора, VIP-поддержка и ранний доступ к новым функциям" },
               { icon: "Wallet", title: "Удобный вывод", desc: "Выводите заработанные средства удобным способом от уровня Бизнес-партнёр" },
@@ -168,6 +168,9 @@ export default function Referral() {
                     <div className="text-sm font-medium text-gray-300">
                       Кэшбэк 1-я линия: <span className="text-blue-400 font-bold">{l.cashback1}</span>
                       {l.cashback2 && <> &nbsp; 2-я линия: <span className="text-blue-400 font-bold">{l.cashback2}</span></>}
+                      {("cashback3" in l) && (l as { cashback3?: string }).cashback3 && (
+                        <> &nbsp; 3-я линия: <span className="text-blue-400 font-bold">{(l as { cashback3?: string }).cashback3}</span></>
+                      )}
                     </div>
                     <ul className="flex flex-col gap-1.5">
                       {l.perks.map((p, j) => (

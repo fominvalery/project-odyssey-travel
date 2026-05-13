@@ -18,6 +18,7 @@ export interface ReferralLevel {
   color: string
   commission1: number
   commission2: number
+  commission3?: number
   withdrawal: boolean
 }
 
@@ -32,6 +33,7 @@ export interface ReferralStats {
   conversion: number
   earned_line1: number
   earned_line2: number
+  earned_line3?: number
   earned_total: number
   bonus_total: number
   bonus_count: number
@@ -40,6 +42,8 @@ export interface ReferralStats {
   balance: number
   line1_payments: number
   line2_payments: number
+  line3_payments?: number
+  line3_count?: number
   level: ReferralLevel
   referred_users: { id: string; name: string; email: string; status: string; joined_at: string | null }[]
   ref_code: string
@@ -64,9 +68,9 @@ export const LEVEL_ICON_COLOR: Record<string, string> = {
 }
 
 export const ALL_LEVELS = [
-  { name: "Друг",      refs: "1–2 реф.",   percent: "5%",  extra: "",       withdrawal: false },
-  { name: "Партнёр",   refs: "3–9 реф.",   percent: "7%",  extra: "",       withdrawal: false },
-  { name: "Бизнес",    refs: "10–29 реф.", percent: "7%",  extra: "",       withdrawal: true  },
-  { name: "Амбасадор", refs: "30–99 реф.", percent: "10%", extra: "",       withdrawal: true  },
-  { name: "Адвокат",   refs: "100+ реф.",  percent: "10%", extra: "+2% L2", withdrawal: true  },
+  { name: "Друг",      refs: "1–2 реф.",   percent: "15%", extra: "+5% L2",          withdrawal: false },
+  { name: "Партнёр",   refs: "3–9 реф.",   percent: "15%", extra: "+5% L2",          withdrawal: false },
+  { name: "Бизнес",    refs: "10–29 реф.", percent: "15%", extra: "+5% L2",          withdrawal: true  },
+  { name: "Амбасадор", refs: "30–99 реф.", percent: "15%", extra: "+5% L2",          withdrawal: true  },
+  { name: "Лидер",     refs: "100+ реф.",  percent: "15%", extra: "+10% L2 +5% L3", withdrawal: true  },
 ]

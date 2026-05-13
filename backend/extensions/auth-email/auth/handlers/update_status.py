@@ -10,7 +10,8 @@ STATUS_TO_PLAN = {
     'agency': 'proplus',
 }
 ALLOWED_STATUSES = {'basic', 'broker', 'agency'}
-ALLOWED_LEVELS = {'Друг', 'Партнёр', 'Бизнес', 'Амбасадор', 'Адвокат', ''}
+ALLOWED_LEVELS = {'Друг', 'Партнёр', 'Бизнес', 'Амбасадор', 'Лидер', ''}
+LEVEL_ALIASES = {'Адвокат': 'Лидер'}
 
 
 def handle(event: dict, origin: str = '*') -> dict:
@@ -51,6 +52,9 @@ def handle(event: dict, origin: str = '*') -> dict:
     # Обновляем реферальный уровень если передан
     if new_level is not None:
         level_val = str(new_level).strip() if new_level else ''
+        level_val = LEVEL_ALIASES.get(level_val, level_val)
+        if level_val and level_val not in ALLOWED_LEVELS:
+            return error(400, 'Неверный уровень', origin)
         execute(f"""
             UPDATE {S}users
             SET referral_level = {escape(level_val) if level_val else 'NULL'}, updated_at = NOW()
