@@ -156,12 +156,17 @@ def handler(event, context):
 
         # Update based on verified payment status
         if payment_status == 'succeeded':
-            if current_status != 'paid':
-                cur.execute(f"""
-                    UPDATE {S}orders
-                    SET status = 'paid', paid_at = %s, updated_at = %s
-                    WHERE id = %s
-                """, (now, now, order_id))
+            # Атомарный UPDATE — только если статус ещё не 'paid'.
+            # Если параллельный webhook уже обработал — affected_rows = 0 и мы выходим.
+            cur.execute(f"""
+                UPDATE {S}orders
+                SET status = 'paid', paid_at = %s, updated_at = %s
+                WHERE id = %s AND status != 'paid'
+                RETURNING id
+            """, (now, now, order_id))
+            updated = cur.fetchone()
+
+            if updated:  # идемпотентность: бонусы начисляем ТОЛЬКО при первом успешном UPDATE
 
                 # Пополняем listings_extra если это заказ на объявления
                 cur.execute(f"""
@@ -280,12 +285,19 @@ def handler(event, context):
                                     pct1, _, _ = get_user_level(r1_id)
                                     commission1 = round(payment_amount * pct1 / 100, 2)
                                     if commission1 > 0:
+                                        # Идемпотентность через частичный UNIQUE index
+                                        # (referrer_id, order_id, bonus_type) WHERE order_id IS NOT NULL
                                         cur.execute(f"""
                                             INSERT INTO {S}referral_bonuses
                                                 (referrer_id, referred_id, bonus_type, amount, description, order_id)
-                                            VALUES (%s, %s, %s, %s, %s, %s)
+                                            SELECT %s, %s, %s, %s, %s, %s
+                                            WHERE NOT EXISTS (
+                                                SELECT 1 FROM {S}referral_bonuses
+                                                WHERE referrer_id = %s AND order_id = %s AND bonus_type = 'commission_line1'
+                                            )
                                         """, (r1_id, order_user_id, 'commission_line1', commission1,
-                                              f'Комиссия {pct1}% за оплату тарифа ({payment_amount} ₽)', order_id))
+                                              f'Комиссия {pct1}% за оплату тарифа ({payment_amount} ₽)', order_id,
+                                              r1_id, order_id))
 
                                     # 2-я линия: реферер реферера, процент по ЕГО уровню
                                     cur.execute(f"SELECT referrer_id FROM {S}referrals WHERE referred_id = %s", (r1_id,))
@@ -298,9 +310,14 @@ def handler(event, context):
                                             cur.execute(f"""
                                                 INSERT INTO {S}referral_bonuses
                                                     (referrer_id, referred_id, bonus_type, amount, description, order_id)
-                                                VALUES (%s, %s, %s, %s, %s, %s)
+                                                SELECT %s, %s, %s, %s, %s, %s
+                                                WHERE NOT EXISTS (
+                                                    SELECT 1 FROM {S}referral_bonuses
+                                                    WHERE referrer_id = %s AND order_id = %s AND bonus_type = 'commission_line2'
+                                                )
                                             """, (r2_id, order_user_id, 'commission_line2', commission2,
-                                                  f'Комиссия 2-й линии {pct2}% за оплату тарифа ({payment_amount} ₽)', order_id))
+                                                  f'Комиссия 2-й линии {pct2}% за оплату тарифа ({payment_amount} ₽)', order_id,
+                                                  r2_id, order_id))
 
                                         # 3-я линия: реферер реферера реферера, процент по ЕГО уровню
                                         cur.execute(f"SELECT referrer_id FROM {S}referrals WHERE referred_id = %s", (r2_id,))
@@ -313,9 +330,14 @@ def handler(event, context):
                                                 cur.execute(f"""
                                                     INSERT INTO {S}referral_bonuses
                                                         (referrer_id, referred_id, bonus_type, amount, description, order_id)
-                                                    VALUES (%s, %s, %s, %s, %s, %s)
+                                                    SELECT %s, %s, %s, %s, %s, %s
+                                                    WHERE NOT EXISTS (
+                                                        SELECT 1 FROM {S}referral_bonuses
+                                                        WHERE referrer_id = %s AND order_id = %s AND bonus_type = 'commission_line3'
+                                                    )
                                                 """, (r3_id, order_user_id, 'commission_line3', commission3,
-                                                      f'Комиссия 3-й линии {pct3}% за оплату тарифа ({payment_amount} ₽)', order_id))
+                                                      f'Комиссия 3-й линии {pct3}% за оплату тарифа ({payment_amount} ₽)', order_id,
+                                                      r3_id, order_id))
                         except Exception:
                             pass  # комиссия не критична
 

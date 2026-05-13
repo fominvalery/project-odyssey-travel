@@ -341,37 +341,32 @@ def handler(event: dict, context) -> dict:
             row = cur.fetchone()
             conn.commit()
 
-            # Начисление 20 бонусов рефереру за первый объект реферала
+            # Начисление 20 ₽ рефереру за первый объект реферала.
+            # Защита от race condition: частичный UNIQUE индекс
+            # referral_bonuses_first_object_unique гарантирует однократность.
+            # WHERE NOT EXISTS — чтобы не делать лишнюю запись.
             if user_id:
                 try:
-                    # Считаем сколько объектов у этого пользователя (новый уже создан)
                     cur.execute(
-                        "SELECT COUNT(*) FROM " + schema + ".objects WHERE user_id = %s",
+                        "SELECT referrer_id FROM " + schema + ".referrals WHERE referred_id = %s",
                         (user_id,)
                     )
-                    obj_count = cur.fetchone()[0]
-
-                    # Если это первый объект — ищем реферера
-                    if obj_count == 1:
+                    ref_row = cur.fetchone()
+                    if ref_row:
+                        referrer_id = ref_row[0]
                         cur.execute(
-                            "SELECT referrer_id FROM " + schema + ".referrals WHERE referred_id = %s",
-                            (user_id,)
+                            "INSERT INTO " + schema + ".referral_bonuses"
+                            " (referrer_id, referred_id, bonus_type, amount, description)"
+                            " SELECT %s, %s, 'first_object', 20, 'Реферал создал первый объект'"
+                            " WHERE NOT EXISTS ("
+                            "   SELECT 1 FROM " + schema + ".referral_bonuses"
+                            "   WHERE referrer_id = %s AND referred_id = %s AND bonus_type = 'first_object'"
+                            " )",
+                            (referrer_id, user_id, referrer_id, user_id)
                         )
-                        ref_row = cur.fetchone()
-                        if ref_row:
-                            referrer_id = ref_row[0]
-                            # Начисляем бонус (UNIQUE гарантирует однократность)
-                            cur.execute(
-                                "INSERT INTO " + schema + ".referral_bonuses"
-                                " (referrer_id, referred_id, bonus_type, amount, description)"
-                                " VALUES (%s, %s, %s, %s, %s)"
-                                " ON CONFLICT (referrer_id, referred_id, bonus_type) DO NOTHING",
-                                (referrer_id, user_id, 'first_object', 20,
-                                 'Реферал создал первый объект')
-                            )
-                            conn.commit()
+                        conn.commit()
                 except Exception:
-                    pass  # бонус не критичен для создания объекта
+                    conn.rollback()  # откатываем чтобы не сломать основную транзакцию
 
             return resp(200, {"ok": True, "object": row_to_obj(row)})
 

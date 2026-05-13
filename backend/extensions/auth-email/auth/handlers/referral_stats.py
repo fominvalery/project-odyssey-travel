@@ -1,5 +1,13 @@
-"""Referral stats handler — реальная статистика рефералов пользователя."""
+"""Referral stats handler — реальная статистика рефералов пользователя.
+
+ВАЖНО: balance считается ТОЛЬКО из реальных записей referral_bonuses
+и withdrawal_requests (с резервом pending/approved заявок) — это единый источник правды.
+
+earned_line1/2/3 ниже считаются ИНФОРМАЦИОННО (для отображения процентов),
+но не входят в balance, чтобы не было двойного учёта с commission_line*.
+"""
 from utils.db import query_one, query, get_schema, escape
+from utils.balance import calculate_balance
 from utils.http import response, error
 
 
@@ -210,14 +218,11 @@ def handle(event: dict, origin: str = '*') -> dict:
         for row in bonus_rows
     ]
 
-    # Уже выплачено (сумма заявок со статусом paid)
-    paid_out_row = query_one(f"""
-        SELECT COALESCE(SUM(amount), 0) FROM {S}withdrawal_requests
-        WHERE user_id = {escape(user_id)} AND status = 'paid'
-    """)
-    paid_out = round(float(paid_out_row[0]) if paid_out_row else 0.0, 2)
-    # Баланс = комиссии + бонусы − выплачено
-    balance = round(max(earned_total + bonus_total - paid_out, 0), 2)
+    # ЕДИНЫЙ РАСЧЁТ БАЛАНСА (учитывает резерв pending заявок, исключает двойной учёт)
+    bal = calculate_balance(user_id)
+    paid_out = bal['paid_out']
+    reserved_withdrawals = bal['reserved_withdrawals']
+    balance = bal['available']
 
     # Список рефералов с именами
     referred_rows = query(f"""
@@ -254,6 +259,7 @@ def handle(event: dict, origin: str = '*') -> dict:
         "bonus_count": bonus_count,
         "bonuses": bonuses,
         "paid_out": paid_out,
+        "reserved_withdrawals": reserved_withdrawals,
         "balance": balance,
         "line1_payments": line1_payments,
         "line2_payments": line2_payments,

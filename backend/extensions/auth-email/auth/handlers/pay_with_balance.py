@@ -1,7 +1,12 @@
-"""Оплата тарифа Клуб реферальными баллами."""
+"""Оплата тарифа Клуб реферальными баллами.
+
+Защищено от race condition — баланс блокируется (SELECT FOR UPDATE)
+внутри транзакции, чтобы параллельные запросы не могли потратить одни и те же баллы.
+"""
 import json
 from datetime import datetime, timedelta, timezone
-from utils.db import query_one, get_schema, escape, execute, execute_returning
+from utils.db import get_connection, get_schema, escape
+from utils.balance import calculate_balance_locked
 from utils.http import response, error
 
 PLANS = {
@@ -32,83 +37,81 @@ def handle(event: dict, origin: str = '*') -> dict:
     price = PLANS[months]
     S = get_schema()
 
-    # Считаем баланс: заработано - выведено - списано на подписку
-    earned_row = query_one(f"""
-        SELECT COALESCE(SUM(amount), 0)
-        FROM {S}referral_bonuses
-        WHERE referrer_id = {escape(user_id)} AND amount > 0
-    """)
-    earned = float(earned_row[0]) if earned_row else 0.0
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
 
-    paid_row = query_one(f"""
-        SELECT COALESCE(SUM(amount), 0)
-        FROM {S}withdrawal_requests
-        WHERE user_id = {escape(user_id)} AND status = 'paid'
-    """)
-    paid_out = float(paid_row[0]) if paid_row else 0.0
+        # Атомарная проверка баланса с блокировкой
+        balance = calculate_balance_locked(cur, user_id)
 
-    spent_row = query_one(f"""
-        SELECT COALESCE(SUM(ABS(amount)), 0)
-        FROM {S}referral_bonuses
-        WHERE referrer_id = {escape(user_id)} AND bonus_type = 'subscription_payment'
-    """)
-    spent = float(spent_row[0]) if spent_row else 0.0
+        if balance < price:
+            conn.rollback()
+            return error(400, f'Недостаточно баллов. Доступно: {balance:.0f} ₽, нужно: {price} ₽', origin)
 
-    balance = earned - paid_out - spent
+        # Получаем текущую дату подписки (тоже под локом — пользователь не должен меняться)
+        cur.execute(
+            f"SELECT subscription_end_at, is_superadmin FROM {S}users WHERE id = %s FOR UPDATE",
+            (user_id,)
+        )
+        user_row = cur.fetchone()
+        if not user_row:
+            conn.rollback()
+            return error(404, 'Пользователь не найден', origin)
 
-    if balance < price:
-        return error(400, f'Недостаточно баллов. Баланс: {balance:.0f} ₽, нужно: {price} ₽', origin)
+        existing_end, is_superadmin = user_row
 
-    # Получаем текущую дату подписки
-    user_row = query_one(f"""
-        SELECT subscription_end_at FROM {S}users WHERE id = {escape(user_id)}
-    """)
-    existing_end = user_row[0] if user_row and user_row[0] else None
+        if is_superadmin:
+            conn.rollback()
+            return error(400, 'Супер-админу не нужно продлевать подписку', origin)
 
-    now_dt = datetime.now(timezone.utc)
-    if existing_end:
-        if existing_end.tzinfo is None:
-            existing_end = existing_end.replace(tzinfo=timezone.utc)
-        base = existing_end if existing_end > now_dt else now_dt
-    else:
-        base = now_dt
-    new_end = base + timedelta(days=months * 30)
-    grace_end = new_end + timedelta(days=3)
+        now_dt = datetime.now(timezone.utc)
+        if existing_end:
+            if existing_end.tzinfo is None:
+                existing_end = existing_end.replace(tzinfo=timezone.utc)
+            base = existing_end if existing_end > now_dt else now_dt
+        else:
+            base = now_dt
+        new_end = base + timedelta(days=months * 30)
+        grace_end = new_end + timedelta(days=3)
 
-    label = MONTHS_LABEL[months]
+        label = MONTHS_LABEL[months]
 
-    # Списываем баллы (отрицательная запись)
-    execute_returning(f"""
-        INSERT INTO {S}referral_bonuses
-            (referrer_id, referred_id, bonus_type, amount, description)
-        VALUES
-            ({escape(user_id)}, {escape(user_id)}, 'subscription_payment',
-             -{price}, {escape(f'Оплата тарифа Клуб — {label}')})
-        RETURNING id
-    """)
+        # Списываем баллы (отрицательная запись)
+        cur.execute(
+            f"INSERT INTO {S}referral_bonuses "
+            f"(referrer_id, referred_id, bonus_type, amount, description) "
+            f"VALUES (%s, %s, 'subscription_payment', %s, %s) RETURNING id",
+            (user_id, user_id, -price, f'Оплата тарифа Клуб — {label}')
+        )
+        cur.fetchone()
 
-    # Продлеваем подписку
-    execute(f"""
-        UPDATE {S}users
-        SET plan = 'pro', status = 'broker',
-            subscription_end_at = '{new_end.isoformat()}',
-            grace_period_end_at = '{grace_end.isoformat()}',
-            updated_at = NOW()
-        WHERE id = {escape(user_id)} AND is_superadmin = false
-    """)
+        # Продлеваем подписку
+        cur.execute(
+            f"UPDATE {S}users SET plan = 'pro', status = 'broker', "
+            f"subscription_end_at = %s, grace_period_end_at = %s, updated_at = NOW() "
+            f"WHERE id = %s AND is_superadmin = false",
+            (new_end.isoformat(), grace_end.isoformat(), user_id)
+        )
 
-    # Уведомление в колокольчик
-    execute(f"""
-        INSERT INTO {S}notifications (user_id, type, title, body)
-        VALUES ({escape(user_id)}, 'payment',
-                'Тариф Клуб продлён',
-                {escape(f'Подписка продлена на {label}. Списано {price} ₽ с реферального баланса.')})
-    """)
+        # Уведомление
+        cur.execute(
+            f"INSERT INTO {S}notifications (user_id, type, title, body) "
+            f"VALUES (%s, 'payment', 'Тариф Клуб продлён', %s)",
+            (user_id, f'Подписка продлена на {label}. Списано {price} ₽ с реферального баланса.')
+        )
 
-    return response(200, {
-        'ok': True,
-        'months': months,
-        'price': price,
-        'new_balance': round(balance - price, 2),
-        'subscription_end_at': new_end.isoformat(),
-    }, origin)
+        conn.commit()
+
+        return response(200, {
+            'ok': True,
+            'months': months,
+            'price': price,
+            'new_balance': round(balance - price, 2),
+            'subscription_end_at': new_end.isoformat(),
+        }, origin)
+
+    except Exception as e:
+        conn.rollback()
+        return error(500, f'Ошибка оплаты: {str(e)[:200]}', origin)
+    finally:
+        conn.close()

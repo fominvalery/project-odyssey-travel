@@ -1,8 +1,13 @@
-"""Withdrawal request handler — сохранение реквизитов и уведомление супер-админа."""
+"""Withdrawal request handler — сохранение реквизитов и уведомление супер-админа.
+
+Защищено от race condition: баланс блокируется в транзакции, заявка не создаётся
+если денег недостаточно (учитываются и pending заявки).
+"""
 import json
 import os
 from datetime import datetime
-from utils.db import query_one, query, execute_returning, get_schema, escape
+from utils.db import query_one, get_connection, get_schema, escape
+from utils.balance import calculate_balance_locked
 from utils.http import response, error
 from utils.email import send_email, _base_template
 
@@ -47,20 +52,37 @@ def handle(event: dict, origin: str = '*') -> dict:
 
     now = datetime.now().strftime('%d.%m.%Y %H:%M')
 
-    # Сохраняем заявку в БД
+    # Сохраняем заявку в БД с проверкой баланса под локом
     amount_val = float(amount) if amount else None
-    request_id = execute_returning(f"""
-        INSERT INTO {S}withdrawal_requests
-            (user_id, entity_type, full_name, inn, bank_name, bik, account, amount, comment)
-        VALUES
-            ({escape(user_id)}, {escape(entity_type)}, {escape(full_name)}, {escape(inn)},
-             {escape(bank_name) if bank_name else 'NULL'},
-             {escape(bik) if bik else 'NULL'},
-             {escape(account)},
-             {amount_val if amount_val is not None else 'NULL'},
-             {escape(comment) if comment else 'NULL'})
-        RETURNING id
-    """)
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        # Если указана сумма — проверяем что её хватает (с учётом pending заявок)
+        if amount_val is not None and amount_val > 0:
+            available = calculate_balance_locked(cur, user_id)
+            if amount_val > available:
+                conn.rollback()
+                return error(400,
+                    f'Недостаточно средств. Доступно: {available:.2f} ₽, запрошено: {amount_val:.2f} ₽',
+                    origin)
+
+        cur.execute(
+            f"INSERT INTO {S}withdrawal_requests "
+            f"(user_id, entity_type, full_name, inn, bank_name, bik, account, amount, comment) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (user_id, entity_type, full_name, inn,
+             bank_name or None, bik or None, account,
+             amount_val, comment or None)
+        )
+        request_id = cur.fetchone()[0]
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return error(500, f'Ошибка создания заявки: {str(e)[:200]}', origin)
+    finally:
+        conn.close()
 
     # HTML письмо супер-админу
     content = f"""
