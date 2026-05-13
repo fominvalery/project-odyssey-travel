@@ -50,4 +50,21 @@ def handle(event: dict, origin: str = '*') -> dict:
     # Delete used token
     execute(f"DELETE FROM {S}email_verification_tokens WHERE user_id = {escape(user_id)}")
 
+    # Начисляем 10₽ рефереру (если есть) — однократно
+    try:
+        ref_row = query_one(f"""
+            SELECT referrer_id FROM {S}referrals WHERE referred_id = {escape(user_id)}
+        """)
+        if ref_row and ref_row[0]:
+            referrer_id = str(ref_row[0])
+            execute(f"""
+                INSERT INTO {S}referral_bonuses
+                    (referrer_id, referred_id, bonus_type, amount, description)
+                VALUES ({escape(referrer_id)}, {escape(user_id)}, 'email_verified', 10,
+                        'Реферал подтвердил email')
+                ON CONFLICT DO NOTHING
+            """)
+    except Exception:
+        pass  # бонус не критичен
+
     return response(200, {'message': 'Email подтверждён'}, origin)

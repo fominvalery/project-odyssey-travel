@@ -44,6 +44,23 @@ def handle(event: dict, origin: str = '*') -> dict:
     # Удаляем неиспользованные коды подтверждения
     execute(f"DELETE FROM {S}email_verification_tokens WHERE user_id = {escape(target_id)}")
 
+    # Начисляем 10₽ рефереру (если есть) — однократно
+    try:
+        ref_row = query_one(f"""
+            SELECT referrer_id FROM {S}referrals WHERE referred_id = {escape(target_id)}
+        """)
+        if ref_row and ref_row[0]:
+            referrer_id = str(ref_row[0])
+            execute(f"""
+                INSERT INTO {S}referral_bonuses
+                    (referrer_id, referred_id, bonus_type, amount, description)
+                VALUES ({escape(referrer_id)}, {escape(target_id)}, 'email_verified', 10,
+                        'Реферал подтвердил email')
+                ON CONFLICT DO NOTHING
+            """)
+    except Exception:
+        pass
+
     return response(200, {
         'success': True,
         'user_id': str(target[0]),

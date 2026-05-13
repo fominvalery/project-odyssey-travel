@@ -241,103 +241,80 @@ def handler(event, context):
                             WHERE user_id = %s
                         """, (order_user_id,))
 
-                        # Начисляем реферальную комиссию рефереру
+                        # Начисляем реферальную комиссию: процент берётся ПО УРОВНЮ ПОЛУЧАТЕЛЯ
                         try:
-                            # Получаем сумму заказа
-                            cur.execute(f"""
-                                SELECT amount FROM {S}orders WHERE id = %s
-                            """, (order_id,))
+                            cur.execute(f"SELECT amount FROM {S}orders WHERE id = %s", (order_id,))
                             amount_row = cur.fetchone()
                             payment_amount = float(amount_row[0]) if amount_row else 0.0
 
                             if payment_amount > 0:
-                                # Ищем реферера (1-я линия)
-                                cur.execute(f"""
-                                    SELECT referrer_id FROM {S}referrals
-                                    WHERE referred_id = %s
-                                """, (order_user_id,))
-                                ref_row = cur.fetchone()
+                                LEVEL_MAP = {
+                                    'Лидер':     (15, 10, 5),
+                                    'Амбасадор': (15,  5, 0),
+                                    'Бизнес':    (15,  5, 0),
+                                    'Партнёр':   (15,  5, 0),
+                                    'Друг':      (15,  5, 0),
+                                }
 
-                                if ref_row:
-                                    referrer_id = ref_row[0]
-
-                                    # Получаем уровень реферера
-                                    cur.execute(f"""
-                                        SELECT referral_level FROM {S}users WHERE id = %s
-                                    """, (referrer_id,))
+                                def get_user_level(uid):
+                                    """Возвращает (pct1, pct2, pct3) по уровню пользователя."""
+                                    cur.execute(f"SELECT referral_level FROM {S}users WHERE id = %s", (uid,))
                                     lvl_row = cur.fetchone()
-                                    level_override = lvl_row[0] if lvl_row else None
-
-                                    # Считаем количество рефералов для определения уровня
-                                    cur.execute(f"""
-                                        SELECT COUNT(*) FROM {S}referrals WHERE referrer_id = %s
-                                    """, (referrer_id,))
+                                    override = lvl_row[0] if lvl_row else None
+                                    if override == 'Адвокат':
+                                        override = 'Лидер'
+                                    if override and override in LEVEL_MAP:
+                                        return LEVEL_MAP[override]
+                                    cur.execute(f"SELECT COUNT(*) FROM {S}referrals WHERE referrer_id = %s", (uid,))
                                     cnt_row = cur.fetchone()
-                                    ref_count = int(cnt_row[0]) if cnt_row else 0
+                                    cnt = int(cnt_row[0]) if cnt_row else 0
+                                    if cnt >= 100:
+                                        return (15, 10, 5)
+                                    return (15, 5, 0)
 
-                                    # Определяем % комиссии (1-я, 2-я, 3-я линии)
-                                    # Алиас старого названия → новое
-                                    if level_override == 'Адвокат':
-                                        level_override = 'Лидер'
-
-                                    LEVEL_MAP = {
-                                        'Лидер':     (15, 10, 5),
-                                        'Амбасадор': (15,  5, 0),
-                                        'Бизнес':    (15,  5, 0),
-                                        'Партнёр':   (15,  5, 0),
-                                        'Друг':      (15,  5, 0),
-                                    }
-                                    if level_override and level_override in LEVEL_MAP:
-                                        pct1, pct2, pct3 = LEVEL_MAP[level_override]
-                                    elif ref_count >= 100:
-                                        pct1, pct2, pct3 = 15, 10, 5
-                                    else:
-                                        pct1, pct2, pct3 = 15, 5, 0
-
+                                # 1-я линия: прямой реферер
+                                cur.execute(f"SELECT referrer_id FROM {S}referrals WHERE referred_id = %s", (order_user_id,))
+                                ref1 = cur.fetchone()
+                                if ref1:
+                                    r1_id = ref1[0]
+                                    pct1, _, _ = get_user_level(r1_id)
                                     commission1 = round(payment_amount * pct1 / 100, 2)
-
-                                    # Записываем комиссию 1-й линии
                                     if commission1 > 0:
                                         cur.execute(f"""
                                             INSERT INTO {S}referral_bonuses
                                                 (referrer_id, referred_id, bonus_type, amount, description, order_id)
                                             VALUES (%s, %s, %s, %s, %s, %s)
-                                        """, (referrer_id, order_user_id, 'commission_line1', commission1,
+                                        """, (r1_id, order_user_id, 'commission_line1', commission1,
                                               f'Комиссия {pct1}% за оплату тарифа ({payment_amount} ₽)', order_id))
 
-                                    # Комиссия 2-й линии
-                                    referrer2_id = None
-                                    if pct2 > 0:
-                                        cur.execute(f"""
-                                            SELECT referrer_id FROM {S}referrals WHERE referred_id = %s
-                                        """, (referrer_id,))
-                                        ref2_row = cur.fetchone()
-                                        if ref2_row:
-                                            referrer2_id = ref2_row[0]
-                                            commission2 = round(payment_amount * pct2 / 100, 2)
-                                            if commission2 > 0:
-                                                cur.execute(f"""
-                                                    INSERT INTO {S}referral_bonuses
-                                                        (referrer_id, referred_id, bonus_type, amount, description, order_id)
-                                                    VALUES (%s, %s, %s, %s, %s, %s)
-                                                """, (referrer2_id, order_user_id, 'commission_line2', commission2,
-                                                      f'Комиссия 2-й линии {pct2}% за оплату тарифа ({payment_amount} ₽)', order_id))
+                                    # 2-я линия: реферер реферера, процент по ЕГО уровню
+                                    cur.execute(f"SELECT referrer_id FROM {S}referrals WHERE referred_id = %s", (r1_id,))
+                                    ref2 = cur.fetchone()
+                                    if ref2:
+                                        r2_id = ref2[0]
+                                        _, pct2, _ = get_user_level(r2_id)
+                                        commission2 = round(payment_amount * pct2 / 100, 2)
+                                        if commission2 > 0:
+                                            cur.execute(f"""
+                                                INSERT INTO {S}referral_bonuses
+                                                    (referrer_id, referred_id, bonus_type, amount, description, order_id)
+                                                VALUES (%s, %s, %s, %s, %s, %s)
+                                            """, (r2_id, order_user_id, 'commission_line2', commission2,
+                                                  f'Комиссия 2-й линии {pct2}% за оплату тарифа ({payment_amount} ₽)', order_id))
 
-                                    # Комиссия 3-й линии (только для Лидера)
-                                    if pct3 > 0 and referrer2_id is not None:
-                                        cur.execute(f"""
-                                            SELECT referrer_id FROM {S}referrals WHERE referred_id = %s
-                                        """, (referrer2_id,))
-                                        ref3_row = cur.fetchone()
-                                        if ref3_row:
-                                            referrer3_id = ref3_row[0]
+                                        # 3-я линия: реферер реферера реферера, процент по ЕГО уровню
+                                        cur.execute(f"SELECT referrer_id FROM {S}referrals WHERE referred_id = %s", (r2_id,))
+                                        ref3 = cur.fetchone()
+                                        if ref3:
+                                            r3_id = ref3[0]
+                                            _, _, pct3 = get_user_level(r3_id)
                                             commission3 = round(payment_amount * pct3 / 100, 2)
                                             if commission3 > 0:
                                                 cur.execute(f"""
                                                     INSERT INTO {S}referral_bonuses
                                                         (referrer_id, referred_id, bonus_type, amount, description, order_id)
                                                     VALUES (%s, %s, %s, %s, %s, %s)
-                                                """, (referrer3_id, order_user_id, 'commission_line3', commission3,
+                                                """, (r3_id, order_user_id, 'commission_line3', commission3,
                                                       f'Комиссия 3-й линии {pct3}% за оплату тарифа ({payment_amount} ₽)', order_id))
                         except Exception:
                             pass  # комиссия не критична

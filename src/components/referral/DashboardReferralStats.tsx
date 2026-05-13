@@ -64,7 +64,7 @@ export default function DashboardReferralStats({ stats, loading, onWithdrawClick
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-4">
             <div className="flex items-center gap-1.5 mb-2">
               <Icon name="Layers" className="h-4 w-4 text-emerald-400" />
@@ -89,6 +89,25 @@ export default function DashboardReferralStats({ stats, loading, onWithdrawClick
               с оборота {loading ? "…" : `${(stats?.line2_payments ?? 0).toLocaleString("ru-RU")} ₽`}
             </p>
           </div>
+          {(() => {
+            const isLeader = (level?.commission3 ?? 0) > 0
+            return (
+              <div className={`rounded-2xl bg-[#111111] border p-4 ${isLeader ? "border-[#1f1f1f]" : "border-[#1f1f1f] opacity-60"}`}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Icon name="Layers" className={`h-4 w-4 ${isLeader ? "text-rose-400" : "text-gray-500"}`} />
+                  <span className="text-xs text-gray-400">Линия 3 ({loading ? "…" : `${level?.commission3 ?? 0}%`})</span>
+                </div>
+                <p className="text-xl font-bold">
+                  {loading ? "…" : `${(stats?.earned_line3 ?? 0).toLocaleString("ru-RU")} ₽`}
+                </p>
+                <p className="text-[10px] text-gray-600 mt-0.5">
+                  {isLeader
+                    ? <>с оборота {loading ? "…" : `${(stats?.line3_payments ?? 0).toLocaleString("ru-RU")} ₽`}</>
+                    : <span className="text-amber-400/70">доступно с уровня «Лидер»</span>}
+                </p>
+              </div>
+            )
+          })()}
         </div>
       </div>
 

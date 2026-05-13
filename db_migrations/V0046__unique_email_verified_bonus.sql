@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS referral_bonuses_email_verified_unique ON t_p32045231_project_odyssey_trav.referral_bonuses (referrer_id, referred_id) WHERE bonus_type = 'email_verified';
