@@ -89,18 +89,18 @@ export default function MessagesChat({
           )}
         </div>
 
-        {/* Кнопка Совместная сделка — справа, крупная */}
+        {/* Кнопка Совместная сделка — только иконка на мобильном, текст на десктопе */}
         {currentUserCanUseJD && (isClubChat || activeDialog.sender_is_club) && (
           <button
             onClick={onToggleJDForm}
-            className={`flex items-center gap-2 text-sm px-4 py-2 rounded-xl border font-medium transition-colors shrink-0 ${
+            className={`flex items-center gap-2 text-sm px-2.5 sm:px-4 py-2 rounded-xl border font-medium transition-colors shrink-0 ${
               showJDForm
                 ? "bg-violet-600 border-violet-600 text-white"
                 : "bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20"
             }`}
           >
-            <Icon name="Handshake" className="h-4 w-4" />
-            Совм. сделка
+            <Icon name="Handshake" className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Совм. сделка</span>
           </button>
         )}
       </div>
