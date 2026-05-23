@@ -219,7 +219,10 @@ export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog
                       {m.pinned && <Icon name="Pin" className="h-3 w-3 text-violet-400 shrink-0" />}
                       {m.muted && <Icon name="BellOff" className="h-3 w-3 text-gray-600 shrink-0" />}
                       <p className="text-sm font-medium truncate text-white flex-1">{d.partner_name}</p>
-                      <span className="text-[10px] text-gray-600 shrink-0">{formatTime(d.last_at)}</span>
+                      {/* Время — скрывается при наведении, точки занимают его место */}
+                      <span className={`text-[10px] text-gray-600 shrink-0 transition-opacity ${isMenuOpen ? "opacity-0" : "group-hover:opacity-0"}`}>
+                        {formatTime(d.last_at)}
+                      </span>
                     </div>
                     <p className={`text-xs truncate mt-0.5 ${unread > 0 ? "text-gray-300 font-medium" : "text-gray-500"}`}>
                       {d.is_mine ? "Вы: " : ""}{d.last_text || "Начните переписку"}
@@ -227,14 +230,16 @@ export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog
                   </div>
                 </button>
 
-                {/* Кнопка три точки */}
+                {/* Кнопка три точки — горизонтальные, синие, на месте времени */}
                 <button
                   onClick={e => { e.stopPropagation(); setMenuOpen(isMenuOpen ? null : d.partner_id) }}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-600 hover:text-white hover:bg-[#2a2a2a] transition-all ${
-                    isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  className={`absolute right-3 top-3 p-1 rounded-md transition-all ${
+                    isMenuOpen
+                      ? "opacity-100 text-blue-400 bg-blue-500/15"
+                      : "opacity-0 group-hover:opacity-100 text-blue-400 hover:bg-blue-500/15"
                   }`}
                 >
-                  <Icon name="MoreVertical" className="h-4 w-4" />
+                  <Icon name="MoreHorizontal" className="h-4 w-4" />
                 </button>
 
                 {/* Выпадающее меню */}
