@@ -45,10 +45,38 @@
       "expectedStatus": 400
     },
     {
+      "name": "POST без session_id — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"object_id": "00000000-0000-0000-0000-000000000001", "text": "Привет"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "POST без text — ошибка 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"object_id": "00000000-0000-0000-0000-000000000001", "session_id": "test"},
+      "expectedStatus": 400
+    },
+    {
       "name": "PUT без полей — ошибка 400",
       "method": "PUT",
       "path": "/",
       "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "PUT без object_id — ошибка 400",
+      "method": "PUT",
+      "path": "/",
+      "body": {"owner_id": "00000000-0000-0000-0000-000000000001"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "PUT без session_id — ошибка 400",
+      "method": "PUT",
+      "path": "/",
+      "body": {"owner_id": "00000000-0000-0000-0000-000000000001", "object_id": "00000000-0000-0000-0000-000000000001"},
       "expectedStatus": 400
     }
   ]

@@ -144,6 +144,59 @@
       "body": {"user_id": "00000000-0000-0000-0000-000000000001", "entity_type": "ip", "full_name": "Тест", "inn": "1234567890", "account": "12345678901234567890"},
       "expectedStatus": 404,
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Chat dialogs без user_id — ошибка 400",
+      "method": "GET",
+      "path": "/?action=chat&chat_action=dialogs",
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Chat dialogs с user_id — возвращает список (Клуб + объекты)",
+      "method": "GET",
+      "path": "/?action=chat&chat_action=dialogs&user_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 200,
+      "expectedBody": {"dialogs": "array"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Chat messages без partner_id — ошибка 400",
+      "method": "GET",
+      "path": "/?action=chat&chat_action=messages&user_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Chat unread_count возвращает club_count + object_count",
+      "method": "GET",
+      "path": "/?action=chat&chat_action=unread_count&user_id=00000000-0000-0000-0000-000000000001",
+      "expectedStatus": 200,
+      "expectedBody": {"unread_count": "number"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Chat send без полей — ошибка 400",
+      "method": "POST",
+      "path": "/?action=chat&chat_action=send",
+      "body": {"sender_id": "00000000-0000-0000-0000-000000000001"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Chat read без partner_id — ошибка 400",
+      "method": "POST",
+      "path": "/?action=chat&chat_action=read",
+      "body": {"user_id": "00000000-0000-0000-0000-000000000001"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Chat с неизвестным chat_action — ошибка 400",
+      "method": "GET",
+      "path": "/?action=chat&chat_action=foobar",
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
     }
   ]
 }
