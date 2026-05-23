@@ -1,142 +1,63 @@
-// Строка вкладок: Все / Объекты / Клуб / пользовательские папки + форма создания папки
+// Строка вкладок: Все / Объекты / Клуб / Папки (одна вкладка)
 
-import { useRef } from "react"
 import Icon from "@/components/ui/icon"
-import { FilterType, Folder, EMOJIS } from "./messagesDialogMeta"
+import { FilterType, Folder } from "./messagesDialogMeta"
 
 interface Props {
   filter: FilterType
   folders: Folder[]
   hasObject: boolean
   hasClub: boolean
-  showFolderForm: boolean
-  editFolder: Folder | null
-  folderName: string
-  folderEmoji: string
-  folderTabMenu: string | null
-  formRef: React.RefObject<HTMLDivElement>
+  activeFolderId: string | null   // если открыта конкретная папка
   onSetFilter: (f: FilterType) => void
-  onSetFolderTabMenu: (id: string | null) => void
-  onSetFolderName: (v: string) => void
-  onSetFolderEmoji: (v: string) => void
-  onOpenCreateFolder: () => void
-  onOpenEditFolder: (f: Folder, e: React.MouseEvent) => void
-  onSaveFolder: () => void
-  onDeleteFolder: (id: string) => void
-  onCloseFolderForm: () => void
+  onOpenFolders: () => void       // открыть экран списка папок
 }
 
 export default function MessagesFolderBar({
-  filter, folders, hasObject, hasClub,
-  showFolderForm, editFolder, folderName, folderEmoji, folderTabMenu,
-  formRef,
-  onSetFilter, onSetFolderTabMenu, onSetFolderName, onSetFolderEmoji,
-  onOpenCreateFolder, onOpenEditFolder, onSaveFolder, onDeleteFolder, onCloseFolderForm,
+  filter, folders, hasObject, hasClub, activeFolderId,
+  onSetFilter, onOpenFolders,
 }: Props) {
-  const folderTabRef = useRef<HTMLDivElement>(null)
+  const hasFolders = folders.length > 0
+  const foldersActive = activeFolderId !== null || filter === "folders"
 
   return (
-    <>
-      {/* Вкладки фильтров + папки */}
-      <div className="px-3 py-2.5 border-b border-[#1f1f1f] shrink-0">
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
-          <Tab active={filter === "all"} onClick={() => onSetFilter("all")}>Все</Tab>
-          {hasObject && (
-            <Tab active={filter === "object"} color="blue" onClick={() => onSetFilter("object")}>
-              <Icon name="Home" className="h-3 w-3" />Объекты
-            </Tab>
-          )}
-          {hasClub && (
-            <Tab active={filter === "club"} color="violet" onClick={() => onSetFilter("club")}>
-              <Icon name="Users" className="h-3 w-3" />Клуб
-            </Tab>
-          )}
+    <div className="px-3 py-2.5 border-b border-[#1f1f1f] shrink-0">
+      <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
+        <Tab active={filter === "all" && !foldersActive} onClick={() => onSetFilter("all")}>Все</Tab>
 
-          {folders.map(f => (
-            <div key={f.id} className="relative shrink-0" ref={folderTabMenu === f.id ? folderTabRef : undefined}>
-              <Tab
-                active={filter === f.id}
-                color="amber"
-                onClick={() => onSetFilter(f.id)}
-                onContextMenu={e => { e.preventDefault(); onSetFolderTabMenu(folderTabMenu === f.id ? null : f.id) }}
-              >
-                <span>{f.emoji}</span>{f.name}
-              </Tab>
-              {folderTabMenu === f.id && (
-                <div className="absolute top-full left-0 mt-1 z-50 w-36 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-xl overflow-hidden">
-                  <button
-                    onClick={e => onOpenEditFolder(f, e)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-[#2a2a2a] text-left"
-                  >
-                    <Icon name="Pencil" className="h-3.5 w-3.5" />Переименовать
-                  </button>
-                  <button
-                    onClick={() => onDeleteFolder(f.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 text-left"
-                  >
-                    <Icon name="Trash2" className="h-3.5 w-3.5" />Удалить
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+        {hasObject && (
+          <Tab active={filter === "object"} color="blue" onClick={() => onSetFilter("object")}>
+            <Icon name="Home" className="h-3 w-3" />Объекты
+          </Tab>
+        )}
 
-          <button
-            onClick={onOpenCreateFolder}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-gray-500 hover:text-white hover:bg-[#1a1a1a] transition-colors whitespace-nowrap shrink-0"
-          >
-            <Icon name="FolderPlus" className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Папка</span>
-          </button>
-        </div>
+        {hasClub && (
+          <Tab active={filter === "club"} color="violet" onClick={() => onSetFilter("club")}>
+            <Icon name="Users" className="h-3 w-3" />Клуб
+          </Tab>
+        )}
+
+        {/* Одна вкладка «Папки» — всегда видна */}
+        <Tab active={foldersActive} color="amber" onClick={onOpenFolders}>
+          <Icon name="Folder" className="h-3 w-3" />
+          Папки
+          {hasFolders && (
+            <span className={`text-[10px] font-bold px-1 rounded ${foldersActive ? "bg-amber-500/30" : "bg-[#2a2a2a]"}`}>
+              {folders.length}
+            </span>
+          )}
+        </Tab>
       </div>
-
-      {/* Форма создания/редактирования папки */}
-      {showFolderForm && (
-        <div ref={formRef} className="px-4 py-3 border-b border-[#1f1f1f] bg-[#111] shrink-0">
-          <p className="text-xs text-gray-500 mb-2">{editFolder ? "Редактировать папку" : "Новая папка"}</p>
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {EMOJIS.map(e => (
-              <button
-                key={e}
-                onClick={() => onSetFolderEmoji(e)}
-                className={`text-base px-1.5 py-0.5 rounded-lg transition-colors ${folderEmoji === e ? "bg-violet-600" : "hover:bg-[#2a2a2a]"}`}
-              >{e}</button>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <input
-              autoFocus
-              value={folderName}
-              onChange={e => onSetFolderName(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") onSaveFolder(); if (e.key === "Escape") onCloseFolderForm() }}
-              placeholder="Название папки..."
-              className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500"
-            />
-            <button
-              onClick={onSaveFolder}
-              disabled={!folderName.trim()}
-              className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white text-sm rounded-lg transition-colors"
-            >
-              {editFolder ? "Сохранить" : "Создать"}
-            </button>
-            <button onClick={onCloseFolderForm} className="px-2 py-1.5 text-gray-500 hover:text-white transition-colors">
-              <Icon name="X" className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   )
 }
 
 // ─── Tab ─────────────────────────────────────────────────────────────────────
 
-function Tab({ active, color = "gray", onClick, onContextMenu, children }: {
+function Tab({ active, color = "gray", onClick, children }: {
   active: boolean
   color?: "gray" | "blue" | "violet" | "amber"
   onClick: () => void
-  onContextMenu?: (e: React.MouseEvent) => void
   children: React.ReactNode
 }) {
   const activeColors = {
@@ -148,7 +69,6 @@ function Tab({ active, color = "gray", onClick, onContextMenu, children }: {
   return (
     <button
       onClick={onClick}
-      onContextMenu={onContextMenu}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
         active ? activeColors[color] : "text-gray-500 hover:text-gray-300 hover:bg-[#1a1a1a]"
       }`}
