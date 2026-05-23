@@ -7,6 +7,12 @@ export interface Dialog {
   last_at: string
   is_mine: boolean
   unread_count: number
+  // object-chat fields (только когда kind='object')
+  kind?: "club" | "object"
+  object_id?: string
+  session_id?: string
+  object_title?: string
+  client_phone?: string
 }
 
 export interface Message {

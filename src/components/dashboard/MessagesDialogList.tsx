@@ -21,7 +21,7 @@ export default function MessagesDialogList({ dialogs, activeDialog, mobileView, 
           <div className="text-center py-16 px-6 text-gray-600">
             <Icon name="MessageSquare" className="h-8 w-8 mx-auto mb-3 opacity-30" />
             <p className="text-sm">Нет диалогов</p>
-            <p className="text-xs mt-1">Перейдите в Клуб и напишите участнику</p>
+            <p className="text-xs mt-1">Здесь появятся сообщения по объектам и от участников Клуба</p>
           </div>
         ) : (
           dialogs.map(d => (
@@ -35,8 +35,12 @@ export default function MessagesDialogList({ dialogs, activeDialog, mobileView, 
               <div className="relative shrink-0">
                 <Avatar className="h-10 w-10">
                   {d.partner_avatar ? <AvatarImage src={d.partner_avatar} /> : null}
-                  <AvatarFallback className={`text-white text-xs font-bold ${isAgency(d.partner_status) ? "bg-gradient-to-br from-violet-600 to-pink-600" : "bg-violet-600"}`}>
-                    {getInitials(d.partner_name)}
+                  <AvatarFallback className={`text-white text-xs font-bold ${
+                    d.kind === "object"
+                      ? "bg-gradient-to-br from-blue-600 to-cyan-600"
+                      : isAgency(d.partner_status) ? "bg-gradient-to-br from-violet-600 to-pink-600" : "bg-violet-600"
+                  }`}>
+                    {d.kind === "object" ? <Icon name="Home" className="h-4 w-4" /> : getInitials(d.partner_name)}
                   </AvatarFallback>
                 </Avatar>
                 {d.unread_count > 0 && (

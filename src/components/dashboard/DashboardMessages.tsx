@@ -7,6 +7,7 @@ import MessagesChat from "./MessagesChat"
 
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 const JOINT_DEALS_URL = (func2url as Record<string, string>)["joint-deals"]
+const OBJECT_CHAT_URL = (func2url as Record<string, string>)["object-chat"]
 
 interface Props {
   userId: string
@@ -63,8 +64,32 @@ export default function DashboardMessages({
     } catch { /* ignore */ }
   }, [userId, onUnreadChange])
 
-  const loadMessages = useCallback(async (partnerId: string, scrollToBottom = false) => {
+  const loadMessages = useCallback(async (partnerId: string, scrollToBottom = false, dialogOverride?: Dialog) => {
     try {
+      const target = dialogOverride || activeDialog
+      // Object-chat dialog: загружаем сообщения по object_id+session_id
+      if (target?.kind === "object" && target.object_id && target.session_id) {
+        const res = await fetch(`${OBJECT_CHAT_URL}?object_id=${encodeURIComponent(target.object_id)}&session_id=${encodeURIComponent(target.session_id)}`)
+        const data = await res.json()
+        const arr = Array.isArray(data.messages) ? data.messages : []
+        // Преобразуем формат object-chat -> Message
+        const newMessages: Message[] = arr.map((m: { id: string; sender: string; text: string; created_at: string }) => ({
+          id: m.id,
+          sender_id: m.sender === "owner" ? userId : (target.partner_id || ""),
+          receiver_id: m.sender === "owner" ? (target.partner_id || "") : userId,
+          text: m.text,
+          is_read: true,
+          created_at: m.created_at,
+        }))
+        setMessages(prev => {
+          const hasNew = newMessages.length > prev.length
+          if (hasNew || scrollToBottom) {
+            setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
+          }
+          return newMessages
+        })
+        return
+      }
       const res = await fetch(`${AUTH_URL}?action=chat&chat_action=messages&user_id=${userId}&partner_id=${partnerId}`)
       const data = await res.json()
       const newMessages = Array.isArray(data.messages) ? data.messages : []
@@ -76,10 +101,20 @@ export default function DashboardMessages({
         return newMessages
       })
     } catch { /* ignore */ }
-  }, [userId])
+  }, [userId, activeDialog])
 
-  const markRead = useCallback(async (partnerId: string) => {
+  const markRead = useCallback(async (partnerId: string, dialogOverride?: Dialog) => {
     try {
+      const target = dialogOverride || activeDialog
+      if (target?.kind === "object" && target.object_id && target.session_id) {
+        await fetch(OBJECT_CHAT_URL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ owner_id: userId, object_id: target.object_id, session_id: target.session_id }),
+        })
+        loadDialogs()
+        return
+      }
       await fetch(`${AUTH_URL}?action=chat&chat_action=read`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,7 +122,7 @@ export default function DashboardMessages({
       })
       loadDialogs()
     } catch { /* ignore */ }
-  }, [userId, loadDialogs])
+  }, [userId, loadDialogs, activeDialog])
 
   const loadPendingProposals = useCallback(async () => {
     try {
@@ -161,8 +196,8 @@ export default function DashboardMessages({
     setActiveDialog(dialog)
     setMobileView("chat")
     setShowJDForm(false)
-    loadMessages(dialog.partner_id, true)
-    markRead(dialog.partner_id)
+    loadMessages(dialog.partner_id, true, dialog)
+    markRead(dialog.partner_id, dialog)
   }
 
   async function sendMessage(customText?: string) {
@@ -181,11 +216,27 @@ export default function DashboardMessages({
     if (!customText) setText("")
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
     try {
-      await fetch(`${AUTH_URL}?action=chat&chat_action=send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sender_id: userId, receiver_id: activeDialog.partner_id, text: msgText }),
-      })
+      // Object-chat: владелец отвечает клиенту
+      if (activeDialog.kind === "object" && activeDialog.object_id && activeDialog.session_id) {
+        await fetch(OBJECT_CHAT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            object_id: activeDialog.object_id,
+            session_id: activeDialog.session_id,
+            sender: "owner",
+            text: msgText,
+            owner_id: userId,
+            object_title: activeDialog.object_title || "",
+          }),
+        })
+      } else {
+        await fetch(`${AUTH_URL}?action=chat&chat_action=send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sender_id: userId, receiver_id: activeDialog.partner_id, text: msgText }),
+        })
+      }
       loadDialogs()
     } catch { /* ignore */ }
     setSending(false)

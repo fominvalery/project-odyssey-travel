@@ -19,6 +19,18 @@
       "expectedStatus": 200
     },
     {
+      "name": "GET диалоги владельца — успех",
+      "method": "GET",
+      "path": "/?owner_id=00000000-0000-0000-0000-000000000001&dialogs=1",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET unread count владельца — успех",
+      "method": "GET",
+      "path": "/?owner_id=00000000-0000-0000-0000-000000000001&unread_count=1",
+      "expectedStatus": 200
+    },
+    {
       "name": "POST без body — ошибка 400",
       "method": "POST",
       "path": "/",
@@ -30,6 +42,13 @@
       "method": "POST",
       "path": "/",
       "body": {"session_id": "test", "text": "Привет"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "PUT без полей — ошибка 400",
+      "method": "PUT",
+      "path": "/",
+      "body": {},
       "expectedStatus": 400
     }
   ]

@@ -34,12 +34,13 @@ def handle(event: dict, origin: str = '*') -> dict:
 
 
 def _get_dialogs(params: dict, origin: str) -> dict:
-    """Список диалогов пользователя с последним сообщением."""
+    """Список диалогов пользователя (Клуб + чаты по объектам)."""
     user_id = str(params.get('user_id', '')).strip()
     if not user_id:
         return error(400, 'user_id обязателен', origin)
 
     S = get_schema()
+    # 1) Личные сообщения участников Клуба
     rows = query(f"""
         WITH last_msgs AS (
             SELECT
@@ -76,6 +77,7 @@ def _get_dialogs(params: dict, origin: str) -> dict:
          text, created_at, sender_id, unread_cnt) = r
         display_name = ' '.join(filter(None, [last_name, first_name])) or name or ''
         dialogs.append({
+            'kind': 'club',
             'partner_id': str(partner_id),
             'partner_name': display_name,
             'partner_avatar': avatar_url,
@@ -85,6 +87,63 @@ def _get_dialogs(params: dict, origin: str) -> dict:
             'is_mine': str(sender_id) == user_id,
             'unread_count': int(unread_cnt),
         })
+
+    # 2) Чаты по объектам (где user_id — владелец)
+    obj_rows = query(f"""
+        WITH last_msgs AS (
+            SELECT object_id, session_id, MAX(created_at) AS last_at
+            FROM {S}object_chat_messages
+            WHERE owner_id = '{user_id}'::uuid
+            GROUP BY object_id, session_id
+        ),
+        unread AS (
+            SELECT object_id, session_id, COUNT(*) AS cnt
+            FROM {S}object_chat_messages
+            WHERE owner_id = '{user_id}'::uuid AND sender = 'client' AND is_read = FALSE
+            GROUP BY object_id, session_id
+        ),
+        names AS (
+            SELECT DISTINCT ON (object_id, session_id) object_id, session_id, name, phone
+            FROM {S}object_chat_messages
+            WHERE owner_id = '{user_id}'::uuid AND sender = 'client'
+                  AND name IS NOT NULL AND name != ''
+            ORDER BY object_id, session_id, created_at ASC
+        )
+        SELECT lm.object_id, lm.session_id, lm.last_at,
+               m.text, m.sender,
+               COALESCE(n.name, 'Гость') AS client_name,
+               COALESCE(n.phone, '') AS client_phone,
+               COALESCE(u.cnt, 0) AS unread_cnt,
+               COALESCE(o.title, 'Объект') AS object_title
+        FROM last_msgs lm
+        JOIN {S}object_chat_messages m
+            ON m.object_id = lm.object_id AND m.session_id = lm.session_id AND m.created_at = lm.last_at
+        LEFT JOIN names n ON n.object_id = lm.object_id AND n.session_id = lm.session_id
+        LEFT JOIN unread u ON u.object_id = lm.object_id AND u.session_id = lm.session_id
+        LEFT JOIN {S}objects o ON o.id::text = lm.object_id
+        ORDER BY lm.last_at DESC
+    """)
+
+    for r in obj_rows:
+        obj_id, sess_id, last_at, last_text, last_sender, c_name, c_phone, unread_cnt, obj_title = r
+        dialogs.append({
+            'kind': 'object',
+            'object_id': obj_id,
+            'session_id': sess_id,
+            'partner_id': f'object:{obj_id}:{sess_id}',
+            'partner_name': f'{c_name} · {obj_title[:40]}' if obj_title else c_name,
+            'partner_avatar': None,
+            'partner_status': 'client',
+            'client_phone': c_phone,
+            'object_title': obj_title,
+            'last_text': last_text or '',
+            'last_at': last_at.isoformat() if last_at else '',
+            'is_mine': last_sender == 'owner',
+            'unread_count': int(unread_cnt),
+        })
+
+    # Сортируем по последнему сообщению
+    dialogs.sort(key=lambda d: d.get('last_at', ''), reverse=True)
 
     return response(200, {'dialogs': dialogs}, origin)
 
@@ -122,7 +181,7 @@ def _get_messages(params: dict, origin: str) -> dict:
 
 
 def _get_unread_count(params: dict, origin: str) -> dict:
-    """Общее количество непрочитанных сообщений."""
+    """Общее количество непрочитанных сообщений (Клуб + объекты)."""
     user_id = str(params.get('user_id', '')).strip()
     if not user_id:
         return error(400, 'user_id обязателен', origin)
@@ -132,8 +191,19 @@ def _get_unread_count(params: dict, origin: str) -> dict:
         SELECT COUNT(*) FROM {S}messages
         WHERE receiver_id = '{user_id}'::uuid AND is_read = FALSE
     """)
-    count = int(row[0]) if row else 0
-    return response(200, {'unread_count': count}, origin)
+    club_count = int(row[0]) if row else 0
+
+    obj_row = query_one(f"""
+        SELECT COUNT(*) FROM {S}object_chat_messages
+        WHERE owner_id = '{user_id}'::uuid AND sender = 'client' AND is_read = FALSE
+    """)
+    obj_count = int(obj_row[0]) if obj_row else 0
+
+    return response(200, {
+        'unread_count': club_count + obj_count,
+        'club_count': club_count,
+        'object_count': obj_count,
+    }, origin)
 
 
 def _send_message(body: dict, origin: str) -> dict:
