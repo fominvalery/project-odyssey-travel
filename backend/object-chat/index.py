@@ -36,12 +36,12 @@ def get_conn():
 def _send_email(to_email: str, subject: str, html: str, text: str) -> bool:
     """Отправка email через SMTP. Не падает при ошибке."""
     try:
-        host = os.environ.get("SMTP_HOST", "")
-        port = int(os.environ.get("SMTP_PORT", "465"))
+        host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+        port = int(os.environ.get("SMTP_PORT", "587"))
         user = os.environ.get("SMTP_USER", "")
         password = os.environ.get("SMTP_PASSWORD", "")
         from_addr = os.environ.get("SMTP_FROM", user)
-        if not host or not user or not password or not to_email:
+        if not user or not password or not to_email:
             return False
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -49,7 +49,8 @@ def _send_email(to_email: str, subject: str, html: str, text: str) -> bool:
         msg["To"] = to_email
         msg.attach(MIMEText(text, "plain", "utf-8"))
         msg.attach(MIMEText(html, "html", "utf-8"))
-        with smtplib.SMTP_SSL(host, port, timeout=10) as s:
+        with smtplib.SMTP(host, port, timeout=15) as s:
+            s.starttls()
             s.login(user, password)
             s.sendmail(from_addr, [to_email], msg.as_string())
         return True
