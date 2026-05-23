@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { STATUS_LABELS } from "@/hooks/useAuth"
-import { Dialog, Message, Proposal, JointDealForm as JointDealFormType, DEFAULT_FORM, getInitials, formatTime, isAgency } from "./messagesTypes"
+import { Dialog, Message, Proposal, JointDealForm as JointDealFormType, getInitials, formatTime, isAgency } from "./messagesTypes"
 import JointDealForm from "./JointDealForm"
 
 interface Props {
@@ -29,55 +29,79 @@ interface Props {
   onSubmitJointDeal: () => void
   onUpdateCommission: (field: "initiator" | "partner", val: number) => void
   onRespondToProposal: (proposalId: string, dealId: string, response: "accept" | "reject") => void
+  onBack: () => void
 }
 
 export default function MessagesChat({
   userId, activeDialog, messages, text, sending,
-  mobileView, showJDForm, jdForm, jdSending,
+   
+  mobileView: _mobileView, showJDForm, jdForm, jdSending,
   pendingProposals, respondingId, currentUserCanUseJD,
   bottomRef,
-  onSetText, onSendMessage, onSetMobileView,
+  onSetText, onSendMessage,
+   
+  onSetMobileView: _onSetMobileView,
   onToggleJDForm, onSetShowJDForm, onSetJdForm,
   onSubmitJointDeal, onUpdateCommission, onRespondToProposal,
+  onBack,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const isObjectChat = activeDialog.kind === "object"
+  const isClubChat = !isObjectChat
 
   return (
     <>
       {/* Шапка диалога */}
-      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-[#1f1f1f] bg-[#0d0d0d] shrink-0">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#1f1f1f] bg-[#0d0d0d] shrink-0">
+        {/* Кнопка назад — всегда видна */}
         <button
-          onClick={() => onSetMobileView("list")}
-          className="md:hidden text-gray-400 hover:text-white mr-1"
+          onClick={onBack}
+          className="text-gray-400 hover:text-white transition-colors shrink-0"
         >
           <Icon name="ArrowLeft" className="h-5 w-5" />
         </button>
+
         <Avatar className="h-9 w-9 shrink-0">
           {activeDialog.partner_avatar ? <AvatarImage src={activeDialog.partner_avatar} /> : null}
-          <AvatarFallback className={`text-white text-xs font-bold ${isAgency(activeDialog.partner_status) ? "bg-gradient-to-br from-violet-600 to-pink-600" : "bg-violet-600"}`}>
-            {getInitials(activeDialog.partner_name)}
+          <AvatarFallback className={`text-white text-xs font-bold ${
+            isObjectChat
+              ? "bg-gradient-to-br from-blue-600 to-cyan-600"
+              : isAgency(activeDialog.partner_status)
+                ? "bg-gradient-to-br from-violet-600 to-pink-600"
+                : "bg-violet-600"
+          }`}>
+            {isObjectChat
+              ? <Icon name="Home" className="h-4 w-4" />
+              : getInitials(activeDialog.partner_name)}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white">{activeDialog.partner_name}</p>
-          <p className="text-[11px] text-violet-400">
-            {STATUS_LABELS[activeDialog.partner_status as "broker" | "agency"] ?? activeDialog.partner_status}
-          </p>
-        </div>
 
-        {currentUserCanUseJD && (
-          <button
-            onClick={onToggleJDForm}
-            className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border transition-colors shrink-0 ${
-              showJDForm
-                ? "bg-violet-600 border-violet-600 text-white"
-                : "bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20"
-            }`}
-          >
-            <Icon name="Handshake" className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Совместная сделка</span>
-          </button>
-        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white truncate">{activeDialog.partner_name}</p>
+          {isObjectChat ? (
+            <p className="text-[11px] text-blue-400 truncate">{activeDialog.client_phone || "Чат по объекту"}</p>
+          ) : (
+            <div className="flex items-center gap-2">
+              <p className="text-[11px] text-violet-400">
+                {STATUS_LABELS[activeDialog.partner_status as "broker" | "agency"] ?? activeDialog.partner_status}
+              </p>
+              {/* Совместная сделка — только в Клубе, рядом со статусом */}
+              {currentUserCanUseJD && isClubChat && (
+                <button
+                  onClick={onToggleJDForm}
+                  className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition-colors ${
+                    showJDForm
+                      ? "bg-violet-600 border-violet-600 text-white"
+                      : "bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20"
+                  }`}
+                >
+                  <Icon name="Handshake" className="h-3 w-3" />
+                  Совм. сделка
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Баннер pending proposals */}

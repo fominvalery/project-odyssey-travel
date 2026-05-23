@@ -9,9 +9,9 @@ interface Props {
   onOpenDialog: (dialog: Dialog) => void
 }
 
-export default function MessagesDialogList({ dialogs, activeDialog, mobileView, onOpenDialog }: Props) {
+export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog }: Props) {
   return (
-    <div className={`w-full md:w-72 shrink-0 border-r border-[#1f1f1f] flex flex-col bg-[#0d0d0d] ${mobileView === "chat" ? "hidden md:flex" : "flex"}`}>
+    <div className="flex flex-col h-full w-full bg-[#0d0d0d]">
       <div className="px-5 py-4 border-b border-[#1f1f1f]">
         <h2 className="font-bold text-base">Сообщения</h2>
       </div>

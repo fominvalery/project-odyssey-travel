@@ -294,23 +294,19 @@ export default function DashboardMessages({
   }
 
   return (
-    <div className="flex h-[calc(100vh-57px)] overflow-hidden">
-      <MessagesDialogList
-        dialogs={dialogs}
-        activeDialog={activeDialog}
-        mobileView={mobileView}
-        onOpenDialog={openDialog}
-      />
+    <div className="relative flex h-[calc(100vh-57px)] overflow-hidden">
+      {/* Список диалогов — всегда на всю ширину когда активен */}
+      <div className={`absolute inset-0 flex flex-col bg-[#0d0d0d] transition-transform duration-300 ${activeDialog ? "-translate-x-full" : "translate-x-0"}`}>
+        <MessagesDialogList
+          dialogs={dialogs}
+          activeDialog={activeDialog}
+          mobileView={mobileView}
+          onOpenDialog={openDialog}
+        />
+      </div>
 
-      <div className={`flex-1 flex flex-col min-w-0 ${mobileView === "list" ? "hidden md:flex" : "flex"}`}>
-        {!activeDialog ? (
-          <div className="flex-1 flex items-center justify-center text-gray-600">
-            <div className="text-center">
-              <Icon name="MessageSquare" className="h-12 w-12 mx-auto mb-3 opacity-20" />
-              <p className="text-sm">Выберите диалог</p>
-            </div>
-          </div>
-        ) : (
+      {/* Чат — выезжает справа поверх списка */}
+      <div className={`absolute inset-0 flex flex-col bg-[#0d0d0d] transition-transform duration-300 ${activeDialog ? "translate-x-0" : "translate-x-full"}`}>
           <MessagesChat
             userId={userId}
             activeDialog={activeDialog}
@@ -334,8 +330,8 @@ export default function DashboardMessages({
             onSubmitJointDeal={submitJointDeal}
             onUpdateCommission={updateCommission}
             onRespondToProposal={respondToProposal}
+            onBack={() => { setActiveDialog(null); setMessages([]) }}
           />
-        )}
       </div>
     </div>
   )
