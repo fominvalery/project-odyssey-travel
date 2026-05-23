@@ -213,7 +213,7 @@ export default function MessagesChat({
             maxLength={2000}
           />
           <button
-            onClick={onSendMessage}
+            onClick={() => onSendMessage()}
             disabled={!text.trim() || sending}
             className="h-10 w-10 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
           >
