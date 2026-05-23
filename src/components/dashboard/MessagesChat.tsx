@@ -158,7 +158,8 @@ export default function MessagesChat({
           const isMine = msg.sender_id === userId
           const prev = messages[i - 1]
           const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString()
-          const isJDMessage = msg.text.startsWith("🤝")
+          const msgText = String(msg.text || "")
+          const isJDMessage = msgText.startsWith("🤝")
           return (
             <div key={msg.id}>
               {showDate && (
@@ -175,7 +176,7 @@ export default function MessagesChat({
                       <Icon name="Handshake" className="h-3.5 w-3.5 text-violet-400 shrink-0" />
                       <span className="text-violet-300 font-medium text-xs">Совместная сделка</span>
                     </div>
-                    <p className="text-gray-300 text-xs">{msg.text}</p>
+                    <p className="text-gray-300 text-xs">{msgText}</p>
                     <p className="text-[10px] mt-1.5 text-right text-gray-600">
                       {formatTime(msg.created_at)}
                       {isMine && <Icon name={msg.is_read ? "CheckCheck" : "Check"} className="inline ml-1 h-3 w-3" />}
@@ -185,7 +186,7 @@ export default function MessagesChat({
                   <div className={`max-w-[75%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
                     isMine ? "bg-violet-600 text-white rounded-br-sm" : "bg-[#1a1a1a] text-gray-100 rounded-bl-sm"
                   }`}>
-                    <p>{msg.text}</p>
+                    <p>{msgText}</p>
                     <p className={`text-[10px] mt-1 text-right ${isMine ? "text-violet-200" : "text-gray-600"}`}>
                       {formatTime(msg.created_at)}
                       {isMine && <Icon name={msg.is_read ? "CheckCheck" : "Check"} className="inline ml-1 h-3 w-3" />}
