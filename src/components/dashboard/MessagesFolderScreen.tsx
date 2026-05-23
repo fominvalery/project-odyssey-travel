@@ -110,20 +110,17 @@ export default function MessagesFolderScreen({ folders, onBack, onSelectFolder, 
           </div>
         ) : (
           folders.map(f => (
-            <div key={f.id} className="relative">
+            <div key={f.id} className="flex items-center border-b border-[#111] hover:bg-[#1a1a1a] transition-colors">
               <button
                 onClick={() => onSelectFolder(f)}
-                className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-[#1a1a1a] transition-colors border-b border-[#111]"
+                className="flex-1 flex items-center gap-3 px-4 py-4 text-left"
               >
                 <span className="text-2xl leading-none shrink-0">{f.emoji}</span>
                 <p className="text-sm font-medium text-white flex-1 truncate">{f.name}</p>
-                <Icon name="ChevronRight" className="h-4 w-4 text-gray-600 shrink-0" />
               </button>
 
-              {/* Кнопки редактировать/удалить */}
-              <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ opacity: confirmDelete === f.id ? 1 : undefined }}
-              >
+              {/* Кнопки редактировать/удалить — всегда видны */}
+              <div className="flex items-center gap-1 pr-3">
                 {confirmDelete === f.id ? (
                   <>
                     <span className="text-xs text-red-400 mr-1">Удалить?</span>
