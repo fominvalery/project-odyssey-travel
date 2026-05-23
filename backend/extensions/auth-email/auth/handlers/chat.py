@@ -102,8 +102,9 @@ def _get_dialogs(params: dict, origin: str) -> dict:
             WHERE owner_id = '{user_id}'::uuid AND sender = 'client' AND is_read = FALSE
             GROUP BY object_id, session_id
         ),
-        names AS (
-            SELECT DISTINCT ON (object_id, session_id) object_id, session_id, name, phone
+        first_client AS (
+            SELECT DISTINCT ON (object_id, session_id)
+                object_id, session_id, name, phone, sender_user_id
             FROM {S}object_chat_messages
             WHERE owner_id = '{user_id}'::uuid AND sender = 'client'
                   AND name IS NOT NULL AND name != ''
@@ -111,21 +112,27 @@ def _get_dialogs(params: dict, origin: str) -> dict:
         )
         SELECT lm.object_id, lm.session_id, lm.last_at,
                m.text, m.sender,
-               COALESCE(n.name, 'Гость') AS client_name,
-               COALESCE(n.phone, '') AS client_phone,
+               COALESCE(fc.name, 'Гость') AS client_name,
+               COALESCE(fc.phone, '') AS client_phone,
                COALESCE(u.cnt, 0) AS unread_cnt,
-               COALESCE(o.title, 'Объект') AS object_title
+               COALESCE(o.title, 'Объект') AS object_title,
+               fc.sender_user_id,
+               CASE
+                   WHEN fc.sender_user_id IS NOT NULL AND su.plan = 'pro' THEN TRUE
+                   ELSE FALSE
+               END AS sender_is_club
         FROM last_msgs lm
         JOIN {S}object_chat_messages m
             ON m.object_id = lm.object_id AND m.session_id = lm.session_id AND m.created_at = lm.last_at
-        LEFT JOIN names n ON n.object_id = lm.object_id AND n.session_id = lm.session_id
+        LEFT JOIN first_client fc ON fc.object_id = lm.object_id AND fc.session_id = lm.session_id
         LEFT JOIN unread u ON u.object_id = lm.object_id AND u.session_id = lm.session_id
         LEFT JOIN {S}objects o ON o.id::text = lm.object_id
+        LEFT JOIN {S}users su ON su.id = fc.sender_user_id
         ORDER BY lm.last_at DESC
     """)
 
     for r in obj_rows:
-        obj_id, sess_id, last_at, last_text, last_sender, c_name, c_phone, unread_cnt, obj_title = r
+        obj_id, sess_id, last_at, last_text, last_sender, c_name, c_phone, unread_cnt, obj_title, sender_user_id, sender_is_club = r
         dialogs.append({
             'kind': 'object',
             'object_id': obj_id,
@@ -140,6 +147,8 @@ def _get_dialogs(params: dict, origin: str) -> dict:
             'last_at': last_at.isoformat() if last_at else '',
             'is_mine': last_sender == 'owner',
             'unread_count': int(unread_cnt),
+            'sender_user_id': str(sender_user_id) if sender_user_id else None,
+            'sender_is_club': bool(sender_is_club),
         })
 
     # Сортируем по последнему сообщению

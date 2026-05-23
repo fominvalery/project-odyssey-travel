@@ -113,8 +113,9 @@ def handle_get(event: dict) -> dict:
                     WHERE owner_id = %s AND sender = 'client' AND is_read = FALSE
                     GROUP BY object_id, session_id
                 ),
-                names AS (
-                    SELECT DISTINCT ON (object_id, session_id) object_id, session_id, name, phone
+                first_client AS (
+                    SELECT DISTINCT ON (object_id, session_id)
+                        object_id, session_id, name, phone, sender_user_id
                     FROM {SCHEMA}.object_chat_messages
                     WHERE owner_id = %s AND sender = 'client'
                           AND name IS NOT NULL AND name != ''
@@ -122,17 +123,25 @@ def handle_get(event: dict) -> dict:
                 )
                 SELECT lm.object_id, lm.session_id, lm.last_at,
                        m.text, m.sender,
-                       COALESCE(n.name, 'Гость') AS client_name,
-                       COALESCE(n.phone, '') AS client_phone,
+                       COALESCE(fc.name, 'Гость') AS client_name,
+                       COALESCE(fc.phone, '') AS client_phone,
                        COALESCE(u.cnt, 0) AS unread_cnt,
                        COALESCE(o.title, 'Объект') AS object_title,
-                       o.photos
+                       o.photos,
+                       fc.sender_user_id,
+                       CASE
+                           WHEN fc.sender_user_id IS NOT NULL
+                                AND su.plan = 'pro' THEN TRUE
+                           ELSE FALSE
+                       END AS sender_is_club,
+                       fc.sender_user_id AS sender_uid
                 FROM last_msgs lm
                 JOIN {SCHEMA}.object_chat_messages m
                     ON m.object_id = lm.object_id AND m.session_id = lm.session_id AND m.created_at = lm.last_at
-                LEFT JOIN names n ON n.object_id = lm.object_id AND n.session_id = lm.session_id
+                LEFT JOIN first_client fc ON fc.object_id = lm.object_id AND fc.session_id = lm.session_id
                 LEFT JOIN unread u ON u.object_id = lm.object_id AND u.session_id = lm.session_id
                 LEFT JOIN {SCHEMA}.objects o ON o.id::text = lm.object_id
+                LEFT JOIN {SCHEMA}.users su ON su.id = fc.sender_user_id
                 ORDER BY lm.last_at DESC
                 """,
                 (owner_id, owner_id, owner_id)
@@ -140,7 +149,7 @@ def handle_get(event: dict) -> dict:
             rows = cur.fetchall()
             dialogs = []
             for r in rows:
-                obj_id, sess_id, last_at, last_text, last_sender, c_name, c_phone, unread_cnt, obj_title, photos = r
+                obj_id, sess_id, last_at, last_text, last_sender, c_name, c_phone, unread_cnt, obj_title, photos, sender_user_id, sender_is_club, sender_uid = r
                 first_photo = (photos[0] if photos else None) if isinstance(photos, list) else None
                 dialogs.append({
                     "object_id": obj_id,
@@ -153,6 +162,8 @@ def handle_get(event: dict) -> dict:
                     "last_sender": last_sender or "client",
                     "last_at": last_at.isoformat() if last_at else "",
                     "unread_count": int(unread_cnt),
+                    "sender_user_id": str(sender_uid) if sender_uid else None,
+                    "sender_is_club": bool(sender_is_club),
                 })
             return {"statusCode": 200, "headers": CORS,
                     "body": json.dumps({"dialogs": dialogs})}
@@ -195,6 +206,7 @@ def handle_post(event: dict) -> dict:
     phone = (body.get("phone") or "").strip()
     owner_id = (body.get("owner_id") or "").strip()
     object_title = (body.get("object_title") or "").strip()
+    sender_user_id = (body.get("sender_id") or "").strip() or None
 
     if not object_id or not session_id or not text:
         return {"statusCode": 400, "headers": CORS,
@@ -226,10 +238,10 @@ def handle_post(event: dict) -> dict:
 
         cur.execute(
             f"INSERT INTO {SCHEMA}.object_chat_messages "
-            f"(object_id, session_id, sender, name, phone, text, owner_id, is_read) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id, created_at",
+            f"(object_id, session_id, sender, name, phone, text, owner_id, is_read, sender_user_id) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id, created_at",
             (object_id, session_id, sender, name or None, phone or None, text,
-             owner_id or None, is_read_value)
+             owner_id or None, is_read_value, sender_user_id or None)
         )
         msg_id, created_at = cur.fetchone()
 

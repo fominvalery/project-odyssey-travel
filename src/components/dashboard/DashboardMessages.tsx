@@ -245,13 +245,17 @@ export default function DashboardMessages({
   async function submitJointDeal() {
     if (!activeDialog || jdSending) return
     setJdSending(true)
+    // Для object-чата partner = реальный user_id отправителя (если он из Клуба)
+    const partnerId = activeDialog.kind === "object"
+      ? (activeDialog.sender_user_id || activeDialog.partner_id)
+      : activeDialog.partner_id
     try {
       await fetch(JOINT_DEALS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           initiator_id: userId,
-          partner_id: activeDialog.partner_id,
+          partner_id: partnerId,
           deal_type: jdForm.deal_type,
           transaction_type: jdForm.transaction_type,
           object_description: jdForm.object_description,

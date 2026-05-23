@@ -13,6 +13,8 @@ export interface Dialog {
   session_id?: string
   object_title?: string
   client_phone?: string
+  sender_user_id?: string | null
+  sender_is_club?: boolean
 }
 
 export interface Message {

@@ -81,13 +81,29 @@ export default function MessagesChat({
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white truncate">{activeDialog.partner_name}</p>
           {isObjectChat ? (
-            <p className="text-[11px] text-blue-400 truncate">{activeDialog.client_phone || "Чат по объекту"}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[11px] text-blue-400 truncate">{activeDialog.client_phone || "Чат по объекту"}</p>
+              {/* Совм. сделка — если клиент из object-чата тоже участник Клуба */}
+              {currentUserCanUseJD && activeDialog.sender_is_club && (
+                <button
+                  onClick={onToggleJDForm}
+                  className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition-colors ${
+                    showJDForm
+                      ? "bg-violet-600 border-violet-600 text-white"
+                      : "bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20"
+                  }`}
+                >
+                  <Icon name="Handshake" className="h-3 w-3" />
+                  Совм. сделка
+                </button>
+              )}
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <p className="text-[11px] text-violet-400">
                 {STATUS_LABELS[activeDialog.partner_status as "broker" | "agency"] ?? activeDialog.partner_status}
               </p>
-              {/* Совместная сделка — только в Клубе, рядом со статусом */}
+              {/* Совместная сделка — только в Клубе */}
               {currentUserCanUseJD && isClubChat && (
                 <button
                   onClick={onToggleJDForm}
