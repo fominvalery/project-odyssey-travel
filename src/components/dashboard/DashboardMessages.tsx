@@ -306,6 +306,7 @@ export default function DashboardMessages({
           activeDialog={activeDialog}
           mobileView={mobileView}
           onOpenDialog={openDialog}
+          onMarkRead={(partnerId, dialog) => markRead(partnerId, dialog)}
         />
       </div>
 
