@@ -46,8 +46,10 @@ export default function MessagesChat({
   onBack,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const isObjectChat = activeDialog.kind === "object"
+  const isObjectChat = activeDialog?.kind === "object"
   const isClubChat = !isObjectChat
+
+  if (!activeDialog) return null
 
   return (
     <>
