@@ -6,17 +6,59 @@ export function Footer() {
     <footer className="bg-background">
       {/* Основной блок */}
       <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-4 gap-10">
-        {/* Логотип и описание */}
+        {/* Логотип и соцсети */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-4">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <Icon name="Building2" size={16} className="text-white" />
             </div>
             <span className="text-white font-bold text-lg">Кабинет-24</span>
           </div>
-          <p className="text-sm text-gray-400 leading-relaxed">
-            Платформа коммерческой недвижимости
-          </p>
+
+          {/* Каналы */}
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Каналы</p>
+          <ul className="space-y-2 mb-4">
+            <li>
+              <a href="https://t.me/kabinet24ru" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <Icon name="Send" size={14} className="text-sky-400 shrink-0" />
+                Telegram
+              </a>
+            </li>
+            <li>
+              <a href="https://max.ru/join/VbVDpr85esJsStWFxXjnmXUSwT_HpE9s_YU23lHxhi4" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <Icon name="Zap" size={14} className="text-orange-400 shrink-0" />
+                MAX
+              </a>
+            </li>
+            <li>
+              <a href="https://vk.com/cabinet24club" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <Icon name="Users" size={14} className="text-blue-400 shrink-0" />
+                ВКонтакте
+              </a>
+            </li>
+          </ul>
+
+          {/* Поддержка */}
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Поддержка</p>
+          <ul className="space-y-2">
+            <li>
+              <a href="https://t.me/+GZI35IMh50BhZmYy" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <Icon name="MessageCircle" size={14} className="text-sky-400 shrink-0" />
+                Чат TG
+              </a>
+            </li>
+            <li>
+              <a href="https://max.ru/join/spMihgwwY2y_2B9ymIPKxRe4dEV3WqmyyTlULN_jkuk" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <Icon name="MessageCircle" size={14} className="text-orange-400 shrink-0" />
+                Чат MAX
+              </a>
+            </li>
+          </ul>
         </div>
 
         {/* Основные разделы */}
