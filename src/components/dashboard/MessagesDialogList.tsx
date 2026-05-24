@@ -5,11 +5,14 @@ import Icon from "@/components/ui/icon"
 import { Dialog } from "./messagesTypes"
 import {
   FilterType, DialogMeta, Folder,
-  loadMeta, saveMeta, loadFolders, saveFolders, defaultMeta,
+  loadMeta, saveMeta, defaultMeta,
 } from "./messagesDialogMeta"
 import MessagesFolderBar from "./MessagesFolderBar"
 import MessagesFolderScreen from "./MessagesFolderScreen"
 import MessagesDialogItem from "./MessagesDialogItem"
+import func2url from "../../../backend/func2url.json"
+
+const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 
 // Экраны навигации
 type Screen = "list" | "folders" | "folder-content"
@@ -18,21 +21,36 @@ interface Props {
   dialogs: Dialog[]
   activeDialog: Dialog | null
   mobileView: "list" | "chat"
+  userId: string
   onOpenDialog: (dialog: Dialog) => void
   onMarkRead?: (partnerId: string, dialog: Dialog) => void
 }
 
-export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog, onMarkRead }: Props) {
+export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog, onMarkRead, userId }: Props) {
   const [screen, setScreen]         = useState<Screen>("list")
-  const [openFolder, setOpenFolder] = useState<Folder | null>(null)  // папка открытая на экране folder-content
+  const [openFolder, setOpenFolder] = useState<Folder | null>(null)
 
   const [search, setSearch]         = useState("")
   const [filter, setFilter]         = useState<FilterType>("all")
   const [meta, setMeta]             = useState<Record<string, DialogMeta>>(loadMeta)
-  const [folders, setFolders]       = useState<Folder[]>(loadFolders)
+  const [folders, setFolders]       = useState<Folder[]>([])
   const [menuOpen, setMenuOpen]     = useState<string | null>(null)
   const [folderMenu, setFolderMenu] = useState<string | null>(null)
   const [copied, setCopied]         = useState(false)
+
+  // Загружаем папки из БД
+  const loadFoldersFromApi = useCallback(async () => {
+    if (!userId) return
+    try {
+      const res = await fetch(`${AUTH_URL}?action=chat&chat_action=folders&user_id=${userId}`)
+      const data = await res.json()
+      if (Array.isArray(data.folders)) {
+        setFolders(data.folders.filter((f: Folder & { name: string }) => !f.name.startsWith('__deleted__')))
+      }
+    } catch { /* ignore */ }
+  }, [userId])
+
+  useEffect(() => { loadFoldersFromApi() }, [loadFoldersFromApi])
 
   const menuRef   = useRef<HTMLDivElement>(null)
   const folderRef = useRef<HTMLDivElement>(null)
@@ -64,27 +82,10 @@ export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog
 
   function handleFoldersChange(updated: Folder[]) {
     setFolders(updated)
-    saveFolders(updated)
-    // Если удалили текущую открытую папку — назад
     if (openFolder && !updated.find(f => f.id === openFolder.id)) {
       setOpenFolder(null)
       setScreen("folders")
     }
-    // Очищаем folderIds в мета для удалённых папок
-    const existingIds = new Set(updated.map(f => f.id))
-    setMeta(prev => {
-      const next = { ...prev }
-      let changed = false
-      Object.keys(next).forEach(pid => {
-        const cleaned = (next[pid].folderIds || []).filter(id => existingIds.has(id))
-        if (cleaned.length !== (next[pid].folderIds || []).length) {
-          next[pid] = { ...next[pid], folderIds: cleaned }
-          changed = true
-        }
-      })
-      if (changed) saveMeta(next)
-      return changed ? next : prev
-    })
   }
 
   function openFolderContent(f: Folder) {
@@ -92,21 +93,39 @@ export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog
     setScreen("folder-content")
   }
 
-  function toggleDialogFolder(partnerId: string, folderId: string) {
-    const m = getMeta(partnerId)
-    const ids = m.folderIds || []
-    const next = ids.includes(folderId) ? ids.filter(i => i !== folderId) : [...ids, folderId]
-    updateMeta(partnerId, { folderIds: next })
+  async function toggleDialogFolder(partnerId: string, folderId: string) {
+    const folder = folders.find(f => f.id === folderId)
+    const inFolder = folder ? (folder.partner_ids || []).includes(partnerId) : false
+    const add = !inFolder
+
+    // Оптимистичное обновление
+    setFolders(prev => prev.map(f =>
+      f.id === folderId
+        ? { ...f, partner_ids: add
+            ? [...(f.partner_ids || []), partnerId]
+            : (f.partner_ids || []).filter(p => p !== partnerId) }
+        : f
+    ))
+
+    // Сохраняем в БД
+    try {
+      await fetch(`${AUTH_URL}?action=chat&chat_action=folder-item`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, folder_id: folderId, partner_id: partnerId, add }),
+      })
+    } catch { loadFoldersFromApi() }
   }
 
   // ─── Фильтрация + сортировка ───────────────────────────────────────────────
 
   function getFilteredDialogs(targetFolderId?: string) {
+    const targetFolder = targetFolderId ? folders.find(f => f.id === targetFolderId) : null
     return dialogs
       .filter(d => {
         const m = getMeta(d.partner_id)
         if (m.deleted) return false
-        if (targetFolderId) return (m.folderIds || []).includes(targetFolderId)
+        if (targetFolderId) return (targetFolder?.partner_ids || []).includes(d.partner_id)
         if (filter === "object") return d.kind === "object"
         if (filter === "club")   return d.kind !== "object"
         const q = search.toLowerCase().trim()
@@ -135,7 +154,7 @@ export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog
 
   function handleMenuAction(action: string, d: Dialog) {
     if (action.startsWith("folder:")) {
-      toggleDialogFolder(d.partner_id, action.replace("folder:", ""))
+      void toggleDialogFolder(d.partner_id, action.replace("folder:", ""))
       return
     }
     setMenuOpen(null); setFolderMenu(null)
@@ -168,9 +187,11 @@ export default function MessagesDialogList({ dialogs, activeDialog, onOpenDialog
     return (
       <MessagesFolderScreen
         folders={folders}
+        userId={userId}
         onBack={() => setScreen("list")}
         onSelectFolder={f => openFolderContent(f)}
         onFoldersChange={handleFoldersChange}
+        onReloadFolders={loadFoldersFromApi}
       />
     )
   }

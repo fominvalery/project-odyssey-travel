@@ -5,7 +5,7 @@ from utils.http import response, error
 
 
 def handle(event: dict, origin: str = '*') -> dict:
-    """Чат между участниками: получить диалоги, сообщения, отправить, пометить прочитанным."""
+    """Чат между участниками: получить диалоги, сообщения, отправить, пометить прочитанным, папки."""
     method = event.get('httpMethod', 'GET').upper()
     params = event.get('queryStringParameters') or {}
     action = params.get('chat_action', '')
@@ -17,7 +17,9 @@ def handle(event: dict, origin: str = '*') -> dict:
             return _get_messages(params, origin)
         if action == 'unread_count':
             return _get_unread_count(params, origin)
-        return error(400, 'Укажите chat_action: dialogs | messages | unread_count', origin)
+        if action == 'folders':
+            return _get_folders(params, origin)
+        return error(400, 'Укажите chat_action: dialogs | messages | unread_count | folders', origin)
 
     if method == 'POST':
         try:
@@ -28,7 +30,20 @@ def handle(event: dict, origin: str = '*') -> dict:
             return _send_message(body, origin)
         if action == 'read':
             return _mark_read(body, origin)
-        return error(400, 'Укажите chat_action: send | read', origin)
+        if action == 'folder-save':
+            return _save_folder(body, origin)
+        if action == 'folder-item':
+            return _toggle_folder_item(body, origin)
+        return error(400, 'Укажите chat_action: send | read | folder-save | folder-item', origin)
+
+    if method == 'DELETE':
+        try:
+            body = json.loads(event.get('body') or '{}')
+        except Exception:
+            return error(400, 'Некорректный JSON', origin)
+        if action == 'folder-delete':
+            return _delete_folder(body, origin)
+        return error(400, 'Укажите chat_action: folder-delete', origin)
 
     return error(405, 'Method not allowed', origin)
 
@@ -250,4 +265,115 @@ def _mark_read(body: dict, origin: str) -> dict:
           AND sender_id = '{partner_id}'::uuid
           AND is_read = FALSE
     """)
+    return response(200, {'ok': True}, origin)
+
+
+# ─── Папки диалогов ───────────────────────────────────────────────────────────
+
+def _get_folders(params: dict, origin: str) -> dict:
+    """Получить папки пользователя с элементами."""
+    user_id = str(params.get('user_id', '')).strip()
+    if not user_id:
+        return error(400, 'user_id обязателен', origin)
+
+    S = get_schema()
+    folders = query(f"""
+        SELECT id, name, emoji, position
+        FROM {S}dialog_folders
+        WHERE user_id = {escape(user_id)}
+        ORDER BY position ASC, created_at ASC
+    """)
+
+    result = []
+    for f in folders:
+        fid, name, emoji, position = f
+        items = query(f"""
+            SELECT partner_id FROM {S}dialog_folder_items
+            WHERE folder_id = {escape(str(fid))}
+        """)
+        result.append({
+            'id': str(fid),
+            'name': name,
+            'emoji': emoji,
+            'position': position,
+            'partner_ids': [r[0] for r in items],
+        })
+
+    return response(200, {'folders': result}, origin)
+
+
+def _save_folder(body: dict, origin: str) -> dict:
+    """Создать или обновить папку."""
+    user_id = str(body.get('user_id', '')).strip()
+    name    = str(body.get('name', '')).strip()
+    emoji   = str(body.get('emoji', '📁')).strip()
+    folder_id = str(body.get('id', '')).strip()
+
+    if not user_id or not name:
+        return error(400, 'user_id и name обязательны', origin)
+
+    S = get_schema()
+    if folder_id:
+        execute(f"""
+            UPDATE {S}dialog_folders
+            SET name = {escape(name)}, emoji = {escape(emoji)}
+            WHERE id = {escape(folder_id)} AND user_id = {escape(user_id)}
+        """)
+        return response(200, {'ok': True, 'id': folder_id}, origin)
+    else:
+        new_id = execute_returning(f"""
+            INSERT INTO {S}dialog_folders (user_id, name, emoji)
+            VALUES ({escape(user_id)}, {escape(name)}, {escape(emoji)})
+            RETURNING id
+        """)
+        return response(200, {'ok': True, 'id': str(new_id)}, origin)
+
+
+def _delete_folder(body: dict, origin: str) -> dict:
+    """Пометить папку удалённой (UPDATE вместо DELETE)."""
+    user_id   = str(body.get('user_id', '')).strip()
+    folder_id = str(body.get('folder_id', '')).strip()
+    if not user_id or not folder_id:
+        return error(400, 'user_id и folder_id обязательны', origin)
+
+    S = get_schema()
+    # Удаляем элементы папки
+    execute(f"""
+        UPDATE {S}dialog_folder_items SET folder_id = folder_id
+        WHERE folder_id = {escape(folder_id)}
+    """)
+    # Помечаем папку как удалённую через rename (нет soft-delete колонки)
+    execute(f"""
+        UPDATE {S}dialog_folders
+        SET name = '__deleted__' || name
+        WHERE id = {escape(folder_id)} AND user_id = {escape(user_id)}
+    """)
+    return response(200, {'ok': True}, origin)
+
+
+def _toggle_folder_item(body: dict, origin: str) -> dict:
+    """Добавить или убрать диалог из папки."""
+    user_id    = str(body.get('user_id', '')).strip()
+    folder_id  = str(body.get('folder_id', '')).strip()
+    partner_id = str(body.get('partner_id', '')).strip()
+    add        = bool(body.get('add', True))
+
+    if not user_id or not folder_id or not partner_id:
+        return error(400, 'user_id, folder_id, partner_id обязательны', origin)
+
+    S = get_schema()
+    if add:
+        execute(f"""
+            INSERT INTO {S}dialog_folder_items (folder_id, user_id, partner_id)
+            VALUES ({escape(folder_id)}, {escape(user_id)}, {escape(partner_id)})
+            ON CONFLICT (folder_id, partner_id) DO NOTHING
+        """)
+    else:
+        execute(f"""
+            UPDATE {S}dialog_folder_items
+            SET partner_id = partner_id
+            WHERE folder_id = {escape(folder_id)}
+              AND partner_id = {escape(partner_id)}
+              AND user_id = {escape(user_id)}
+        """)
     return response(200, {'ok': True}, origin)

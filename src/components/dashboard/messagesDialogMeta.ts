@@ -15,6 +15,8 @@ export interface Folder {
   id: string
   name: string
   emoji: string
+  position?: number
+  partner_ids?: string[]  // список partner_id в этой папке (из БД)
 }
 
 export const META_KEY   = "dialog_meta_v1"

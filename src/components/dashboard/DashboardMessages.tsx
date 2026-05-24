@@ -305,6 +305,7 @@ export default function DashboardMessages({
           dialogs={dialogs}
           activeDialog={activeDialog}
           mobileView={mobileView}
+          userId={userId}
           onOpenDialog={openDialog}
           onMarkRead={(partnerId, dialog) => markRead(partnerId, dialog)}
         />
