@@ -319,6 +319,73 @@ def handler(event: dict, context) -> dict:
             )
             results['notified_4d'] += 1
 
+    # ───── Суперадмин: уведомления + автопродление ─────────────────────────────
+    try:
+        from datetime import timedelta
+        cur.execute(f"""
+            SELECT id, email, name, subscription_end_at, grace_period_end_at
+            FROM {S}users
+            WHERE is_superadmin = true
+              AND subscription_end_at IS NOT NULL
+        """)
+        admins = cur.fetchall()
+        for adm_id, adm_email, adm_name, adm_end, adm_grace in admins:
+            if not adm_end:
+                continue
+            if adm_end.tzinfo is None:
+                adm_end = adm_end.replace(tzinfo=timezone.utc)
+            adm_days_left = (adm_end - now).days
+            adm_end_str = adm_end.strftime('%d.%m.%Y')
+
+            # Уведомления за 5, 3 дня
+            if adm_days_left == 5:
+                create_notification(cur, S, str(adm_id),
+                    '[Система] Подписка истекает через 5 дней',
+                    f'Тестовое: подписка до {adm_end_str}. Автопродление сработает в день окончания.', 'info')
+                send_email(adm_email, '[Кабинет-24] Подписка истекает через 5 дней',
+                    build_email_html('Подписка через 5 дней', 'Подписка истекает через 5 дней',
+                        f'Подписка Клуб действует до {adm_end_str}. В день окончания произойдёт автопродление на 1 месяц.',
+                        site_url, 'Открыть дашборд'),
+                    f'Подписка до {adm_end_str}. Автопродление в день окончания.')
+
+            elif adm_days_left == 3:
+                create_notification(cur, S, str(adm_id),
+                    '[Система] Подписка истекает через 3 дня',
+                    f'Тестовое: подписка до {adm_end_str}. Автопродление сработает в день окончания.', 'warning')
+                send_email(adm_email, '[Кабинет-24] Подписка истекает через 3 дня',
+                    build_email_html('Подписка через 3 дня', 'Подписка истекает через 3 дня',
+                        f'Подписка Клуб действует до {adm_end_str}. В день окончания произойдёт автопродление на 1 месяц.',
+                        site_url, 'Открыть дашборд'),
+                    f'Подписка до {adm_end_str}. Автопродление в день окончания.')
+
+            # В день окончания — автопродление на 1 месяц
+            elif adm_days_left == 0:
+                new_end   = adm_end + timedelta(days=30)
+                new_grace = new_end + timedelta(days=3)
+                cur.execute(f"""
+                    UPDATE {S}users
+                    SET subscription_end_at  = %s,
+                        grace_period_end_at  = %s,
+                        plan   = 'pro',
+                        status = 'broker',
+                        updated_at = NOW()
+                    WHERE id = %s
+                """, (new_end.isoformat(), new_grace.isoformat(), str(adm_id)))
+                new_end_str = new_end.strftime('%d.%m.%Y')
+                create_notification(cur, S, str(adm_id),
+                    '[Система] Подписка автоматически продлена',
+                    f'Тестовое: подписка продлена до {new_end_str}. Система работает корректно.', 'info')
+                send_email(adm_email, '[Кабинет-24] Подписка автоматически продлена',
+                    build_email_html('Автопродление', 'Подписка автоматически продлена',
+                        f'Подписка Клуб продлена до {new_end_str}. Это подтверждает корректную работу системы уведомлений.',
+                        site_url, 'Открыть дашборд'),
+                    f'Подписка продлена до {new_end_str}. Система работает корректно.')
+                results['downgraded'] -= 1  # не учитываем как downgrade
+
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     # ───── Объявления: уведомления за 3 дня и автоснятие истёкших ─────
     results['object_expiring_soon'] = 0
     results['object_auto_unpublished'] = 0
