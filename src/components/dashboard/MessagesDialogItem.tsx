@@ -122,7 +122,7 @@ export default function MessagesDialogItem({
               {isFolderMenuOpen && (
                 <div ref={folderRef} className="absolute right-full top-0 mr-1 z-50 w-44 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl overflow-hidden">
                   {folders.map(f => {
-                    const inFolder = (f.partner_ids || []).includes(dialog.partner_id)
+                    const inFolder = (f.partner_ids || []).includes(d.partner_id)
                     return (
                       <button
                         key={f.id}
