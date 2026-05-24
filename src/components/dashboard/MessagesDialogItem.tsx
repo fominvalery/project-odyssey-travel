@@ -106,9 +106,9 @@ export default function MessagesDialogItem({
             onClick={() => onAction("mute")}
           />
 
-          {/* В папку — подменю */}
+          {/* В папку — раскрывающийся список прямо в меню */}
           {folders.length > 0 && (
-            <div className="relative">
+            <>
               <button
                 onClick={e => { e.stopPropagation(); onToggleFolderMenu() }}
                 className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#2a2a2a] text-left"
@@ -117,19 +117,19 @@ export default function MessagesDialogItem({
                   <Icon name="FolderInput" className="h-4 w-4 shrink-0" />
                   В папку
                 </span>
-                <Icon name="ChevronLeft" className="h-3.5 w-3.5 text-gray-600" />
+                <Icon name={isFolderMenuOpen ? "ChevronUp" : "ChevronDown"} className="h-3.5 w-3.5 text-gray-600" />
               </button>
               {isFolderMenuOpen && (
-                <div ref={folderRef} className="absolute right-full top-0 mr-1 z-50 w-44 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl overflow-hidden">
+                <div className="bg-[#111] border-t border-[#2a2a2a]">
                   {folders.map(f => {
                     const inFolder = (f.partner_ids || []).includes(d.partner_id)
                     return (
                       <button
                         key={f.id}
-                        onClick={() => onAction(`folder:${f.id}`)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-300 hover:bg-[#2a2a2a] text-left"
+                        onClick={e => { e.stopPropagation(); onAction(`folder:${f.id}`) }}
+                        className="w-full flex items-center gap-2.5 px-6 py-2 text-sm text-gray-400 hover:bg-[#2a2a2a] text-left"
                       >
-                        <span className="text-base leading-none">{f.emoji}</span>
+                        <span className="text-sm leading-none">{f.emoji}</span>
                         <span className="flex-1 truncate">{f.name}</span>
                         {inFolder && <Icon name="Check" className="h-3.5 w-3.5 text-violet-400 shrink-0" />}
                       </button>
@@ -137,7 +137,7 @@ export default function MessagesDialogItem({
                   })}
                 </div>
               )}
-            </div>
+            </>
           )}
 
           {d.kind === "object" && d.client_phone && (
