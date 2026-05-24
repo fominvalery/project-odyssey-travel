@@ -1,7 +1,9 @@
 """Chat handler — отправка и получение личных сообщений между участниками Клуба."""
 import json
+import os
 from utils.db import query, query_one, execute, execute_returning, get_schema, escape
 from utils.http import response, error
+from utils.email import send_email, _base_template
 
 
 def handle(event: dict, origin: str = '*') -> dict:
@@ -231,10 +233,10 @@ def _get_unread_count(params: dict, origin: str) -> dict:
 
 
 def _send_message(body: dict, origin: str) -> dict:
-    """Отправить сообщение."""
-    sender_id = str(body.get('sender_id', '')).strip()
+    """Отправить сообщение + уведомление в колокольчик + email получателю."""
+    sender_id   = str(body.get('sender_id', '')).strip()
     receiver_id = str(body.get('receiver_id', '')).strip()
-    text = str(body.get('text', '')).strip()
+    text        = str(body.get('text', '')).strip()
 
     if not sender_id or not receiver_id or not text:
         return error(400, 'sender_id, receiver_id и text обязательны', origin)
@@ -247,6 +249,55 @@ def _send_message(body: dict, origin: str) -> dict:
         VALUES ('{sender_id}'::uuid, '{receiver_id}'::uuid, {escape(text)})
         RETURNING id
     """)
+
+    # Уведомление в колокольчик + email (не критично — не падаем при ошибке)
+    try:
+        sender_row = query_one(f"""
+            SELECT name, first_name FROM {S}users WHERE id = {escape(sender_id)}
+        """)
+        sender_name = ''
+        if sender_row:
+            sender_name = ' '.join(filter(None, [sender_row[1], sender_row[0]])) or sender_row[0] or 'Участник'
+
+        receiver_row = query_one(f"""
+            SELECT email, name FROM {S}users WHERE id = {escape(receiver_id)}
+        """)
+
+        short_text = text[:100] + ('…' if len(text) > 100 else '')
+
+        # Колокольчик
+        execute(f"""
+            INSERT INTO {S}notifications (user_id, type, title, body)
+            VALUES ({escape(receiver_id)}, 'message',
+                    {escape(f'Новое сообщение от {sender_name}')},
+                    {escape(short_text)})
+        """)
+
+        # Email
+        if receiver_row and receiver_row[0]:
+            receiver_email = receiver_row[0]
+            site_url = os.environ.get('SITE_URL', 'https://kabinet-24.ru')
+            content = f"""
+                <p style="margin:0 0 16px;font-size:15px;color:#aaaaaa;">
+                  Вам написал участник Клуба <b style="color:#fff">{sender_name}</b>
+                </p>
+                <div style="background:#1a1a1a;border-left:3px solid #8b5cf6;padding:14px 18px;margin:0 0 24px;border-radius:8px;">
+                  <p style="margin:0;color:#fff;line-height:1.5;">{text}</p>
+                </div>
+                <p style="margin:0;">
+                  <a href="{site_url}/dashboard?tab=messages"
+                     style="display:inline-block;background:#8b5cf6;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+                    Ответить
+                  </a>
+                </p>
+            """
+            html_body = _base_template(f'Сообщение от {sender_name}', content)
+            text_body = f'Сообщение от {sender_name}:\n\n{text}\n\nОтветить: {site_url}/dashboard?tab=messages'
+            send_email(receiver_email,
+                       f'[Кабинет-24] Сообщение от {sender_name}',
+                       html_body, text_body)
+    except Exception:
+        pass  # уведомление не критично
 
     return response(200, {'id': str(mid), 'ok': True}, origin)
 
