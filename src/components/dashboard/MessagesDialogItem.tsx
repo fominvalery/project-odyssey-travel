@@ -117,10 +117,10 @@ export default function MessagesDialogItem({
                   <Icon name="FolderInput" className="h-4 w-4 shrink-0" />
                   В папку
                 </span>
-                <Icon name="ChevronRight" className="h-3.5 w-3.5 text-gray-600" />
+                <Icon name="ChevronLeft" className="h-3.5 w-3.5 text-gray-600" />
               </button>
               {isFolderMenuOpen && (
-                <div ref={folderRef} className="absolute left-full top-0 ml-1 z-50 w-44 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl overflow-hidden">
+                <div ref={folderRef} className="absolute right-full top-0 mr-1 z-50 w-44 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl overflow-hidden">
                   {folders.map(f => {
                     const inFolder = (f.partner_ids || []).includes(dialog.partner_id)
                     return (
