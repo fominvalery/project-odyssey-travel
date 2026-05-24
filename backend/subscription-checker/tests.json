@@ -1,11 +1,41 @@
 {
   "tests": [
     {
-      "name": "Run subscription checker",
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Запуск checker — статус 200 + ok:true",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
       "expectedBody": {"ok": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "results.notified_4d присутствует в ответе",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"results": {"notified_4d": 0}},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "results.downgraded = 0 (никто не слетел на Basic)",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"results": {"downgraded": 0}},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "results.object_auto_unpublished присутствует в ответе",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"results": {"object_auto_unpublished": 0}},
       "bodyMatcher": "partial"
     }
   ]
