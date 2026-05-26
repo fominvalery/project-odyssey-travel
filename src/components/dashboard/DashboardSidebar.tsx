@@ -184,22 +184,25 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             </div>
           </div>
           {user.isSuperadmin && (
-            <>
+            <div className="mb-2 rounded-xl border border-red-500/20 bg-red-500/5 overflow-hidden">
+              <div className="px-3 py-1.5 text-[10px] font-semibold text-red-500/60 uppercase tracking-wider">
+                Администрирование
+              </div>
+              <button
+                onClick={() => navigate("/admin-k24")}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full font-medium"
+              >
+                <Icon name="LayoutDashboard" className="h-4 w-4" />
+                Цифровой офис
+              </button>
               <button
                 onClick={() => navigate("/superadmin")}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-600 hover:text-gray-400 hover:bg-[#1a1a1a] transition-colors w-full mb-1"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-red-400/70 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full"
               >
                 <Icon name="Shield" className="h-4 w-4" />
                 Супер-Админ
               </button>
-              <button
-                onClick={() => navigate("/admin-k24")}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full mb-1"
-              >
-                <Icon name="ShieldCheck" className="h-4 w-4" />
-                Панель управления
-              </button>
-            </>
+            </div>
           )}
           <button
             onClick={onLogout}
