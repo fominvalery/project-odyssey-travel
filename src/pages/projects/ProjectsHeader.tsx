@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
@@ -57,6 +57,8 @@ export default function ProjectsHeader({
   onOpenFixModal,
 }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo = (location.state as { returnTo?: string })?.returnTo ?? "/dashboard"
 
   const catGroups = SUBTYPES[category] ?? []
   const activeGroup = getActiveGroup(category, subtype)
@@ -77,10 +79,10 @@ export default function ProjectsHeader({
       <div className="border-b border-[#1f1f1f] px-4 md:px-8 py-1">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-white transition-colors">
+            <button onClick={() => navigate(returnTo)} className="text-gray-400 hover:text-white transition-colors">
               <Icon name="ArrowLeft" className="h-5 w-5" />
             </button>
-            <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
+            <button onClick={() => navigate(returnTo)} className="flex items-center gap-2">
               <img src={LOGO_URL} alt="Кабинет-24" className="h-14 w-auto object-contain" />
             </button>
           </div>

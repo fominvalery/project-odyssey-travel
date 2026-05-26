@@ -179,7 +179,7 @@ export default function AdminPanel() {
                 {group.items.map(item => (
                   <button
                     key={item.id}
-                    onClick={() => item.id === "projects_link" ? navigate("/projects") : setSection(item.id as Section)}
+                    onClick={() => item.id === "projects_link" ? navigate("/projects", { state: { returnTo: "/admin-k24" } }) : setSection(item.id as Section)}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left w-full ${
                       section === item.id
                         ? "bg-white/5 text-white"
