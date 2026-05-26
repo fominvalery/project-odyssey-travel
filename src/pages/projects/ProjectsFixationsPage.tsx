@@ -230,7 +230,6 @@ export default function ProjectsFixationsPage() {
                   <tr className="border-b border-[#1f1f1f] bg-[#111]">
                     <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Дата</th>
                     <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Клиент</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Телефон</th>
                     <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Объект</th>
                     <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Город</th>
                     <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Статус</th>
@@ -266,7 +265,6 @@ export default function ProjectsFixationsPage() {
                       >
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">{formatDate(fix.created_at)}</td>
                         <td className="px-4 py-3 text-xs font-medium text-white max-w-[140px] truncate">{fix.client_name}</td>
-                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">{fix.client_phone || "—"}</td>
                         <td className="px-4 py-3 text-xs text-gray-300 max-w-[180px] truncate">{fix.offer_title}</td>
                         <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{fix.city || "—"}</td>
                         <td className="px-4 py-3 whitespace-nowrap">
