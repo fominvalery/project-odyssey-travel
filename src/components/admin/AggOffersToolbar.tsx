@@ -16,6 +16,7 @@ interface Props {
   onStatusFilter: (v: string) => void
   onRefresh: () => void
   onAdd: () => void
+  onFeed: () => void
 }
 
 export default function AggOffersToolbar({
@@ -30,6 +31,7 @@ export default function AggOffersToolbar({
   onStatusFilter,
   onRefresh,
   onAdd,
+  onFeed,
 }: Props) {
   return (
     <div className="p-5 border-b border-[#1f1f1f] flex items-center justify-between gap-4 flex-wrap">
@@ -69,6 +71,10 @@ export default function AggOffersToolbar({
         </Select>
         <Button onClick={onRefresh} variant="ghost" size="icon" className="text-gray-500 hover:text-white">
           <Icon name="RefreshCw" className="h-4 w-4" />
+        </Button>
+        <Button onClick={onFeed} variant="outline" className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 text-sm">
+          <Icon name="Rss" className="h-4 w-4 mr-1.5" />
+          XML Фид
         </Button>
         <Button onClick={onAdd} className="bg-blue-600 hover:bg-blue-700 text-white text-sm">
           <Icon name="Plus" className="h-4 w-4 mr-1.5" />

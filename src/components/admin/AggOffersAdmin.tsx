@@ -5,6 +5,10 @@ import AggOffersToolbar from "./AggOffersToolbar"
 import AggOffersTable from "./AggOffersTable"
 import AggOffersDialog from "./AggOffersDialog"
 import { AddObjectWizardBase } from "@/components/AddObjectWizardBase"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import Icon from "@/components/ui/icon"
 
 const AGG_ADMIN_URL = (func2url as Record<string, string>)["agg-admin"]
 
@@ -18,6 +22,13 @@ export default function AggOffersAdmin({ token }: { token: string }) {
 
   // Мастер — открывается при нажатии «Добавить»
   const [wizardOpen, setWizardOpen] = useState(false)
+
+  // XML Фид
+  const [feedOpen, setFeedOpen] = useState(false)
+  const [feedUrl, setFeedUrl] = useState("")
+  const [feedLoading, setFeedLoading] = useState(false)
+  const [feedResult, setFeedResult] = useState<{ imported: number; skipped: number; errors: string[] } | null>(null)
+  const [feedError, setFeedError] = useState("")
 
   // Диалог — открывается при редактировании существующего объекта
   const [dialog, setDialog] = useState(false)
@@ -49,6 +60,29 @@ export default function AggOffersAdmin({ token }: { token: string }) {
 
   // «Добавить» — открывает полный мастер
   const openNew = () => setWizardOpen(true)
+
+  const handleFeedImport = async () => {
+    if (!feedUrl.trim()) return
+    setFeedLoading(true)
+    setFeedError("")
+    setFeedResult(null)
+    try {
+      const FEED_URL = (func2url as Record<string, string>)["agg-feed-import"]
+      const res = await fetch(FEED_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feed_url: feedUrl.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Ошибка импорта")
+      setFeedResult(data)
+      load()
+    } catch (e: unknown) {
+      setFeedError(e instanceof Error ? e.message : "Ошибка импорта")
+    } finally {
+      setFeedLoading(false)
+    }
+  }
 
   // Клик по строке таблицы — открывает быстрый диалог редактирования
   const openEdit = (o: Offer) => {
@@ -150,6 +184,7 @@ export default function AggOffersAdmin({ token }: { token: string }) {
         onStatusFilter={setStatusFilter}
         onRefresh={load}
         onAdd={openNew}
+        onFeed={() => { setFeedOpen(true); setFeedResult(null); setFeedError("") }}
       />
 
       <div className="flex-1 overflow-y-auto">
@@ -168,6 +203,75 @@ export default function AggOffersAdmin({ token }: { token: string }) {
           onSave={() => { setWizardOpen(false); load() }}
         />
       )}
+
+      {/* Модальное окно XML Фид */}
+      <Dialog open={feedOpen} onOpenChange={(v) => { setFeedOpen(v); if (!v) { setFeedResult(null); setFeedError("") } }}>
+        <DialogContent className="bg-[#111] border-[#2a2a2a] text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="Rss" className="h-5 w-5 text-emerald-400" />
+              Импорт XML Фида
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-gray-400">
+              Вставьте URL XML-фида (форматы: YRL, Циан, Авито Недвижимость). Система загрузит и добавит объекты в базу автоматически.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500">URL фида</label>
+              <Input
+                placeholder="https://example.com/feed.xml"
+                value={feedUrl}
+                onChange={e => setFeedUrl(e.target.value)}
+                className="bg-[#0d0d0d] border-[#2a2a2a] text-white placeholder:text-gray-600"
+                disabled={feedLoading}
+              />
+            </div>
+
+            {feedError && (
+              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                <Icon name="AlertCircle" className="h-4 w-4 shrink-0" />
+                {feedError}
+              </div>
+            )}
+
+            {feedResult && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-3 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-medium text-sm">
+                  <Icon name="CheckCircle" className="h-4 w-4" />
+                  Импорт завершён
+                </div>
+                <p className="text-sm text-gray-300">Добавлено: <span className="text-white font-semibold">{feedResult.imported}</span> объектов</p>
+                {feedResult.skipped > 0 && <p className="text-sm text-gray-400">Пропущено дублей: {feedResult.skipped}</p>}
+                {feedResult.errors?.length > 0 && (
+                  <details className="mt-1">
+                    <summary className="text-xs text-red-400 cursor-pointer">Ошибок: {feedResult.errors.length}</summary>
+                    <ul className="mt-1 space-y-0.5 text-xs text-red-300">
+                      {feedResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                onClick={handleFeedImport}
+                disabled={!feedUrl.trim() || feedLoading}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+              >
+                {feedLoading ? <Icon name="Loader2" className="h-4 w-4 mr-1.5 animate-spin" /> : <Icon name="Download" className="h-4 w-4 mr-1.5" />}
+                {feedLoading ? "Загружаю фид..." : "Импортировать"}
+              </Button>
+              <Button variant="ghost" onClick={() => setFeedOpen(false)} className="text-gray-400 hover:text-white">
+                Закрыть
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Быстрый диалог редактирования существующего объекта */}
       <AggOffersDialog
