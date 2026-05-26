@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -202,6 +202,19 @@ export default function ProjectsPage() {
   const groupActiveClass = GROUP_ACTIVE[category] ?? "bg-blue-600 text-white border-blue-600"
   const subtypeActiveClass = SUBTYPE_ACTIVE[category] ?? "border-blue-500 bg-blue-500/15 text-blue-300"
 
+  const [showClientsMenu, setShowClientsMenu] = useState(false)
+  const clientsMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (clientsMenuRef.current && !clientsMenuRef.current.contains(e.target as Node)) {
+        setShowClientsMenu(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
   return (
     <div className="flex-1 overflow-auto bg-[#0d0d0d] min-h-screen">
 
@@ -223,15 +236,94 @@ export default function ProjectsPage() {
                 {total > 0 ? `${total} предложений` : "Каталог объектов"}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/projects/fixations")}
-              className="border-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#1a1a1a] shrink-0"
-            >
-              <Icon name="BookmarkCheck" className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Мои фиксации</span>
-            </Button>
+            {/* Кнопка Клиенты с дропдауном */}
+            <div className="relative shrink-0" ref={clientsMenuRef}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowClientsMenu(v => !v)}
+                className={`border-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#1a1a1a] gap-1.5 ${showClientsMenu ? "bg-[#1a1a1a] text-white" : ""}`}
+              >
+                <Icon name="Users" className="h-4 w-4" />
+                <span>Клиенты</span>
+                <Icon name="ChevronDown" className={`h-3.5 w-3.5 transition-transform ${showClientsMenu ? "rotate-180" : ""}`} />
+              </Button>
+
+              {showClientsMenu && (
+                <div className="absolute right-0 top-full mt-2 w-[520px] max-w-[90vw] bg-[#111] border border-[#2a2a2a] rounded-2xl shadow-2xl z-50 p-5">
+                  <div className="grid grid-cols-3 gap-6">
+                    {/* Фиксации */}
+                    <div>
+                      <button
+                        onClick={() => { navigate("/projects/fixations"); setShowClientsMenu(false) }}
+                        className="flex items-center gap-1.5 text-base font-bold text-white hover:text-blue-400 transition-colors mb-3 group"
+                      >
+                        Фиксации
+                        <Icon name="ChevronRight" className="h-4 w-4 text-gray-500 group-hover:text-blue-400" />
+                      </button>
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => { navigate("/projects/fixations?filter=failed"); setShowClientsMenu(false) }}
+                          className="block text-sm text-gray-400 hover:text-white transition-colors"
+                        >
+                          Срывы
+                        </button>
+                        <button
+                          onClick={() => { navigate("/projects/fixations"); setShowClientsMenu(false) }}
+                          className="block text-sm text-gray-400 hover:text-white transition-colors"
+                        >
+                          Зафиксировать
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Брони */}
+                    <div>
+                      <button
+                        onClick={() => { navigate("/projects/bookings"); setShowClientsMenu(false) }}
+                        className="flex items-center gap-1.5 text-base font-bold text-white hover:text-blue-400 transition-colors mb-3 group"
+                      >
+                        Брони
+                        <Icon name="ChevronRight" className="h-4 w-4 text-gray-500 group-hover:text-blue-400" />
+                      </button>
+                      <div className="space-y-2">
+                        {["Бесплатные", "Платные", "Запись на договор", "Срывы"].map(label => (
+                          <button
+                            key={label}
+                            onClick={() => { navigate(`/projects/bookings?filter=${label}`); setShowClientsMenu(false) }}
+                            className="block text-sm text-gray-400 hover:text-white transition-colors"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Сделки */}
+                    <div>
+                      <button
+                        onClick={() => { navigate("/projects/deals"); setShowClientsMenu(false) }}
+                        className="flex items-center gap-1.5 text-base font-bold text-white hover:text-blue-400 transition-colors mb-3 group"
+                      >
+                        Сделки
+                        <Icon name="ChevronRight" className="h-4 w-4 text-gray-500 group-hover:text-blue-400" />
+                      </button>
+                      <div className="space-y-2">
+                        {["Подписанные", "Оплаченные", "Расторжение"].map(label => (
+                          <button
+                            key={label}
+                            onClick={() => { navigate(`/projects/deals?filter=${label}`); setShowClientsMenu(false) }}
+                            className="block text-sm text-gray-400 hover:text-white transition-colors"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Строка поиска + Фильтры */}
