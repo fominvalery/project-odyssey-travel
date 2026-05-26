@@ -89,11 +89,19 @@ export default function ProjectsPage() {
       <div className="sticky top-0 z-10 bg-[#0d0d0d]/95 backdrop-blur border-b border-[#1f1f1f] px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-xl font-bold text-white">База / Проекты</h1>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {total > 0 ? `${total} предложений` : "Каталог объектов агрегатора"}
-              </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
+                <Icon name="ChevronLeft" className="h-5 w-5" />
+              </button>
+              <div>
+                <h1 className="text-xl font-bold text-white">База / Проекты</h1>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {total > 0 ? `${total} предложений` : "Каталог объектов агрегатора"}
+                </p>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button
