@@ -224,22 +224,26 @@ export default function ProjectsFixationsPage() {
           </div>
         ) : (
           <div className="bg-[#0d0d0d] rounded-2xl border border-[#1f1f1f] overflow-hidden">
-            {/* Заголовок таблицы — всегда виден */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[800px]">
                 <thead>
                   <tr className="border-b border-[#1f1f1f] bg-[#111]">
-                    {["Дата создания", "Агент", "Клиент", "Объект", "Город", "Статус фиксации", "Актуален до", "Вид"].map(col => (
-                      <th key={col} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
-                        {col}
-                      </th>
-                    ))}
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Дата</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Клиент</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Телефон</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Объект</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Город</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Статус</th>
+                    {activeTab === "fixations" || activeTab === "all" ? (
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Актуален до</th>
+                    ) : null}
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Вид</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1a1a1a]">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-20 text-center">
+                      <td colSpan={activeTab === "fixations" || activeTab === "all" ? 8 : 7} className="py-20 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <Icon name="BookmarkX" className="h-10 w-10 text-gray-700" />
                           <p className="text-gray-500 text-sm">
@@ -253,6 +257,7 @@ export default function ProjectsFixationsPage() {
                     </tr>
                   ) : filtered.map(fix => {
                     const expires = formatExpires(fix.expires_at)
+                    const showExpires = activeTab === "fixations" || activeTab === "all"
                     return (
                       <tr
                         key={fix.id}
@@ -260,25 +265,24 @@ export default function ProjectsFixationsPage() {
                         onClick={() => navigate(`/projects/${fix.offer_id}`)}
                       >
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">{formatDate(fix.created_at)}</td>
-                        <td className="px-4 py-3 text-xs text-gray-300">—</td>
-                        <td className="px-4 py-3 max-w-[140px]">
-                          <p className="text-xs font-medium text-white truncate">{fix.client_name}</p>
-                          {fix.client_phone && <p className="text-[10px] text-gray-500 truncate">{fix.client_phone}</p>}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-300 max-w-[160px] truncate">{fix.offer_title}</td>
+                        <td className="px-4 py-3 text-xs font-medium text-white max-w-[140px] truncate">{fix.client_name}</td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">{fix.client_phone || "—"}</td>
+                        <td className="px-4 py-3 text-xs text-gray-300 max-w-[180px] truncate">{fix.offer_title}</td>
                         <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{fix.city || "—"}</td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`text-xs font-medium ${STATUS_COLOR[fix.status] || "text-gray-400"}`}>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-lg border ${STATUS_BG[fix.status] || "bg-gray-500/10 border-gray-500/20 text-gray-400"}`}>
                             {STATUS_LABEL[fix.status] || fix.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          {expires.label ? (
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${expires.expired ? "bg-gray-500/20 text-gray-400" : "bg-red-500 text-white"}`}>
-                              {expires.label}
-                            </span>
-                          ) : <span className="text-xs text-gray-600">—</span>}
-                        </td>
+                        {showExpires && (
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {expires.label ? (
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded-lg ${expires.expired ? "text-gray-500" : "text-red-400"}`}>
+                                {expires.label}
+                              </span>
+                            ) : <span className="text-xs text-gray-600">—</span>}
+                          </td>
+                        )}
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                           {CAT_LABEL[fix.category || ""] || fix.category || "—"}
                         </td>
