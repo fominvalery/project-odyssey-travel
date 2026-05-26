@@ -1,0 +1,1 @@
+ALTER TABLE agg_fixations ADD COLUMN IF NOT EXISTS offer_title_override text;

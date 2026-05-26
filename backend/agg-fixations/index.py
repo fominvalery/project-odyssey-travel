@@ -120,12 +120,12 @@ def handler(event: dict, context) -> dict:
             cur.execute(
                 f"""SELECT f.id, f.offer_id, f.user_id, f.agency_id, f.status,
                           f.expires_at, f.notes, f.created_at, f.updated_at,
-                          o.title as offer_title, o.city, o.category,
+                          COALESCE(f.offer_title_override, o.title) as offer_title, o.city, o.category,
                           c.full_name, c.phone, c.email,
                           u.name as broker_name, u.email as broker_email,
                           om.department_id, d.name as dept_name
                    FROM agg_fixations f
-                   JOIN agg_offers o ON o.id = f.offer_id
+                   LEFT JOIN agg_offers o ON o.id = f.offer_id
                    JOIN agg_clients c ON c.id = f.client_id
                    LEFT JOIN users u ON u.id::text = f.user_id
                    LEFT JOIN office_members om ON om.user_id = u.id AND om.status = 'active'
@@ -138,12 +138,12 @@ def handler(event: dict, context) -> dict:
             cur.execute(
                 """SELECT f.id, f.offer_id, f.user_id, f.agency_id, f.status,
                           f.expires_at, f.notes, f.created_at, f.updated_at,
-                          o.title as offer_title, o.city, o.category,
+                          COALESCE(f.offer_title_override, o.title) as offer_title, o.city, o.category,
                           c.full_name, c.phone, c.email,
                           NULL as broker_name, NULL as broker_email,
                           NULL as department_id, NULL as dept_name
                    FROM agg_fixations f
-                   JOIN agg_offers o ON o.id = f.offer_id
+                   LEFT JOIN agg_offers o ON o.id = f.offer_id
                    JOIN agg_clients c ON c.id = f.client_id
                    WHERE f.user_id = %s
                    ORDER BY f.created_at DESC""",
@@ -181,9 +181,15 @@ def handler(event: dict, context) -> dict:
         notes = body.get("notes", "")
         agency_id = body.get("agency_id", "")
 
-        if not offer_id or not full_name:
+        if not full_name:
             conn.close()
-            return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "offer_id и full_name обязательны"})}
+            return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "full_name обязателен"})}
+
+        PLACEHOLDER_OFFER_ID = "00000000-0000-0000-0000-000000000001"
+        offer_title_override = None
+        if not offer_id:
+            offer_id = PLACEHOLDER_OFFER_ID
+            offer_title_override = body.get("offer_title_manual", "Объект не указан")
 
         cur.execute(
             "INSERT INTO agg_clients (user_id, full_name, phone, email, notes) VALUES (%s, %s, %s, %s, %s) RETURNING id",
@@ -193,8 +199,8 @@ def handler(event: dict, context) -> dict:
 
         expires_at = datetime.now() + timedelta(days=30)
         cur.execute(
-            "INSERT INTO agg_fixations (offer_id, client_id, user_id, agency_id, status, expires_at, notes) VALUES (%s, %s, %s, %s, 'pending', %s, %s) RETURNING id",
-            (offer_id, client_id, user_id, agency_id or None, expires_at, notes),
+            "INSERT INTO agg_fixations (offer_id, client_id, user_id, agency_id, status, expires_at, notes, offer_title_override) VALUES (%s, %s, %s, %s, 'pending', %s, %s, %s) RETURNING id",
+            (offer_id, client_id, user_id, agency_id or None, expires_at, notes, offer_title_override),
         )
         fix_id = cur.fetchone()[0]
         conn.commit()
