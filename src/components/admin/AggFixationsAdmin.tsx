@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, createPortal } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
@@ -220,7 +220,9 @@ function FixCard({
   onClick: () => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0, width: 0 })
   const ref = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
   const dl = daysLeft(fix.expires_at)
 
   useEffect(() => {
@@ -231,6 +233,17 @@ function FixCard({
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
   }, [menuOpen])
+
+  const openMenu = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const menuHeight = STATUSES.length * 32
+      const top = spaceBelow >= menuHeight ? rect.bottom + 4 : rect.top - menuHeight - 4
+      setMenuPos({ top, left: rect.left, width: rect.width })
+    }
+    setMenuOpen(v => !v)
+  }
 
   return (
     <div
@@ -265,9 +278,10 @@ function FixCard({
         {dl.text && <span className={`text-xs ${dl.warn ? "text-red-400" : "text-gray-500"}`}>{dl.text}</span>}
       </div>
 
-      <div className="relative" ref={ref} onClick={e => e.stopPropagation()}>
+      <div ref={ref} onClick={e => e.stopPropagation()}>
         <button
-          onClick={() => setMenuOpen(v => !v)}
+          ref={btnRef}
+          onClick={openMenu}
           disabled={updating === fix.id}
           className="w-full flex items-center justify-between gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors bg-[#0d0d0d] border-[#2a2a2a] hover:border-[#3a3a3a]"
         >
@@ -282,8 +296,11 @@ function FixCard({
           </div>
           <Icon name="ChevronDown" className="h-3 w-3 text-gray-600 shrink-0" />
         </button>
-        {menuOpen && (
-          <div className="absolute bottom-full mb-1 left-0 right-0 z-50 bg-[#161616] border border-[#2a2a2a] rounded-xl shadow-xl overflow-hidden">
+        {menuOpen && createPortal(
+          <div
+            style={{ position: "fixed", top: menuPos.top, left: menuPos.left, width: menuPos.width, zIndex: 9999 }}
+            className="bg-[#161616] border border-[#2a2a2a] rounded-xl shadow-xl overflow-hidden"
+          >
             {STATUSES.map(s => (
               <button
                 key={s.id}
@@ -295,7 +312,8 @@ function FixCard({
                 {fix.status === s.id && <Icon name="Check" className="h-3 w-3 text-gray-500 ml-auto" />}
               </button>
             ))}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>
