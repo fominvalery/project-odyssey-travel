@@ -110,7 +110,13 @@ export default function ClientsDropdown({ onOpenFixModal }: Props) {
               return (
                 <button
                   key={t.id}
-                  onClick={() => setClientsTab(t.id)}
+                  onClick={() => {
+                    setClientsTab(t.id)
+                    if (t.id === "fixations") { navigate(`/projects/fixations?tab=fixations`); setOpen(false) }
+                    else if (t.id === "showing") { navigate(`/projects/fixations?tab=showing`); setOpen(false) }
+                    else if (t.id === "booking") { navigate(`/projects/fixations?tab=booking`); setOpen(false) }
+                    else if (t.id === "deal") { navigate(`/projects/fixations?tab=deal`); setOpen(false) }
+                  }}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all flex flex-col items-center gap-0.5 ${
                     isActive ? "bg-[#222] text-white" : "text-gray-500 hover:text-gray-300"
                   }`}

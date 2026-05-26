@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
 import func2url from "../../../backend/func2url.json"
@@ -8,7 +9,7 @@ import func2url from "../../../backend/func2url.json"
 const STATUS_LABEL: Record<string, string> = {
   pending: "Ожидает ответа",
   fixed: "Зафиксирован",
-  invalid: "Неактуален",
+  invalid: "Неуникальный",
   showing: "Показ",
   booking: "Бронь",
   negotiation: "Переговоры",
@@ -18,18 +19,29 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  pending: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-  fixed: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-  invalid: "bg-red-500/20 text-red-300 border-red-500/30",
-  showing: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  booking: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-  negotiation: "bg-violet-500/20 text-violet-300 border-violet-500/30",
-  deal: "bg-emerald-600/20 text-emerald-200 border-emerald-600/30",
-  docs: "bg-orange-500/20 text-orange-300 border-orange-500/30",
-  payment: "bg-pink-500/20 text-pink-300 border-pink-500/30",
+  pending: "text-yellow-400",
+  fixed: "text-emerald-400",
+  invalid: "text-red-400",
+  showing: "text-blue-400",
+  booking: "text-cyan-400",
+  negotiation: "text-violet-400",
+  deal: "text-emerald-300",
+  docs: "text-orange-400",
+  payment: "text-pink-400",
 }
 
-// Группы вкладок — каждая объединяет несколько статусов CRM
+const STATUS_BG: Record<string, string> = {
+  pending: "bg-yellow-500/10 border-yellow-500/20 text-yellow-300",
+  fixed: "bg-emerald-500/10 border-emerald-500/20 text-emerald-300",
+  invalid: "bg-red-500/10 border-red-500/20 text-red-300",
+  showing: "bg-blue-500/10 border-blue-500/20 text-blue-300",
+  booking: "bg-cyan-500/10 border-cyan-500/20 text-cyan-300",
+  negotiation: "bg-violet-500/10 border-violet-500/20 text-violet-300",
+  deal: "bg-emerald-600/10 border-emerald-600/20 text-emerald-200",
+  docs: "bg-orange-500/10 border-orange-500/20 text-orange-300",
+  payment: "bg-pink-500/10 border-pink-500/20 text-pink-300",
+}
+
 const TABS = [
   { id: "all",         label: "Все",         statuses: [] as string[] },
   { id: "fixations",   label: "Фиксации",    statuses: ["pending", "fixed"] },
@@ -55,20 +67,27 @@ interface Fixation {
   client_email?: string
 }
 
-function daysLeft(dateStr: string | null): string {
-  if (!dateStr) return ""
-  const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  if (diff <= 0) return "Истекла"
-  if (diff === 1) return "1 день"
-  if (diff < 5) return `${diff} дня`
-  return `${diff} дней`
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit" })
+    + " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
 }
 
-// Преобразуем route в id вкладки
-function routeToTab(pathname: string): string {
-  if (pathname.includes("/bookings")) return "booking"
-  if (pathname.includes("/deals")) return "deal"
-  return "all"
+function formatExpires(dateStr: string | null): { label: string; expired: boolean } {
+  if (!dateStr) return { label: "", expired: false }
+  const d = new Date(dateStr)
+  const diff = Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  const label = d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit" })
+  return { label, expired: diff <= 0 }
+}
+
+const CAT_LABEL: Record<string, string> = {
+  commercial: "Коммерция",
+  investment: "Инвестиции",
+  resort: "Курортная",
+  auction: "С торгов",
+  residential: "Жилая",
+  newbuild: "Новостройка",
 }
 
 export default function ProjectsFixationsPage() {
@@ -77,12 +96,15 @@ export default function ProjectsFixationsPage() {
   const { user } = useAuthContext()
   const [fixations, setFixations] = useState<Fixation[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
 
-  // Определяем активную вкладку из URL
-  const pathname = window.location.pathname
-  const filterParam = searchParams.get("filter")
-  const defaultTab = filterParam === "failed" ? "invalid" : routeToTab(pathname)
-  const [activeTab, setActiveTab] = useState(defaultTab)
+  const tabParam = searchParams.get("tab") || "all"
+  const [activeTab, setActiveTab] = useState(tabParam)
+
+  // Sync tab from URL
+  useEffect(() => {
+    setActiveTab(searchParams.get("tab") || "all")
+  }, [searchParams])
 
   const load = async () => {
     if (!user?.id) return
@@ -103,39 +125,61 @@ export default function ProjectsFixationsPage() {
   useEffect(() => { load() }, [user?.id])
 
   const tab = TABS.find(t => t.id === activeTab) || TABS[0]
-  const filtered = tab.statuses.length === 0
-    ? fixations
-    : fixations.filter(f => tab.statuses.includes(f.status))
+  const filtered = (tab.statuses.length === 0 ? fixations : fixations.filter(f => tab.statuses.includes(f.status)))
+    .filter(f => {
+      if (!search.trim()) return true
+      const q = search.toLowerCase()
+      return (
+        f.client_name?.toLowerCase().includes(q) ||
+        f.client_phone?.toLowerCase().includes(q) ||
+        f.offer_title?.toLowerCase().includes(q) ||
+        f.city?.toLowerCase().includes(q)
+      )
+    })
+
+  function handleTabClick(id: string) {
+    setActiveTab(id)
+    navigate(`/projects/fixations?tab=${id}`, { replace: true })
+  }
 
   return (
     <div className="flex-1 overflow-auto bg-[#0d0d0d] min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Шапка */}
-        <div className="flex items-center gap-3 mb-5">
+
+      {/* Поиск + фильтры (sticky) */}
+      <div className="sticky top-0 z-10 bg-[#0d0d0d]/95 backdrop-blur border-b border-[#1f1f1f] px-4 md:px-8 py-3">
+        <div className="max-w-7xl mx-auto flex items-center gap-3">
           <button
             onClick={() => navigate("/projects")}
-            className="text-gray-500 hover:text-white transition-colors"
+            className="shrink-0 text-gray-500 hover:text-white transition-colors"
           >
             <Icon name="ChevronLeft" className="h-5 w-5" />
           </button>
-          <div>
-            <h1 className="text-xl font-bold text-white">Мои клиенты</h1>
-            <p className="text-xs text-gray-500">
-              {loading ? "Загрузка..." : `${fixations.length} клиентов в CRM`}
-            </p>
+
+          <div className="relative flex-1">
+            <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Телефон или ФИО клиента, объект или ЖК"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 bg-[#111] border-[#2a2a2a] text-white placeholder:text-gray-600 focus:border-violet-500"
+            />
           </div>
+
           <Button
             size="sm"
             onClick={() => navigate("/projects")}
-            className="ml-auto bg-violet-600 hover:bg-violet-700 text-white"
+            className="shrink-0 bg-violet-600 hover:bg-violet-700 text-white gap-1.5"
           >
-            <Icon name="Plus" className="h-4 w-4 mr-1.5" />
+            <Icon name="Plus" className="h-4 w-4" />
             Зафиксировать
           </Button>
         </div>
+      </div>
 
-        {/* Вкладки статусов */}
-        <div className="flex gap-1.5 flex-wrap mb-5">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
+
+        {/* Вкладки */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-4">
           {TABS.map(t => {
             const count = t.statuses.length === 0
               ? fixations.length
@@ -144,7 +188,7 @@ export default function ProjectsFixationsPage() {
             return (
               <button
                 key={t.id}
-                onClick={() => setActiveTab(t.id)}
+                onClick={() => handleTabClick(t.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
                   isActive
                     ? "bg-violet-600 text-white"
@@ -164,10 +208,18 @@ export default function ProjectsFixationsPage() {
           })}
         </div>
 
+        {/* Счётчик */}
+        {!loading && (
+          <p className="text-sm text-gray-500 mb-3">
+            {filtered.length} результатов
+          </p>
+        )}
+
+        {/* Таблица */}
         {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-[#111] border border-[#1f1f1f] rounded-2xl h-28 animate-pulse" />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-12 bg-[#111] border border-[#1f1f1f] rounded-xl animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -176,81 +228,91 @@ export default function ProjectsFixationsPage() {
             <p className="text-gray-500 text-lg font-medium">
               {activeTab === "all" ? "Клиентов пока нет" : `Нет клиентов в статусе «${tab.label}»`}
             </p>
-            <p className="text-gray-700 text-sm mt-1 mb-6">
-              {activeTab === "all"
-                ? "Перейдите в каталог и зафиксируйте клиента на объект"
-                : "Переместите клиентов в эту стадию через CRM Фиксации"
-              }
-            </p>
-            <Button onClick={() => navigate("/projects")} className="bg-violet-600 hover:bg-violet-700 text-white">
+            <Button onClick={() => navigate("/projects")} className="mt-6 bg-violet-600 hover:bg-violet-700 text-white">
               Открыть каталог
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {filtered.map(fix => (
-              <FixationRow key={fix.id} fix={fix} onOpenOffer={() => navigate(`/projects/${fix.offer_id}`)} />
-            ))}
+          <div className="bg-[#0d0d0d] rounded-2xl border border-[#1f1f1f] overflow-hidden">
+            {/* Заголовок таблицы */}
+            <div className="hidden md:grid grid-cols-[160px_1fr_1fr_1fr_1fr_180px_110px_130px] gap-3 px-4 py-2.5 border-b border-[#1f1f1f] bg-[#111]">
+              {["Дата создания", "Агент", "Клиент", "Объект", "Город", "Статус фиксации", "Актуален до", "Вид"].map(col => (
+                <span key={col} className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{col}</span>
+              ))}
+            </div>
+
+            {/* Строки */}
+            <div className="divide-y divide-[#1a1a1a]">
+              {filtered.map(fix => {
+                const expires = formatExpires(fix.expires_at)
+                return (
+                  <div
+                    key={fix.id}
+                    className="grid grid-cols-1 md:grid-cols-[160px_1fr_1fr_1fr_1fr_180px_110px_130px] gap-3 px-4 py-3 hover:bg-[#111] transition-colors cursor-pointer"
+                    onClick={() => navigate(`/projects/${fix.offer_id}`)}
+                  >
+                    {/* Дата создания */}
+                    <div className="flex items-center">
+                      <span className="text-xs text-gray-400">{formatDate(fix.created_at)}</span>
+                    </div>
+
+                    {/* Агент */}
+                    <div className="flex items-center min-w-0">
+                      <span className="text-xs text-gray-300 truncate">—</span>
+                    </div>
+
+                    {/* Клиент */}
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-medium text-white truncate">{fix.client_name}</span>
+                      {fix.client_phone && (
+                        <span className="text-[10px] text-gray-500 truncate">{fix.client_phone}</span>
+                      )}
+                    </div>
+
+                    {/* Объект */}
+                    <div className="flex items-center min-w-0">
+                      <span className="text-xs text-gray-300 truncate">{fix.offer_title}</span>
+                    </div>
+
+                    {/* Город */}
+                    <div className="flex items-center min-w-0">
+                      <span className="text-xs text-gray-500 truncate">{fix.city || "—"}</span>
+                    </div>
+
+                    {/* Статус */}
+                    <div className="flex items-center">
+                      <span className={`text-xs font-medium ${STATUS_COLOR[fix.status] || "text-gray-400"}`}>
+                        {STATUS_LABEL[fix.status] || fix.status}
+                      </span>
+                    </div>
+
+                    {/* Актуален до */}
+                    <div className="flex items-center">
+                      {expires.label ? (
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${
+                          expires.expired
+                            ? "bg-gray-500/20 text-gray-400"
+                            : "bg-red-500 text-white"
+                        }`}>
+                          {expires.label}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-600">—</span>
+                      )}
+                    </div>
+
+                    {/* Вид недвижимости */}
+                    <div className="flex items-center">
+                      <span className="text-xs text-gray-400">
+                        {CAT_LABEL[fix.category || ""] || fix.category || "—"}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
-      </div>
-    </div>
-  )
-}
-
-function FixationRow({ fix, onOpenOffer }: { fix: Fixation; onOpenOffer: () => void }) {
-  const colorClass = STATUS_COLOR[fix.status] || "bg-gray-500/20 text-gray-300 border-gray-500/30"
-  const days = fix.expires_at ? daysLeft(fix.expires_at) : null
-  const isExpired = days === "Истекла"
-
-  return (
-    <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-4 hover:border-[#2a2a2a] transition-colors">
-      <div className="flex items-start gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <button
-              onClick={onOpenOffer}
-              className="text-sm font-semibold text-white hover:text-violet-400 transition-colors text-left line-clamp-1"
-            >
-              {fix.offer_title}
-            </button>
-            {fix.city && (
-              <span className="text-xs text-gray-500">{fix.city}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-            <span className="flex items-center gap-1">
-              <Icon name="User" className="h-3 w-3" />
-              {fix.client_name}
-            </span>
-            {fix.client_phone && (
-              <span className="flex items-center gap-1">
-                <Icon name="Phone" className="h-3 w-3" />
-                {fix.client_phone}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${colorClass}`}>
-              {STATUS_LABEL[fix.status] || fix.status}
-            </span>
-            {days && (
-              <span className={`text-[10px] flex items-center gap-1 ${isExpired ? "text-red-400" : "text-gray-500"}`}>
-                <Icon name="Clock" className="h-3 w-3" />
-                {isExpired ? "Фиксация истекла" : `Действует ${days}`}
-              </span>
-            )}
-            <span className="text-[10px] text-gray-600">
-              {new Date(fix.created_at).toLocaleDateString("ru-RU")}
-            </span>
-          </div>
-        </div>
-        <button
-          onClick={onOpenOffer}
-          className="shrink-0 text-gray-600 hover:text-white transition-colors"
-        >
-          <Icon name="ChevronRight" className="h-5 w-5" />
-        </button>
       </div>
     </div>
   )
