@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
 import func2url from "../../../backend/func2url.json"
+import QuickFixationModal from "./QuickFixationModal"
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Ожидает ответа",
@@ -97,6 +98,7 @@ export default function ProjectsFixationsPage() {
   const [fixations, setFixations] = useState<Fixation[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [fixModal, setFixModal] = useState(false)
 
   const tabParam = searchParams.get("tab") || "all"
   const [activeTab, setActiveTab] = useState(tabParam)
@@ -167,7 +169,7 @@ export default function ProjectsFixationsPage() {
 
           <Button
             size="sm"
-            onClick={() => navigate("/projects")}
+            onClick={() => setFixModal(true)}
             className="shrink-0 bg-violet-600 hover:bg-violet-700 text-white gap-1.5"
           >
             <Icon name="Plus" className="h-4 w-4" />
@@ -293,6 +295,8 @@ export default function ProjectsFixationsPage() {
           </div>
         )}
       </div>
+
+      <QuickFixationModal open={fixModal} onOpenChange={setFixModal} />
     </div>
   )
 }
