@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
 import { STATUS_LABELS } from "@/hooks/useAuth"
+import AggOffersAdmin from "@/components/admin/AggOffersAdmin"
+import AggFixationsAdmin from "@/components/admin/AggFixationsAdmin"
 
 const ADMIN_URL = "https://functions.poehali.dev/0628c75d-0129-48e8-9794-82bd87b83906"
 
@@ -35,6 +37,7 @@ export default function AdminPanel() {
   const [password, setPassword] = useState("")
   const [pwError, setPwError] = useState("")
   const [token, setToken] = useState("")
+  const [adminSection, setAdminSection] = useState<"users" | "offers" | "fixations">("users")
 
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(false)
@@ -142,13 +145,23 @@ export default function AdminPanel() {
         </div>
 
         <nav className="flex flex-col gap-1">
-          {[
-            { icon: "Users", label: `Пользователи (${users.length})` },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-red-600/10 text-red-400 text-sm font-medium">
-              <Icon name={item.icon as "Users"} className="h-4 w-4" />
+          {([
+            { id: "users",     icon: "Users",      label: `Пользователи (${users.length})` },
+            { id: "offers",    icon: "FolderOpen", label: "База / Проекты" },
+            { id: "fixations", icon: "BookmarkCheck", label: "Фиксации" },
+          ] as const).map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setAdminSection(item.id)}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
+                adminSection === item.id
+                  ? "bg-red-600/10 text-red-400"
+                  : "text-gray-500 hover:text-white hover:bg-[#1a1a1a]"
+              }`}
+            >
+              <Icon name={item.icon} className="h-4 w-4" />
               {item.label}
-            </div>
+            </button>
           ))}
         </nav>
 
@@ -176,8 +189,10 @@ export default function AdminPanel() {
 
       {/* Основной контент */}
       <main className="flex-1 flex overflow-hidden">
+        {adminSection === "offers" && <AggOffersAdmin token={token} />}
+        {adminSection === "fixations" && <AggFixationsAdmin token={token} />}
         {/* Список пользователей */}
-        <div className={`flex flex-col ${activeUser ? "w-80 border-r border-[#1f1f1f]" : "flex-1"} overflow-hidden`}>
+        <div className={`${adminSection !== "users" ? "hidden" : ""} flex flex-col ${activeUser ? "w-80 border-r border-[#1f1f1f]" : "flex-1"} overflow-hidden`}>
           <div className="p-5 border-b border-[#1f1f1f]">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-lg">Пользователи</h2>
@@ -225,7 +240,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Детали пользователя */}
-        {activeUser && (
+        {adminSection === "users" && activeUser && (
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-lg">
               <div className="flex items-start justify-between mb-6">
