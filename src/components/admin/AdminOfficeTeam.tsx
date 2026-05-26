@@ -333,11 +333,13 @@ type Tab = "members" | "departments" | "invites"
 export default function AdminOfficeTeam({
   allUsers,
   token = "k24admin",
+  tab: initialTab = "members",
 }: {
   allUsers?: { id: string; name: string; email: string }[]
   token?: string
+  tab?: Tab
 }) {
-  const [tab, setTab] = useState<Tab>("members")
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [members, setMembers] = useState<OfficeMember[]>([])
   const [departments, setDepartments] = useState<OfficeDepartment[]>([])
   const [invites, setInvites] = useState<OfficeInvite[]>([])
@@ -426,53 +428,48 @@ export default function AdminOfficeTeam({
   const pendingInvites = invites.filter(i => i.status === "pending")
   const archiveInvites = invites.filter(i => i.status !== "pending")
 
+  const PAGE_TITLES: Record<Tab, { title: string; subtitle: string; icon: string }> = {
+    members:     { title: "Команда",      subtitle: `${activeMembers.length} сотрудников`,    icon: "UsersRound" },
+    departments: { title: "Отделы",       subtitle: `${departments.length} отделов`,           icon: "Network" },
+    invites:     { title: "Приглашения",  subtitle: `${pendingInvites.length} активных`,       icon: "Mail" },
+  }
+  const pageInfo = PAGE_TITLES[tab]
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Шапка */}
       <div className="px-6 py-4 border-b border-[#1f1f1f] shrink-0">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white">Онлайн Офис</h2>
-            <p className="text-xs text-gray-500">Команда Кабинет-24 · {activeMembers.length} сотрудников</p>
+            <h2 className="text-lg font-bold text-white">{pageInfo.title}</h2>
+            <p className="text-xs text-gray-500">Онлайн Офис · {pageInfo.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setShowInvite(true)} size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
-              <Icon name="UserPlus" className="h-3.5 w-3.5 mr-1.5" />
-              Пригласить
-            </Button>
-            <Button onClick={() => setEditMember("new")} size="sm"
-              className="bg-violet-600 hover:bg-violet-700 text-white text-xs">
-              <Icon name="Plus" className="h-3.5 w-3.5 mr-1.5" />
-              Добавить
-            </Button>
+            {tab === "invites" && (
+              <Button onClick={() => setShowInvite(true)} size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
+                <Icon name="UserPlus" className="h-3.5 w-3.5 mr-1.5" />
+                Пригласить
+              </Button>
+            )}
+            {tab === "members" && (
+              <Button onClick={() => setEditMember("new")} size="sm"
+                className="bg-violet-600 hover:bg-violet-700 text-white text-xs">
+                <Icon name="Plus" className="h-3.5 w-3.5 mr-1.5" />
+                Добавить
+              </Button>
+            )}
+            {tab === "departments" && (
+              <Button onClick={() => setEditDept("new")} size="sm"
+                className="bg-gradient-to-r from-violet-500 to-pink-500 hover:opacity-90 text-white text-xs">
+                <Icon name="Plus" className="h-3.5 w-3.5 mr-1.5" />
+                Новый отдел
+              </Button>
+            )}
             <Button onClick={load} variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-white">
               <Icon name={loading ? "Loader2" : "RefreshCw"} className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </div>
-        </div>
-
-        {/* Вкладки */}
-        <div className="flex gap-1">
-          {[
-            { id: "members" as Tab,     label: "Команда",       icon: "Users",      count: activeMembers.length },
-            { id: "departments" as Tab, label: "Отделы",        icon: "Network",    count: departments.length },
-            { id: "invites" as Tab,     label: "Приглашения",   icon: "Mail",       count: pendingInvites.length },
-          ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                tab === t.id ? "bg-white/10 text-white" : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
-              }`}
-            >
-              <Icon name={t.icon as "Users"} className="h-3.5 w-3.5" />
-              {t.label}
-              {t.count > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full tabular-nums ${tab === t.id ? "bg-white/20 text-white" : "bg-white/5 text-gray-500"}`}>
-                  {t.count}
-                </span>
-              )}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -595,7 +592,7 @@ export default function AdminOfficeTeam({
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500">{departments.length} отделов</p>
               <Button onClick={() => setEditDept("new")} size="sm"
-                className="bg-gradient-to-r from-violet-500 to-pink-500 hover:opacity-90 text-white text-xs">
+                className="bg-gradient-to-r from-violet-500 to-pink-500 hover:opacity-90 text-white text-xs md:hidden">
                 <Icon name="Plus" className="h-3.5 w-3.5 mr-1" />
                 Новый отдел
               </Button>
@@ -675,7 +672,7 @@ export default function AdminOfficeTeam({
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold text-white">Активные ({pendingInvites.length})</h3>
                 <Button onClick={() => setShowInvite(true)} size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:hidden">
                   <Icon name="Plus" className="h-3.5 w-3.5 mr-1" />
                   Новое
                 </Button>

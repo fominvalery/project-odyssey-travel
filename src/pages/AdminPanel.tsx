@@ -12,6 +12,8 @@ import AggFixationsAdmin from "@/components/admin/AggFixationsAdmin"
 import AdminDashboard from "@/components/admin/AdminDashboard"
 import AdminTeam from "@/components/admin/AdminTeam"
 import AdminOfficeTeam from "@/components/admin/AdminOfficeTeam"
+import AdminOfficeCard from "@/components/admin/AdminOfficeCard"
+import AdminOfficeDeals from "@/components/admin/AdminOfficeDeals"
 import AdminContent from "@/components/admin/AdminContent"
 import AdminMarketing from "@/components/admin/AdminMarketing"
 
@@ -23,7 +25,7 @@ const STATUS_COLORS: Record<string, string> = {
   agency: "text-amber-400 bg-amber-500/10",
 }
 
-type Section = "home" | "users" | "team" | "office" | "offers" | "fixations" | "content" | "marketing"
+type Section = "home" | "users" | "team" | "office_team" | "office_depts" | "office_invites" | "office_card" | "office_deals" | "offers" | "fixations" | "content" | "marketing"
 
 interface AdminUser {
   id: string
@@ -43,29 +45,38 @@ const NAV_GROUPS = [
   {
     label: "Главное",
     items: [
-      { id: "home",    icon: "LayoutDashboard", label: "Дашборд",        color: "text-red-400" },
+      { id: "home",          icon: "LayoutDashboard", label: "Дашборд",        color: "text-red-400" },
     ],
   },
   {
-    label: "Пользователи",
+    label: "Онлайн Офис",
     items: [
-      { id: "users",   icon: "Users",           label: "Все аккаунты",   color: "text-blue-400" },
-      { id: "team",    icon: "UsersRound",       label: "Команда",        color: "text-cyan-400" },
-      { id: "office",  icon: "Building2",        label: "Онлайн Офис",    color: "text-violet-400" },
+      { id: "office_card",    icon: "CreditCard",      label: "Карточка",       color: "text-orange-400" },
+      { id: "office_team",    icon: "UsersRound",      label: "Команда",        color: "text-violet-400" },
+      { id: "office_depts",   icon: "Network",         label: "Отделы",         color: "text-blue-400" },
+      { id: "office_invites", icon: "Mail",            label: "Приглашения",    color: "text-emerald-400" },
+      { id: "office_deals",   icon: "Handshake",       label: "Сделки",         color: "text-amber-400" },
     ],
   },
   {
     label: "База объектов",
     items: [
-      { id: "offers",     icon: "FolderOpen",     label: "Проекты / База", color: "text-emerald-400" },
-      { id: "fixations",  icon: "BookmarkCheck",  label: "Фиксации",       color: "text-violet-400" },
+      { id: "offers",         icon: "FolderOpen",      label: "Проекты / База", color: "text-emerald-400" },
+      { id: "fixations",      icon: "BookmarkCheck",   label: "Фиксации",       color: "text-violet-400" },
     ],
   },
   {
     label: "Платформа",
     items: [
-      { id: "content",    icon: "FileText",       label: "Контент",        color: "text-amber-400" },
-      { id: "marketing",  icon: "Megaphone",      label: "Маркетинг",      color: "text-pink-400" },
+      { id: "content",        icon: "FileText",        label: "Контент",        color: "text-amber-400" },
+      { id: "marketing",      icon: "Megaphone",       label: "Маркетинг",      color: "text-pink-400" },
+    ],
+  },
+  {
+    label: "Пользователи",
+    items: [
+      { id: "users",          icon: "Users",           label: "Все аккаунты",   color: "text-blue-400" },
+      { id: "team",           icon: "Shield",          label: "Роли / Верификация", color: "text-cyan-400" },
     ],
   },
 ]
@@ -220,18 +231,31 @@ export default function AdminPanel() {
           <AdminDashboard users={users} onSection={(s) => setSection(s as Section)} />
         )}
 
-        {/* Команда */}
+        {/* Роли / Верификация */}
         {section === "team" && (
           <AdminTeam users={users} token="k24admin" onRefresh={refreshUsers} />
         )}
 
-        {/* Онлайн Офис */}
-        {section === "office" && (
-          <AdminOfficeTeam
-            token="k24admin"
-            allUsers={users.map(u => ({ id: u.id, name: u.name, email: u.email }))}
-          />
+        {/* Онлайн Офис — Команда */}
+        {section === "office_team" && (
+          <AdminOfficeTeam tab="members" token="k24admin" allUsers={users.map(u => ({ id: u.id, name: u.name, email: u.email }))} />
         )}
+
+        {/* Онлайн Офис — Отделы */}
+        {section === "office_depts" && (
+          <AdminOfficeTeam tab="departments" token="k24admin" allUsers={users.map(u => ({ id: u.id, name: u.name, email: u.email }))} />
+        )}
+
+        {/* Онлайн Офис — Приглашения */}
+        {section === "office_invites" && (
+          <AdminOfficeTeam tab="invites" token="k24admin" allUsers={users.map(u => ({ id: u.id, name: u.name, email: u.email }))} />
+        )}
+
+        {/* Онлайн Офис — Карточка */}
+        {section === "office_card" && <AdminOfficeCard />}
+
+        {/* Онлайн Офис — Сделки */}
+        {section === "office_deals" && <AdminOfficeDeals />}
 
         {/* База объектов */}
         {section === "offers" && <AggOffersAdmin token="k24admin" />}
