@@ -7,9 +7,10 @@ interface Props {
   loading: boolean
   onEdit: (o: Offer) => void
   onAdd: () => void
+  onDelete: (o: Offer) => void
 }
 
-export default function AggOffersTable({ offers, loading, onEdit, onAdd }: Props) {
+export default function AggOffersTable({ offers, loading, onEdit, onAdd, onDelete }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 text-gray-600">Загрузка...</div>
@@ -66,12 +67,20 @@ export default function AggOffersTable({ offers, loading, onEdit, onAdd }: Props
               {o.photos?.length ? `${o.photos.length} фото` : "—"}
             </td>
             <td className="px-5 py-3.5 text-right">
-              <button
-                className="text-gray-600 hover:text-white transition-colors"
-                onClick={e => { e.stopPropagation(); onEdit(o) }}
-              >
-                <Icon name="Pencil" className="h-4 w-4" />
-              </button>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  className="text-gray-600 hover:text-white transition-colors"
+                  onClick={e => { e.stopPropagation(); onEdit(o) }}
+                >
+                  <Icon name="Pencil" className="h-4 w-4" />
+                </button>
+                <button
+                  className="text-gray-700 hover:text-red-500 transition-colors"
+                  onClick={e => { e.stopPropagation(); onDelete(o) }}
+                >
+                  <Icon name="Trash2" className="h-4 w-4" />
+                </button>
+              </div>
             </td>
           </tr>
         ))}

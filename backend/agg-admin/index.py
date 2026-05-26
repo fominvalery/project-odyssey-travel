@@ -15,7 +15,7 @@ def get_conn():
 
 CORS = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-User-Id, X-Auth-Token, X-Session-Id",
 }
 
@@ -138,6 +138,17 @@ def handler(event: dict, context) -> dict:
 
         args.append(offer_id)
         cur.execute(f"UPDATE agg_offers SET {', '.join(fields)} WHERE id = %s", args)
+        conn.commit()
+        conn.close()
+        return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
+
+    if method == "DELETE":
+        params = event.get("queryStringParameters") or {}
+        offer_id = params.get("id")
+        if not offer_id:
+            conn.close()
+            return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "id обязателен"})}
+        cur.execute("DELETE FROM agg_offers WHERE id = %s", (offer_id,))
         conn.commit()
         conn.close()
         return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}

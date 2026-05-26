@@ -164,6 +164,12 @@ export default function AggOffersAdmin({ token }: { token: string }) {
     setForm(f => ({ ...f, videos: f.videos.filter((_, idx) => idx !== i) }))
   }
 
+  const deleteOffer = async (o: Offer) => {
+    if (!confirm(`Удалить "${o.title}"?`)) return
+    await fetch(`${AGG_ADMIN_URL}?id=${o.id}`, { method: "DELETE" })
+    load()
+  }
+
   const filtered = offers.filter(o =>
     !search ||
     o.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -193,6 +199,7 @@ export default function AggOffersAdmin({ token }: { token: string }) {
           loading={loading}
           onEdit={openEdit}
           onAdd={openNew}
+          onDelete={deleteOffer}
         />
       </div>
 
