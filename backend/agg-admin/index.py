@@ -76,28 +76,37 @@ def handler(event: dict, context) -> dict:
             conn.close()
             return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "title и category обязательны"})}
 
+        def num(val):
+            v = body.get(val)
+            if v == "" or v is None:
+                return None
+            try:
+                return float(v)
+            except (ValueError, TypeError):
+                return None
+
         cur.execute(
             """INSERT INTO agg_offers (title, category, subtype, city, region, address, price, price_label, area, yield_percent, description, status, photos, videos, presentation_url, extra_fields, commission, commission_notes)
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
             (
                 title,
                 category,
-                body.get("subtype"),
-                body.get("city"),
-                body.get("region"),
-                body.get("address"),
-                body.get("price"),
-                body.get("price_label"),
-                body.get("area"),
-                body.get("yield_percent"),
-                body.get("description"),
+                body.get("subtype") or None,
+                body.get("city") or None,
+                body.get("region") or None,
+                body.get("address") or None,
+                num("price"),
+                body.get("price_label") or None,
+                num("area"),
+                num("yield_percent"),
+                body.get("description") or None,
                 body.get("status", "active"),
                 json.dumps(body.get("photos", [])),
                 json.dumps(body.get("videos", [])),
-                body.get("presentation_url"),
+                body.get("presentation_url") or None,
                 json.dumps(body.get("extra_fields", {})),
-                body.get("commission"),
-                body.get("commission_notes"),
+                body.get("commission") or None,
+                body.get("commission_notes") or None,
             ),
         )
         new_id = cur.fetchone()[0]

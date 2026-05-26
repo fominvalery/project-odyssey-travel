@@ -10,7 +10,7 @@
       "name": "Создание предложения",
       "method": "POST",
       "path": "/",
-      "body": {"title": "Тест офис 2", "category": "commercial", "city": "Москва"},
+      "body": {"title": "Test office", "category": "commercial", "city": "Moscow"},
       "expectedStatus": 200
     }
   ]
