@@ -224,11 +224,6 @@ export default function QuickFixationModal({ open, onOpenChange, preselectedOffe
                 </select>
               </div>
 
-              {/* Инфо-блок 30 дней */}
-              <div className="p-3 bg-violet-500/5 border border-violet-500/20 rounded-xl text-xs text-violet-300">
-                После фиксации клиент будет зарегистрирован в CRM на <span className="font-semibold">30 дней</span>. Менеджер проекта получит уведомление.
-              </div>
-
               {/* Комментарий */}
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Дополнительная информация</p>
