@@ -71,42 +71,26 @@ export default function ProjectsHeader({
   }
 
   return (
-    <div className="bg-[#0d0d0d] border-b border-[#1f1f1f]">
+    <div className="bg-[#0d0d0d]">
 
-      {/* ── Верхняя строка: логотип / заголовок / кнопка ── */}
-      <div className="px-4 md:px-8 pt-4 pb-5">
-        <div className="max-w-7xl mx-auto flex items-start justify-between gap-4">
-
-          {/* Логотип слева */}
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="flex flex-col items-start gap-1 shrink-0"
-          >
-            <img
-              src={LOGO_URL}
-              alt="Кабинет-24"
-              className="h-14 w-auto object-contain"
-            />
-            <span className="text-[11px] text-gray-600 leading-none pl-0.5">
-              {total > 0 ? `${total} предложений` : "Каталог объектов"}
-            </span>
+      {/* ── Хедер: логотип + кнопка Клиенты ── */}
+      <div className="border-b border-[#1f1f1f] px-4 md:px-8 py-1">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
+            <img src={LOGO_URL} alt="Кабинет-24" className="h-28 w-auto object-contain" />
           </button>
-
-          {/* Заголовок по центру */}
-          <div className="flex-1 text-center pt-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-              База / Проекты
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Платим риелтору за сделки
-            </p>
-          </div>
-
-          {/* Кнопка Клиенты справа */}
-          <div className="shrink-0 pt-1">
-            <ClientsDropdown onOpenFixModal={onOpenFixModal} />
-          </div>
+          <ClientsDropdown onOpenFixModal={onOpenFixModal} />
         </div>
+      </div>
+
+      {/* ── Hero: заголовок по центру ── */}
+      <div className="px-4 md:px-8 pt-10 pb-8 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-3">
+          База / Проекты
+        </h1>
+        <p className="text-lg text-gray-400">
+          Платим риелтору за сделки
+        </p>
       </div>
 
       {/* ── Поиск + фильтры + категории — sticky ── */}
