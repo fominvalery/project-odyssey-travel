@@ -12,6 +12,13 @@
       "path": "/",
       "headers": {"X-User-Id": "test-user"},
       "expectedStatus": 200
+    },
+    {
+      "name": "Admin — все фиксации",
+      "method": "GET",
+      "path": "/",
+      "headers": {"X-Admin-Token": "k24admin"},
+      "expectedStatus": 200
     }
   ]
 }

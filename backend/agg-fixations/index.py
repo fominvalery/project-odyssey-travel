@@ -1,8 +1,8 @@
 """
 Фиксации клиентов агрегатора.
-GET  / — список фиксаций текущего пользователя
+GET  / — список фиксаций (admin: все, user: свои)
 POST / — создать фиксацию (+ клиента)
-PUT  / — обновить статус фиксации
+PUT  / — обновить статус/заметки фиксации (admin может любую)
 """
 import json
 import os
@@ -17,8 +17,10 @@ def get_conn():
 CORS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-User-Id, X-Auth-Token, X-Session-Id",
+    "Access-Control-Allow-Headers": "Content-Type, X-User-Id, X-Auth-Token, X-Session-Id, X-Admin-Token",
 }
+
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "k24admin")
 
 STATUSES = {
     "pending": "Ожидает ответа",
@@ -32,36 +34,61 @@ STATUSES = {
 }
 
 
+def is_admin(headers: dict) -> bool:
+    return headers.get("X-Admin-Token", "") == ADMIN_TOKEN
+
+
 def handler(event: dict, context) -> dict:
+    """Фиксации агрегатора — управление статусами через CRM-воронку."""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": {**CORS, "Access-Control-Max-Age": "86400"}, "body": ""}
 
     method = event.get("httpMethod", "GET")
     headers = event.get("headers") or {}
     user_id = headers.get("X-User-Id", "")
+    admin = is_admin(headers)
 
-    if not user_id:
+    if not user_id and not admin:
         return {"statusCode": 401, "headers": CORS, "body": json.dumps({"error": "unauthorized"})}
 
     conn = get_conn()
     cur = conn.cursor()
 
     if method == "GET":
-        cur.execute(
-            """SELECT f.id, f.offer_id, f.status, f.expires_at, f.notes, f.created_at, f.updated_at,
-                      o.title as offer_title, o.city, o.category,
-                      c.full_name, c.phone, c.email
-               FROM agg_fixations f
-               JOIN agg_offers o ON o.id = f.offer_id
-               JOIN agg_clients c ON c.id = f.client_id
-               WHERE f.user_id = %s
-               ORDER BY f.created_at DESC""",
-            (user_id,),
-        )
+        if admin:
+            cur.execute(
+                """SELECT f.id, f.offer_id, f.user_id, f.agency_id, f.status,
+                          f.expires_at, f.notes, f.created_at, f.updated_at,
+                          o.title as offer_title, o.city, o.category,
+                          c.full_name, c.phone, c.email,
+                          u.name as broker_name, u.email as broker_email
+                   FROM agg_fixations f
+                   JOIN agg_offers o ON o.id = f.offer_id
+                   JOIN agg_clients c ON c.id = f.client_id
+                   LEFT JOIN users u ON u.id::text = f.user_id
+                   ORDER BY f.created_at DESC"""
+            )
+        else:
+            cur.execute(
+                """SELECT f.id, f.offer_id, f.user_id, f.agency_id, f.status,
+                          f.expires_at, f.notes, f.created_at, f.updated_at,
+                          o.title as offer_title, o.city, o.category,
+                          c.full_name, c.phone, c.email,
+                          NULL as broker_name, NULL as broker_email
+                   FROM agg_fixations f
+                   JOIN agg_offers o ON o.id = f.offer_id
+                   JOIN agg_clients c ON c.id = f.client_id
+                   WHERE f.user_id = %s
+                   ORDER BY f.created_at DESC""",
+                (user_id,),
+            )
         rows = cur.fetchall()
         conn.close()
-        cols = ["id", "offer_id", "status", "expires_at", "notes", "created_at", "updated_at",
-                "offer_title", "city", "category", "client_name", "client_phone", "client_email"]
+        cols = ["id", "offer_id", "user_id", "agency_id", "status",
+                "expires_at", "notes", "created_at", "updated_at",
+                "offer_title", "city", "category",
+                "client_name", "client_phone", "client_email",
+                "broker_name", "broker_email"]
         fixations = []
         for row in rows:
             f = dict(zip(cols, row))
@@ -113,16 +140,28 @@ def handler(event: dict, context) -> dict:
             conn.close()
             return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "invalid params"})}
 
-        if notes is not None:
-            cur.execute(
-                "UPDATE agg_fixations SET status = %s, notes = %s, updated_at = NOW() WHERE id = %s AND user_id = %s",
-                (new_status, notes, fix_id, user_id),
-            )
+        if admin:
+            if notes is not None:
+                cur.execute(
+                    "UPDATE agg_fixations SET status = %s, notes = %s, updated_at = NOW() WHERE id = %s",
+                    (new_status, notes, fix_id),
+                )
+            else:
+                cur.execute(
+                    "UPDATE agg_fixations SET status = %s, updated_at = NOW() WHERE id = %s",
+                    (new_status, fix_id),
+                )
         else:
-            cur.execute(
-                "UPDATE agg_fixations SET status = %s, updated_at = NOW() WHERE id = %s AND user_id = %s",
-                (new_status, fix_id, user_id),
-            )
+            if notes is not None:
+                cur.execute(
+                    "UPDATE agg_fixations SET status = %s, notes = %s, updated_at = NOW() WHERE id = %s AND user_id = %s",
+                    (new_status, notes, fix_id, user_id),
+                )
+            else:
+                cur.execute(
+                    "UPDATE agg_fixations SET status = %s, updated_at = NOW() WHERE id = %s AND user_id = %s",
+                    (new_status, fix_id, user_id),
+                )
         conn.commit()
         conn.close()
         return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
