@@ -20,16 +20,6 @@ interface Props {
   preselectedOffer?: Offer | null
 }
 
-const STATUS_OPTIONS = [
-  "Заявка на фиксацию",
-  "Зафиксирован",
-  "Показ",
-  "Бронь",
-  "Переговоры",
-  "Сделка",
-  "Подготовка документов",
-  "Оплата",
-]
 
 export default function QuickFixationModal({ open, onOpenChange, preselectedOffer }: Props) {
   const { user } = useAuthContext()
@@ -48,13 +38,12 @@ export default function QuickFixationModal({ open, onOpenChange, preselectedOffe
   const [clientPhone, setClientPhone] = useState("")
   const [clientEmail, setClientEmail] = useState("")
   const [comment, setComment] = useState("")
-  const [status, setStatus] = useState(STATUS_OPTIONS[0])
+  const status = "Заявка на фиксацию"
 
   useEffect(() => {
     if (open) {
       setStep("form")
       setClientName(""); setClientPhone(""); setClientEmail(""); setComment("")
-      setStatus(STATUS_OPTIONS[0])
       setSelectedOffer(preselectedOffer || null)
       setOfferSearch(""); setOfferResults([])
     }
@@ -214,15 +203,9 @@ export default function QuickFixationModal({ open, onOpenChange, preselectedOffe
                   Стадия и время
                 </label>
                 <p className="text-xs text-gray-500 mb-1.5">Статус фиксации</p>
-                <select
-                  value={status}
-                  onChange={e => setStatus(e.target.value)}
-                  className="w-full bg-[#0d0d0d] border border-[#2a2a2a] text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-violet-500 appearance-none cursor-pointer"
-                >
-                  {STATUS_OPTIONS.map(s => (
-                    <option key={s} value={s} className="bg-[#111]">{s}</option>
-                  ))}
-                </select>
+                <div className="w-full bg-[#0d0d0d] border border-[#2a2a2a] text-white text-sm rounded-xl px-3 py-2.5">
+                  Заявка на фиксацию
+                </div>
               </div>
 
               {/* Комментарий */}
