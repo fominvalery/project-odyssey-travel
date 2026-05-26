@@ -90,4 +90,8 @@ export const FIELD_LABELS: Record<string, string> = {
   season: "Сезонность",
   usage_format: "Формат использования",
   management_company: "Управляющая компания",
+  power: "Электромощность (кВт)",
+  elevator: "Лифт",
+  reception: "Ресепшн",
+  workplaces: "Рабочих мест",
 }
