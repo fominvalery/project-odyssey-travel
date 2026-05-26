@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
 import func2url from "../../../backend/func2url.json"
@@ -17,17 +16,6 @@ const CAT_LABEL: Record<string, string> = {
   residential: "Жилая",
   land: "Земля",
   parking: "Паркинги",
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Ожидает ответа",
-  fixed: "Зафиксирован",
-  invalid: "Неактуален",
-  showing: "Показ",
-  negotiation: "Переговоры",
-  deal: "Сделка",
-  docs: "Подготовка документов",
-  payment: "Оплата",
 }
 
 function formatPrice(p: number | null): string {
@@ -60,6 +48,9 @@ interface OfferDetail {
 
 const DEFAULT_IMG = "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/755cddaf-8b60-449f-82bf-27fe2c9dab48.jpg"
 
+// Ключи регламента и менеджера — не показываем в блоке «Характеристики»
+const REGULATION_KEYS = new Set(["commission", "commission_notes", "ad_rules", "work_rules", "manager_name", "manager_phone", "manager_email", "subtype", "deal_type"])
+
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -68,6 +59,8 @@ export default function ProjectDetailPage() {
   const [offer, setOffer] = useState<OfferDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [photoIdx, setPhotoIdx] = useState(0)
+
+  // Фиксация клиента
   const [fixDialog, setFixDialog] = useState(false)
   const [fixLoading, setFixLoading] = useState(false)
   const [fixSuccess, setFixSuccess] = useState(false)
@@ -75,6 +68,9 @@ export default function ProjectDetailPage() {
   const [clientPhone, setClientPhone] = useState("")
   const [clientEmail, setClientEmail] = useState("")
   const [fixNotes, setFixNotes] = useState("")
+
+  // Связь с менеджером
+  const [contactDialog, setContactDialog] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -112,6 +108,15 @@ export default function ProjectDetailPage() {
     }
   }
 
+  const resetFixDialog = () => {
+    setFixDialog(false)
+    setFixSuccess(false)
+    setClientName("")
+    setClientPhone("")
+    setClientEmail("")
+    setFixNotes("")
+  }
+
   if (loading) {
     return (
       <div className="flex-1 bg-[#0d0d0d] flex items-center justify-center min-h-screen">
@@ -131,6 +136,23 @@ export default function ProjectDetailPage() {
   }
 
   const photos = offer.photos && offer.photos.length > 0 ? offer.photos : [DEFAULT_IMG]
+
+  // Данные менеджера из extra_fields
+  const ef = offer.extra_fields || {}
+  const managerName = ef.manager_name || ""
+  const managerPhone = ef.manager_phone || ""
+  const managerEmail = ef.manager_email || ""
+  const hasManager = Boolean(managerName || managerPhone || managerEmail)
+
+  // Регламент
+  const commission = ef.commission || offer.commission || ""
+  const commissionNotes = ef.commission_notes || offer.commission_notes || ""
+  const adRules = ef.ad_rules || ""
+  const workRules = ef.work_rules || ""
+  const hasRegulations = Boolean(commission || adRules || workRules)
+
+  // Характеристики — только не-регламентные поля
+  const charFields = Object.entries(ef).filter(([k]) => !REGULATION_KEYS.has(k))
 
   return (
     <div className="flex-1 overflow-auto bg-[#0d0d0d] min-h-screen">
@@ -211,24 +233,19 @@ export default function ProjectDetailPage() {
                     <div className="text-sm font-medium text-emerald-400">{offer.yield_percent}%</div>
                   </div>
                 )}
-                {offer.commission && (
+                {offer.commission && !ef.commission && (
                   <div>
                     <div className="text-xs text-gray-500 mb-0.5">Комиссия</div>
                     <div className="text-sm font-medium text-white">{offer.commission}</div>
                   </div>
                 )}
-                {offer.extra_fields && Object.entries(offer.extra_fields).map(([k, v]) => (
+                {charFields.map(([k, v]) => (
                   <div key={k}>
                     <div className="text-xs text-gray-500 mb-0.5 capitalize">{k}</div>
                     <div className="text-sm font-medium text-white">{v}</div>
                   </div>
                 ))}
               </div>
-              {offer.commission_notes && (
-                <div className="mt-4 p-3 bg-emerald-900/20 border border-emerald-700/30 rounded-xl text-xs text-emerald-300">
-                  {offer.commission_notes}
-                </div>
-              )}
             </div>
 
             {/* Описание */}
@@ -236,6 +253,46 @@ export default function ProjectDetailPage() {
               <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
                 <h2 className="text-sm font-semibold text-white mb-3">Описание</h2>
                 <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-line">{offer.description}</p>
+              </div>
+            )}
+
+            {/* Регламент работы */}
+            {hasRegulations && (
+              <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5 space-y-4">
+                <h2 className="text-sm font-semibold text-white">Регламент для брокеров</h2>
+
+                {commission && (
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon name="Percent" className="h-4 w-4 text-amber-400" />
+                      <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider">Комиссия</span>
+                    </div>
+                    <p className="text-sm text-white font-medium">{commission}</p>
+                    {commissionNotes && (
+                      <p className="text-xs text-gray-400 mt-1">{commissionNotes}</p>
+                    )}
+                  </div>
+                )}
+
+                {workRules && (
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon name="ClipboardList" className="h-4 w-4 text-emerald-400" />
+                      <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wider">Регламент работы</span>
+                    </div>
+                    <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">{workRules}</p>
+                  </div>
+                )}
+
+                {adRules && (
+                  <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon name="Megaphone" className="h-4 w-4 text-blue-400" />
+                      <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider">Регламент рекламы</span>
+                    </div>
+                    <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">{adRules}</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -286,13 +343,26 @@ export default function ProjectDetailPage() {
                   Скачать презентацию
                 </Button>
               )}
+
+              {/* Фиксация клиента */}
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold"
                 onClick={() => setFixDialog(true)}
               >
                 <Icon name="BookmarkPlus" className="h-4 w-4 mr-2" />
                 Зафиксировать клиента
               </Button>
+
+              {/* Связаться с менеджером */}
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                onClick={() => setContactDialog(true)}
+                disabled={!hasManager}
+              >
+                <Icon name="MessageCircle" className="h-4 w-4 mr-2" />
+                Связаться с менеджером
+              </Button>
+
               <button
                 onClick={() => navigate("/projects/fixations")}
                 className="w-full text-center text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
@@ -300,12 +370,45 @@ export default function ProjectDetailPage() {
                 Мои фиксации →
               </button>
             </div>
+
+            {/* Карточка менеджера (если данные есть) */}
+            {hasManager && (
+              <div className="bg-[#111] border border-violet-500/20 rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Icon name="UserCheck" className="h-4 w-4 text-violet-400" />
+                  <span className="text-xs font-semibold text-violet-300 uppercase tracking-wider">Менеджер проекта</span>
+                </div>
+                {managerName && (
+                  <p className="text-sm font-semibold text-white mb-2">{managerName}</p>
+                )}
+                <div className="space-y-1.5">
+                  {managerPhone && (
+                    <a
+                      href={`tel:${managerPhone}`}
+                      className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      <Icon name="Phone" className="h-3.5 w-3.5" />
+                      {managerPhone}
+                    </a>
+                  )}
+                  {managerEmail && (
+                    <a
+                      href={`mailto:${managerEmail}`}
+                      className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-300 transition-colors"
+                    >
+                      <Icon name="Mail" className="h-3.5 w-3.5" />
+                      {managerEmail}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Диалог фиксации */}
-      <Dialog open={fixDialog} onOpenChange={v => { setFixDialog(v); if (!v) { setFixSuccess(false); setClientName(""); setClientPhone(""); setClientEmail(""); setFixNotes("") } }}>
+      {/* Диалог фиксации клиента */}
+      <Dialog open={fixDialog} onOpenChange={v => { if (!v) resetFixDialog(); else setFixDialog(true) }}>
         <DialogContent className="bg-[#111] border-[#2a2a2a] text-white max-w-md">
           <DialogHeader>
             <DialogTitle>Зафиксировать клиента</DialogTitle>
@@ -314,9 +417,9 @@ export default function ProjectDetailPage() {
             <div className="py-8 text-center">
               <Icon name="CheckCircle2" className="h-12 w-12 text-emerald-400 mx-auto mb-3" />
               <p className="text-white font-semibold">Фиксация отправлена!</p>
-              <p className="text-gray-400 text-sm mt-1">Ожидайте подтверждения от менеджера платформы</p>
+              <p className="text-gray-400 text-sm mt-1">Заявка передана в CRM. Ожидайте подтверждения от менеджера.</p>
               <Button
-                className="mt-4 w-full bg-blue-600 hover:bg-blue-700"
+                className="mt-4 w-full bg-violet-600 hover:bg-violet-700"
                 onClick={() => navigate("/projects/fixations")}
               >
                 Мои фиксации
@@ -327,6 +430,9 @@ export default function ProjectDetailPage() {
               <div className="p-3 bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl text-xs text-gray-400">
                 <span className="font-medium text-white">{offer.title}</span>
                 {offer.city && ` · ${offer.city}`}
+              </div>
+              <div className="p-3 bg-violet-500/5 border border-violet-500/20 rounded-xl text-xs text-violet-300">
+                После фиксации клиент будет зарегистрирован в CRM на 30 дней. Менеджер проекта получит уведомление.
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">ФИО клиента *</label>
@@ -358,7 +464,7 @@ export default function ProjectDetailPage() {
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Комментарий</label>
                 <Textarea
-                  placeholder="Источник клиента, пожелания..."
+                  placeholder="Источник клиента, пожелания, бюджет..."
                   value={fixNotes}
                   onChange={e => setFixNotes(e.target.value)}
                   className="bg-[#0d0d0d] border-[#2a2a2a] text-white placeholder:text-gray-600 resize-none"
@@ -366,14 +472,63 @@ export default function ProjectDetailPage() {
                 />
               </div>
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold"
                 disabled={!clientName.trim() || fixLoading}
                 onClick={handleFixation}
               >
-                {fixLoading ? "Отправка..." : "Зафиксировать"}
+                {fixLoading ? (
+                  <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Отправка...</>
+                ) : (
+                  <><Icon name="BookmarkPlus" className="h-4 w-4 mr-2" />Зафиксировать</>
+                )}
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог — Связаться с менеджером */}
+      <Dialog open={contactDialog} onOpenChange={setContactDialog}>
+        <DialogContent className="bg-[#111] border-[#2a2a2a] text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Менеджер проекта</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
+                <Icon name="UserCheck" className="h-6 w-6 text-violet-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-white">{managerName || "Менеджер"}</p>
+                <p className="text-xs text-gray-500">{offer.title}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {managerPhone && (
+                <a
+                  href={`tel:${managerPhone}`}
+                  className="flex items-center gap-3 w-full p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm transition-colors"
+                >
+                  <Icon name="Phone" className="h-4 w-4 shrink-0" />
+                  {managerPhone}
+                </a>
+              )}
+              {managerEmail && (
+                <a
+                  href={`mailto:${managerEmail}?subject=Запрос по объекту: ${encodeURIComponent(offer.title)}`}
+                  className="flex items-center gap-3 w-full p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] hover:border-blue-500/40 text-gray-300 hover:text-white font-medium text-sm transition-colors"
+                >
+                  <Icon name="Mail" className="h-4 w-4 shrink-0" />
+                  {managerEmail}
+                </a>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-600 text-center">
+              Свяжитесь с менеджером для получения дополнительной информации, организации показа или согласования условий сотрудничества.
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
