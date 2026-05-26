@@ -49,6 +49,14 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: "База объектов",
+    items: [
+      { id: "offers",         icon: "FolderOpen",      label: "Объекты База",   color: "text-emerald-400" },
+      { id: "projects_link",  icon: "Layers",          label: "База / Проекты", color: "text-cyan-400" },
+      { id: "fixations",      icon: "BookmarkCheck",   label: "CRM Фиксации",   color: "text-violet-400" },
+    ],
+  },
+  {
     label: "Онлайн Офис",
     items: [
       { id: "office_card",    icon: "CreditCard",      label: "Карточка",       color: "text-orange-400" },
@@ -56,13 +64,6 @@ const NAV_GROUPS = [
       { id: "office_depts",   icon: "Network",         label: "Отделы",         color: "text-blue-400" },
       { id: "office_invites", icon: "Mail",            label: "Приглашения",    color: "text-emerald-400" },
       { id: "office_deals",   icon: "Handshake",       label: "Сделки",         color: "text-amber-400" },
-    ],
-  },
-  {
-    label: "База объектов",
-    items: [
-      { id: "offers",         icon: "FolderOpen",      label: "Проекты / База", color: "text-emerald-400" },
-      { id: "fixations",      icon: "BookmarkCheck",   label: "CRM Фиксации",   color: "text-violet-400" },
     ],
   },
   {
@@ -178,7 +179,7 @@ export default function AdminPanel() {
                 {group.items.map(item => (
                   <button
                     key={item.id}
-                    onClick={() => setSection(item.id as Section)}
+                    onClick={() => item.id === "projects_link" ? navigate("/projects") : setSection(item.id as Section)}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left w-full ${
                       section === item.id
                         ? "bg-white/5 text-white"
