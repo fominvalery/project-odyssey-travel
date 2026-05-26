@@ -89,7 +89,7 @@ export default function ProjectsHeader({
           База / Проекты
         </h1>
         <p className="text-lg text-gray-400">
-          Платим риелтору за сделки
+          Платим брокеру за сделки
         </p>
       </div>
 
