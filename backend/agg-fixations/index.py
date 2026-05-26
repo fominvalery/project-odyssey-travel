@@ -1,8 +1,9 @@
 """
 Фиксации клиентов агрегатора.
-GET  / — список фиксаций (admin: все, user: свои)
-POST / — создать фиксацию (+ клиента)
-PUT  / — обновить статус/заметки фиксации (admin может любую)
+GET  /         — список фиксаций (admin: все + отделы + сотрудники, user: свои)
+GET  /?meta=1  — только отделы и сотрудники (для фильтров)
+POST /         — создать фиксацию (+ клиента)
+PUT  /         — обновить статус/заметки фиксации (admin может любую)
 """
 import json
 import os
@@ -39,7 +40,7 @@ def is_admin(headers: dict) -> bool:
 
 
 def handler(event: dict, context) -> dict:
-    """Фиксации агрегатора — управление статусами через CRM-воронку."""
+    """Фиксации агрегатора — CRM-воронка с фильтрами по отделам и сотрудникам."""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": {**CORS, "Access-Control-Max-Age": "86400"}, "body": ""}
 
@@ -47,6 +48,7 @@ def handler(event: dict, context) -> dict:
     headers = event.get("headers") or {}
     user_id = headers.get("X-User-Id", "")
     admin = is_admin(headers)
+    qs = event.get("queryStringParameters") or {}
 
     if not user_id and not admin:
         return {"statusCode": 401, "headers": CORS, "body": json.dumps({"error": "unauthorized"})}
@@ -55,18 +57,81 @@ def handler(event: dict, context) -> dict:
     cur = conn.cursor()
 
     if method == "GET":
+        # Получить метаданные (отделы + сотрудники) для фильтров
+        departments = []
+        brokers = []
         if admin:
             cur.execute(
-                """SELECT f.id, f.offer_id, f.user_id, f.agency_id, f.status,
+                """SELECT d.id, d.name, d.head_id,
+                          u.name as head_name,
+                          COUNT(m.id) as members_count
+                   FROM departments d
+                   LEFT JOIN users u ON u.id = d.head_id
+                   LEFT JOIN org_memberships m ON m.department_id = d.id AND m.status = 'active'
+                   GROUP BY d.id, d.name, d.head_id, u.name
+                   ORDER BY d.name"""
+            )
+            for row in cur.fetchall():
+                departments.append({
+                    "id": str(row[0]),
+                    "name": row[1],
+                    "head_id": str(row[2]) if row[2] else None,
+                    "head_name": row[3],
+                    "members_count": row[4],
+                })
+
+            cur.execute(
+                """SELECT DISTINCT u.id, u.name, m.department_id, d.name as dept_name
+                   FROM agg_fixations f
+                   JOIN users u ON u.id::text = f.user_id
+                   LEFT JOIN org_memberships m ON m.user_id = u.id AND m.status = 'active'
+                   LEFT JOIN departments d ON d.id = m.department_id
+                   ORDER BY u.name"""
+            )
+            for row in cur.fetchall():
+                brokers.append({
+                    "id": str(row[0]),
+                    "name": row[1],
+                    "department_id": str(row[2]) if row[2] else None,
+                    "department_name": row[3],
+                })
+
+        if qs.get("meta") == "1":
+            conn.close()
+            return {"statusCode": 200, "headers": CORS, "body": json.dumps({"departments": departments, "brokers": brokers}, ensure_ascii=False)}
+
+        # Получить фиксации
+        dept_filter = qs.get("department_id", "")
+        broker_filter = qs.get("broker_id", "")
+
+        if admin:
+            where_clauses = []
+            params = []
+            if dept_filter:
+                where_clauses.append("m.department_id = %s")
+                params.append(dept_filter)
+            if broker_filter:
+                where_clauses.append("f.user_id = %s")
+                params.append(broker_filter)
+
+            where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+
+            cur.execute(
+                f"""SELECT f.id, f.offer_id, f.user_id, f.agency_id, f.status,
                           f.expires_at, f.notes, f.created_at, f.updated_at,
                           o.title as offer_title, o.city, o.category,
                           c.full_name, c.phone, c.email,
-                          u.name as broker_name, u.email as broker_email
+                          u.name as broker_name, u.email as broker_email,
+                          m.department_id, d.name as dept_name
                    FROM agg_fixations f
                    JOIN agg_offers o ON o.id = f.offer_id
                    JOIN agg_clients c ON c.id = f.client_id
                    LEFT JOIN users u ON u.id::text = f.user_id
-                   ORDER BY f.created_at DESC"""
+                   LEFT JOIN org_memberships m ON m.user_id = u.id AND m.status = 'active'
+                   LEFT JOIN departments d ON d.id = m.department_id
+                   {where_sql}
+                   ORDER BY f.created_at DESC""",
+                params if params else None,
             )
         else:
             cur.execute(
@@ -74,7 +139,8 @@ def handler(event: dict, context) -> dict:
                           f.expires_at, f.notes, f.created_at, f.updated_at,
                           o.title as offer_title, o.city, o.category,
                           c.full_name, c.phone, c.email,
-                          NULL as broker_name, NULL as broker_email
+                          NULL as broker_name, NULL as broker_email,
+                          NULL as department_id, NULL as dept_name
                    FROM agg_fixations f
                    JOIN agg_offers o ON o.id = f.offer_id
                    JOIN agg_clients c ON c.id = f.client_id
@@ -88,18 +154,22 @@ def handler(event: dict, context) -> dict:
                 "expires_at", "notes", "created_at", "updated_at",
                 "offer_title", "city", "category",
                 "client_name", "client_phone", "client_email",
-                "broker_name", "broker_email"]
+                "broker_name", "broker_email", "department_id", "dept_name"]
         fixations = []
         for row in rows:
             f = dict(zip(cols, row))
             f["id"] = str(f["id"])
             f["offer_id"] = str(f["offer_id"])
+            f["department_id"] = str(f["department_id"]) if f["department_id"] else None
             f["status_label"] = STATUSES.get(f["status"], f["status"])
             f["expires_at"] = str(f["expires_at"]) if f["expires_at"] else None
             f["created_at"] = str(f["created_at"])
             f["updated_at"] = str(f["updated_at"])
             fixations.append(f)
-        return {"statusCode": 200, "headers": CORS, "body": json.dumps({"fixations": fixations}, ensure_ascii=False)}
+        return {"statusCode": 200, "headers": CORS, "body": json.dumps(
+            {"fixations": fixations, "departments": departments, "brokers": brokers},
+            ensure_ascii=False
+        )}
 
     if method == "POST":
         body = json.loads(event.get("body") or "{}")
