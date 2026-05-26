@@ -11,6 +11,7 @@ const STATUSES = [
   { id: "fixed",       label: "Зафиксирован",          color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/20", dot: "bg-emerald-400" },
   { id: "invalid",     label: "Неактуален",            color: "text-red-300",     bg: "bg-red-500/10",     border: "border-red-500/20",     dot: "bg-red-400" },
   { id: "showing",     label: "Показ",                 color: "text-blue-300",    bg: "bg-blue-500/10",    border: "border-blue-500/20",    dot: "bg-blue-400" },
+  { id: "booking",     label: "Бронь",                 color: "text-cyan-300",    bg: "bg-cyan-500/10",    border: "border-cyan-500/20",    dot: "bg-cyan-400" },
   { id: "negotiation", label: "Переговоры",            color: "text-violet-300",  bg: "bg-violet-500/10",  border: "border-violet-500/20",  dot: "bg-violet-400" },
   { id: "deal",        label: "Сделка",                color: "text-emerald-200", bg: "bg-emerald-600/10", border: "border-emerald-600/20", dot: "bg-emerald-300" },
   { id: "docs",        label: "Подготовка документов", color: "text-orange-300",  bg: "bg-orange-500/10",  border: "border-orange-500/20",  dot: "bg-orange-400" },

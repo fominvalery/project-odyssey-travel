@@ -62,7 +62,7 @@ const NAV_GROUPS = [
     label: "База объектов",
     items: [
       { id: "offers",         icon: "FolderOpen",      label: "Проекты / База", color: "text-emerald-400" },
-      { id: "fixations",      icon: "BookmarkCheck",   label: "Фиксации",       color: "text-violet-400" },
+      { id: "fixations",      icon: "BookmarkCheck",   label: "CRM Фиксации",   color: "text-violet-400" },
     ],
   },
   {
