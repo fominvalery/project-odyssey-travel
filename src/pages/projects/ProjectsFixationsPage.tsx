@@ -222,94 +222,71 @@ export default function ProjectsFixationsPage() {
               <div key={i} className="h-12 bg-[#111] border border-[#1f1f1f] rounded-xl animate-pulse" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <Icon name="BookmarkX" className="h-12 w-12 text-gray-700 mb-4" />
-            <p className="text-gray-500 text-lg font-medium">
-              {activeTab === "all" ? "Клиентов пока нет" : `Нет клиентов в статусе «${tab.label}»`}
-            </p>
-            <Button onClick={() => navigate("/projects")} className="mt-6 bg-violet-600 hover:bg-violet-700 text-white">
-              Открыть каталог
-            </Button>
-          </div>
         ) : (
           <div className="bg-[#0d0d0d] rounded-2xl border border-[#1f1f1f] overflow-hidden">
-            {/* Заголовок таблицы */}
-            <div className="hidden md:grid grid-cols-[160px_1fr_1fr_1fr_1fr_180px_110px_130px] gap-3 px-4 py-2.5 border-b border-[#1f1f1f] bg-[#111]">
-              {["Дата создания", "Агент", "Клиент", "Объект", "Город", "Статус фиксации", "Актуален до", "Вид"].map(col => (
-                <span key={col} className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{col}</span>
-              ))}
-            </div>
-
-            {/* Строки */}
-            <div className="divide-y divide-[#1a1a1a]">
-              {filtered.map(fix => {
-                const expires = formatExpires(fix.expires_at)
-                return (
-                  <div
-                    key={fix.id}
-                    className="grid grid-cols-1 md:grid-cols-[160px_1fr_1fr_1fr_1fr_180px_110px_130px] gap-3 px-4 py-3 hover:bg-[#111] transition-colors cursor-pointer"
-                    onClick={() => navigate(`/projects/${fix.offer_id}`)}
-                  >
-                    {/* Дата создания */}
-                    <div className="flex items-center">
-                      <span className="text-xs text-gray-400">{formatDate(fix.created_at)}</span>
-                    </div>
-
-                    {/* Агент */}
-                    <div className="flex items-center min-w-0">
-                      <span className="text-xs text-gray-300 truncate">—</span>
-                    </div>
-
-                    {/* Клиент */}
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-medium text-white truncate">{fix.client_name}</span>
-                      {fix.client_phone && (
-                        <span className="text-[10px] text-gray-500 truncate">{fix.client_phone}</span>
-                      )}
-                    </div>
-
-                    {/* Объект */}
-                    <div className="flex items-center min-w-0">
-                      <span className="text-xs text-gray-300 truncate">{fix.offer_title}</span>
-                    </div>
-
-                    {/* Город */}
-                    <div className="flex items-center min-w-0">
-                      <span className="text-xs text-gray-500 truncate">{fix.city || "—"}</span>
-                    </div>
-
-                    {/* Статус */}
-                    <div className="flex items-center">
-                      <span className={`text-xs font-medium ${STATUS_COLOR[fix.status] || "text-gray-400"}`}>
-                        {STATUS_LABEL[fix.status] || fix.status}
-                      </span>
-                    </div>
-
-                    {/* Актуален до */}
-                    <div className="flex items-center">
-                      {expires.label ? (
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${
-                          expires.expired
-                            ? "bg-gray-500/20 text-gray-400"
-                            : "bg-red-500 text-white"
-                        }`}>
-                          {expires.label}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-600">—</span>
-                      )}
-                    </div>
-
-                    {/* Вид недвижимости */}
-                    <div className="flex items-center">
-                      <span className="text-xs text-gray-400">
-                        {CAT_LABEL[fix.category || ""] || fix.category || "—"}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
+            {/* Заголовок таблицы — всегда виден */}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <thead>
+                  <tr className="border-b border-[#1f1f1f] bg-[#111]">
+                    {["Дата создания", "Агент", "Клиент", "Объект", "Город", "Статус фиксации", "Актуален до", "Вид"].map(col => (
+                      <th key={col} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1a1a1a]">
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-20 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <Icon name="BookmarkX" className="h-10 w-10 text-gray-700" />
+                          <p className="text-gray-500 text-sm">
+                            {activeTab === "all" ? "Клиентов пока нет" : `Нет клиентов в статусе «${tab.label}»`}
+                          </p>
+                          <Button onClick={() => navigate("/projects")} size="sm" className="bg-violet-600 hover:bg-violet-700 text-white mt-2">
+                            Открыть каталог
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : filtered.map(fix => {
+                    const expires = formatExpires(fix.expires_at)
+                    return (
+                      <tr
+                        key={fix.id}
+                        className="hover:bg-[#111] transition-colors cursor-pointer"
+                        onClick={() => navigate(`/projects/${fix.offer_id}`)}
+                      >
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">{formatDate(fix.created_at)}</td>
+                        <td className="px-4 py-3 text-xs text-gray-300">—</td>
+                        <td className="px-4 py-3 max-w-[140px]">
+                          <p className="text-xs font-medium text-white truncate">{fix.client_name}</p>
+                          {fix.client_phone && <p className="text-[10px] text-gray-500 truncate">{fix.client_phone}</p>}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-300 max-w-[160px] truncate">{fix.offer_title}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{fix.city || "—"}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`text-xs font-medium ${STATUS_COLOR[fix.status] || "text-gray-400"}`}>
+                            {STATUS_LABEL[fix.status] || fix.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {expires.label ? (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${expires.expired ? "bg-gray-500/20 text-gray-400" : "bg-red-500 text-white"}`}>
+                              {expires.label}
+                            </span>
+                          ) : <span className="text-xs text-gray-600">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {CAT_LABEL[fix.category || ""] || fix.category || "—"}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
