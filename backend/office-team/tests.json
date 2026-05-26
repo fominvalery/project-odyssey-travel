@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Без токена — 401",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401
+    },
+    {
+      "name": "Получить структуру офиса — 200",
+      "method": "GET",
+      "path": "/",
+      "headers": { "X-Admin-Token": "k24admin" },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Неизвестный action — 400",
+      "method": "POST",
+      "path": "/",
+      "headers": { "X-Admin-Token": "k24admin", "Content-Type": "application/json" },
+      "body": { "action": "unknown_action" },
+      "expectedStatus": 400
+    }
+  ]
+}

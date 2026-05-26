@@ -11,6 +11,7 @@ import AggOffersAdmin from "@/components/admin/AggOffersAdmin"
 import AggFixationsAdmin from "@/components/admin/AggFixationsAdmin"
 import AdminDashboard from "@/components/admin/AdminDashboard"
 import AdminTeam from "@/components/admin/AdminTeam"
+import AdminOfficeTeam from "@/components/admin/AdminOfficeTeam"
 import AdminContent from "@/components/admin/AdminContent"
 import AdminMarketing from "@/components/admin/AdminMarketing"
 
@@ -22,7 +23,7 @@ const STATUS_COLORS: Record<string, string> = {
   agency: "text-amber-400 bg-amber-500/10",
 }
 
-type Section = "home" | "users" | "team" | "offers" | "fixations" | "content" | "marketing"
+type Section = "home" | "users" | "team" | "office" | "offers" | "fixations" | "content" | "marketing"
 
 interface AdminUser {
   id: string
@@ -50,6 +51,7 @@ const NAV_GROUPS = [
     items: [
       { id: "users",   icon: "Users",           label: "Все аккаунты",   color: "text-blue-400" },
       { id: "team",    icon: "UsersRound",       label: "Команда",        color: "text-cyan-400" },
+      { id: "office",  icon: "Building2",        label: "Онлайн Офис",    color: "text-violet-400" },
     ],
   },
   {
@@ -221,6 +223,14 @@ export default function AdminPanel() {
         {/* Команда */}
         {section === "team" && (
           <AdminTeam users={users} token="k24admin" onRefresh={refreshUsers} />
+        )}
+
+        {/* Онлайн Офис */}
+        {section === "office" && (
+          <AdminOfficeTeam
+            token="k24admin"
+            allUsers={users.map(u => ({ id: u.id, name: u.name, email: u.email }))}
+          />
         )}
 
         {/* База объектов */}

@@ -64,10 +64,10 @@ def handler(event: dict, context) -> dict:
             cur.execute(
                 """SELECT d.id, d.name, d.head_id,
                           u.name as head_name,
-                          COUNT(m.id) as members_count
-                   FROM departments d
+                          COUNT(m.id) FILTER (WHERE m.status = 'active') as members_count
+                   FROM office_departments d
                    LEFT JOIN users u ON u.id = d.head_id
-                   LEFT JOIN org_memberships m ON m.department_id = d.id AND m.status = 'active'
+                   LEFT JOIN office_members m ON m.department_id = d.id
                    GROUP BY d.id, d.name, d.head_id, u.name
                    ORDER BY d.name"""
             )
@@ -81,11 +81,11 @@ def handler(event: dict, context) -> dict:
                 })
 
             cur.execute(
-                """SELECT DISTINCT u.id, u.name, m.department_id, d.name as dept_name
+                """SELECT DISTINCT u.id, u.name, om.department_id, d.name as dept_name
                    FROM agg_fixations f
                    JOIN users u ON u.id::text = f.user_id
-                   LEFT JOIN org_memberships m ON m.user_id = u.id AND m.status = 'active'
-                   LEFT JOIN departments d ON d.id = m.department_id
+                   LEFT JOIN office_members om ON om.user_id = u.id AND om.status = 'active'
+                   LEFT JOIN office_departments d ON d.id = om.department_id
                    ORDER BY u.name"""
             )
             for row in cur.fetchall():
@@ -108,7 +108,7 @@ def handler(event: dict, context) -> dict:
             where_clauses = []
             params = []
             if dept_filter:
-                where_clauses.append("m.department_id = %s")
+                where_clauses.append("om.department_id = %s")
                 params.append(dept_filter)
             if broker_filter:
                 where_clauses.append("f.user_id = %s")
@@ -122,13 +122,13 @@ def handler(event: dict, context) -> dict:
                           o.title as offer_title, o.city, o.category,
                           c.full_name, c.phone, c.email,
                           u.name as broker_name, u.email as broker_email,
-                          m.department_id, d.name as dept_name
+                          om.department_id, d.name as dept_name
                    FROM agg_fixations f
                    JOIN agg_offers o ON o.id = f.offer_id
                    JOIN agg_clients c ON c.id = f.client_id
                    LEFT JOIN users u ON u.id::text = f.user_id
-                   LEFT JOIN org_memberships m ON m.user_id = u.id AND m.status = 'active'
-                   LEFT JOIN departments d ON d.id = m.department_id
+                   LEFT JOIN office_members om ON om.user_id = u.id AND om.status = 'active'
+                   LEFT JOIN office_departments d ON d.id = om.department_id
                    {where_sql}
                    ORDER BY f.created_at DESC""",
                 params if params else None,
