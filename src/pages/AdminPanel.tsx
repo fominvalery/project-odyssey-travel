@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
 import { STATUS_LABELS } from "@/hooks/useAuth"
@@ -68,42 +69,35 @@ const NAV_GROUPS = [
 ]
 
 export default function AdminPanel() {
-  const { register, logout } = useAuthContext()
+  const { user, register, logout } = useAuthContext()
   const navigate = useNavigate()
 
-  const [authed, setAuthed] = useState(false)
-  const [password, setPassword] = useState("")
-  const [pwError, setPwError] = useState("")
-  const [token, setToken] = useState("")
   const [section, setSection] = useState<Section>("home")
-
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [activeUser, setActiveUser] = useState<AdminUser | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setPwError("")
-    setLoading(true)
-    const res = await fetch(ADMIN_URL, { headers: { "X-Admin-Token": password } })
-    if (res.status === 403) {
-      setPwError("Неверный пароль")
-      setLoading(false)
+  useEffect(() => {
+    if (!user?.isSuperadmin) {
+      navigate("/dashboard")
       return
     }
-    const data = await res.json()
-    setToken(password)
-    setUsers(data.users || [])
-    setAuthed(true)
-    setLoading(false)
-  }
+    refreshUsers()
+  }, [user])
 
   async function refreshUsers() {
-    const res = await fetch(ADMIN_URL, { headers: { "X-Admin-Token": token } })
-    const data = await res.json()
-    setUsers(data.users || [])
+    setLoading(true)
+    try {
+      const res = await fetch(ADMIN_URL, { headers: { "X-Admin-Token": "k24admin" } })
+      const data = await res.json()
+      setUsers(data.users || [])
+    } catch {
+      setUsers([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleDelete(userId: string) {
@@ -111,21 +105,21 @@ export default function AdminPanel() {
     setDeleting(userId)
     await fetch(`${ADMIN_URL}/users/${userId}`, {
       method: "DELETE",
-      headers: { "X-Admin-Token": token },
+      headers: { "X-Admin-Token": "k24admin" },
     })
     await refreshUsers()
     setDeleting(null)
     if (activeUser?.id === userId) setActiveUser(null)
   }
 
-  function loginAs(user: AdminUser) {
+  function loginAs(u: AdminUser) {
     logout()
     register({
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      company: user.company,
-      plan: user.plan,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      company: u.company,
+      plan: u.plan,
     })
     navigate("/dashboard")
   }
@@ -137,42 +131,10 @@ export default function AdminPanel() {
       (u.company || "").toLowerCase().includes(search.toLowerCase())
   )
 
-  if (!authed) {
+  if (loading && users.length === 0) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-              <Icon name="ShieldCheck" className="h-7 w-7 text-red-400" />
-            </div>
-            <h1 className="text-xl font-bold text-white">Кабинет-24</h1>
-            <p className="text-sm text-gray-500 mt-1">Внутренний цифровой офис</p>
-          </div>
-          <form onSubmit={handleLogin} className="bg-[#111111] border border-[#1f1f1f] rounded-2xl p-6 space-y-4">
-            <div>
-              <label className="text-xs text-gray-400 block mb-1.5">Секретный пароль</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-red-500"
-                required
-              />
-              {pwError && (
-                <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
-                  <Icon name="AlertCircle" className="h-3.5 w-3.5" />{pwError}
-                </p>
-              )}
-            </div>
-            <Button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl">
-              {loading
-                ? <span className="flex items-center gap-2"><Icon name="Loader2" className="h-4 w-4 animate-spin" />Проверка...</span>
-                : "Войти в офис"
-              }
-            </Button>
-          </form>
-        </div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <Icon name="Loader2" className="h-8 w-8 text-red-400 animate-spin" />
       </div>
     )
   }
@@ -239,7 +201,7 @@ export default function AdminPanel() {
             На главную
           </button>
           <button
-            onClick={() => { setAuthed(false); setToken(""); setUsers([]) }}
+            onClick={() => navigate("/dashboard")}
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
           >
             <Icon name="LogOut" className="h-4 w-4" />
@@ -258,14 +220,14 @@ export default function AdminPanel() {
 
         {/* Команда */}
         {section === "team" && (
-          <AdminTeam users={users} token={token} onRefresh={refreshUsers} />
+          <AdminTeam users={users} token="k24admin" onRefresh={refreshUsers} />
         )}
 
         {/* База объектов */}
-        {section === "offers" && <AggOffersAdmin token={token} />}
+        {section === "offers" && <AggOffersAdmin token="k24admin" />}
 
         {/* Фиксации */}
-        {section === "fixations" && <AggFixationsAdmin token={token} />}
+        {section === "fixations" && <AggFixationsAdmin token="k24admin" />}
 
         {/* Контент */}
         {section === "content" && <AdminContent />}
