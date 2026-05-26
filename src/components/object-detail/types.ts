@@ -84,4 +84,10 @@ export const FIELD_LABELS: Record<string, string> = {
   owner_fee: "Комиссия собственника",
   owner_comment: "Комментарий собственника",
   tenant: "Арендатор",
+  pool: "Бассейн / водоём",
+  beach: "Пляж",
+  units: "Номеров / мест",
+  season: "Сезонность",
+  usage_format: "Формат использования",
+  management_company: "Управляющая компания",
 }
