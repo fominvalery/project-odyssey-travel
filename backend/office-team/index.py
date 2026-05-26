@@ -189,7 +189,7 @@ def handler(event: dict, context) -> dict:
                 conn.close()
                 return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "id required"})}
             cur.execute("UPDATE office_members SET department_id = NULL WHERE department_id = %s", (dept_id,))
-            cur.execute("UPDATE office_departments SET name = '[удалён] ' || name, updated_at = NOW() WHERE id = %s", (dept_id,))
+            cur.execute("DELETE FROM office_departments WHERE id = %s", (dept_id,))
             conn.commit()
             conn.close()
             return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
