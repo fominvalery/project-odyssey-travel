@@ -24,6 +24,9 @@ const Offer = lazy(() => import("./pages/Offer"));
 const AiRules = lazy(() => import("./pages/AiRules"));
 const Consent = lazy(() => import("./pages/Consent"));
 const Club = lazy(() => import("./pages/Club"));
+const ProjectsPage = lazy(() => import("./pages/projects/ProjectsPage"));
+const ProjectDetailPage = lazy(() => import("./pages/projects/ProjectDetailPage"));
+const ProjectsFixationsPage = lazy(() => import("./pages/projects/ProjectsFixationsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -72,6 +75,9 @@ const App = () => (
               <Route path="/ai-rules" element={<AiRules />} />
               <Route path="/consent" element={<Consent />} />
               <Route path="/club" element={<Club />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/fixations" element={<ProjectsFixationsPage />} />
+              <Route path="/projects/:id" element={<ProjectDetailPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

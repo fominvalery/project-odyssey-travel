@@ -1,4 +1,7 @@
 {
+  "agg-offers": "https://functions.poehali.dev/9ad893e3-5006-4206-bae5-46b67fca5c78",
+  "agg-admin": "https://functions.poehali.dev/b9027e25-2e59-4f15-bdb4-a49530aee090",
+  "agg-fixations": "https://functions.poehali.dev/88b77042-5ba0-4a19-a550-00b5457bd7aa",
   "object-pdf": "https://functions.poehali.dev/51bbb9bd-859a-4dca-a25a-1924778fa0b2",
   "pdf-test": "https://functions.poehali.dev/7d580d3d-64de-4dcc-ab6e-0d3be4327508",
   "analytics": "https://functions.poehali.dev/a479bc55-9c4c-466a-aaba-c96f3efc444e",

@@ -110,6 +110,16 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             Маркетплейс
           </button>
 
+          {!isBasic && (
+            <button
+              onClick={() => navigate("/projects")}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
+            >
+              <Icon name="FolderOpen" className="h-4 w-4 shrink-0" />
+              База / Проекты
+            </button>
+          )}
+
           <button
             onClick={() => setSection("support")}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${

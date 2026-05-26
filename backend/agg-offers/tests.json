@@ -1,0 +1,6 @@
+{
+  "tests": [
+    {"name": "Список предложений", "method": "GET", "path": "/", "expectedStatus": 200},
+    {"name": "Фильтр по категории", "method": "GET", "path": "/?category=commercial", "expectedStatus": 200}
+  ]
+}

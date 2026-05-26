@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Список всех предложений",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Создание предложения",
+      "method": "POST",
+      "path": "/",
+      "body": {"title": "Тест офис 2", "category": "commercial", "city": "Москва"},
+      "expectedStatus": 200
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Без авторизации — 401",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401
+    },
+    {
+      "name": "Список фиксаций авторизованного",
+      "method": "GET",
+      "path": "/",
+      "headers": {"X-User-Id": "test-user"},
+      "expectedStatus": 200
+    }
+  ]
+}
