@@ -4,6 +4,7 @@ import { Offer, OfferForm, EMPTY_FORM } from "./AggOffersTypes"
 import AggOffersToolbar from "./AggOffersToolbar"
 import AggOffersTable from "./AggOffersTable"
 import AggOffersDialog from "./AggOffersDialog"
+import { AddObjectWizardBase } from "@/components/AddObjectWizardBase"
 
 const AGG_ADMIN_URL = (func2url as Record<string, string>)["agg-admin"]
 
@@ -14,6 +15,11 @@ export default function AggOffersAdmin({ token }: { token: string }) {
   const [search, setSearch] = useState("")
   const [catFilter, setCatFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
+
+  // Мастер — открывается при нажатии «Добавить»
+  const [wizardOpen, setWizardOpen] = useState(false)
+
+  // Диалог — открывается при редактировании существующего объекта
   const [dialog, setDialog] = useState(false)
   const [editing, setEditing] = useState<Offer | null>(null)
   const [form, setForm] = useState<OfferForm>(EMPTY_FORM)
@@ -41,14 +47,10 @@ export default function AggOffersAdmin({ token }: { token: string }) {
 
   useEffect(() => { load() }, [catFilter, statusFilter])
 
-  const openNew = () => {
-    setEditing(null)
-    setForm(EMPTY_FORM)
-    setPhotoInput("")
-    setVideoInput("")
-    setDialog(true)
-  }
+  // «Добавить» — открывает полный мастер
+  const openNew = () => setWizardOpen(true)
 
+  // Клик по строке таблицы — открывает быстрый диалог редактирования
   const openEdit = (o: Offer) => {
     setEditing(o)
     setForm({
@@ -159,6 +161,15 @@ export default function AggOffersAdmin({ token }: { token: string }) {
         />
       </div>
 
+      {/* Мастер добавления нового объекта */}
+      {wizardOpen && (
+        <AddObjectWizardBase
+          onClose={() => setWizardOpen(false)}
+          onSave={() => { setWizardOpen(false); load() }}
+        />
+      )}
+
+      {/* Быстрый диалог редактирования существующего объекта */}
       <AggOffersDialog
         open={dialog}
         editing={editing}
