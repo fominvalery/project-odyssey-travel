@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import Icon from "@/components/ui/icon"
 import { useAuthContext } from "@/context/AuthContext"
 import func2url from "../../../backend/func2url.json"
@@ -30,6 +29,17 @@ const STATUS_COLOR: Record<string, string> = {
   payment: "bg-pink-500/20 text-pink-300 border-pink-500/30",
 }
 
+// Группы вкладок — каждая объединяет несколько статусов CRM
+const TABS = [
+  { id: "all",         label: "Все",         statuses: [] as string[] },
+  { id: "fixations",   label: "Фиксации",    statuses: ["pending", "fixed"] },
+  { id: "showing",     label: "Показ",       statuses: ["showing"] },
+  { id: "booking",     label: "Бронь",       statuses: ["booking"] },
+  { id: "negotiation", label: "Переговоры",  statuses: ["negotiation"] },
+  { id: "deal",        label: "Сделки",      statuses: ["deal", "docs", "payment"] },
+  { id: "invalid",     label: "Срывы",       statuses: ["invalid"] },
+]
+
 interface Fixation {
   id: string
   offer_id: string
@@ -54,11 +64,25 @@ function daysLeft(dateStr: string | null): string {
   return `${diff} дней`
 }
 
+// Преобразуем route в id вкладки
+function routeToTab(pathname: string): string {
+  if (pathname.includes("/bookings")) return "booking"
+  if (pathname.includes("/deals")) return "deal"
+  return "all"
+}
+
 export default function ProjectsFixationsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuthContext()
   const [fixations, setFixations] = useState<Fixation[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Определяем активную вкладку из URL
+  const pathname = window.location.pathname
+  const filterParam = searchParams.get("filter")
+  const defaultTab = filterParam === "failed" ? "invalid" : routeToTab(pathname)
+  const [activeTab, setActiveTab] = useState(defaultTab)
 
   const load = async () => {
     if (!user?.id) return
@@ -78,11 +102,16 @@ export default function ProjectsFixationsPage() {
 
   useEffect(() => { load() }, [user?.id])
 
+  const tab = TABS.find(t => t.id === activeTab) || TABS[0]
+  const filtered = tab.statuses.length === 0
+    ? fixations
+    : fixations.filter(f => tab.statuses.includes(f.status))
+
   return (
     <div className="flex-1 overflow-auto bg-[#0d0d0d] min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Шапка */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-5">
           <button
             onClick={() => navigate("/projects")}
             className="text-gray-500 hover:text-white transition-colors"
@@ -90,19 +119,49 @@ export default function ProjectsFixationsPage() {
             <Icon name="ChevronLeft" className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-white">Мои фиксации</h1>
+            <h1 className="text-xl font-bold text-white">Мои клиенты</h1>
             <p className="text-xs text-gray-500">
-              {fixations.length > 0 ? `${fixations.length} фиксаций` : "Зафиксированные клиенты по объектам"}
+              {loading ? "Загрузка..." : `${fixations.length} клиентов в CRM`}
             </p>
           </div>
           <Button
             size="sm"
             onClick={() => navigate("/projects")}
-            className="ml-auto bg-blue-600 hover:bg-blue-700 text-white"
+            className="ml-auto bg-violet-600 hover:bg-violet-700 text-white"
           >
             <Icon name="Plus" className="h-4 w-4 mr-1.5" />
-            Новая фиксация
+            Зафиксировать
           </Button>
+        </div>
+
+        {/* Вкладки статусов */}
+        <div className="flex gap-1.5 flex-wrap mb-5">
+          {TABS.map(t => {
+            const count = t.statuses.length === 0
+              ? fixations.length
+              : fixations.filter(f => t.statuses.includes(f.status)).length
+            const isActive = activeTab === t.id
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  isActive
+                    ? "bg-violet-600 text-white"
+                    : "bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#222]"
+                }`}
+              >
+                {t.label}
+                {count > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    isActive ? "bg-white/20 text-white" : "bg-[#2a2a2a] text-gray-500"
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {loading ? (
@@ -111,18 +170,25 @@ export default function ProjectsFixationsPage() {
               <div key={i} className="bg-[#111] border border-[#1f1f1f] rounded-2xl h-28 animate-pulse" />
             ))}
           </div>
-        ) : fixations.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Icon name="BookmarkX" className="h-12 w-12 text-gray-700 mb-4" />
-            <p className="text-gray-500 text-lg font-medium">Фиксаций пока нет</p>
-            <p className="text-gray-700 text-sm mt-1 mb-6">Перейдите в каталог и зафиксируйте клиента на объект</p>
-            <Button onClick={() => navigate("/projects")} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <p className="text-gray-500 text-lg font-medium">
+              {activeTab === "all" ? "Клиентов пока нет" : `Нет клиентов в статусе «${tab.label}»`}
+            </p>
+            <p className="text-gray-700 text-sm mt-1 mb-6">
+              {activeTab === "all"
+                ? "Перейдите в каталог и зафиксируйте клиента на объект"
+                : "Переместите клиентов в эту стадию через CRM Фиксации"
+              }
+            </p>
+            <Button onClick={() => navigate("/projects")} className="bg-violet-600 hover:bg-violet-700 text-white">
               Открыть каталог
             </Button>
           </div>
         ) : (
           <div className="space-y-3">
-            {fixations.map(fix => (
+            {filtered.map(fix => (
               <FixationRow key={fix.id} fix={fix} onOpenOffer={() => navigate(`/projects/${fix.offer_id}`)} />
             ))}
           </div>
@@ -144,7 +210,7 @@ function FixationRow({ fix, onOpenOffer }: { fix: Fixation; onOpenOffer: () => v
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <button
               onClick={onOpenOffer}
-              className="text-sm font-semibold text-white hover:text-blue-400 transition-colors text-left line-clamp-1"
+              className="text-sm font-semibold text-white hover:text-violet-400 transition-colors text-left line-clamp-1"
             >
               {fix.offer_title}
             </button>
