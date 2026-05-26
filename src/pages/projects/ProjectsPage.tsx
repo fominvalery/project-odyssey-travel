@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Icon from "@/components/ui/icon"
 import func2url from "../../../backend/func2url.json"
+import QuickFixationModal from "./QuickFixationModal"
 
 // ── Категории ─────────────────────────────────────────────────────────────────
 
@@ -203,6 +204,7 @@ export default function ProjectsPage() {
   const subtypeActiveClass = SUBTYPE_ACTIVE[category] ?? "border-blue-500 bg-blue-500/15 text-blue-300"
 
   const [showClientsMenu, setShowClientsMenu] = useState(false)
+  const [showFixModal, setShowFixModal] = useState(false)
   const clientsMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -269,10 +271,10 @@ export default function ProjectsPage() {
                           Срывы
                         </button>
                         <button
-                          onClick={() => { navigate("/projects/fixations"); setShowClientsMenu(false) }}
-                          className="block text-sm text-gray-400 hover:text-white transition-colors"
+                          onClick={() => { setShowClientsMenu(false); setShowFixModal(true) }}
+                          className="block text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors"
                         >
-                          Зафиксировать
+                          + Зафиксировать
                         </button>
                       </div>
                     </div>
@@ -499,6 +501,11 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
+
+      <QuickFixationModal
+        open={showFixModal}
+        onOpenChange={setShowFixModal}
+      />
     </div>
   )
 }
