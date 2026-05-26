@@ -125,18 +125,11 @@ export default function AdminOfficeTeam({
             <p className="text-xs text-gray-500">Онлайн Офис · {pageInfo.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            {tab === "invites" && (
+            {(tab === "members" || tab === "invites") && (
               <Button onClick={() => setShowInvite(true)} size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
+                className="bg-violet-600 hover:bg-violet-700 text-white text-xs">
                 <Icon name="UserPlus" className="h-3.5 w-3.5 mr-1.5" />
                 Пригласить
-              </Button>
-            )}
-            {tab === "members" && (
-              <Button onClick={() => setEditMember("new")} size="sm"
-                className="bg-violet-600 hover:bg-violet-700 text-white text-xs">
-                <Icon name="Plus" className="h-3.5 w-3.5 mr-1.5" />
-                Добавить
               </Button>
             )}
             {tab === "departments" && (
@@ -168,7 +161,7 @@ export default function AdminOfficeTeam({
             onEdit={m => setEditMember(m)}
             onFire={fireMember}
             onRestore={id => saveMember({ id, status: "active" })}
-            onAdd={() => setEditMember("new")}
+            onAdd={() => setShowInvite(true)}
           />
         )}
         {tab === "departments" && (
@@ -199,9 +192,9 @@ export default function AdminOfficeTeam({
           onSave={saveDept}
         />
       )}
-      {editMember !== null && (
+      {editMember !== null && editMember !== "new" && (
         <MemberModal
-          member={editMember === "new" ? null : editMember}
+          member={editMember}
           departments={departments}
           roles={roles}
           allUsers={allUsers || []}
