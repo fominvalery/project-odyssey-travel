@@ -76,9 +76,14 @@ export default function ProjectsHeader({
       {/* ── Хедер: логотип + кнопка Клиенты ── */}
       <div className="border-b border-[#1f1f1f] px-4 md:px-8 py-1">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
-            <img src={LOGO_URL} alt="Кабинет-24" className="h-14 w-auto object-contain" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-white transition-colors">
+              <Icon name="ArrowLeft" className="h-5 w-5" />
+            </button>
+            <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
+              <img src={LOGO_URL} alt="Кабинет-24" className="h-14 w-auto object-contain" />
+            </button>
+          </div>
           <ClientsDropdown onOpenFixModal={onOpenFixModal} />
         </div>
       </div>
