@@ -1,6 +1,7 @@
 """
 Импорт объектов недвижимости из XML-фида.
 POST / — принимает feed_url, скачивает XML, парсит, добавляет объекты в базу.
+GET  /?selftest=1 — внутренний тест парсера (не трогает БД).
 Поддерживает форматы: YRL (Яндекс), Циан, Авито Недвижимость.
 """
 import json
@@ -16,9 +17,45 @@ def get_conn():
 
 CORS = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
 }
+
+SELFTEST_YRL = """<?xml version="1.0" encoding="utf-8"?>
+<realty-feed>
+  <offer>
+    <name>Офис в центре Москвы</name>
+    <type>коммерческая</type>
+    <locality-name>Москва</locality-name>
+    <address>ул. Тверская, 10</address>
+    <price><value>15000000</value></price>
+    <area><value>120</value></area>
+    <description>Светлый офис с ремонтом</description>
+    <image>https://example.com/photo1.jpg</image>
+  </offer>
+  <offer>
+    <name>Склад в Подмосковье</name>
+    <type>commercial</type>
+    <locality-name>Химки</locality-name>
+    <address>Ленинградское ш., 5</address>
+    <price><value>8500000</value></price>
+    <area><value>450</value></area>
+    <description>Тёплый склад класса B</description>
+  </offer>
+</realty-feed>"""
+
+SELFTEST_AVITO = """<?xml version="1.0" encoding="utf-8"?>
+<Ads>
+  <Ad>
+    <Title>Торговое помещение на Арбате</Title>
+    <Category>коммерческая</Category>
+    <City>Москва</City>
+    <Address>ул. Арбат, 22</Address>
+    <Price>22000000</Price>
+    <Square>80</Square>
+    <Description>Первая линия, высокий трафик</Description>
+  </Ad>
+</Ads>"""
 
 CATEGORY_MAP = {
     "коммерческая": "commercial",
