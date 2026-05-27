@@ -102,6 +102,8 @@ export function AddObjectWizardBase({ onClose, onSave, initial }: AddObjectWizar
       ...(subtype ? { subtype } : {}),
       ...(dealType ? { deal_type: dealType } : {}),
       ...regulationsFields,
+      ...(form.developer_org_id ? { developer_org_id: form.developer_org_id, developer_org_name: form.developer_org_name } : {}),
+      ...(form.related_project_id ? { related_project_id: form.related_project_id, related_project_name: form.related_project_name } : {}),
     }
     const payload = {
       category,
@@ -247,7 +249,7 @@ export function AddObjectWizardBase({ onClose, onSave, initial }: AddObjectWizar
         )}
         {step === 5 && (
           <Step6PublishBase
-            form={form} category={category}
+            form={form} setForm={setForm} category={category}
             publishToBase={publishToBase}
             setPublishToBase={setPublishToBase}
           />

@@ -38,6 +38,10 @@ export interface WizardForm {
   presentation_contact_name: string
   presentation_contact_phone: string
   presentation_contact_company: string
+  developer_org_id?: string
+  developer_org_name?: string
+  related_project_id?: string
+  related_project_name?: string
 }
 
 export const STEPS = ["Основное", "Локация", "Характеристики", "Описание", "Презентация", "Публикация", "Собственник"]

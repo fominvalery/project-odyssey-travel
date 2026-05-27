@@ -1,16 +1,99 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Icon from "@/components/ui/icon"
 import { CATEGORIES, WizardForm } from "../wizardTypes"
+import { agencyApi, OrgSummary } from "@/lib/agencyApi"
+import { useAuthContext } from "@/context/AuthContext"
+import func2url from "../../../../backend/func2url.json"
+
+interface Offer {
+  id: number | string
+  title: string
+  city: string
+  category: string
+}
 
 interface Step6PublishBaseProps {
   form: WizardForm
+  setForm: (f: WizardForm) => void
   category: string
   publishToBase: boolean
   setPublishToBase: (v: boolean) => void
 }
 
-export function Step6PublishBase({ form, category, publishToBase, setPublishToBase }: Step6PublishBaseProps) {
+export function Step6PublishBase({ form, setForm, category, publishToBase, setPublishToBase }: Step6PublishBaseProps) {
   const catLabel = CATEGORIES.find(c => c.id === category)?.label ?? category
+  const { user } = useAuthContext()
+
+  const [orgSearch, setOrgSearch] = useState(form.developer_org_name ?? "")
+  const [orgs, setOrgs] = useState<OrgSummary[]>([])
+  const [filteredOrgs, setFilteredOrgs] = useState<OrgSummary[]>([])
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false)
+  const orgRef = useRef<HTMLDivElement>(null)
+
+  const [projectSearch, setProjectSearch] = useState(form.related_project_name ?? "")
+  const [projects, setProjects] = useState<Offer[]>([])
+  const [filteredProjects, setFilteredProjects] = useState<Offer[]>([])
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false)
+  const [projectsLoading, setProjectsLoading] = useState(false)
+  const projectRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!user) return
+    agencyApi.listMyOrgs(user.id).then(setOrgs).catch(() => {})
+  }, [user])
+
+  useEffect(() => {
+    const q = orgSearch.toLowerCase()
+    setFilteredOrgs(q ? orgs.filter(o => o.name.toLowerCase().includes(q)) : orgs)
+  }, [orgSearch, orgs])
+
+  useEffect(() => {
+    if (!publishToBase) return
+    setProjectsLoading(true)
+    const url = new URL((func2url as Record<string, string>)["agg-offers"])
+    url.searchParams.set("limit", "100")
+    fetch(url.toString())
+      .then(r => r.json())
+      .then(d => setProjects(d.offers ?? []))
+      .catch(() => {})
+      .finally(() => setProjectsLoading(false))
+  }, [publishToBase])
+
+  useEffect(() => {
+    const q = projectSearch.toLowerCase()
+    setFilteredProjects(q ? projects.filter(p => p.title.toLowerCase().includes(q) || (p.city ?? "").toLowerCase().includes(q)) : projects)
+  }, [projectSearch, projects])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (orgRef.current && !orgRef.current.contains(e.target as Node)) setShowOrgDropdown(false)
+      if (projectRef.current && !projectRef.current.contains(e.target as Node)) setShowProjectDropdown(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
+  function selectOrg(org: OrgSummary) {
+    setOrgSearch(org.name)
+    setForm({ ...form, developer_org_id: org.id, developer_org_name: org.name })
+    setShowOrgDropdown(false)
+  }
+
+  function clearOrg() {
+    setOrgSearch("")
+    setForm({ ...form, developer_org_id: undefined, developer_org_name: undefined })
+  }
+
+  function selectProject(p: Offer) {
+    setProjectSearch(p.title)
+    setForm({ ...form, related_project_id: String(p.id), related_project_name: p.title })
+    setShowProjectDropdown(false)
+  }
+
+  function clearProject() {
+    setProjectSearch("")
+    setForm({ ...form, related_project_id: undefined, related_project_name: undefined })
+  }
 
   return (
     <div className="space-y-4">
@@ -54,7 +137,7 @@ export function Step6PublishBase({ form, category, publishToBase, setPublishToBa
         </div>
       </button>
 
-      {/* Блоки функционала при размещении в базе */}
+      {/* Блоки при размещении в базе */}
       {publishToBase && (
         <div className="space-y-3">
           <div className="flex items-center gap-2.5 text-xs text-gray-400 px-1">
@@ -63,38 +146,117 @@ export function Step6PublishBase({ form, category, publishToBase, setPublishToBa
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Связь с менеджером */}
+            {/* Привязать застройщика/компанию */}
             <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
-              <div className="flex items-center gap-2.5 mb-2">
+              <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                  <Icon name="MessageCircle" className="h-4 w-4 text-blue-400" />
+                  <Icon name="Building2" className="h-4 w-4 text-blue-400" />
                 </div>
-                <span className="text-sm font-medium text-white">Связаться с менеджером</span>
+                <span className="text-sm font-medium text-white">Привязать застройщика / компанию</span>
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Кнопка для брокеров — быстрая связь с менеджером проекта (контакты из шага «Регламент»)
-              </p>
-              <div className="mt-2 flex items-center gap-1 text-xs text-emerald-400">
-                <Icon name="Check" className="h-3 w-3" />
-                Будет активна при размещении
+              <div className="relative" ref={orgRef}>
+                <div className="relative">
+                  <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={orgSearch}
+                    onChange={e => { setOrgSearch(e.target.value); setShowOrgDropdown(true) }}
+                    onFocus={() => setShowOrgDropdown(true)}
+                    placeholder="Начните вводить название..."
+                    className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg pl-8 pr-8 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                  />
+                  {form.developer_org_id && (
+                    <button onClick={clearOrg} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                      <Icon name="X" className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                {showOrgDropdown && filteredOrgs.length > 0 && (
+                  <div className="absolute z-20 mt-1 w-full bg-[#141414] border border-[#2a2a2a] rounded-lg shadow-xl max-h-44 overflow-y-auto">
+                    {filteredOrgs.map(org => (
+                      <button
+                        key={org.id}
+                        type="button"
+                        onMouseDown={() => selectOrg(org)}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-[#1f1f1f] flex items-center gap-2"
+                      >
+                        {org.logo_url
+                          ? <img src={org.logo_url} className="w-5 h-5 rounded object-cover shrink-0" alt="" />
+                          : <div className="w-5 h-5 rounded bg-blue-500/20 flex items-center justify-center shrink-0"><Icon name="Building2" className="h-3 w-3 text-blue-400" /></div>
+                        }
+                        <span className="truncate">{org.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showOrgDropdown && orgSearch && filteredOrgs.length === 0 && (
+                  <div className="absolute z-20 mt-1 w-full bg-[#141414] border border-[#2a2a2a] rounded-lg px-3 py-2 text-xs text-gray-500">
+                    Ничего не найдено
+                  </div>
+                )}
               </div>
+              {form.developer_org_id && (
+                <div className="mt-2 flex items-center gap-1 text-xs text-emerald-400">
+                  <Icon name="Check" className="h-3 w-3" />
+                  {form.developer_org_name}
+                </div>
+              )}
             </div>
 
-            {/* Фиксация клиента */}
+            {/* Добавить проект */}
             <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4">
-              <div className="flex items-center gap-2.5 mb-2">
+              <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
-                  <Icon name="BookmarkCheck" className="h-4 w-4 text-violet-400" />
+                  <Icon name="FolderKanban" className="h-4 w-4 text-violet-400" />
                 </div>
-                <span className="text-sm font-medium text-white">Фиксация клиента</span>
+                <span className="text-sm font-medium text-white">Добавить проект</span>
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Брокер может зафиксировать клиента — заявка попадёт в CRM (Фиксации) с данными клиента и брокера
-              </p>
-              <div className="mt-2 flex items-center gap-1 text-xs text-emerald-400">
-                <Icon name="Check" className="h-3 w-3" />
-                Будет активна при размещении
+              <div className="relative" ref={projectRef}>
+                <div className="relative">
+                  <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={projectSearch}
+                    onChange={e => { setProjectSearch(e.target.value); setShowProjectDropdown(true) }}
+                    onFocus={() => setShowProjectDropdown(true)}
+                    placeholder={projectsLoading ? "Загрузка..." : "Начните вводить название..."}
+                    disabled={projectsLoading}
+                    className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg pl-8 pr-8 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/50 disabled:opacity-50"
+                  />
+                  {form.related_project_id && (
+                    <button onClick={clearProject} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                      <Icon name="X" className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                {showProjectDropdown && filteredProjects.length > 0 && (
+                  <div className="absolute z-20 mt-1 w-full bg-[#141414] border border-[#2a2a2a] rounded-lg shadow-xl max-h-44 overflow-y-auto">
+                    {filteredProjects.map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onMouseDown={() => selectProject(p)}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-[#1f1f1f] flex items-center gap-2"
+                      >
+                        <Icon name="MapPin" className="h-3.5 w-3.5 text-gray-500 shrink-0" />
+                        <span className="truncate">{p.title}</span>
+                        {p.city && <span className="text-xs text-gray-500 shrink-0">{p.city}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showProjectDropdown && projectSearch && filteredProjects.length === 0 && !projectsLoading && (
+                  <div className="absolute z-20 mt-1 w-full bg-[#141414] border border-[#2a2a2a] rounded-lg px-3 py-2 text-xs text-gray-500">
+                    Ничего не найдено
+                  </div>
+                )}
               </div>
+              {form.related_project_id && (
+                <div className="mt-2 flex items-center gap-1 text-xs text-emerald-400">
+                  <Icon name="Check" className="h-3 w-3" />
+                  {form.related_project_name}
+                </div>
+              )}
             </div>
           </div>
 
