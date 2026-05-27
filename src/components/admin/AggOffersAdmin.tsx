@@ -5,7 +5,7 @@ import AggOffersToolbar from "./AggOffersToolbar"
 import AggOffersTable from "./AggOffersTable"
 import AggOffersDialog from "./AggOffersDialog"
 import AddDeveloperDialog, { DeveloperForm } from "./AddDeveloperDialog"
-import AddProjectDialog, { ProjectForm } from "./AddProjectDialog"
+import AddProjectWizard from "./AddProjectWizard"
 import { AddObjectWizardBase } from "@/components/AddObjectWizardBase"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -27,7 +27,6 @@ export default function AggOffersAdmin({ token }: { token: string }) {
   const [developerOpen, setDeveloperOpen] = useState(false)
   const [projectOpen, setProjectOpen] = useState(false)
   const [developerSaving, setDeveloperSaving] = useState(false)
-  const [projectSaving, setProjectSaving] = useState(false)
 
   // XML Фид
   const [feedOpen, setFeedOpen] = useState(false)
@@ -205,30 +204,7 @@ export default function AggOffersAdmin({ token }: { token: string }) {
     load()
   }
 
-  const handleProjectSave = async (data: ProjectForm) => {
-    setProjectSaving(true)
-    const projectTypes: Record<string, string> = { bc: "Бизнес-центр", mfk: "МФК", zhk: "ЖК", kp: "Коттеджный посёлок", tc: "ТЦ", sk: "Склад", gk: "Гостиница", other: "Проект" }
-    await fetch(AGG_ADMIN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: data.name,
-        category: "commercial",
-        subtype: projectTypes[data.type] || data.type,
-        city: data.city,
-        address: data.address,
-        price: data.price_from ? Number(data.price_from) : undefined,
-        area: data.total_area ? Number(data.total_area) : undefined,
-        description: [data.description, data.developer && `Застройщик: ${data.developer}`, data.floors && `Этажность: ${data.floors}`, data.completion_date && `Срок сдачи: ${data.completion_date}`, data.class_type && `Класс: ${data.class_type}`].filter(Boolean).join("\n"),
-        status: "active",
-        photos: data.photos,
-        videos: data.videos,
-      }),
-    })
-    setProjectSaving(false)
-    setProjectOpen(false)
-    load()
-  }
+
 
   const filtered = offers.filter(o =>
     !search ||
@@ -281,13 +257,13 @@ export default function AggOffersAdmin({ token }: { token: string }) {
         saving={developerSaving}
       />
 
-      {/* Модалка проекта */}
-      <AddProjectDialog
-        open={projectOpen}
-        onOpenChange={setProjectOpen}
-        onSave={handleProjectSave}
-        saving={projectSaving}
-      />
+      {/* Мастер добавления проекта */}
+      {projectOpen && (
+        <AddProjectWizard
+          onClose={() => setProjectOpen(false)}
+          onSave={() => { setProjectOpen(false); load() }}
+        />
+      )}
 
       {/* Модальное окно XML Фид */}
       <Dialog open={feedOpen} onOpenChange={(v) => { setFeedOpen(v); if (!v) { setFeedResult(null); setFeedError("") } }}>
