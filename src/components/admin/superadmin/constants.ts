@@ -24,9 +24,8 @@ export const LEVELS = [
   { name: "Друг",      color: "blue",    desc: "" },
   { name: "Партнёр",   color: "emerald", desc: "" },
   { name: "Бизнес",    color: "violet",  desc: "" },
-  { name: "Лидер",     color: "amber",   desc: "" },
-  { name: "Амбасадор", color: "rose",    desc: "" },
-  { name: "Адвокат",   color: "rose",    desc: "" },
+  { name: "Амбасадор", color: "amber",   desc: "" },
+  { name: "Лидер",     color: "rose",    desc: "" },
 ]
 
 export type MainTab = "users" | "withdrawals" | "expiry"
