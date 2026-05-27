@@ -4,6 +4,8 @@ import { Offer, OfferForm, EMPTY_FORM } from "./AggOffersTypes"
 import AggOffersToolbar from "./AggOffersToolbar"
 import AggOffersTable from "./AggOffersTable"
 import AggOffersDialog from "./AggOffersDialog"
+import AddDeveloperDialog, { DeveloperForm } from "./AddDeveloperDialog"
+import AddProjectDialog, { ProjectForm } from "./AddProjectDialog"
 import { AddObjectWizardBase } from "@/components/AddObjectWizardBase"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -20,8 +22,12 @@ export default function AggOffersAdmin({ token }: { token: string }) {
   const [catFilter, setCatFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
 
-  // Мастер — открывается при нажатии «Добавить»
+  // Мастер — открывается при нажатии «Добавить объект»
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [developerOpen, setDeveloperOpen] = useState(false)
+  const [projectOpen, setProjectOpen] = useState(false)
+  const [developerSaving, setDeveloperSaving] = useState(false)
+  const [projectSaving, setProjectSaving] = useState(false)
 
   // XML Фид
   const [feedOpen, setFeedOpen] = useState(false)
@@ -48,7 +54,15 @@ export default function AggOffersAdmin({ token }: { token: string }) {
     try {
       const res = await fetch(url.toString())
       const data = await res.json()
-      setOffers(data.offers || [])
+      const allOffers: Offer[] = data.offers || []
+      // Автоудаление системного placeholder
+      const placeholder = allOffers.find(o => o.id === "00000000-0000-0000-0000-000000000001")
+      if (placeholder) {
+        await fetch(`${AGG_ADMIN_URL}?id=${placeholder.id}`, { method: "DELETE" })
+        setOffers(allOffers.filter(o => o.id !== "00000000-0000-0000-0000-000000000001"))
+      } else {
+        setOffers(allOffers)
+      }
       setTotal(data.total || 0)
       setTotalFixations(data.total_fixations || 0)
     } finally {
@@ -92,19 +106,19 @@ export default function AggOffersAdmin({ token }: { token: string }) {
       category: o.category || "commercial",
       subtype: o.subtype || "",
       city: o.city || "",
-      region: "",
-      address: "",
+      region: o.region || "",
+      address: o.address || "",
       price: o.price ? String(o.price) : "",
       price_label: o.price_label || "",
       area: o.area ? String(o.area) : "",
       yield_percent: o.yield_percent ? String(o.yield_percent) : "",
-      description: "",
+      description: o.description || "",
       status: o.status || "active",
       photos: o.photos || [],
-      videos: [],
+      videos: o.videos || [],
       presentation_url: o.presentation_url || "",
       commission: o.commission || "",
-      commission_notes: "",
+      commission_notes: o.commission_notes || "",
     })
     setPhotoInput("")
     setVideoInput("")
@@ -170,6 +184,52 @@ export default function AggOffersAdmin({ token }: { token: string }) {
     load()
   }
 
+  const handleDeveloperSave = async (data: DeveloperForm) => {
+    setDeveloperSaving(true)
+    await fetch(AGG_ADMIN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: data.name,
+        category: "commercial",
+        subtype: "Застройщик",
+        city: data.city,
+        description: [data.description, data.website && `Сайт: ${data.website}`, data.phone && `Тел: ${data.phone}`, data.email && `Email: ${data.email}`].filter(Boolean).join("\n"),
+        status: "active",
+        photos: [...(data.logo_url ? [data.logo_url] : []), ...data.photos],
+        videos: data.videos,
+      }),
+    })
+    setDeveloperSaving(false)
+    setDeveloperOpen(false)
+    load()
+  }
+
+  const handleProjectSave = async (data: ProjectForm) => {
+    setProjectSaving(true)
+    const projectTypes: Record<string, string> = { bc: "Бизнес-центр", mfk: "МФК", zhk: "ЖК", kp: "Коттеджный посёлок", tc: "ТЦ", sk: "Склад", gk: "Гостиница", other: "Проект" }
+    await fetch(AGG_ADMIN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: data.name,
+        category: "commercial",
+        subtype: projectTypes[data.type] || data.type,
+        city: data.city,
+        address: data.address,
+        price: data.price_from ? Number(data.price_from) : undefined,
+        area: data.total_area ? Number(data.total_area) : undefined,
+        description: [data.description, data.developer && `Застройщик: ${data.developer}`, data.floors && `Этажность: ${data.floors}`, data.completion_date && `Срок сдачи: ${data.completion_date}`, data.class_type && `Класс: ${data.class_type}`].filter(Boolean).join("\n"),
+        status: "active",
+        photos: data.photos,
+        videos: data.videos,
+      }),
+    })
+    setProjectSaving(false)
+    setProjectOpen(false)
+    load()
+  }
+
   const filtered = offers.filter(o =>
     !search ||
     o.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -191,6 +251,8 @@ export default function AggOffersAdmin({ token }: { token: string }) {
         onRefresh={load}
         onAdd={openNew}
         onFeed={() => { setFeedOpen(true); setFeedResult(null); setFeedError("") }}
+        onAddDeveloper={() => setDeveloperOpen(true)}
+        onAddProject={() => setProjectOpen(true)}
       />
 
       <div className="flex-1 overflow-y-auto">
@@ -210,6 +272,22 @@ export default function AggOffersAdmin({ token }: { token: string }) {
           onSave={() => { setWizardOpen(false); load() }}
         />
       )}
+
+      {/* Модалка застройщика */}
+      <AddDeveloperDialog
+        open={developerOpen}
+        onOpenChange={setDeveloperOpen}
+        onSave={handleDeveloperSave}
+        saving={developerSaving}
+      />
+
+      {/* Модалка проекта */}
+      <AddProjectDialog
+        open={projectOpen}
+        onOpenChange={setProjectOpen}
+        onSave={handleProjectSave}
+        saving={projectSaving}
+      />
 
       {/* Модальное окно XML Фид */}
       <Dialog open={feedOpen} onOpenChange={(v) => { setFeedOpen(v); if (!v) { setFeedResult(null); setFeedError("") } }}>

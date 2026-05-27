@@ -28,14 +28,19 @@ export interface Offer {
   category: string
   subtype?: string
   city?: string
+  region?: string
+  address?: string
   price?: number
   price_label?: string
   area?: number
   yield_percent?: number
+  description?: string
   status: string
   photos?: string[]
+  videos?: string[]
   presentation_url?: string
   commission?: string
+  commission_notes?: string
   created_at?: string
 }
 
