@@ -4,8 +4,74 @@ from datetime import datetime, timedelta
 
 from utils.db import query_one, execute_returning, execute, escape, get_schema
 from utils.password import hash_password, verify_password, validate_password, validate_email
-from utils.email import is_email_enabled, generate_code, send_verification_code
+from utils.email import is_email_enabled, generate_code, send_verification_code, send_email, _base_template
 from utils.http import response, error
+
+WELCOME_PLAN_HOURS = 72
+WELCOME_NOTIFICATION_TITLE = "Приветственный доступ к тарифу «Клуб» — 72 часа"
+WELCOME_NOTIFICATION_BODY = (
+    "Здравствуйте!\n\n"
+    "Рады видеть вас в Кабинете-24 — платформе, где брокеры коммерческой недвижимости "
+    "находят партнёров, объекты и реальные сделки.\n\n"
+    "Чтобы вы могли познакомиться с платформой по-настоящему — мы открыли вам "
+    "приветственный доступ к тарифу «Клуб» на 72 часа."
+)
+
+
+def _grant_welcome_plan(user_id, email: str, name: str, S: str) -> None:
+    """Назначить тариф Клуб на 72 часа, создать уведомление и отправить письмо."""
+    expires_at = (datetime.utcnow() + timedelta(hours=WELCOME_PLAN_HOURS)).isoformat()
+
+    execute(f"""
+        UPDATE {S}users
+        SET plan = 'club', status = 'broker', subscription_end_at = {escape(expires_at)}, updated_at = NOW()
+        WHERE id = {escape(user_id)}
+    """)
+
+    execute(f"""
+        INSERT INTO {S}notifications (user_id, type, title, body)
+        VALUES ({escape(user_id)}, 'info', {escape(WELCOME_NOTIFICATION_TITLE)}, {escape(WELCOME_NOTIFICATION_BODY)})
+    """)
+
+    _send_welcome_email(email, name or "", datetime.fromisoformat(expires_at))
+
+
+def _send_welcome_email(to_email: str, name: str, expires_at: datetime) -> None:
+    """Отправить приветственное письмо о тарифе Клуб."""
+    expires_str = expires_at.strftime("%d.%m.%Y в %H:%M")
+    display_name = name.strip() or "Коллега"
+
+    content = f"""
+        <p style="margin:0 0 16px;font-size:15px;color:#aaaaaa;line-height:1.6;">
+          Здравствуйте, {display_name}!
+        </p>
+        <p style="margin:0 0 16px;font-size:15px;color:#aaaaaa;line-height:1.6;">
+          Рады видеть вас в <strong style="color:#ffffff;">Кабинете-24</strong> — платформе, где брокеры
+          коммерческой недвижимости находят партнёров, объекты и реальные сделки.
+        </p>
+        <p style="margin:0 0 24px;font-size:15px;color:#aaaaaa;line-height:1.6;">
+          Чтобы вы могли познакомиться с платформой по-настоящему — мы открыли вам
+          приветственный доступ к тарифу <strong style="color:#ffffff;">«Клуб»</strong> на <strong style="color:#ffffff;">72 часа</strong>.
+        </p>
+        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:24px;margin:0 0 24px;text-align:center;">
+          <p style="margin:0 0 8px;font-size:13px;color:#666666;">Доступ активен до</p>
+          <p style="margin:0;font-size:24px;font-weight:700;color:#3b82f6;">{expires_str}</p>
+        </div>
+        <p style="margin:0;font-size:13px;color:#666666;line-height:1.6;">
+          Войдите на платформу и изучите все возможности тарифа «Клуб».<br>
+          После окончания пробного периода вы сможете продлить подписку.
+        </p>
+    """
+
+    html_body = _base_template("Приветственный бонус — тариф «Клуб»", content)
+    text_body = (
+        f"Здравствуйте, {display_name}!\n\n"
+        "Рады видеть вас в Кабинете-24.\n\n"
+        "Мы открыли вам приветственный доступ к тарифу «Клуб» на 72 часа.\n"
+        f"Доступ активен до: {expires_str}"
+    )
+
+    send_email(to_email, "Кабинет-24: Приветственный доступ к тарифу «Клуб» на 72 часа", html_body, text_body)
 
 
 VERIFICATION_CODE_HOURS = 24
@@ -116,6 +182,9 @@ def handle(event: dict, origin: str = '*') -> dict:
                     INSERT INTO {S}referrals (referrer_id, referred_id, created_at)
                     VALUES ({escape(referrer_id)}, {escape(user_id)}, NOW())
                 """)
+
+    # Назначаем приветственный тариф Клуб на 72 часа
+    _grant_welcome_plan(user_id, email, name, S)
 
     result = {
         'user_id': user_id,

@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Forbidden without secret",
+      "method": "POST",
+      "path": "/",
+      "body": {"dry_run": true},
+      "expectedStatus": 403
+    }
+  ]
+}

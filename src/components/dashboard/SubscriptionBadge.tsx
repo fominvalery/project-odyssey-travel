@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Icon from "@/components/ui/icon"
 import { type UserProfile } from "@/hooks/useAuth"
 
@@ -22,14 +22,47 @@ function getDaysLeft(iso: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
+function getMsLeft(iso: string): number {
+  return new Date(iso).getTime() - Date.now()
+}
+
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return "00:00:00"
+  const totalSec = Math.floor(ms / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  return [h, m, s].map(v => String(v).padStart(2, "0")).join(":")
+}
+
+// Показываем таймер обратного отсчёта если осталось меньше 3 суток
+function shouldShowCountdown(iso: string): boolean {
+  return getMsLeft(iso) > 0 && getMsLeft(iso) < 3 * 24 * 60 * 60 * 1000
+}
+
 export default function SubscriptionBadge({ user, onRenew }: Props) {
   const [open, setOpen] = useState(false)
+  const [countdown, setCountdown] = useState("")
+
+  useEffect(() => {
+    if (!user.subscriptionEndAt) return
+    if (!shouldShowCountdown(user.subscriptionEndAt)) return
+
+    const tick = () => {
+      const ms = getMsLeft(user.subscriptionEndAt!)
+      setCountdown(formatCountdown(ms))
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [user.subscriptionEndAt])
 
   if (user.status !== "broker" || !user.subscriptionEndAt) return null
 
   const daysLeft = getDaysLeft(user.subscriptionEndAt)
   const isUrgent = daysLeft <= 4
   const isExpired = daysLeft <= 0
+  const showCountdown = shouldShowCountdown(user.subscriptionEndAt)
 
   const badgeColor = isExpired
     ? "bg-red-500/15 border-red-500/30 text-red-400 hover:bg-red-500/25"
@@ -39,6 +72,10 @@ export default function SubscriptionBadge({ user, onRenew }: Props) {
 
   const dotColor = isExpired ? "bg-red-400" : isUrgent ? "bg-amber-400" : "bg-blue-400"
 
+  const badgeLabel = showCountdown && countdown
+    ? `Клуб · ${countdown}`
+    : `Клуб · до ${formatShort(user.subscriptionEndAt)}`
+
   return (
     <div className="relative">
       <button
@@ -46,7 +83,7 @@ export default function SubscriptionBadge({ user, onRenew }: Props) {
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${badgeColor}`}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
-        Клуб · до {formatShort(user.subscriptionEndAt)}
+        {badgeLabel}
       </button>
 
       {open && (
@@ -80,7 +117,12 @@ export default function SubscriptionBadge({ user, onRenew }: Props) {
                 <p className="text-white font-semibold text-sm">
                   {formatDate(user.subscriptionEndAt)}
                 </p>
-                {!isExpired && (
+                {!isExpired && showCountdown && countdown && (
+                  <p className={`text-xs mt-1 font-mono ${isUrgent ? "text-amber-400" : "text-blue-400"}`}>
+                    Осталось: {countdown}
+                  </p>
+                )}
+                {!isExpired && !showCountdown && (
                   <p className={`text-xs mt-1 ${isUrgent ? "text-amber-400" : "text-gray-500"}`}>
                     {daysLeft === 1 ? "Остался 1 день" : `Осталось ${daysLeft} дн.`}
                   </p>
