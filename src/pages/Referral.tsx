@@ -68,38 +68,48 @@ export default function Referral() {
       <Header />
 
       {/* Hero */}
-      <section className="flex flex-col items-center justify-center text-center px-6 pt-20 pb-16">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#262626] bg-[#141414] px-4 py-1.5 text-sm text-gray-300 mb-8">
-          <Icon name="Gift" className="h-4 w-4 text-violet-400" />
-          Партнёрская программа
+      <section className="relative overflow-hidden flex flex-col items-center justify-center text-center px-6 pt-20 pb-16">
+        <div className="absolute inset-0 pointer-events-none">
+          <img
+            src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/1ea4abe3-37e5-4db8-9984-0a8f76563081.jpg"
+            alt=""
+            className="w-full h-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/50 via-[#0a0a0a]/20 to-[#0a0a0a]" />
         </div>
+        <div className="relative flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#262626] bg-[#141414] px-4 py-1.5 text-sm text-gray-300 mb-8">
+            <Icon name="Gift" className="h-4 w-4 text-violet-400" />
+            Партнёрская программа
+          </div>
 
-        <h1 className="text-5xl md:text-6xl font-bold text-white max-w-3xl leading-tight mb-6">
-          Зарабатывайте вместе с нами
-        </h1>
+          <h1 className="text-5xl md:text-6xl font-bold text-white max-w-3xl leading-tight mb-6">
+            Зарабатывайте вместе с нами
+          </h1>
 
-        <p className="text-gray-400 text-lg max-w-xl mb-10 leading-relaxed">
-          Приглашайте профессионалов рынка недвижимости и получайте
-          растущий процент от их платежей. 5 уровней роста — от бонусов до
-          пассивного дохода со второй линии.
-        </p>
+          <p className="text-gray-400 text-lg max-w-xl mb-10 leading-relaxed">
+            Приглашайте профессионалов рынка недвижимости и получайте
+            растущий процент от их платежей. 5 уровней роста — от бонусов до
+            пассивного дохода со второй линии.
+          </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <GlowButton
-            onClick={() => setRegisterOpen(true)}
-            className="rounded-full px-8 py-3 text-base"
-          >
-            Стать партнёром
-            <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
-          </GlowButton>
-          <Button
-            onClick={scrollToCalc}
-            variant="outline"
-            className="rounded-full border-[#262626] bg-[#141414] text-white hover:bg-[#1f1f1f] px-8 py-3 text-base font-medium"
-          >
-            Рассчитать доход
-            <Icon name="Calculator" className="h-4 w-4 ml-2" />
-          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <GlowButton
+              onClick={() => setRegisterOpen(true)}
+              className="rounded-full px-8 py-3 text-base"
+            >
+              Стать партнёром
+              <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
+            </GlowButton>
+            <Button
+              onClick={scrollToCalc}
+              variant="outline"
+              className="rounded-full border-[#262626] bg-[#141414] text-white hover:bg-[#1f1f1f] px-8 py-3 text-base font-medium"
+            >
+              Рассчитать доход
+              <Icon name="Calculator" className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
         </div>
       </section>
 
