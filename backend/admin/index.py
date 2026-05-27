@@ -14,7 +14,7 @@ import psycopg2
 CORS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token",
+    "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token, X-User-Id",
 }
 
 SUBSCRIPTION_CHECKER_URL = "https://functions.poehali.dev/34cd0693-d330-408d-a6fe-1bdce31950d8"
