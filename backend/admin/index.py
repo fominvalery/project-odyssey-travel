@@ -6,6 +6,9 @@
 import os
 import json
 import urllib.request
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import psycopg2
 
 CORS = {
@@ -16,9 +19,70 @@ CORS = {
 
 SUBSCRIPTION_CHECKER_URL = "https://functions.poehali.dev/34cd0693-d330-408d-a6fe-1bdce31950d8"
 
+# Фильтры аудитории → SQL WHERE условия
+AUDIENCE_FILTERS = {
+    "all":      "TRUE",
+    "broker":   "status = 'broker'",
+    "agency":   "status = 'agency'",
+    "basic":    "plan = 'basic' OR plan IS NULL",
+    "new":      "created_at >= NOW() - INTERVAL '7 days'",
+    "inactive": "last_login_at < NOW() - INTERVAL '30 days' OR last_login_at IS NULL",
+}
+
 
 def resp(status, body):
     return {"statusCode": status, "headers": CORS, "body": json.dumps(body, default=str)}
+
+
+def send_campaign_email(to_email: str, subject: str, body_text: str) -> bool:
+    smtp_user = os.environ.get("SMTP_USER", "")
+    smtp_password = os.environ.get("SMTP_PASSWORD", "")
+    if not smtp_user or not smtp_password:
+        return False
+    html = f"""<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+        <tr>
+          <td style="background:#111;border:1px solid #1f1f1f;border-radius:16px 16px 0 0;padding:28px 40px;text-align:center;">
+            <span style="font-size:20px;font-weight:700;color:#fff;">Кабинет<span style="color:#3b82f6;">&#8209;24</span></span>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#141414;border-left:1px solid #1f1f1f;border-right:1px solid #1f1f1f;padding:40px;">
+            <div style="font-size:15px;color:#aaa;line-height:1.8;white-space:pre-wrap;">{body_text}</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#111;border:1px solid #1f1f1f;border-top:none;border-radius:0 0 16px 16px;padding:20px 40px;text-align:center;">
+            <p style="margin:0;font-size:12px;color:#555;">Кабинет-24 · Автоматическая рассылка</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+    try:
+        smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+        smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+        smtp_from = os.environ.get("SMTP_FROM", smtp_user)
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = smtp_from
+        msg["To"] = to_email
+        msg.attach(MIMEText(body_text, "plain", "utf-8"))
+        msg.attach(MIMEText(html, "html", "utf-8"))
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(smtp_from, to_email, msg.as_string())
+        return True
+    except Exception:
+        return False
 
 
 def handler(event: dict, context) -> dict:
@@ -190,6 +254,96 @@ def handler(event: dict, context) -> dict:
                 except Exception as e:
                     return resp(500, {"error": f"cron failed: {str(e)}"})
 
+            # ─── Создать кампанию ───
+            if action == "create_campaign":
+                title = body.get("title", "").strip()
+                channel = body.get("channel", "email")
+                audience = body.get("audience", "all")
+                subject = body.get("subject", "").strip()
+                campaign_body = body.get("body", "").strip()
+                scheduled_at = body.get("scheduled_at") or None
+                if not title or not campaign_body:
+                    return resp(400, {"error": "title и body обязательны"})
+
+                aud_filter = AUDIENCE_FILTERS.get(audience, "TRUE")
+                cur.execute(f"SELECT COUNT(*) FROM {schema}.users WHERE email_verified=TRUE AND ({aud_filter})")
+                recipients = cur.fetchone()[0]
+
+                cur.execute(f"""
+                    INSERT INTO {schema}.campaigns
+                        (title, channel, audience, subject, body, scheduled_at, status, recipients)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'draft', %s)
+                    RETURNING id
+                """, (title, channel, audience, subject, campaign_body, scheduled_at, recipients))
+                new_id = str(cur.fetchone()[0])
+                conn.commit()
+                return resp(201, {"ok": True, "id": new_id, "recipients": recipients})
+
+            # ─── Удалить кампанию ───
+            if action == "delete_campaign":
+                campaign_id = body.get("campaign_id")
+                if not campaign_id:
+                    return resp(400, {"error": "campaign_id required"})
+                cur.execute(f"DELETE FROM {schema}.campaigns WHERE id=%s", (campaign_id,))
+                conn.commit()
+                return resp(200, {"ok": True})
+
+            # ─── Отправить кампанию ───
+            if action == "send_campaign":
+                campaign_id = body.get("campaign_id")
+                if not campaign_id:
+                    return resp(400, {"error": "campaign_id required"})
+
+                cur.execute(f"""
+                    SELECT id, title, channel, audience, subject, body, status
+                    FROM {schema}.campaigns WHERE id=%s
+                """, (campaign_id,))
+                camp = cur.fetchone()
+                if not camp:
+                    return resp(404, {"error": "Кампания не найдена"})
+                c_id, c_title, c_channel, c_audience, c_subject, c_body, c_status = camp
+                if c_status == "sent":
+                    return resp(400, {"error": "Кампания уже отправлена"})
+
+                # Обновляем статус на "sending"
+                cur.execute(f"UPDATE {schema}.campaigns SET status='sending', updated_at=NOW() WHERE id=%s", (campaign_id,))
+                conn.commit()
+
+                # Получаем получателей
+                aud_filter = AUDIENCE_FILTERS.get(c_audience, "TRUE")
+                cur.execute(f"""
+                    SELECT email, name FROM {schema}.users
+                    WHERE email_verified=TRUE AND is_superadmin=FALSE AND ({aud_filter})
+                """)
+                recipients_list = cur.fetchall()
+
+                email_subject = c_subject or c_title
+                sent_count = 0
+                failed_count = 0
+
+                if c_channel in ("email", "both"):
+                    for r_email, r_name in recipients_list:
+                        ok = send_campaign_email(r_email, email_subject, c_body)
+                        if ok:
+                            sent_count += 1
+                        else:
+                            failed_count += 1
+
+                # Финальное обновление кампании
+                cur.execute(f"""
+                    UPDATE {schema}.campaigns
+                    SET status='sent', sent_at=NOW(), recipients=%s, updated_at=NOW()
+                    WHERE id=%s
+                """, (sent_count, campaign_id))
+                conn.commit()
+
+                return resp(200, {
+                    "ok": True,
+                    "sent": sent_count,
+                    "failed": failed_count,
+                    "total": len(recipients_list),
+                })
+
             return resp(400, {"error": f"Unknown action: {action}"})
 
         # ─────────── GET ───────────
@@ -241,6 +395,43 @@ def handler(event: dict, context) -> dict:
             ]
 
             return resp(200, {"summary": summary, "objects": objects})
+
+        # GET /?action=campaigns — список кампаний
+        if method == "GET" and qs.get("action") == "campaigns":
+            cur.execute(f"""
+                SELECT id, title, channel, audience, subject, body, status,
+                       recipients, opens, clicks, sent_at, scheduled_at, created_at
+                FROM {schema}.campaigns
+                ORDER BY created_at DESC
+                LIMIT 100
+            """)
+            campaigns = [
+                {
+                    "id": str(r[0]),
+                    "title": r[1],
+                    "channel": r[2],
+                    "audience": r[3],
+                    "subject": r[4] or "",
+                    "body": r[5] or "",
+                    "status": r[6],
+                    "recipients": r[7] or 0,
+                    "opens": r[8] or 0,
+                    "clicks": r[9] or 0,
+                    "sent_at": r[10].strftime("%d.%m.%Y") if r[10] else None,
+                    "scheduled_at": r[11].isoformat() if r[11] else None,
+                    "created_at": r[12].isoformat() if r[12] else None,
+                }
+                for r in cur.fetchall()
+            ]
+            return resp(200, {"campaigns": campaigns})
+
+        # GET /?action=audience_count — количество по сегменту
+        if method == "GET" and qs.get("action") == "audience_count":
+            counts = {}
+            for aud_id, aud_filter in AUDIENCE_FILTERS.items():
+                cur.execute(f"SELECT COUNT(*) FROM {schema}.users WHERE email_verified=TRUE AND ({aud_filter})")
+                counts[aud_id] = cur.fetchone()[0]
+            return resp(200, {"counts": counts})
 
         # GET /users — список всех пользователей (старый функционал)
         cur.execute(f"""
