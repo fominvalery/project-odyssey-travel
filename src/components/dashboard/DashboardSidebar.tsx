@@ -249,6 +249,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
                 { id: "referral",  label: "Рефералы",   icon: "Gift",            action: "section" },
                 { id: "profile",   label: "Профиль",    icon: "User",            action: "section" },
                 { id: "marketplace", label: "Маркетплейс", icon: "Store",        action: "navigate" },
+                { id: "projects",  label: "База/Проекты", icon: "FolderOpen",   action: "navigate" },
                 { id: "support",   label: "Поддержка",  icon: "Headphones",      action: "section" },
               ]
           ).map((item) => {
