@@ -268,7 +268,7 @@ export default function AdminPanel() {
         {section === "content" && <AdminContent />}
 
         {/* Маркетинг */}
-        {section === "marketing" && <AdminMarketing totalUsers={users.length} />}
+        {section === "marketing" && <AdminMarketing totalUsers={users.length} actorId={user?.id || ""} />}
 
         {/* Пользователи */}
         {section === "users" && (

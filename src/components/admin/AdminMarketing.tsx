@@ -58,7 +58,7 @@ interface Campaign {
   scheduled_at: string | null
 }
 
-export default function AdminMarketing({ totalUsers }: { totalUsers: number }) {
+export default function AdminMarketing({ totalUsers, actorId }: { totalUsers: number; actorId: string }) {
   const [tab, setTab] = useState<MktTab>("campaigns")
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,7 +69,8 @@ export default function AdminMarketing({ totalUsers }: { totalUsers: number }) {
   const [sending, setSending] = useState<string | null>(null)
   const [error, setError] = useState("")
 
-  const headers = { "Content-Type": "application/json", "X-Admin-Token": "k24admin" }
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (actorId) headers["X-User-Id"] = actorId
 
   const loadCampaigns = useCallback(async () => {
     setLoading(true)
