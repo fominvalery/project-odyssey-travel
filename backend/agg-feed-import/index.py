@@ -113,7 +113,6 @@ def parse_yrl(root):
 def parse_cian(root):
     """Парсим формат Циан"""
     offers = []
-    ns = {"c": ""}
     for offer in root.iter("object"):
         title = (offer.findtext("name") or offer.findtext("title") or "").strip()
         if not title:
@@ -128,6 +127,37 @@ def parse_cian(root):
             "price": safe_float(offer.findtext("price") or ""),
             "area": safe_float(offer.findtext("area") or offer.findtext("totalArea") or ""),
             "description": offer.findtext("description") or "",
+            "photos": photos[:20],
+        })
+    return offers
+
+
+def parse_sminex(root):
+    """Парсим формат Sminex/Циан CamelCase (feed > object > ExternalId, PropertyType, Address, Photos)"""
+    offers = []
+    for obj in root.iter("object"):
+        ext_id = obj.findtext("ExternalId") or ""
+        address = (obj.findtext("Address") or "").strip()
+        prop_type = obj.findtext("PropertyType") or ""
+        description = (obj.findtext("Description") or "").strip()
+        title = address or description or ext_id or prop_type
+        if not title:
+            continue
+        price_el = obj.find(".//Price")
+        price = safe_float(price_el.text if price_el is not None else "")
+        area_el = obj.find(".//TotalArea") or obj.find(".//Area") or obj.find(".//SquareTotal")
+        area = safe_float(area_el.text if area_el is not None else "")
+        photos = [el.text.strip() for el in obj.findall(".//Photos/PhotoSchema/FullUrl") if el.text]
+        photos += [el.text.strip() for el in obj.findall(".//LayoutPhoto/FullUrl") if el.text]
+        city = obj.findtext("City") or obj.findtext("Town") or ""
+        offers.append({
+            "title": title,
+            "category": normalize_category(prop_type),
+            "city": city,
+            "address": address,
+            "price": price,
+            "area": area,
+            "description": description,
             "photos": photos[:20],
         })
     return offers
@@ -162,6 +192,10 @@ def detect_and_parse(root) -> list:
     if root.find(".//Ad") is not None:
         return parse_avito(root)
     if root.find(".//object") is not None:
+        # Sminex/CamelCase формат: есть ExternalId или PropertyType
+        first_obj = root.find(".//object")
+        if first_obj is not None and (first_obj.find("ExternalId") is not None or first_obj.find("PropertyType") is not None):
+            return parse_sminex(root)
         return parse_cian(root)
     # Generic fallback — ищем любые item/offer/object/ad
     for tag_name in ("offer", "item", "Ad", "object", "listing"):
