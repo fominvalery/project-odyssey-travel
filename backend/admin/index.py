@@ -5,11 +5,15 @@
 """
 import os
 import json
+import logging
 import urllib.request
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import psycopg2
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 CORS = {
     "Access-Control-Allow-Origin": "*",
@@ -68,17 +72,21 @@ def send_campaign_bulk(recipients: list, subject: str, body_text: str) -> tuple:
     smtp_user = os.environ.get("SMTP_USER", "")
     smtp_password = os.environ.get("SMTP_PASSWORD", "")
     if not smtp_user or not smtp_password:
+        logger.error("[CAMPAIGN] SMTP не настроен")
         return 0, len(recipients)
     smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.environ.get("SMTP_PORT", "587"))
     smtp_from = os.environ.get("SMTP_FROM", smtp_user)
+    logger.info(f"[CAMPAIGN] Старт рассылки: {len(recipients)} получателей, host={smtp_host}:{smtp_port}")
     html = build_email_html(body_text)
     sent = 0
     failed = 0
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+        logger.info("[CAMPAIGN] Подключение к SMTP...")
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
+            logger.info("[CAMPAIGN] SMTP подключён, начинаю отправку")
             for r_email, r_name in recipients:
                 try:
                     msg = MIMEMultipart("alternative")
@@ -89,10 +97,14 @@ def send_campaign_bulk(recipients: list, subject: str, body_text: str) -> tuple:
                     msg.attach(MIMEText(html, "html", "utf-8"))
                     server.sendmail(smtp_from, r_email, msg.as_string())
                     sent += 1
-                except Exception:
+                    logger.info(f"[CAMPAIGN] OK -> {r_email}")
+                except Exception as e:
                     failed += 1
-    except Exception:
+                    logger.error(f"[CAMPAIGN] FAIL -> {r_email}: {e}")
+    except Exception as e:
+        logger.error(f"[CAMPAIGN] SMTP соединение упало: {type(e).__name__}: {e}")
         failed += len(recipients)
+    logger.info(f"[CAMPAIGN] Итог: sent={sent}, failed={failed}")
     return sent, failed
 
 
