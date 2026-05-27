@@ -42,6 +42,8 @@ def handler(event: dict, context) -> dict:
         if status:
             where.append("status = %s")
             args.append(status)
+        else:
+            where.append("status != 'hidden'")
         if category:
             where.append("category = %s")
             args.append(category)
