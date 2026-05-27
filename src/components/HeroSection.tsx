@@ -20,7 +20,7 @@ export function HeroSection() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/50 via-[#0a0a0a]/20 to-[#0a0a0a]" />
       </div>
-      <div className="relative">
+      <div className="relative flex flex-col items-center text-center">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] py-2 text-sm px-2">
           <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-400">НОВИНКА</span>
           <span className="text-gray-300">Недвижимость с торгов — эксклюзивные объекты</span>

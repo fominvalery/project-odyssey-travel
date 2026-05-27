@@ -77,7 +77,7 @@ export default function Referral() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/50 via-[#0a0a0a]/20 to-[#0a0a0a]" />
         </div>
-        <div className="relative flex flex-col items-center">
+        <div className="relative flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#262626] bg-[#141414] px-4 py-1.5 text-sm text-gray-300 mb-8">
             <Icon name="Gift" className="h-4 w-4 text-violet-400" />
             Партнёрская программа
