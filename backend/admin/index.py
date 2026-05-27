@@ -34,12 +34,8 @@ def resp(status, body):
     return {"statusCode": status, "headers": CORS, "body": json.dumps(body, default=str)}
 
 
-def send_campaign_email(to_email: str, subject: str, body_text: str) -> bool:
-    smtp_user = os.environ.get("SMTP_USER", "")
-    smtp_password = os.environ.get("SMTP_PASSWORD", "")
-    if not smtp_user or not smtp_password:
-        return False
-    html = f"""<!DOCTYPE html>
+def build_email_html(body_text: str) -> str:
+    return f"""<!DOCTYPE html>
 <html lang="ru">
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:'Segoe UI',Arial,sans-serif;">
@@ -66,23 +62,38 @@ def send_campaign_email(to_email: str, subject: str, body_text: str) -> bool:
   </table>
 </body>
 </html>"""
+
+
+def send_campaign_bulk(recipients: list, subject: str, body_text: str) -> tuple:
+    smtp_user = os.environ.get("SMTP_USER", "")
+    smtp_password = os.environ.get("SMTP_PASSWORD", "")
+    if not smtp_user or not smtp_password:
+        return 0, len(recipients)
+    smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_from = os.environ.get("SMTP_FROM", smtp_user)
+    html = build_email_html(body_text)
+    sent = 0
+    failed = 0
     try:
-        smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
-        smtp_port = int(os.environ.get("SMTP_PORT", "587"))
-        smtp_from = os.environ.get("SMTP_FROM", smtp_user)
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = smtp_from
-        msg["To"] = to_email
-        msg.attach(MIMEText(body_text, "plain", "utf-8"))
-        msg.attach(MIMEText(html, "html", "utf-8"))
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
-            server.sendmail(smtp_from, to_email, msg.as_string())
-        return True
+            for r_email, r_name in recipients:
+                try:
+                    msg = MIMEMultipart("alternative")
+                    msg["Subject"] = subject
+                    msg["From"] = smtp_from
+                    msg["To"] = r_email
+                    msg.attach(MIMEText(body_text, "plain", "utf-8"))
+                    msg.attach(MIMEText(html, "html", "utf-8"))
+                    server.sendmail(smtp_from, r_email, msg.as_string())
+                    sent += 1
+                except Exception:
+                    failed += 1
     except Exception:
-        return False
+        failed += len(recipients)
+    return sent, failed
 
 
 def handler(event: dict, context) -> dict:
@@ -322,12 +333,7 @@ def handler(event: dict, context) -> dict:
                 failed_count = 0
 
                 if c_channel in ("email", "both"):
-                    for r_email, r_name in recipients_list:
-                        ok = send_campaign_email(r_email, email_subject, c_body)
-                        if ok:
-                            sent_count += 1
-                        else:
-                            failed_count += 1
+                    sent_count, failed_count = send_campaign_bulk(recipients_list, email_subject, c_body)
 
                 # Финальное обновление кампании
                 cur.execute(f"""
