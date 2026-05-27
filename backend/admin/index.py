@@ -328,7 +328,7 @@ def handler(event: dict, context) -> dict:
                 if c_status == "sent":
                     return resp(400, {"error": "Кампания уже отправлена"})
 
-                # Обновляем статус на "sending"
+                # Сбрасываем зависший статус sending/failed → и переводим в sending
                 cur.execute(f"UPDATE {schema}.campaigns SET status='sending', updated_at=NOW() WHERE id=%s", (campaign_id,))
                 conn.commit()
 
@@ -344,16 +344,22 @@ def handler(event: dict, context) -> dict:
                 sent_count = 0
                 failed_count = 0
 
-                if c_channel in ("email", "both"):
-                    sent_count, failed_count = send_campaign_bulk(recipients_list, email_subject, c_body)
+                try:
+                    if c_channel in ("email", "both"):
+                        sent_count, failed_count = send_campaign_bulk(recipients_list, email_subject, c_body)
 
-                # Финальное обновление кампании
-                cur.execute(f"""
-                    UPDATE {schema}.campaigns
-                    SET status='sent', sent_at=NOW(), recipients=%s, updated_at=NOW()
-                    WHERE id=%s
-                """, (sent_count, campaign_id))
-                conn.commit()
+                    final_status = "sent" if failed_count == 0 or sent_count > 0 else "failed"
+                    cur.execute(f"""
+                        UPDATE {schema}.campaigns
+                        SET status=%s, sent_at=NOW(), recipients=%s, updated_at=NOW()
+                        WHERE id=%s
+                    """, (final_status, sent_count, campaign_id))
+                    conn.commit()
+                except Exception as e:
+                    logger.error(f"[CAMPAIGN] Критическая ошибка при отправке: {e}")
+                    cur.execute(f"UPDATE {schema}.campaigns SET status='failed', updated_at=NOW() WHERE id=%s", (campaign_id,))
+                    conn.commit()
+                    return resp(500, {"error": f"Ошибка отправки: {str(e)}"})
 
                 return resp(200, {
                     "ok": True,

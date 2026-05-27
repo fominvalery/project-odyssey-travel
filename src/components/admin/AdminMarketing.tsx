@@ -265,7 +265,7 @@ export default function AdminMarketing({ totalUsers, actorId }: { totalUsers: nu
                         </div>
                       )}
 
-                      {(c.status === "draft" || c.status === "scheduled") && (
+                      {(c.status === "draft" || c.status === "scheduled" || c.status === "sending" || c.status === "failed") && (
                         <div className="flex gap-2">
                           <Button
                             onClick={() => sendNow(c.id)}
@@ -275,6 +275,8 @@ export default function AdminMarketing({ totalUsers, actorId }: { totalUsers: nu
                           >
                             {sending === c.id ? (
                               <><Icon name="Loader2" className="h-3.5 w-3.5 mr-1.5 animate-spin" />Отправка...</>
+                            ) : c.status === "sending" || c.status === "failed" ? (
+                              <><Icon name="RefreshCw" className="h-3.5 w-3.5 mr-1.5" />Отправить заново</>
                             ) : (
                               <><Icon name="Send" className="h-3.5 w-3.5 mr-1.5" />Отправить сейчас</>
                             )}
