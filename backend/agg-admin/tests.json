@@ -7,11 +7,11 @@
       "expectedStatus": 200
     },
     {
-      "name": "Создание предложения",
+      "name": "Проверка метода POST без тела — ожидаем 400",
       "method": "POST",
       "path": "/",
-      "body": {"title": "Test office", "category": "commercial", "city": "Moscow"},
-      "expectedStatus": 200
+      "body": {},
+      "expectedStatus": 400
     }
   ]
 }
