@@ -21,11 +21,12 @@ export const WITHDRAWAL_STATUS_COLORS: Record<string, string> = {
 }
 
 export const LEVELS = [
-  { name: "Друг",      color: "blue",    desc: "1–2 реф. • 5%" },
-  { name: "Партнёр",   color: "emerald", desc: "3–9 реф. • 7%" },
-  { name: "Бизнес",    color: "violet",  desc: "10–29 реф. • 7%" },
-  { name: "Амбасадор", color: "amber",   desc: "30–99 реф. • 10%" },
-  { name: "Адвокат",   color: "rose",    desc: "100+ реф. • 10%+2%" },
+  { name: "Друг",      color: "blue",    desc: "" },
+  { name: "Партнёр",   color: "emerald", desc: "" },
+  { name: "Бизнес",    color: "violet",  desc: "" },
+  { name: "Лидер",     color: "amber",   desc: "" },
+  { name: "Амбасадор", color: "rose",    desc: "" },
+  { name: "Адвокат",   color: "rose",    desc: "" },
 ]
 
 export type MainTab = "users" | "withdrawals" | "expiry"
