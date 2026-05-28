@@ -41,7 +41,9 @@ def handle(event: dict, origin: str = '*') -> dict:
     execute(f"DELETE FROM {S}email_verification_tokens WHERE user_id = {escape(target_id)}")
     execute(f"DELETE FROM {S}password_reset_tokens WHERE user_id = {escape(target_id)}")
     execute(f"DELETE FROM {S}referral_bonuses WHERE referrer_id = {escape(target_id)} OR referred_id = {escape(target_id)}")
-    execute(f"DELETE FROM {S}referral_clicks WHERE referrer_id = {escape(target_id)}")
+    ref_row = query_one(f"SELECT ref_code FROM {S}referrals WHERE referrer_id = {escape(target_id)} LIMIT 1")
+    if ref_row and ref_row[0]:
+        execute(f"DELETE FROM {S}referral_clicks WHERE ref_code = {escape(ref_row[0])}")
     execute(f"DELETE FROM {S}referrals WHERE referrer_id = {escape(target_id)} OR referred_id = {escape(target_id)}")
     execute(f"DELETE FROM {S}notifications WHERE user_id = {escape(target_id)}")
     execute(f"DELETE FROM {S}withdrawal_requests WHERE user_id = {escape(target_id)}")
