@@ -131,13 +131,15 @@ export default function Training() {
                     className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#161616] transition-colors"
                   >
                     <span className="text-sm font-medium text-white pr-4">{a.title}</span>
-                    <Icon name={isOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-gray-400 shrink-0" />
+                    <Icon name="ChevronDown" className={`h-4 w-4 text-gray-400 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
                   </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-sm text-gray-400 leading-relaxed border-t border-[#1f1f1f]">
-                      {a.body}
+                  <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                    <div className="overflow-hidden">
+                      <div className="px-5 pb-5 pt-3 text-sm text-gray-400 leading-relaxed border-t border-[#1f1f1f]">
+                        {a.body}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               )
             })}
