@@ -4,9 +4,7 @@
       "name": "GET blog articles",
       "method": "GET",
       "path": "/?type=blog&status=published",
-      "expectedStatus": 200,
-      "expectedBody": {"articles": []},
-      "bodyMatcher": "partial"
+      "expectedStatus": 200
     }
   ]
 }

@@ -45,6 +45,7 @@ interface Article {
   photos: string[]
   videos: string[]
   created_at: string
+  sort_order: number
 }
 
 const EMPTY_FORM = {
@@ -178,6 +179,16 @@ export default function AdminContent() {
     load()
   }
 
+  const reorderFaq = async (id: string, direction: "up" | "down") => {
+    if (!user?.id) return
+    await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-User-Id": user.id },
+      body: JSON.stringify({ action: "reorder", id, direction }),
+    })
+    load()
+  }
+
   const filtered = articles.filter(a => {
     const matchSearch = !search || a.title.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === "all" || a.status === statusFilter
@@ -279,6 +290,16 @@ export default function AdminContent() {
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
+                      {a.category === "faq" && (
+                        <>
+                          <button onClick={() => reorderFaq(a.id, "up")} className="p-1.5 text-gray-600 hover:text-amber-400 transition-colors" title="Выше">
+                            <Icon name="ChevronUp" className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => reorderFaq(a.id, "down")} className="p-1.5 text-gray-600 hover:text-amber-400 transition-colors" title="Ниже">
+                            <Icon name="ChevronDown" className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
                       <button onClick={() => openEdit(a)} className="p-1.5 text-gray-600 hover:text-white transition-colors">
                         <Icon name="Pencil" className="h-4 w-4" />
                       </button>
