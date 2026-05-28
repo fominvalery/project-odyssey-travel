@@ -331,36 +331,38 @@ export default function AdminContent() {
               </div>
             </div>
 
-            {/* Заголовок */}
+            {/* Заголовок / Вопрос */}
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Заголовок *</label>
+              <label className="text-xs text-gray-500 mb-1 block">{form.category === "faq" ? "Вопрос *" : "Заголовок *"}</label>
               <Input
-                placeholder="Введите заголовок..."
+                placeholder={form.category === "faq" ? "Введите вопрос..." : "Введите заголовок..."}
                 value={form.title}
                 onChange={e => patch({ title: e.target.value })}
                 className="bg-[#0d0d0d] border-[#2a2a2a] text-white placeholder:text-gray-600"
               />
             </div>
 
-            {/* Краткое описание */}
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Краткое описание</label>
-              <Input
-                placeholder="Одна строка — анонс материала..."
-                value={form.preview}
-                onChange={e => patch({ preview: e.target.value })}
-                className="bg-[#0d0d0d] border-[#2a2a2a] text-white placeholder:text-gray-600"
-              />
-            </div>
+            {/* Краткое описание — скрываем для FAQ */}
+            {form.category !== "faq" && (
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Краткое описание</label>
+                <Input
+                  placeholder="Одна строка — анонс материала..."
+                  value={form.preview}
+                  onChange={e => patch({ preview: e.target.value })}
+                  className="bg-[#0d0d0d] border-[#2a2a2a] text-white placeholder:text-gray-600"
+                />
+              </div>
+            )}
 
-            {/* Текст */}
+            {/* Текст / Ответ */}
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Текст материала</label>
+              <label className="text-xs text-gray-500 mb-1 block">{form.category === "faq" ? "Ответ *" : "Текст материала"}</label>
               <Textarea
-                placeholder="Полный текст статьи..."
+                placeholder={form.category === "faq" ? "Введите ответ на вопрос..." : "Полный текст статьи..."}
                 value={form.body}
                 onChange={e => patch({ body: e.target.value })}
-                rows={6}
+                rows={form.category === "faq" ? 4 : 6}
                 className="bg-[#0d0d0d] border-[#2a2a2a] text-white placeholder:text-gray-600 resize-none"
               />
             </div>

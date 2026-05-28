@@ -46,6 +46,7 @@ export default function Training() {
   const [catFilter, setCatFilter] = useState("")
   const [selected, setSelected] = useState<Article | null>(null)
   const [photoIdx, setPhotoIdx] = useState(0)
+  const [openFaq, setOpenFaq] = useState<string | null>(null)
 
   const prevPhoto = useCallback(() => setPhotoIdx(i => Math.max(0, i - 1)), [])
   const nextPhoto = useCallback((max: number) => setPhotoIdx(i => Math.min(max - 1, i + 1)), [])
@@ -117,6 +118,29 @@ export default function Training() {
             <Icon name="GraduationCap" className="h-12 w-12 mx-auto mb-4 opacity-30" />
             <p className="text-lg">Материалов пока нет</p>
             <p className="text-sm mt-2">Скоро здесь появятся инструкции и видеоуроки</p>
+          </div>
+        ) : catFilter === "faq" || (!catFilter && filtered.every(a => a.category === "faq")) ? (
+          /* FAQ — аккордеон */
+          <div className="max-w-3xl mx-auto space-y-2">
+            {filtered.map(a => {
+              const isOpen = openFaq === a.id
+              return (
+                <div key={a.id} className="border border-[#2a2a2a] rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : a.id)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#161616] transition-colors"
+                  >
+                    <span className="text-sm font-medium text-white pr-4">{a.title}</span>
+                    <Icon name={isOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-gray-400 shrink-0" />
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-1 text-sm text-gray-400 leading-relaxed border-t border-[#1f1f1f]">
+                      {a.body}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
