@@ -115,7 +115,7 @@ export default function SuperAdminUsersTab(props: Props) {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => (
-                  <tr key={u.id} className="border-t border-[#1f1f1f] hover:bg-[#111]">
+                  <tr key={u.id} className="border-t border-[#1f1f1f] hover:bg-[#111] group">
 
                     {/* Пользователь */}
                     <td className="px-4 py-3">
