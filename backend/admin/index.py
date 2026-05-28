@@ -57,6 +57,11 @@ def build_email_html(body_text: str) -> str:
           </td>
         </tr>
         <tr>
+          <td style="background:#141414;border-left:1px solid #1f1f1f;border-right:1px solid #1f1f1f;padding:0 40px 32px;text-align:center;">
+            <a href="https://kabinet-24.ru" style="display:inline-block;background:#3b82f6;color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">Перейти на сайт</a>
+          </td>
+        </tr>
+        <tr>
           <td style="background:#111;border:1px solid #1f1f1f;border-top:none;border-radius:0 0 16px 16px;padding:20px 40px;text-align:center;">
             <p style="margin:0;font-size:12px;color:#555;">Кабинет-24 · Автоматическая рассылка</p>
           </td>
