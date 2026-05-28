@@ -1,18 +1,45 @@
 import { useState, useEffect } from "react"
 import func2url from "../../../backend/func2url.json"
-import { Offer, OfferForm, EMPTY_FORM } from "./AggOffersTypes"
+import { Offer } from "./AggOffersTypes"
 import AggOffersToolbar from "./AggOffersToolbar"
 import AggOffersTable from "./AggOffersTable"
-import AggOffersDialog from "./AggOffersDialog"
 import AddDeveloperDialog, { DeveloperForm } from "./AddDeveloperDialog"
 import AddProjectWizard from "./AddProjectWizard"
 import { AddObjectWizardBase } from "@/components/AddObjectWizardBase"
+import type { ObjectData } from "@/components/AddObjectWizard"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 
 const AGG_ADMIN_URL = (func2url as Record<string, string>)["agg-admin"]
+
+function offerToObjectData(o: Offer): ObjectData {
+  return {
+    id: o.id,
+    type: o.category,
+    subtype: o.subtype ?? "",
+    title: o.title,
+    city: o.city ?? "",
+    address: o.address ?? "",
+    price: o.price ? String(o.price) : "",
+    area: o.area ? String(o.area) : "",
+    yield: o.yield_percent ? String(o.yield_percent) : "",
+    description: o.description ?? "",
+    status: o.status === "active" ? "Активен" : o.status === "hidden" ? "Скрыт" : "Продан",
+    category: o.category,
+    published: o.status === "active",
+    photos: o.photos ?? [],
+    presentation_url: o.presentation_url ?? undefined,
+    extra_fields: {
+      ...(o.subtype ? { subtype: o.subtype } : {}),
+      ...(o.price_label ? { price_label: o.price_label } : {}),
+      ...(o.commission ? { commission: o.commission } : {}),
+      ...(o.commission_notes ? { commission_notes: o.commission_notes } : {}),
+      ...(o.region ? { region: o.region } : {}),
+    },
+  }
+}
 
 export default function AggOffersAdmin({ token }: { token: string }) {
   const [offers, setOffers] = useState<Offer[]>([])
@@ -22,8 +49,9 @@ export default function AggOffersAdmin({ token }: { token: string }) {
   const [catFilter, setCatFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
 
-  // Мастер — открывается при нажатии «Добавить объект»
+  // Визард — для добавления и редактирования
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [wizardInitial, setWizardInitial] = useState<ObjectData | undefined>(undefined)
   const [developerOpen, setDeveloperOpen] = useState(false)
   const [projectOpen, setProjectOpen] = useState(false)
   const [developerSaving, setDeveloperSaving] = useState(false)
@@ -35,13 +63,6 @@ export default function AggOffersAdmin({ token }: { token: string }) {
   const [feedResult, setFeedResult] = useState<{ imported: number; skipped: number; errors: string[] } | null>(null)
   const [feedError, setFeedError] = useState("")
 
-  // Диалог — открывается при редактировании существующего объекта
-  const [dialog, setDialog] = useState(false)
-  const [editing, setEditing] = useState<Offer | null>(null)
-  const [form, setForm] = useState<OfferForm>(EMPTY_FORM)
-  const [saving, setSaving] = useState(false)
-  const [photoInput, setPhotoInput] = useState("")
-  const [videoInput, setVideoInput] = useState("")
   const [totalFixations, setTotalFixations] = useState(0)
 
   const load = async () => {
@@ -71,8 +92,11 @@ export default function AggOffersAdmin({ token }: { token: string }) {
 
   useEffect(() => { load() }, [catFilter, statusFilter])
 
-  // «Добавить» — открывает полный мастер
-  const openNew = () => setWizardOpen(true)
+  // «Добавить» — открывает визард без initial
+  const openNew = () => { setWizardInitial(undefined); setWizardOpen(true) }
+
+  // «Редактировать» — открывает визард с данными объекта
+  const openEdit = (o: Offer) => { setWizardInitial(offerToObjectData(o)); setWizardOpen(true) }
 
   const handleFeedImport = async () => {
     if (!feedUrl.trim()) return
@@ -95,86 +119,6 @@ export default function AggOffersAdmin({ token }: { token: string }) {
     } finally {
       setFeedLoading(false)
     }
-  }
-
-  // Клик по строке таблицы — открывает быстрый диалог редактирования
-  const openEdit = (o: Offer) => {
-    setEditing(o)
-    setForm({
-      title: o.title || "",
-      category: o.category || "commercial",
-      subtype: o.subtype || "",
-      city: o.city || "",
-      region: o.region || "",
-      address: o.address || "",
-      price: o.price ? String(o.price) : "",
-      price_label: o.price_label || "",
-      area: o.area ? String(o.area) : "",
-      yield_percent: o.yield_percent ? String(o.yield_percent) : "",
-      description: o.description || "",
-      status: o.status || "active",
-      photos: o.photos || [],
-      videos: o.videos || [],
-      presentation_url: o.presentation_url || "",
-      commission: o.commission || "",
-      commission_notes: o.commission_notes || "",
-    })
-    setPhotoInput("")
-    setVideoInput("")
-    setDialog(true)
-  }
-
-  const handleSave = async () => {
-    if (!form.title.trim() || !form.category) return
-    setSaving(true)
-    const body: Record<string, unknown> = {
-      title: form.title,
-      category: form.category,
-      subtype: form.subtype || undefined,
-      city: form.city || undefined,
-      region: form.region || undefined,
-      address: form.address || undefined,
-      price: form.price ? Number(form.price) : undefined,
-      price_label: form.price_label || undefined,
-      area: form.area ? Number(form.area) : undefined,
-      yield_percent: form.yield_percent ? Number(form.yield_percent) : undefined,
-      description: form.description || undefined,
-      status: form.status,
-      photos: form.photos,
-      videos: form.videos,
-      presentation_url: form.presentation_url || undefined,
-      commission: form.commission || undefined,
-      commission_notes: form.commission_notes || undefined,
-    }
-    if (editing) body.id = editing.id
-    await fetch(AGG_ADMIN_URL, {
-      method: editing ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
-    setSaving(false)
-    setDialog(false)
-    load()
-  }
-
-  const addPhoto = () => {
-    if (!photoInput.trim()) return
-    setForm(f => ({ ...f, photos: [...f.photos, photoInput.trim()] }))
-    setPhotoInput("")
-  }
-
-  const removePhoto = (i: number) => {
-    setForm(f => ({ ...f, photos: f.photos.filter((_, idx) => idx !== i) }))
-  }
-
-  const addVideo = () => {
-    if (!videoInput.trim()) return
-    setForm(f => ({ ...f, videos: [...f.videos, videoInput.trim()] }))
-    setVideoInput("")
-  }
-
-  const removeVideo = (i: number) => {
-    setForm(f => ({ ...f, videos: f.videos.filter((_, idx) => idx !== i) }))
   }
 
   const deleteOffer = async (o: Offer) => {
@@ -241,11 +185,12 @@ export default function AggOffersAdmin({ token }: { token: string }) {
         />
       </div>
 
-      {/* Мастер добавления нового объекта */}
+      {/* Визард добавления / редактирования */}
       {wizardOpen && (
         <AddObjectWizardBase
-          onClose={() => setWizardOpen(false)}
-          onSave={() => { setWizardOpen(false); load() }}
+          onClose={() => { setWizardOpen(false); setWizardInitial(undefined) }}
+          onSave={() => { setWizardOpen(false); setWizardInitial(undefined); load() }}
+          initial={wizardInitial}
         />
       )}
 
@@ -334,24 +279,6 @@ export default function AggOffersAdmin({ token }: { token: string }) {
         </DialogContent>
       </Dialog>
 
-      {/* Быстрый диалог редактирования существующего объекта */}
-      <AggOffersDialog
-        open={dialog}
-        editing={editing}
-        form={form}
-        saving={saving}
-        photoInput={photoInput}
-        videoInput={videoInput}
-        onOpenChange={setDialog}
-        onFormChange={patch => setForm(f => ({ ...f, ...patch }))}
-        onPhotoInputChange={setPhotoInput}
-        onVideoInputChange={setVideoInput}
-        onAddPhoto={addPhoto}
-        onRemovePhoto={removePhoto}
-        onAddVideo={addVideo}
-        onRemoveVideo={removeVideo}
-        onSave={handleSave}
-      />
     </div>
   )
 }
