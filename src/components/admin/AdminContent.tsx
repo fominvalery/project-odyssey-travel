@@ -48,7 +48,7 @@ interface Article {
 }
 
 const EMPTY_FORM = {
-  title: "", category: "news", status: "draft",
+  title: "", category: "news", status: "published",
   preview: "", body: "", tags: "",
   photos: [] as string[], videos: [] as string[],
 }
