@@ -83,20 +83,20 @@ export default function Referral() {
             Партнёрская программа
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold text-white max-w-3xl leading-tight mb-6">
+          <h1 className="text-3xl md:text-6xl font-bold text-white max-w-3xl leading-tight mb-6">
             Зарабатывайте вместе с нами
           </h1>
 
-          <p className="text-gray-400 text-lg max-w-xl mb-10 leading-relaxed">
+          <p className="text-gray-400 text-base md:text-lg max-w-xl mb-8 leading-relaxed">
             Приглашайте профессионалов рынка недвижимости и получайте
             растущий процент от их платежей. 5 уровней роста — от бонусов до
             пассивного дохода со второй линии.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
             <GlowButton
               onClick={() => setRegisterOpen(true)}
-              className="rounded-full px-8 py-3 text-base"
+              className="rounded-full px-6 py-2.5 text-sm md:px-8 md:py-3 md:text-base w-full sm:w-auto"
             >
               Стать партнёром
               <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
@@ -104,7 +104,7 @@ export default function Referral() {
             <Button
               onClick={scrollToCalc}
               variant="outline"
-              className="rounded-full border-[#262626] bg-[#141414] text-white hover:bg-[#1f1f1f] px-8 py-3 text-base font-medium"
+              className="rounded-full border-[#262626] bg-[#141414] text-white hover:bg-[#1f1f1f] px-6 py-2.5 text-sm md:px-8 md:py-3 md:text-base font-medium w-full sm:w-auto"
             >
               Рассчитать доход
               <Icon name="Calculator" className="h-4 w-4 ml-2" />
