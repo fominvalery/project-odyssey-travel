@@ -124,7 +124,7 @@ export default function AggOffersTable({ offers, loading, onEdit, onAdd, onDelet
                     <span>{o.city}</span>
                   </>
                 )}
-                {o.area && (
+                {o.area && o.category !== "investment" && (
                   <span className="ml-auto text-gray-600">{o.area} м²</span>
                 )}
               </div>

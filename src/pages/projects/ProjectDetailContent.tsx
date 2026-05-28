@@ -1,5 +1,5 @@
 import Icon from "@/components/ui/icon"
-import { OfferDetail, CAT_LABEL, DEFAULT_IMG, REGULATION_KEYS } from "./ProjectDetailTypes"
+import { OfferDetail, CAT_LABEL, DEFAULT_IMG, REGULATION_KEYS, FIELD_LABELS } from "./ProjectDetailTypes"
 
 interface ProjectDetailContentProps {
   offer: OfferDetail
@@ -91,7 +91,7 @@ export function ProjectDetailContent({ offer, photos, photoIdx, onPhotoIdx }: Pr
           )}
           {charFields.map(([k, v]) => (
             <div key={k}>
-              <div className="text-xs text-gray-500 mb-0.5 capitalize">{k}</div>
+              <div className="text-xs text-gray-500 mb-0.5">{FIELD_LABELS[k] || k.replace(/_/g, " ")}</div>
               <div className="text-sm font-medium text-white">{v}</div>
             </div>
           ))}

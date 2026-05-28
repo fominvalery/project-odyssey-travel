@@ -32,6 +32,7 @@ function offerToObjectData(o: Offer): ObjectData {
     photos: o.photos ?? [],
     presentation_url: o.presentation_url ?? undefined,
     extra_fields: {
+      ...(o.extra_fields || {}),
       ...(o.subtype ? { subtype: o.subtype } : {}),
       ...(o.price_label ? { price_label: o.price_label } : {}),
       ...(o.commission ? { commission: o.commission } : {}),

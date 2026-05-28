@@ -41,6 +41,7 @@ export interface Offer {
   presentation_url?: string
   commission?: string
   commission_notes?: string
+  extra_fields?: Record<string, string>
   created_at?: string
 }
 

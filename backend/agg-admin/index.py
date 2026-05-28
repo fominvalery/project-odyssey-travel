@@ -49,11 +49,11 @@ def handler(event: dict, context) -> dict:
             args.append(category)
 
         cur.execute(
-            f"SELECT id, title, category, subtype, city, region, address, price, price_label, area, yield_percent, description, status, photos, videos, presentation_url, commission, commission_notes, created_at FROM agg_offers WHERE {' AND '.join(where)} ORDER BY created_at DESC LIMIT %s OFFSET %s",
+            f"SELECT id, title, category, subtype, city, region, address, price, price_label, area, yield_percent, description, status, photos, videos, presentation_url, commission, commission_notes, extra_fields, created_at FROM agg_offers WHERE {' AND '.join(where)} ORDER BY created_at DESC LIMIT %s OFFSET %s",
             args + [limit, offset],
         )
         rows = cur.fetchall()
-        cols = ["id", "title", "category", "subtype", "city", "region", "address", "price", "price_label", "area", "yield_percent", "description", "status", "photos", "videos", "presentation_url", "commission", "commission_notes", "created_at"]
+        cols = ["id", "title", "category", "subtype", "city", "region", "address", "price", "price_label", "area", "yield_percent", "description", "status", "photos", "videos", "presentation_url", "commission", "commission_notes", "extra_fields", "created_at"]
         offers = []
         for row in rows:
             o = dict(zip(cols, row))
@@ -62,6 +62,7 @@ def handler(event: dict, context) -> dict:
             o["price"] = float(o["price"]) if o["price"] is not None else None
             o["area"] = float(o["area"]) if o["area"] is not None else None
             o["yield_percent"] = float(o["yield_percent"]) if o["yield_percent"] is not None else None
+            o["extra_fields"] = o["extra_fields"] or {}
             offers.append(o)
 
         cur.execute(f"SELECT COUNT(*) FROM agg_offers WHERE {' AND '.join(where)}", args)

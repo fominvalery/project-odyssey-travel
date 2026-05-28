@@ -52,7 +52,7 @@ export default function OfferCard({ offer, onOpen }: Props) {
           <div className="text-base font-bold text-white drop-shadow-lg">
             {offer.price_label || formatPrice(offer.price ?? null)}
           </div>
-          {offer.area && (
+          {offer.area && offer.category !== "investment" && (
             <div className="text-xs text-gray-300 bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
               {offer.area} м²
             </div>
