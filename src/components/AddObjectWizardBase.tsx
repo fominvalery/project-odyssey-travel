@@ -125,10 +125,11 @@ export function AddObjectWizardBase({ onClose, onSave, initial }: AddObjectWizar
 
     setSaving(true)
     try {
+      const existingId = initial?.id ? String(initial.id) : savedObjectId
       const res = await fetch((func2url as Record<string, string>)["agg-admin"], {
-        method: isEditing ? "PUT" : "POST",
+        method: existingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isEditing ? { ...payload, id: initial!.id } : payload),
+        body: JSON.stringify(existingId ? { ...payload, id: existingId } : payload),
       })
       const data = await res.json()
       const id = data.id ? String(data.id) : (data.offer?.id ? String(data.offer.id) : undefined)

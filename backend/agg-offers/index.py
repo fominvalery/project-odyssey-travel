@@ -42,6 +42,9 @@ def handler(event: dict, context) -> dict:
         offer = dict(zip(cols, row))
         offer["id"] = str(offer["id"])
         offer["created_at"] = str(offer["created_at"])
+        offer["price"] = float(offer["price"]) if offer["price"] is not None else None
+        offer["area"] = float(offer["area"]) if offer["area"] is not None else None
+        offer["yield_percent"] = float(offer["yield_percent"]) if offer["yield_percent"] is not None else None
         return {"statusCode": 200, "headers": CORS, "body": json.dumps({"offer": offer}, ensure_ascii=False)}
 
     # Список с фильтрами
