@@ -198,6 +198,8 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwn
   const isExpired = obj.auto_unpublished || (daysLeft !== null && daysLeft <= 0)
   const isExpiringSoon = !isExpired && daysLeft !== null && daysLeft <= 7
   const requiresPayment = !!obj.requires_payment
+  const SHARES_SUBTYPES = ["Доля в ООО / бизнесе", "Акции / Ценные бумаги", "Займ с фиксированной доходностью", "Облигации", "Коллективная покупка объекта"]
+  const isShares = SHARES_SUBTYPES.includes(obj.subtype ?? "")
   const dealType = obj.extra_fields?.deal_type
   const isRent = dealType === "rent"
   const priceLabel = isRent ? `${formatPrice(obj.price)} ₽/мес` : obj.price ? `${formatPrice(obj.price)} ₽` : "—"
@@ -229,10 +231,18 @@ export default function ObjectCard({ obj, onEdit, onDelete, onArchive, onSaveOwn
         )}
 
         {/* Бейдж категории */}
-        <span className={`absolute top-3 left-3 ${badge.color} text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg`}>
-          <Icon name={badge.icon as "Building2"} className="h-3 w-3" />
-          {badge.label}
-        </span>
+        <div className="absolute top-3 left-3 flex flex-col gap-1">
+          <span className={`${badge.color} text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg`}>
+            <Icon name={badge.icon as "Building2"} className="h-3 w-3" />
+            {badge.label}
+          </span>
+          {isShares && (
+            <span className="bg-violet-600/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md w-fit">
+              <Icon name="PieChart" className="h-2.5 w-2.5" />
+              Доли / Акции
+            </span>
+          )}
+        </div>
 
         {/* Статус */}
         <span className={`absolute bottom-3 right-3 text-xs font-medium px-2.5 py-1 rounded-full border backdrop-blur-sm ${statusCls}`}>

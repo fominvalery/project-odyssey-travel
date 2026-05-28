@@ -12,6 +12,8 @@ interface MarketplaceCardProps {
 
 export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) {
   const isResort = obj.type === "Курортная"
+  const SHARES_SUBTYPES = ["Доля в ООО / бизнесе", "Акции / Ценные бумаги", "Займ с фиксированной доходностью", "Облигации", "Коллективная покупка объекта"]
+  const isShares = SHARES_SUBTYPES.includes((obj as Record<string, unknown>).subtype as string ?? "")
   const ef = (obj as Record<string, unknown>).extra_fields as Record<string, string> | undefined
   const occupancy = ef?.occupancy ?? ""
   const avgCheck = ef?.avg_check ?? ""
@@ -37,6 +39,12 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
         {obj.badge && (
           <span className={`absolute top-3 left-3 ${obj.badgeColor} text-white text-xs font-semibold px-2.5 py-1 rounded-full`}>
             {obj.badge}
+          </span>
+        )}
+        {isShares && !obj.badge && (
+          <span className="absolute top-3 left-3 bg-violet-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <Icon name="PieChart" className="h-3 w-3" />
+            Доли / Акции
           </span>
         )}
         {isResort && obj.yield !== "—" && (
