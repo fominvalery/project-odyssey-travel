@@ -2,6 +2,21 @@ import func2url from "../../backend/func2url.json"
 
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 
+const LEVELS_MAP = [
+  { name: "Друг",      level: 1, color: "blue" },
+  { name: "Партнёр",   level: 2, color: "emerald" },
+  { name: "Бизнес",    level: 3, color: "violet" },
+  { name: "Амбасадор", level: 4, color: "amber" },
+  { name: "Лидер",     level: 5, color: "rose" },
+]
+
+function normalizeLevel(raw: unknown): ReferralLevel {
+  if (raw && typeof raw === "object" && "name" in (raw as object)) return raw as ReferralLevel
+  const name = typeof raw === "string" ? raw : "Друг"
+  const found = LEVELS_MAP.find(l => l.name === name) || LEVELS_MAP[0]
+  return found
+}
+
 export interface ReferralLevel {
   name: string
   level: number
@@ -107,7 +122,11 @@ export const superadminApi = {
     const raw = await res.text()
     const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
     if (!res.ok) throw new Error(data?.error || "Ошибка загрузки")
-    return data.users || []
+    const users: AdminUser[] = (data.users || []).map((u: AdminUser) => ({
+      ...u,
+      referral_level: normalizeLevel(u.referral_level),
+    }))
+    return users
   },
 
   async listWithdrawals(actorId: string, statusFilter = ""): Promise<AdminWithdrawalsResponse> {
