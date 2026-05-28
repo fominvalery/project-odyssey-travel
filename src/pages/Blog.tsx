@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { Header } from "@/components/Header"
 import { Footer } from "@/components/Footer"
@@ -46,6 +46,10 @@ export default function Blog() {
   const [loading, setLoading] = useState(true)
   const [catFilter, setCatFilter] = useState("")
   const [selected, setSelected] = useState<Article | null>(null)
+  const [photoIdx, setPhotoIdx] = useState(0)
+
+  const prevPhoto = useCallback(() => setPhotoIdx(i => Math.max(0, i - 1)), [])
+  const nextPhoto = useCallback((max: number) => setPhotoIdx(i => Math.min(max - 1, i + 1)), [])
 
   useEffect(() => {
     if (!API_URL) return
@@ -119,7 +123,7 @@ export default function Blog() {
             {filtered.map(a => (
               <article
                 key={a.id}
-                onClick={() => setSelected(a)}
+                onClick={() => { setSelected(a); setPhotoIdx(0) }}
                 className="bg-[#111] border border-[#1f1f1f] rounded-2xl overflow-hidden hover:border-[#3a3a3a] transition-all cursor-pointer group"
               >
                 {a.photos?.[0] ? (
@@ -155,9 +159,43 @@ export default function Blog() {
       {selected && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" onClick={() => setSelected(null)}>
           <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl max-w-3xl w-full my-8 overflow-hidden" onClick={e => e.stopPropagation()}>
-            {selected.photos?.[0] && (
-              <img src={selected.photos[0]} alt={selected.title} className="w-full h-64 object-cover" />
+
+            {/* Карусель фото */}
+            {selected.photos?.length > 0 && (
+              <div className="relative bg-black select-none">
+                <img
+                  src={selected.photos[photoIdx]}
+                  alt={selected.title}
+                  className="w-full max-h-[420px] object-contain"
+                />
+                {selected.photos.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevPhoto}
+                      disabled={photoIdx === 0}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 flex items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition"
+                    >
+                      <Icon name="ChevronLeft" className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => nextPhoto(selected.photos.length)}
+                      disabled={photoIdx === selected.photos.length - 1}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 flex items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition"
+                    >
+                      <Icon name="ChevronRight" className="h-5 w-5" />
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                      {selected.photos.map((_, i) => (
+                        <button key={i} onClick={() => setPhotoIdx(i)}
+                          className={`w-1.5 h-1.5 rounded-full transition-all ${i === photoIdx ? "bg-white scale-125" : "bg-white/40"}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             )}
+
             <div className="p-8">
               <button onClick={() => setSelected(null)} className="flex items-center gap-1.5 text-gray-500 hover:text-white text-sm mb-6 transition-colors">
                 <Icon name="ArrowLeft" className="h-4 w-4" />
@@ -167,15 +205,6 @@ export default function Blog() {
               <h1 className="text-2xl font-bold text-white mb-4">{selected.title}</h1>
               {selected.preview && <p className="text-gray-400 text-base mb-6 border-l-2 border-blue-500 pl-4 italic">{selected.preview}</p>}
               {selected.body && <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap mb-6">{selected.body}</div>}
-
-              {/* Доп фото */}
-              {selected.photos?.length > 1 && (
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  {selected.photos.slice(1).map((url, i) => (
-                    <img key={i} src={url} alt="" className="rounded-xl object-cover w-full h-40" />
-                  ))}
-                </div>
-              )}
 
               {/* Видео */}
               {selected.videos?.length > 0 && (
