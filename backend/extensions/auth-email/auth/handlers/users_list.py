@@ -4,7 +4,8 @@ from utils.http import response, error
 
 
 LEVEL_BY_NAME = {
-    "Адвокат":   {"name": "Адвокат",   "level": 5, "color": "rose"},
+    "Лидер":     {"name": "Лидер",     "level": 5, "color": "rose"},
+    "Адвокат":   {"name": "Лидер",     "level": 5, "color": "rose"},
     "Амбасадор": {"name": "Амбасадор", "level": 4, "color": "amber"},
     "Бизнес":    {"name": "Бизнес",    "level": 3, "color": "violet"},
     "Партнёр":   {"name": "Партнёр",   "level": 2, "color": "emerald"},
