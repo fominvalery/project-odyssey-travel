@@ -146,6 +146,21 @@ export default function SuperAdmin() {
     }
   }
 
+  const deleteUser = async (targetId: string, name: string, email: string) => {
+    if (!user?.id) return
+    if (!confirm(`Удалить аккаунт «${name || email}»?\n\nЭто действие нельзя отменить. Все данные пользователя будут удалены.`)) return
+    setUpdatingId(targetId)
+    try {
+      await superadminApi.deleteUser(user.id, targetId)
+      setUsers((prev) => prev.filter((u) => u.id !== targetId))
+      toast({ title: "Готово", description: `Аккаунт ${name || email} удалён` })
+    } catch (e) {
+      toast({ title: "Ошибка", description: e instanceof Error ? e.message : "Не удалось удалить", variant: "destructive" })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
   const verifyEmailManually = async (targetId: string, email: string) => {
     if (!user?.id) return
     if (!confirm(`Подтвердить email пользователя ${email} вручную?\n\nПосле этого он сможет войти в систему даже без письма.`)) return
@@ -209,6 +224,7 @@ export default function SuperAdmin() {
             changeStatus={changeStatus}
             changeLevel={changeLevel}
             verifyEmailManually={verifyEmailManually}
+            deleteUser={deleteUser}
           />
         )}
 

@@ -27,6 +27,7 @@ interface Props {
   changeStatus: (targetId: string, status: "basic" | "broker" | "agency") => void
   changeLevel: (targetId: string, levelName: string) => void
   verifyEmailManually: (targetId: string, email: string) => void
+  deleteUser: (targetId: string, name: string, email: string) => void
 }
 
 const STATUSES = [
@@ -47,7 +48,7 @@ export default function SuperAdminUsersTab(props: Props) {
     levelDropdown, setLevelDropdown, levelDropdownRef,
     statusDropdown, setStatusDropdown, statusDropdownRef,
     usersFilter, setUsersFilter,
-    unverifiedCount, handleSearch, changeStatus, changeLevel, verifyEmailManually,
+    unverifiedCount, handleSearch, changeStatus, changeLevel, verifyEmailManually, deleteUser,
   } = props
 
   return (
@@ -109,6 +110,7 @@ export default function SuperAdminUsersTab(props: Props) {
                   <th className="px-4 py-3 text-left font-medium">Статус</th>
                   <th className="px-4 py-3 text-left font-medium">Уровень</th>
                   <th className="px-4 py-3 text-left font-medium">Регистрация</th>
+                  <th className="px-4 py-3 text-left font-medium w-10"></th>
                 </tr>
               </thead>
               <tbody>
@@ -212,6 +214,20 @@ export default function SuperAdminUsersTab(props: Props) {
                     {/* Дата регистрации */}
                     <td className="px-4 py-3 text-xs text-gray-400">
                       {formatDate(u.created_at)}
+                    </td>
+
+                    {/* Удаление */}
+                    <td className="px-2 py-3">
+                      {!u.is_superadmin && (
+                        <button
+                          disabled={updatingId === u.id}
+                          onClick={() => deleteUser(u.id, u.name, u.email)}
+                          title="Удалить аккаунт"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 disabled:opacity-30 p-1 rounded"
+                        >
+                          <Icon name="Trash2" size={14} />
+                        </button>
+                      )}
                     </td>
 
                   </tr>

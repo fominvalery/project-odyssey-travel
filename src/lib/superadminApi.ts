@@ -152,6 +152,17 @@ export const superadminApi = {
     if (!res.ok) throw new Error(data?.error || "Ошибка обновления")
   },
 
+  async deleteUser(actorId: string, userId: string): Promise<void> {
+    const res = await fetch(`${AUTH_URL}?action=admin-delete-user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-User-Id": actorId },
+      body: JSON.stringify({ user_id: userId }),
+    })
+    const raw = await res.text()
+    const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+    if (!res.ok) throw new Error(data?.error || "Ошибка удаления")
+  },
+
   async verifyEmailManually(actorId: string, userId: string): Promise<void> {
     const res = await fetch(`${AUTH_URL}?action=admin-verify-email`, {
       method: "POST",
