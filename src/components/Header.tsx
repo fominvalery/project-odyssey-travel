@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -19,6 +19,16 @@ export function Header() {
   const navigate = useNavigate()
   const [registerOpen, setRegisterOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
+  const infoRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) setInfoOpen(false)
+    }
+    if (infoOpen) document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [infoOpen])
 
   const initials = user?.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() ?? ""
 
@@ -40,12 +50,42 @@ export function Header() {
           <button onClick={() => navigate("/ecosystem")} className="text-sm text-gray-300 hover:text-white transition-colors">
             Экосистема
           </button>
-          <button onClick={() => navigate("/referral")} className="text-sm text-gray-300 hover:text-white transition-colors">
-            Реферальная программа
-          </button>
-          <button onClick={() => navigate("/club")} className="text-sm text-gray-300 hover:text-white transition-colors">
-            Клуб
-          </button>
+
+          {/* Информация — dropdown */}
+          <div className="relative" ref={infoRef}>
+            <button
+              onClick={() => setInfoOpen(v => !v)}
+              className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
+            >
+              Информация
+              <Icon name="ChevronDown" className={`h-3.5 w-3.5 transition-transform ${infoOpen ? "rotate-180" : ""}`} />
+            </button>
+            {infoOpen && (
+              <div className="absolute top-full mt-2 left-0 w-56 bg-[#141414] border border-[#262626] rounded-xl shadow-2xl overflow-hidden z-50">
+                <button
+                  onClick={() => { navigate("/blog"); setInfoOpen(false) }}
+                  className="w-full flex items-start gap-3 px-4 py-3 hover:bg-[#1f1f1f] transition-colors text-left"
+                >
+                  <Icon name="Newspaper" className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
+                  <div>
+                    <div className="text-sm text-white font-medium">Новости / Блог</div>
+                    <div className="text-xs text-gray-500">Новости платформы и рынка</div>
+                  </div>
+                </button>
+                <div className="border-t border-[#1f1f1f]" />
+                <button
+                  onClick={() => { navigate("/training"); setInfoOpen(false) }}
+                  className="w-full flex items-start gap-3 px-4 py-3 hover:bg-[#1f1f1f] transition-colors text-left"
+                >
+                  <Icon name="GraduationCap" className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                  <div>
+                    <div className="text-sm text-white font-medium">Обучение по платформе</div>
+                    <div className="text-xs text-gray-500">Инструкции и видеоуроки</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
 
         {user ? (
