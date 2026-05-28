@@ -68,7 +68,8 @@ def build_email_html(body_text: str) -> str:
 </html>"""
 
 
-def send_campaign_bulk(recipients: list, subject: str, body_text: str) -> tuple:
+def send_campaign_bulk(recipients: list, subject: str, body_text: str, batch_size: int = 10) -> tuple:
+    import time
     smtp_user = os.environ.get("SMTP_USER", "")
     smtp_password = os.environ.get("SMTP_PASSWORD", "")
     if not smtp_user or not smtp_password:
@@ -77,33 +78,38 @@ def send_campaign_bulk(recipients: list, subject: str, body_text: str) -> tuple:
     smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.environ.get("SMTP_PORT", "587"))
     smtp_from = os.environ.get("SMTP_FROM", smtp_user)
-    logger.info(f"[CAMPAIGN] Старт рассылки: {len(recipients)} получателей, host={smtp_host}:{smtp_port}")
+    logger.info(f"[CAMPAIGN] Старт рассылки: {len(recipients)} получателей, батчи по {batch_size}, host={smtp_host}:{smtp_port}")
     html = build_email_html(body_text)
     sent = 0
     failed = 0
-    try:
-        logger.info("[CAMPAIGN] Подключение к SMTP...")
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            logger.info("[CAMPAIGN] SMTP подключён, начинаю отправку")
-            for r_email, r_name in recipients:
-                try:
-                    msg = MIMEMultipart("alternative")
-                    msg["Subject"] = subject
-                    msg["From"] = smtp_from
-                    msg["To"] = r_email
-                    msg.attach(MIMEText(body_text, "plain", "utf-8"))
-                    msg.attach(MIMEText(html, "html", "utf-8"))
-                    server.sendmail(smtp_from, r_email, msg.as_string())
-                    sent += 1
-                    logger.info(f"[CAMPAIGN] OK -> {r_email}")
-                except Exception as e:
-                    failed += 1
-                    logger.error(f"[CAMPAIGN] FAIL -> {r_email}: {e}")
-    except Exception as e:
-        logger.error(f"[CAMPAIGN] SMTP соединение упало: {type(e).__name__}: {e}")
-        failed += len(recipients)
+
+    batches = [recipients[i:i + batch_size] for i in range(0, len(recipients), batch_size)]
+    for batch_num, batch in enumerate(batches):
+        logger.info(f"[CAMPAIGN] Батч {batch_num + 1}/{len(batches)}, писем: {len(batch)}")
+        try:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                for r_email, r_name in batch:
+                    try:
+                        msg = MIMEMultipart("alternative")
+                        msg["Subject"] = subject
+                        msg["From"] = smtp_from
+                        msg["To"] = r_email
+                        msg.attach(MIMEText(body_text, "plain", "utf-8"))
+                        msg.attach(MIMEText(html, "html", "utf-8"))
+                        server.sendmail(smtp_from, r_email, msg.as_string())
+                        sent += 1
+                        logger.info(f"[CAMPAIGN] OK -> {r_email}")
+                    except Exception as e:
+                        failed += 1
+                        logger.error(f"[CAMPAIGN] FAIL -> {r_email}: {e}")
+        except Exception as e:
+            logger.error(f"[CAMPAIGN] Батч {batch_num + 1} — SMTP упал: {type(e).__name__}: {e}")
+            failed += len(batch)
+        if batch_num < len(batches) - 1:
+            time.sleep(1)
+
     logger.info(f"[CAMPAIGN] Итог: sent={sent}, failed={failed}")
     return sent, failed
 
