@@ -95,6 +95,9 @@ def handler(event: dict, context) -> dict:
     for row in rows:
         o = dict(zip(cols, row))
         o["id"] = str(o["id"])
+        o["price"] = float(o["price"]) if o["price"] is not None else None
+        o["area"] = float(o["area"]) if o["area"] is not None else None
+        o["yield_percent"] = float(o["yield_percent"]) if o["yield_percent"] is not None else None
         offers.append(o)
 
     return {"statusCode": 200, "headers": CORS, "body": json.dumps({"offers": offers, "total": total}, ensure_ascii=False)}

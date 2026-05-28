@@ -59,6 +59,9 @@ def handler(event: dict, context) -> dict:
             o = dict(zip(cols, row))
             o["id"] = str(o["id"])
             o["created_at"] = str(o["created_at"])
+            o["price"] = float(o["price"]) if o["price"] is not None else None
+            o["area"] = float(o["area"]) if o["area"] is not None else None
+            o["yield_percent"] = float(o["yield_percent"]) if o["yield_percent"] is not None else None
             offers.append(o)
 
         cur.execute(f"SELECT COUNT(*) FROM agg_offers WHERE {' AND '.join(where)}", args)
