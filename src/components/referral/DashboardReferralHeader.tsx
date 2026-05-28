@@ -49,16 +49,16 @@ export default function DashboardReferralHeader({ stats, loading, refLink, copie
       </div>
 
       {/* Уровни */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-3 mb-6">
         {ALL_LEVELS.map((lvl) => {
           const isActive = level?.name === lvl.name
           return (
-            <div key={lvl.name} className={`rounded-xl p-4 text-center border transition-all ${isActive ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"}`}>
-              <p className={`text-xs font-semibold mb-1 ${isActive ? "text-blue-400" : "text-gray-400"}`}>{lvl.name}</p>
-              <p className="text-xs text-gray-500 mb-2">{lvl.refs}</p>
-              <p className={`text-xl font-bold ${isActive ? "text-white" : "text-gray-300"}`}>{lvl.percent}</p>
-              {lvl.extra && <p className="text-xs text-violet-400">{lvl.extra}</p>}
-              {lvl.withdrawal && <p className="text-xs text-emerald-400 mt-1">Вывод ✓</p>}
+            <div key={lvl.name} className={`rounded-xl p-2.5 md:p-4 text-center border transition-all ${isActive ? "border-blue-500 bg-blue-500/10" : "border-[#1f1f1f] bg-[#111]"}`}>
+              <p className={`text-xs font-semibold mb-0.5 ${isActive ? "text-blue-400" : "text-gray-400"}`}>{lvl.name}</p>
+              <p className="text-[10px] text-gray-500 mb-1 leading-tight">{lvl.refs}</p>
+              <p className={`text-lg md:text-xl font-bold ${isActive ? "text-white" : "text-gray-300"}`}>{lvl.percent}</p>
+              {lvl.extra && <p className="text-[10px] text-violet-400 leading-tight">{lvl.extra}</p>}
+              {lvl.withdrawal && <p className="text-[10px] text-emerald-400 mt-0.5">Вывод ✓</p>}
             </div>
           )
         })}
