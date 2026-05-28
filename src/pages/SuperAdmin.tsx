@@ -21,9 +21,11 @@ export default function SuperAdmin() {
   const [usersLoading, setUsersLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [levelDropdown, setLevelDropdown] = useState<string | null>(null)
+  const [statusDropdown, setStatusDropdown] = useState<string | null>(null)
   const [usersFilter, setUsersFilter] = useState<UsersFilter>("all")
   const [verifyingId, setVerifyingId] = useState<string | null>(null)
   const levelDropdownRef = useRef<HTMLDivElement>(null)
+  const statusDropdownRef = useRef<HTMLDivElement>(null)
 
   // Withdrawals tab state
   const [withdrawalsData, setWithdrawalsData] = useState<AdminWithdrawalsResponse | null>(null)
@@ -48,10 +50,13 @@ export default function SuperAdmin() {
       if (levelDropdownRef.current && !levelDropdownRef.current.contains(e.target as Node)) {
         setLevelDropdown(null)
       }
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setStatusDropdown(null)
+      }
     }
-    if (levelDropdown) document.addEventListener("mousedown", handler)
+    if (levelDropdown || statusDropdown) document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
-  }, [levelDropdown])
+  }, [levelDropdown, statusDropdown])
 
   const loadUsers = async (q = "") => {
     if (!user?.id) return
@@ -194,6 +199,9 @@ export default function SuperAdmin() {
             levelDropdown={levelDropdown}
             setLevelDropdown={setLevelDropdown}
             levelDropdownRef={levelDropdownRef}
+            statusDropdown={statusDropdown}
+            setStatusDropdown={setStatusDropdown}
+            statusDropdownRef={statusDropdownRef}
             usersFilter={usersFilter}
             setUsersFilter={setUsersFilter}
             unverifiedCount={unverifiedCount}
