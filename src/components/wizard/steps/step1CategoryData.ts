@@ -109,9 +109,16 @@ export const INVESTMENT_GROUPS = [
     bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e919abf3-3a33-4ef2-8c03-623c50f3aecd.jpg",
   },
   {
+    id: "shares",
+    label: "Доли / Акции",
+    desc: "Доля ООО, ЦБ, займ, облигации, коллективное участие",
+    icon: "PieChart",
+    bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/45105d0e-283b-4c24-96d6-9e70466ec426.jpg",
+  },
+  {
     id: "special",
     label: "Спец. форматы",
-    desc: "Портфель, доля, Sale & Leaseback",
+    desc: "Портфель, Sale & Leaseback, срочная продажа",
     icon: "Layers",
     bg: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/5b8d838b-05d4-4c7f-98f7-51c7c2e60002.jpg",
   },

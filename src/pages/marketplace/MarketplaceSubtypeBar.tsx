@@ -170,14 +170,17 @@ export default function MarketplaceSubtypeBar({
     const GAB = ["ГАБ (готовый арендный бизнес)", "Создание ГАБ", "ГАБ Субаренда"]
     const REDEV = ["Редевелопмент", "Девелоперский проект", "Реконструкция"]
     const LAND = ["Земля под строительство МКД", "Земля под застройку (коммерция)", "Земля под жилую застройку", "Земля под коммерцию"]
+    const SHARES = ["Доля в ООО / бизнесе", "Акции / Ценные бумаги", "Займ с фиксированной доходностью", "Облигации", "Коллективная покупка объекта"]
     const SPECIAL = ["Портфель объектов", "Доля в объекте", "Sale & Leaseback", "Срочная продажа"]
     const activeGroup = GAB.includes(activeSubtype) ? "gab"
       : REDEV.includes(activeSubtype) ? "redev"
       : LAND.includes(activeSubtype) ? "land"
+      : SHARES.includes(activeSubtype) ? "shares"
       : SPECIAL.includes(activeSubtype) ? "special" : ""
     const visibleSubtypes = activeGroup === "gab" ? GAB
       : activeGroup === "redev" ? REDEV
       : activeGroup === "land" ? LAND
+      : activeGroup === "shares" ? SHARES
       : activeGroup === "special" ? SPECIAL
       : [...GAB, ...REDEV, ...LAND]
     return (
@@ -186,6 +189,7 @@ export default function MarketplaceSubtypeBar({
           { id: "gab", label: "ГАБ / Аренда", subtypes: GAB },
           { id: "redev", label: "Редевелопмент", subtypes: REDEV },
           { id: "land", label: "Земля", subtypes: LAND },
+          { id: "shares", label: "Доли / Акции", subtypes: SHARES },
           { id: "special", label: "Спец. форматы", subtypes: SPECIAL },
         ]}
         activeGroup={activeGroup}

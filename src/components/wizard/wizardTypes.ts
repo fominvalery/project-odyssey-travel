@@ -131,7 +131,7 @@ export const CATEGORIES: CategoryItem[] = [
   {
     id: "investment",
     label: "Инвестиции",
-    desc: "ГАБ, редевелопмент, земля, портфель",
+    desc: "ГАБ, редевелопмент, земля, доли, портфель",
     icon: "TrendingUp",
     group: "commercial_group",
     subtypes: [
@@ -141,6 +141,8 @@ export const CATEGORIES: CategoryItem[] = [
       "Редевелопмент", "Девелоперский проект", "Реконструкция",
       // Земля
       "Земля под строительство МКД", "Земля под застройку (коммерция)", "Земля под жилую застройку", "Земля под коммерцию",
+      // Доли / Акции
+      "Доля в ООО / бизнесе", "Акции / Ценные бумаги", "Займ с фиксированной доходностью", "Облигации", "Коллективная покупка объекта",
       // Специальные форматы
       "Портфель объектов", "Доля в объекте", "Sale & Leaseback", "Срочная продажа",
     ],
@@ -148,6 +150,7 @@ export const CATEGORIES: CategoryItem[] = [
       { label: "Готовый арендный бизнес", items: ["ГАБ (готовый арендный бизнес)", "Создание ГАБ", "ГАБ Субаренда"] },
       { label: "Редевелопмент и девелопмент", items: ["Редевелопмент", "Девелоперский проект", "Реконструкция"] },
       { label: "Земельные участки", items: ["Земля под строительство МКД", "Земля под застройку (коммерция)", "Земля под жилую застройку", "Земля под коммерцию"] },
+      { label: "Доли / Акции", items: ["Доля в ООО / бизнесе", "Акции / Ценные бумаги", "Займ с фиксированной доходностью", "Облигации", "Коллективная покупка объекта"] },
       { label: "Специальные форматы", items: ["Портфель объектов", "Доля в объекте", "Sale & Leaseback", "Срочная продажа"] },
     ],
   },
@@ -632,6 +635,102 @@ const INVESTMENT_FIELDS_URGENT = [
   { key: "documents_ready", label: "Документы готовы", placeholder: "Да, все / В процессе" },
   { key: "negotiable", label: "Торг", placeholder: "Да / Нет / При быстром выходе" },
   { key: "strategy", label: "Привлекательность для инвестора", placeholder: "Флип / ГАБ / Редевелопмент" },
+]
+
+// ── Поля: Доля в ООО / бизнесе ───────────────────────────────────────────────
+const INVESTMENT_FIELDS_SHARE_OOO = [
+  { key: "share_size", label: "Размер доли (%)", placeholder: "25%" },
+  { key: "min_investment", label: "Минимальный взнос (₽)", placeholder: "1 000 000" },
+  { key: "total_value", label: "Оценка компании / объекта (₽)", placeholder: "40 000 000" },
+  { key: "entry_price", label: "Цена доли (₽)", placeholder: "10 000 000" },
+  { key: "business_type", label: "Сфера / Тип бизнеса", placeholder: "Торговля / Аренда / Производство / Сервис" },
+  { key: "revenue", label: "Выручка компании (₽/год)", placeholder: "12 000 000" },
+  { key: "profit", label: "Чистая прибыль (₽/год)", placeholder: "4 000 000" },
+  { key: "dividend_yield", label: "Дивидендная доходность (%/год)", placeholder: "15" },
+  { key: "payout_schedule", label: "График выплат", placeholder: "Ежеквартально / Ежегодно / По решению" },
+  { key: "legal_form", label: "Правовая форма", placeholder: "ООО / АО / ИП / Иное" },
+  { key: "co_owners", label: "Текущие участники", placeholder: "1 физлицо, 60% / Учредитель — 100%" },
+  { key: "exit_conditions", label: "Условия выхода", placeholder: "Преимущественное право / Свободная продажа" },
+  { key: "management", label: "Управление", placeholder: "Пассивное / Участие в совете / Оперативное" },
+  { key: "encumbrance", label: "Обременения / Риски", placeholder: "Нет / Кредитная нагрузка / Судебные споры" },
+  { key: "documents_ready", label: "Документы для Due Diligence", placeholder: "Бухотчётность за 3 года / ЕГРЮЛ / Устав" },
+]
+
+// ── Поля: Акции / Ценные бумаги ──────────────────────────────────────────────
+const INVESTMENT_FIELDS_SECURITIES = [
+  { key: "security_type", label: "Вид ценной бумаги", placeholder: "Акция / Вексель / Пай ЗПИФ / Иное" },
+  { key: "issuer", label: "Эмитент / Компания", placeholder: "ООО Ромашка / ПАО Инвест / ЗПИФ Недвижимость" },
+  { key: "total_securities", label: "Общий объём эмиссии", placeholder: "1 000 акций / 10 000 паёв" },
+  { key: "lot_size", label: "Размер лота (мин. покупка)", placeholder: "1 акция / 10 паёв" },
+  { key: "min_investment", label: "Минимальный взнос (₽)", placeholder: "100 000" },
+  { key: "entry_price", label: "Цена лота / единицы (₽)", placeholder: "50 000" },
+  { key: "underlying_asset", label: "Базовый актив", placeholder: "ТЦ «Лесной» / Портфель из 5 объектов" },
+  { key: "yield", label: "Прогнозная доходность (%/год)", placeholder: "12" },
+  { key: "dividend_yield", label: "Дивиденд / купон (%/год)", placeholder: "10" },
+  { key: "payout_schedule", label: "График выплат", placeholder: "Ежеквартально / Ежегодно" },
+  { key: "investment_horizon", label: "Горизонт инвестиции (лет)", placeholder: "3–5" },
+  { key: "liquidity", label: "Ликвидность / Вторичный рынок", placeholder: "Есть / Нет / Через организатора" },
+  { key: "registration", label: "Регистрация / Лицензия", placeholder: "ЦБ РФ / Профучастник / Без регистрации" },
+  { key: "legal_form", label: "Правовая форма сделки", placeholder: "ДКП ЦБ / Договор паевого взноса" },
+  { key: "encumbrance", label: "Риски", placeholder: "Рыночный / Неликвидность / Регуляторный" },
+]
+
+// ── Поля: Займ с фиксированной доходностью ───────────────────────────────────
+const INVESTMENT_FIELDS_LOAN = [
+  { key: "loan_amount", label: "Сумма займа (₽)", placeholder: "5 000 000" },
+  { key: "min_investment", label: "Минимальный взнос (₽)", placeholder: "500 000" },
+  { key: "interest_rate", label: "Процентная ставка (%/год)", placeholder: "18" },
+  { key: "payout_schedule", label: "График выплат %", placeholder: "Ежемесячно / Ежеквартально / В конце срока" },
+  { key: "loan_term", label: "Срок займа (мес.)", placeholder: "12 / 24 / 36" },
+  { key: "purpose", label: "Цель займа", placeholder: "Покупка объекта / Ремонт / Пополнение оборота" },
+  { key: "collateral", label: "Обеспечение / Залог", placeholder: "Объект недвижимости / Поручительство / Нет" },
+  { key: "collateral_value", label: "Стоимость залога (₽)", placeholder: "12 000 000" },
+  { key: "ltv", label: "LTV (% долга к залогу)", placeholder: "50%" },
+  { key: "borrower_type", label: "Заёмщик", placeholder: "ООО / ИП / Физлицо" },
+  { key: "repayment_type", label: "Тип погашения", placeholder: "Аннуитет / Пуля / Частичное" },
+  { key: "total_payout", label: "Сумма выплат за срок (₽)", placeholder: "6 800 000" },
+  { key: "early_repayment", label: "Досрочное погашение", placeholder: "Возможно / Штраф 2%" },
+  { key: "legal_form", label: "Правовая форма", placeholder: "Договор займа / ГК РФ / Нотариус" },
+  { key: "documents_ready", label: "Документы", placeholder: "Договор / Залоговое соглашение / Выписка ЕГРН" },
+]
+
+// ── Поля: Облигации ──────────────────────────────────────────────────────────
+const INVESTMENT_FIELDS_BONDS = [
+  { key: "bond_type", label: "Тип облигации", placeholder: "Корпоративная / Ипотечная / ЦФА / Под объект" },
+  { key: "issuer", label: "Эмитент", placeholder: "ООО Девелопмент-Инвест / ПАО" },
+  { key: "total_issue", label: "Объём выпуска (₽)", placeholder: "50 000 000" },
+  { key: "nominal", label: "Номинал 1 облигации (₽)", placeholder: "10 000" },
+  { key: "min_investment", label: "Минимальный взнос (₽)", placeholder: "100 000" },
+  { key: "coupon_rate", label: "Купонная ставка (%/год)", placeholder: "17" },
+  { key: "payout_schedule", label: "Периодичность купона", placeholder: "Ежеквартально / Ежемесячно" },
+  { key: "maturity", label: "Срок обращения (лет)", placeholder: "3" },
+  { key: "underlying_asset", label: "Обеспечение / Базовый актив", placeholder: "БЦ «Центральный» / Портфель объектов" },
+  { key: "total_payout", label: "Доход за срок (₽ на 1 млн)", placeholder: "510 000 (17% × 3 года)" },
+  { key: "early_exit", label: "Досрочный выкуп / Оферта", placeholder: "Через 18 мес. / Нет / По рыночной цене" },
+  { key: "registration", label: "Регистрация", placeholder: "ЦБ РФ / ЦФА-платформа / НРД" },
+  { key: "credit_rating", label: "Кредитный рейтинг эмитента", placeholder: "BB / BBB / Без рейтинга" },
+  { key: "liquidity", label: "Вторичный рынок", placeholder: "Биржа / OTC / Только выкуп эмитентом" },
+  { key: "legal_form", label: "Правовая форма", placeholder: "Облигация / ЦФА / Вексельная схема" },
+]
+
+// ── Поля: Коллективная покупка объекта ───────────────────────────────────────
+const INVESTMENT_FIELDS_COLLECTIVE = [
+  { key: "object_type", label: "Тип объекта", placeholder: "ТЦ / БЦ / Склад / ГАБ / Жильё" },
+  { key: "total_value", label: "Полная стоимость объекта (₽)", placeholder: "120 000 000" },
+  { key: "min_investment", label: "Минимальный взнос (₽)", placeholder: "1 000 000" },
+  { key: "share_size", label: "Доля за минимальный взнос (%)", placeholder: "0.83%" },
+  { key: "investors_needed", label: "Количество инвесторов (план)", placeholder: "20–50" },
+  { key: "collected_now", label: "Уже собрано (₽)", placeholder: "40 000 000" },
+  { key: "target_raise", label: "Цель сбора (₽)", placeholder: "120 000 000" },
+  { key: "raise_deadline", label: "Срок сбора", placeholder: "до 01.09.2025 / 3 мес." },
+  { key: "revenue_model", label: "Модель дохода", placeholder: "Аренда / Продажа / Смешанная" },
+  { key: "yield", label: "Прогнозная доходность (%/год)", placeholder: "14" },
+  { key: "payout_schedule", label: "График распределения дохода", placeholder: "Ежеквартально пропорционально доле" },
+  { key: "management", label: "Управляющая компания / УК", placeholder: "ООО УК Инвест / Сами участники" },
+  { key: "legal_form", label: "Правовая форма", placeholder: "ЗПИФ / ПТ / ООО / Договор соинвестирования" },
+  { key: "exit_conditions", label: "Условия выхода", placeholder: "Продажа доли другому инвестору / Выкуп УК" },
+  { key: "investment_horizon", label: "Горизонт инвестиции (лет)", placeholder: "3–7" },
+  { key: "documents_ready", label: "Документы / Проспект", placeholder: "Инвест-меморандум / Устав / ПДД" },
 ]
 
 // ── Поля для Инвестиций (общий fallback) ─────────────────────────────────────
@@ -1258,6 +1357,12 @@ export function getCategoryFields(catId: string, subtype?: string) {
     if (subtype === "Доля в объекте") return INVESTMENT_FIELDS_SHARE
     if (subtype === "Sale & Leaseback") return INVESTMENT_FIELDS_SALE_LEASEBACK
     if (subtype === "Срочная продажа") return INVESTMENT_FIELDS_URGENT
+    // Доли / Акции
+    if (subtype === "Доля в ООО / бизнесе") return INVESTMENT_FIELDS_SHARE_OOO
+    if (subtype === "Акции / Ценные бумаги") return INVESTMENT_FIELDS_SECURITIES
+    if (subtype === "Займ с фиксированной доходностью") return INVESTMENT_FIELDS_LOAN
+    if (subtype === "Облигации") return INVESTMENT_FIELDS_BONDS
+    if (subtype === "Коллективная покупка объекта") return INVESTMENT_FIELDS_COLLECTIVE
     return INVESTMENT_FIELDS
   }
   if (catId === "auction") {

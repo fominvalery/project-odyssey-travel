@@ -30,7 +30,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
   const [newbuildGroup, setNewbuildGroup] = useState<"commercial" | "residential" | "">("")
   const [residentialGroup, setResidentialGroup] = useState<"urban" | "suburban" | "premium" | "">("")
   const [commercialGroup, setCommercialGroup] = useState<"office" | "retail" | "warehouse" | "service" | "mixed" | "">("")
-  const [investmentGroup, setInvestmentGroup] = useState<"gab" | "redevelopment" | "land" | "special" | "">("")
+  const [investmentGroup, setInvestmentGroup] = useState<"gab" | "redevelopment" | "land" | "shares" | "special" | "">("")
   const [auctionGroup, setAuctionGroup] = useState<"bankruptcy" | "state" | "pledge" | "special" | "">("")
   const [resortGroup, setResortGroup] = useState<"accommodation" | "wellness" | "nature" | "invest" | "">("")
   const selectedCat = CATEGORIES.find(c => c.id === category)
@@ -113,7 +113,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
     }, 50)
   }
 
-  function handleInvestmentGroupSelect(groupId: "gab" | "redevelopment" | "land" | "special") {
+  function handleInvestmentGroupSelect(groupId: "gab" | "redevelopment" | "land" | "shares" | "special") {
     setInvestmentGroup(groupId)
     setSubtype("")
     setTimeout(() => {
@@ -201,13 +201,13 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
           title="Тип инвестиционного объекта"
           groups={INVESTMENT_GROUPS}
           activeGroup={investmentGroup}
-          onSelect={id => handleInvestmentGroupSelect(id as "gab" | "redevelopment" | "land" | "special")}
+          onSelect={id => handleInvestmentGroupSelect(id as "gab" | "redevelopment" | "land" | "shares" | "special")}
           accentBorder="border-amber-500 shadow-lg shadow-amber-500/20"
           accentBg="rgba(120,53,15,0.68)"
           accentIcon="bg-amber-500/40 border border-amber-400/50"
           accentDesc="text-amber-200/80"
           minHeight={120}
-          cols="grid-cols-2"
+          cols="grid-cols-2 sm:grid-cols-3"
           containerRef={investmentGroupRef}
           fallbackIcon="TrendingUp"
         />
@@ -221,6 +221,7 @@ export function Step1Category({ category, setCategory, subtype, setSubtype, deal
             investmentGroup === "gab" ? "Готовый арендный бизнес" :
             investmentGroup === "redevelopment" ? "Редевелопмент и девелопмент" :
             investmentGroup === "land" ? "Земельные участки" :
+            investmentGroup === "shares" ? "Доли / Акции" :
             "Специальные форматы"
           }
           subtype={subtype}
