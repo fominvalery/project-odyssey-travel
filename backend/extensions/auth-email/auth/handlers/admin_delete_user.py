@@ -1,6 +1,6 @@
 """Admin: delete user account (superadmin-only)."""
 import json
-from utils.db import query, query_one, execute, get_schema, escape
+from utils.db import query_one, execute, get_schema, escape
 from utils.http import response, error
 
 
@@ -38,28 +38,16 @@ def handle(event: dict, origin: str = '*') -> dict:
 
     tid = escape(target_id)
 
-    # 1. Сначала получаем ref_code до удаления referrals
-    rows = query(f"SELECT ref_code FROM {S}referrals WHERE referrer_id = {tid}")
-    ref_codes = [r[0] for r in rows if r[0]]
-
-    # 2. Удаляем в правильном порядке (сначала зависимые таблицы)
+    # Удаляем в правильном порядке — сначала таблицы с FK на users
     execute(f"DELETE FROM {S}refresh_tokens WHERE user_id = {tid}")
     execute(f"DELETE FROM {S}email_verification_tokens WHERE user_id = {tid}")
     execute(f"DELETE FROM {S}password_reset_tokens WHERE user_id = {tid}")
     execute(f"DELETE FROM {S}notifications WHERE user_id = {tid}")
     execute(f"DELETE FROM {S}withdrawal_requests WHERE user_id = {tid}")
-
-    # referral_bonuses ссылается на users через referrer_id и referred_id
     execute(f"DELETE FROM {S}referral_bonuses WHERE referrer_id = {tid} OR referred_id = {tid}")
-
-    # referral_clicks — по ref_code
-    for code in ref_codes:
-        execute(f"DELETE FROM {S}referral_clicks WHERE ref_code = {escape(code)}")
-
-    # referrals — удаляем где он реферер или реферал
     execute(f"DELETE FROM {S}referrals WHERE referrer_id = {tid} OR referred_id = {tid}")
 
-    # 3. Удаляем пользователя
+    # Удаляем пользователя
     execute(f"DELETE FROM {S}users WHERE id = {tid}")
 
     return response(200, {
