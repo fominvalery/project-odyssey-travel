@@ -175,7 +175,18 @@ export default function Training() {
 
             {/* Карусель фото */}
             {selected.photos?.length > 0 && (
-              <div className="relative bg-black select-none">
+              <div
+                className="relative bg-black select-none"
+                onTouchStart={e => { (e.currentTarget as HTMLDivElement).dataset.touchX = String(e.touches[0].clientX) }}
+                onTouchEnd={e => {
+                  const startX = Number((e.currentTarget as HTMLDivElement).dataset.touchX)
+                  const diff = startX - e.changedTouches[0].clientX
+                  if (Math.abs(diff) > 40) {
+                    if (diff > 0) nextPhoto(selected.photos.length)
+                    else prevPhoto()
+                  }
+                }}
+              >
                 <img
                   src={selected.photos[photoIdx]}
                   alt={selected.title}
