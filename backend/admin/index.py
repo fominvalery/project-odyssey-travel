@@ -374,6 +374,67 @@ def handler(event: dict, context) -> dict:
                     "total": len(recipients_list),
                 })
 
+            # ─── Отправить батч кампании ───
+            if action == "send_campaign_batch":
+                campaign_id = body.get("campaign_id")
+                offset = int(body.get("offset", 0))
+                limit = int(body.get("limit", 10))
+                if not campaign_id:
+                    return resp(400, {"error": "campaign_id required"})
+
+                cur.execute(f"""
+                    SELECT id, title, channel, audience, subject, body, status, recipients
+                    FROM {schema}.campaigns WHERE id=%s
+                """, (campaign_id,))
+                camp = cur.fetchone()
+                if not camp:
+                    return resp(404, {"error": "Кампания не найдена"})
+                c_id, c_title, c_channel, c_audience, c_subject, c_body, c_status, c_recipients = camp
+
+                aud_filter = AUDIENCE_FILTERS.get(c_audience, "TRUE")
+                cur.execute(f"""
+                    SELECT email, name FROM {schema}.users
+                    WHERE email_verified=TRUE AND is_superadmin=FALSE AND ({aud_filter})
+                    ORDER BY id
+                    OFFSET {offset} LIMIT {limit + 1}
+                """)
+                rows = cur.fetchall()
+                has_more = len(rows) > limit
+                batch = rows[:limit]
+
+                if offset == 0:
+                    cur.execute(f"UPDATE {schema}.campaigns SET status='sending', updated_at=NOW() WHERE id=%s", (campaign_id,))
+                    conn.commit()
+
+                email_subject = c_subject or c_title
+                sent_count, failed_count = 0, 0
+                if c_channel in ("email", "both") and batch:
+                    sent_count, failed_count = send_campaign_bulk(batch, email_subject, c_body, batch_size=len(batch))
+
+                if not has_more:
+                    total_sent = (c_recipients or 0) + sent_count if offset > 0 else sent_count
+                    cur.execute(f"""
+                        UPDATE {schema}.campaigns
+                        SET status='sent', sent_at=NOW(), recipients=%s, updated_at=NOW()
+                        WHERE id=%s
+                    """, (total_sent, campaign_id))
+                    conn.commit()
+                else:
+                    cur.execute(f"""
+                        UPDATE {schema}.campaigns
+                        SET recipients=COALESCE(recipients,0)+%s, updated_at=NOW()
+                        WHERE id=%s
+                    """, (sent_count, campaign_id))
+                    conn.commit()
+
+                return resp(200, {
+                    "ok": True,
+                    "sent": sent_count,
+                    "failed": failed_count,
+                    "has_more": has_more,
+                    "offset": offset,
+                })
+
             return resp(400, {"error": f"Unknown action: {action}"})
 
         # ─────────── GET ───────────

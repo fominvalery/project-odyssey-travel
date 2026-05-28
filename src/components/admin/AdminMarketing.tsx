@@ -134,19 +134,30 @@ export default function AdminMarketing({ totalUsers, actorId }: { totalUsers: nu
   const sendNow = async (id: string) => {
     if (!confirm("Отправить кампанию прямо сейчас? Письма уйдут всем получателям сегмента.")) return
     setSending(id)
+    const BATCH = 10
+    let offset = 0
+    let totalSentCount = 0
+    let totalFailed = 0
+    let hasMore = true
     try {
-      const res = await fetch(ADMIN_URL, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ action: "send_campaign", campaign_id: id }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        alert(`Отправлено: ${data.sent} · Ошибок: ${data.failed}`)
-        loadCampaigns()
-      } else {
-        alert(data.error || "Ошибка отправки")
+      while (hasMore) {
+        const res = await fetch(ADMIN_URL, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ action: "send_campaign_batch", campaign_id: id, offset, limit: BATCH }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.error || "Ошибка отправки")
+          break
+        }
+        totalSentCount += data.sent || 0
+        totalFailed += data.failed || 0
+        hasMore = data.has_more === true
+        offset += BATCH
       }
+      alert(`Отправлено: ${totalSentCount} · Ошибок: ${totalFailed}`)
+      loadCampaigns()
     } catch {
       alert("Ошибка сети")
     } finally {
