@@ -76,6 +76,31 @@ FIELD_LABELS = {
     "complex": "Комплекс", "developer": "Застройщик",
     "delivery": "Срок сдачи", "corpus": "Корпус/секция",
     "units": "Юнитов",
+    # Доли / Акции
+    "share_size": "Размер доли", "min_investment": "Мин. взнос, ₽",
+    "total_value": "Оценка компании, ₽", "entry_price": "Цена входа, ₽",
+    "business_type": "Сфера бизнеса", "revenue": "Выручка, ₽/год",
+    "profit": "Чистая прибыль, ₽/год", "dividend_yield": "Дивидендная доходность, %/год",
+    "payout_schedule": "График выплат", "legal_form": "Правовая форма",
+    "co_owners": "Участники", "exit_conditions": "Условия выхода",
+    "management": "Управление", "documents_ready": "Документы",
+    "security_type": "Вид ЦБ", "issuer": "Эмитент",
+    "total_securities": "Объём эмиссии", "lot_size": "Размер лота",
+    "underlying_asset": "Базовый актив", "liquidity": "Ликвидность",
+    "registration": "Регистрация", "investment_horizon": "Горизонт инвестиции",
+    "loan_amount": "Сумма займа, ₽", "interest_rate": "Ставка, %/год",
+    "loan_term": "Срок займа, мес.", "purpose": "Цель займа",
+    "collateral": "Обеспечение", "collateral_value": "Стоимость залога, ₽",
+    "ltv": "LTV, %", "borrower_type": "Заёмщик",
+    "repayment_type": "Тип погашения", "total_payout": "Итого выплат, ₽",
+    "early_repayment": "Досрочное погашение",
+    "bond_type": "Тип облигации", "total_issue": "Объём выпуска, ₽",
+    "nominal": "Номинал, ₽", "coupon_rate": "Купонная ставка, %/год",
+    "maturity": "Срок обращения, лет", "early_exit": "Досрочный выкуп",
+    "credit_rating": "Кредитный рейтинг",
+    "object_type": "Тип объекта", "investors_needed": "Кол-во инвесторов",
+    "collected_now": "Уже собрано, ₽", "target_raise": "Цель сбора, ₽",
+    "raise_deadline": "Срок сбора", "revenue_model": "Модель дохода",
 }
 
 CATEGORY_LABELS = {
@@ -208,30 +233,59 @@ def fetch_object(object_id: str) -> dict:
     conn = psycopg2.connect(dsn)
     try:
         cur = conn.cursor()
+        # Сначала ищем в таблице личных объектов (ЛК Клуб/АН)
         cur.execute(
             "SELECT id, category, type, title, city, address, price, area, description, "
             "yield_percent, extra_fields, photos, user_id, pdf_options "
             f"FROM objects WHERE id = '{object_id}'"
         )
         row = cur.fetchone()
-        cur.close()
+        if row:
+            return {
+                "id": str(row[0]),
+                "category": row[1] or "",
+                "type": row[2] or "",
+                "title": row[3] or "",
+                "city": row[4] or "",
+                "address": row[5] or "",
+                "price": str(row[6] or ""),
+                "area": str(row[7] or ""),
+                "description": row[8] or "",
+                "yield_percent": str(row[9] or ""),
+                "extra_fields": row[10] or {},
+                "photos": list(row[11] or []),
+                "user_id": str(row[12]) if row[12] else "",
+                "pdf_options": row[13] or {},
+            }
+        # Фолбэк: ищем в таблице агрегатора (Внутренний офис / agg-admin)
+        cur.execute(
+            "SELECT id, category, subtype, title, city, address, price, area, description, "
+            "yield_percent, extra_fields, photos "
+            f"FROM agg_offers WHERE id = '{object_id}'"
+        )
+        row = cur.fetchone()
         if not row:
             return {}
+        extra = row[10] or {}
+        # subtype кладём в extra_fields чтобы PDF мог его отобразить
+        if row[2] and "subtype" not in extra:
+            extra = dict(extra)
+            extra["subtype"] = row[2]
         return {
             "id": str(row[0]),
             "category": row[1] or "",
-            "type": row[2] or "",
+            "type": row[1] or "",
             "title": row[3] or "",
             "city": row[4] or "",
             "address": row[5] or "",
-            "price": row[6] or "",
-            "area": row[7] or "",
+            "price": str(row[6] or ""),
+            "area": str(row[7] or ""),
             "description": row[8] or "",
-            "yield_percent": row[9] or "",
-            "extra_fields": row[10] or {},
-            "photos": list(row[11] or []),
-            "user_id": str(row[12]) if row[12] else "",
-            "pdf_options": row[13] or {},
+            "yield_percent": str(row[9] or ""),
+            "extra_fields": extra,
+            "photos": list(row[11] or []) if row[11] else [],
+            "user_id": "",
+            "pdf_options": {},
         }
     finally:
         conn.close()
