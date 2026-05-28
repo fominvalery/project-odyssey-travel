@@ -61,8 +61,11 @@ export default function OfferCard({ offer, onOpen }: Props) {
       </div>
 
       <div className="p-4">
-        <h3 className="text-sm font-semibold text-white line-clamp-2 mb-2 leading-snug">{offer.title}</h3>
-        <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-white line-clamp-2 mb-1 leading-snug">{offer.title}</h3>
+        {offer.subtype && (
+          <p className="text-[11px] text-gray-500 mb-2">{offer.subtype}</p>
+        )}
+        <div className="flex items-center justify-between mt-2">
           {offer.city ? (
             <span className="flex items-center gap-1 text-xs text-gray-500">
               <Icon name="MapPin" className="h-3 w-3" />

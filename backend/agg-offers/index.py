@@ -83,7 +83,7 @@ def handler(event: dict, context) -> dict:
         where.append("(title ILIKE %s OR description ILIKE %s OR city ILIKE %s)")
         args += [f"%{search}%", f"%{search}%", f"%{search}%"]
 
-    sql = f"SELECT id, title, category, subtype, city, price, price_label, area, yield_percent, photos, presentation_url, status, commission FROM agg_offers WHERE {' AND '.join(where)} ORDER BY created_at DESC LIMIT %s OFFSET %s"
+    sql = f"SELECT id, title, category, subtype, city, price, price_label, area, yield_percent, photos, presentation_url, status, commission, extra_fields FROM agg_offers WHERE {' AND '.join(where)} ORDER BY created_at DESC LIMIT %s OFFSET %s"
     args += [limit, offset]
 
     cur.execute(sql, args)
@@ -93,7 +93,7 @@ def handler(event: dict, context) -> dict:
     total = cur.fetchone()[0]
     conn.close()
 
-    cols = ["id", "title", "category", "subtype", "city", "price", "price_label", "area", "yield_percent", "photos", "presentation_url", "status", "commission"]
+    cols = ["id", "title", "category", "subtype", "city", "price", "price_label", "area", "yield_percent", "photos", "presentation_url", "status", "commission", "extra_fields"]
     offers = []
     for row in rows:
         o = dict(zip(cols, row))
@@ -101,6 +101,7 @@ def handler(event: dict, context) -> dict:
         o["price"] = float(o["price"]) if o["price"] is not None else None
         o["area"] = float(o["area"]) if o["area"] is not None else None
         o["yield_percent"] = float(o["yield_percent"]) if o["yield_percent"] is not None else None
+        o["extra_fields"] = o["extra_fields"] or {}
         offers.append(o)
 
     return {"statusCode": 200, "headers": CORS, "body": json.dumps({"offers": offers, "total": total}, ensure_ascii=False)}
