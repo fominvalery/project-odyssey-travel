@@ -96,8 +96,18 @@ export default function AggOffersAdmin({ token }: { token: string }) {
   // «Добавить» — открывает визард без initial
   const openNew = () => { setWizardInitial(undefined); setWizardOpen(true) }
 
-  // «Редактировать» — открывает визард с данными объекта
-  const openEdit = (o: Offer) => { setWizardInitial(offerToObjectData(o)); setWizardOpen(true) }
+  // «Редактировать» — загружаем полный объект по ID (со всеми extra_fields), открываем визард
+  const openEdit = async (o: Offer) => {
+    try {
+      const res = await fetch(`${AGG_ADMIN_URL}?id=${o.id}`)
+      const data = await res.json()
+      const full: Offer = data.offer || o
+      setWizardInitial(offerToObjectData(full))
+    } catch {
+      setWizardInitial(offerToObjectData(o))
+    }
+    setWizardOpen(true)
+  }
 
   const handleFeedImport = async () => {
     if (!feedUrl.trim()) return

@@ -32,6 +32,28 @@ def handler(event: dict, context) -> dict:
 
     if method == "GET":
         params = event.get("queryStringParameters") or {}
+        offer_id = params.get("id")
+
+        # Получение одного объекта по ID
+        if offer_id:
+            cur.execute(
+                "SELECT id, title, category, subtype, city, region, address, price, price_label, area, yield_percent, description, status, photos, videos, presentation_url, commission, commission_notes, extra_fields, created_at FROM agg_offers WHERE id = %s",
+                (offer_id,),
+            )
+            row = cur.fetchone()
+            conn.close()
+            if not row:
+                return {"statusCode": 404, "headers": CORS, "body": json.dumps({"error": "not found"})}
+            cols = ["id", "title", "category", "subtype", "city", "region", "address", "price", "price_label", "area", "yield_percent", "description", "status", "photos", "videos", "presentation_url", "commission", "commission_notes", "extra_fields", "created_at"]
+            offer = dict(zip(cols, row))
+            offer["id"] = str(offer["id"])
+            offer["created_at"] = str(offer["created_at"])
+            offer["price"] = float(offer["price"]) if offer["price"] is not None else None
+            offer["area"] = float(offer["area"]) if offer["area"] is not None else None
+            offer["yield_percent"] = float(offer["yield_percent"]) if offer["yield_percent"] is not None else None
+            offer["extra_fields"] = offer["extra_fields"] or {}
+            return {"statusCode": 200, "headers": CORS, "body": json.dumps({"offer": offer}, ensure_ascii=False)}
+
         status = params.get("status", "")
         category = params.get("category", "")
         limit = min(int(params.get("limit", 100)), 500)

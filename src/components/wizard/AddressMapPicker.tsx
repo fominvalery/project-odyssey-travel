@@ -77,6 +77,31 @@ export default function AddressMapPicker({
 
     mapRef.current = map
 
+    // Автогеокодинг при редактировании: нет координат, но есть адрес
+    if ((!lat || !lon) && (city || address)) {
+      const q = [address, city].filter(Boolean).join(", ")
+      fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+        { headers: { "Accept-Language": "ru" } }
+      )
+        .then(r => r.json())
+        .then((data: Suggestion[]) => {
+          if (data[0] && mapRef.current) {
+            const autoLat = parseFloat(data[0].lat)
+            const autoLon = parseFloat(data[0].lon)
+            const pos: [number, number] = [autoLat, autoLon]
+            mapRef.current.setView(pos, 15)
+            if (markerRef.current) {
+              markerRef.current.setLatLng(pos)
+            } else {
+              markerRef.current = L.marker(pos).addTo(mapRef.current!)
+            }
+            onCoordsChange?.(autoLat, autoLon)
+          }
+        })
+        .catch(() => {})
+    }
+
     return () => {
       map.remove()
       mapRef.current = null
