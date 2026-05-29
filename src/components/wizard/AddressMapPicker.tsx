@@ -29,9 +29,10 @@ interface Props {
 
 const DEFAULT_CENTER: [number, number] = [55.751244, 37.618423]
 
-async function geocodeQuery(query: string): Promise<{ lat: number; lon: number } | null> {
+async function geocodeQuery(query: string, city?: string): Promise<{ lat: number; lon: number } | null> {
   try {
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${GEOCODER_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
+    const fullQuery = city && !query.toLowerCase().includes(city.toLowerCase()) ? `${city}, ${query}` : query
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${GEOCODER_KEY}&geocode=${encodeURIComponent(fullQuery)}&format=json&lang=ru_RU&results=1`
     const res = await fetch(url)
     const data = await res.json()
     const pos = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos
@@ -177,7 +178,7 @@ export default function AddressMapPicker({
       const q = city ? `${city}, ${val}` : val
       const [suggestions, geocoded] = await Promise.all([
         suggestAddresses(q),
-        geocodeQuery(q),
+        geocodeQuery(val, city),
       ])
       setSuggestions(suggestions)
       setShowSuggestions(suggestions.length > 0)
@@ -189,7 +190,10 @@ export default function AddressMapPicker({
   }
 
   function handleSelect(s: Suggestion) {
-    onAddressChange(s.display_name.split(",").slice(0, 2).join(",").trim())
+    // Берём только название улицы с номером дома (первая часть до города/района)
+    const parts = s.display_name.split(",")
+    const streetPart = parts[0]?.trim() || s.display_name
+    onAddressChange(streetPart)
     const newLat = parseFloat(s.lat)
     const newLon = parseFloat(s.lon)
     moveMapTo(newLat, newLon)
