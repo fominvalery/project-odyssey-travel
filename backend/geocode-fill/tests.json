@@ -1,0 +1,1 @@
+{"tests": [{"name": "Fill geocodes", "method": "GET", "path": "/", "expectedStatus": 200, "expectedBody": {"updated": 0}, "bodyMatcher": "partial"}]}
