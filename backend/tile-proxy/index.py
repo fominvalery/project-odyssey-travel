@@ -17,7 +17,7 @@ def handler(event: dict, context) -> dict:
     y = params.get("y", "0")
     z = params.get("z", "0")
 
-    url = f"https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    url = f"https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU"
 
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=10) as resp:
