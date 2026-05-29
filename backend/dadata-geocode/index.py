@@ -45,6 +45,7 @@ def handler(event: dict, context) -> dict:
         geo = s.get("data", {})
         lat = geo.get("geo_lat")
         lon = geo.get("geo_lon")
+        print(f"[DADATA] value={s.get('value')} lat={lat} lon={lon}")
         suggestions.append({
             "display_name": s.get("value", ""),
             "lat": lat,
