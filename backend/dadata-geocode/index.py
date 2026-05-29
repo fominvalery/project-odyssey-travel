@@ -15,7 +15,7 @@ def handler(event: dict, context) -> dict:
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
-    api_key = os.environ["DADATA_API_KEY"]
+    api_key = os.environ["DADATA_API_KEY"]  # v2
     secret_key = os.environ.get("DADATA_SECRET_KEY", "")
     params = event.get("queryStringParameters") or {}
     query = params.get("q", "")
