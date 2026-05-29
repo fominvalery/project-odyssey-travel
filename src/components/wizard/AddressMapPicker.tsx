@@ -158,18 +158,41 @@ export default function AddressMapPicker({
     setShowSuggestions(results.length > 0)
   }, [])
 
+  function moveMapTo(lat: number, lon: number) {
+    const pos: [number, number] = [lat, lon]
+    if (mapRef.current) {
+      mapRef.current.setView(pos, 16)
+      if (markerRef.current) {
+        markerRef.current.setLatLng(pos)
+      } else {
+        markerRef.current = L.marker(pos).addTo(mapRef.current)
+      }
+    }
+  }
+
   function handleAddressInput(val: string) {
     onAddressChange(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      searchAddress(city ? `${city}, ${val}` : val)
-    }, 400)
+    debounceRef.current = setTimeout(async () => {
+      const q = city ? `${city}, ${val}` : val
+      const [suggestions, geocoded] = await Promise.all([
+        suggestAddresses(q),
+        geocodeQuery(q),
+      ])
+      setSuggestions(suggestions)
+      setShowSuggestions(suggestions.length > 0)
+      if (geocoded) {
+        moveMapTo(geocoded.lat, geocoded.lon)
+        onCoordsChange?.(geocoded.lat, geocoded.lon)
+      }
+    }, 600)
   }
 
   function handleSelect(s: Suggestion) {
     onAddressChange(s.display_name.split(",").slice(0, 2).join(",").trim())
     const newLat = parseFloat(s.lat)
     const newLon = parseFloat(s.lon)
+    moveMapTo(newLat, newLon)
     onCoordsChange?.(newLat, newLon)
     setSuggestions([])
     setShowSuggestions(false)
