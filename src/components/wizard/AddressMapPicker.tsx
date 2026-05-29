@@ -118,7 +118,7 @@ export default function AddressMapPicker({
     mapRef.current = map
 
     if ((!lat || !lon) && (city || address)) {
-      const q = [address, city].filter(Boolean).join(", ")
+      const q = [city, address].filter(Boolean).join(", ")
       geocodeQuery(q).then(result => {
         if (result && mapRef.current) {
           const pos: [number, number] = [result.lat, result.lon]
