@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 
-const YANDEX_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || ""
-const YANDEX_GEOCODER_KEY = import.meta.env.VITE_YANDEX_GEOCODER_KEY || ""
+const YANDEX_API_KEY = "c82661bb-1958-4042-bd02-e02f758f1cd8"
+const YANDEX_GEOCODER_KEY = "8966eab8-9617-4075-845c-184846af3286"
 
 declare global {
   interface Window {
