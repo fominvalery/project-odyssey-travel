@@ -9,8 +9,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 })
 
-const GEOCODER_KEY = "8966eab8-9617-4075-845c-184846af3286"
-
 interface Props {
   city: string
   address: string
@@ -25,14 +23,15 @@ export default function ObjectMap({ city, address }: Props) {
     const query = [address, city].filter(Boolean).join(", ")
     if (!query) return
 
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${GEOCODER_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
-
-    fetch(url)
+    fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+      { headers: { "Accept-Language": "ru" } }
+    )
       .then(r => r.json())
-      .then(data => {
-        const pos = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos
-        if (!pos) { setNotFound(true); return }
-        const [lon, lat] = pos.split(" ").map(Number)
+      .then((data: { lat: string; lon: string }[]) => {
+        if (!data.length) { setNotFound(true); return }
+        const lat = parseFloat(data[0].lat)
+        const lon = parseFloat(data[0].lon)
 
         if (!containerRef.current) return
 
@@ -44,14 +43,12 @@ export default function ObjectMap({ city, address }: Props) {
         const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false })
           .setView([lat, lon], 16)
 
-        L.tileLayer("https://functions.poehali.dev/005b268c-77f7-4955-86e4-a56f799e8699?x={x}&y={y}&z={z}", {
-          attribution: '&copy; <a href="https://yandex.ru/maps">Яндекс.Карты</a>',
-          maxZoom: 19,
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         }).addTo(map)
 
         L.marker([lat, lon]).addTo(map)
         mapRef.current = map
-        setTimeout(() => map.invalidateSize(), 100)
       })
       .catch(() => setNotFound(true))
 
