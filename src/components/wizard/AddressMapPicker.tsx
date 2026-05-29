@@ -111,64 +111,68 @@ export default function AddressMapPicker({
   useEffect(() => {
     let destroyed = false
 
-    loadYandexMaps()
-      .then(() => window.ymaps3.ready)
-      .then(async () => {
-        if (destroyed || !containerRef.current) return
+    const init = async () => {
+      await new Promise(r => setTimeout(r, 100))
+      if (destroyed || !containerRef.current) return
 
-        const { YMap, YMapDefaultScheme, YMapDefaultFeaturesLayer, YMapDefaultMarker, YMapListener } = window.ymaps3
+      await loadYandexMaps()
+      await window.ymaps3.ready
+      if (destroyed || !containerRef.current) return
 
-        const center = lat && lon ? [lon, lat] : [DEFAULT_CENTER[1], DEFAULT_CENTER[0]]
-        const zoom = lat && lon ? 16 : 11
+      const { YMap, YMapDefaultScheme, YMapDefaultFeaturesLayer, YMapDefaultMarker, YMapListener } = window.ymaps3
 
-        const map = new YMap(containerRef.current, {
-          location: { center, zoom },
-        })
+      const center = lat && lon ? [lon, lat] : [DEFAULT_CENTER[1], DEFAULT_CENTER[0]]
+      const zoom = lat && lon ? 16 : 11
 
-        map.addChild(new YMapDefaultScheme())
-        map.addChild(new YMapDefaultFeaturesLayer())
-
-        if (lat && lon) {
-          const marker = new YMapDefaultMarker({ coordinates: [lon, lat] })
-          map.addChild(marker)
-          markerRef.current = marker
-        }
-
-        const listener = new YMapListener({
-          layer: "any",
-          onClick: async (_obj: unknown, event: { coordinates: [number, number] }) => {
-            const [clon, clat] = event.coordinates
-            onCoordsChange?.(clat, clon)
-
-            if (markerRef.current) map.removeChild(markerRef.current)
-            const newMarker = new YMapDefaultMarker({ coordinates: [clon, clat] })
-            map.addChild(newMarker)
-            markerRef.current = newMarker
-
-            const result = await reverseGeocodeCoords(clat, clon)
-            if (result) {
-              if (result.address) onAddressChange(result.address)
-              if (result.city) onCityChange(result.city)
-            }
-          },
-        })
-        map.addChild(listener)
-        mapRef.current = map
-
-        if ((!lat || !lon) && (city || address)) {
-          const q = [address, city].filter(Boolean).join(", ")
-          const result = await geocodeQuery(q)
-          if (result && mapRef.current && !destroyed) {
-            map.setLocation({ center: [result.lon, result.lat], zoom: 15 })
-            if (markerRef.current) map.removeChild(markerRef.current)
-            const m = new YMapDefaultMarker({ coordinates: [result.lon, result.lat] })
-            map.addChild(m)
-            markerRef.current = m
-            onCoordsChange?.(result.lat, result.lon)
-          }
-        }
+      const map = new YMap(containerRef.current, {
+        location: { center, zoom },
       })
-      .catch(() => {})
+
+      map.addChild(new YMapDefaultScheme())
+      map.addChild(new YMapDefaultFeaturesLayer())
+
+      if (lat && lon) {
+        const marker = new YMapDefaultMarker({ coordinates: [lon, lat] })
+        map.addChild(marker)
+        markerRef.current = marker
+      }
+
+      const listener = new YMapListener({
+        layer: "any",
+        onClick: async (_obj: unknown, event: { coordinates: [number, number] }) => {
+          const [clon, clat] = event.coordinates
+          onCoordsChange?.(clat, clon)
+
+          if (markerRef.current) map.removeChild(markerRef.current)
+          const newMarker = new YMapDefaultMarker({ coordinates: [clon, clat] })
+          map.addChild(newMarker)
+          markerRef.current = newMarker
+
+          const result = await reverseGeocodeCoords(clat, clon)
+          if (result) {
+            if (result.address) onAddressChange(result.address)
+            if (result.city) onCityChange(result.city)
+          }
+        },
+      })
+      map.addChild(listener)
+      mapRef.current = map
+
+      if ((!lat || !lon) && (city || address)) {
+        const q = [address, city].filter(Boolean).join(", ")
+        const result = await geocodeQuery(q)
+        if (result && mapRef.current && !destroyed) {
+          map.setLocation({ center: [result.lon, result.lat], zoom: 15 })
+          if (markerRef.current) map.removeChild(markerRef.current)
+          const m = new YMapDefaultMarker({ coordinates: [result.lon, result.lat] })
+          map.addChild(m)
+          markerRef.current = m
+          onCoordsChange?.(result.lat, result.lon)
+        }
+      }
+    }
+
+    init().catch(() => {})
 
     return () => {
       destroyed = true
@@ -255,7 +259,7 @@ export default function AddressMapPicker({
       <div
         ref={containerRef}
         className="rounded-xl overflow-hidden border border-[#1f1f1f]"
-        style={{ height: 280 }}
+        style={{ height: 280, width: "100%" }}
       />
       <p className="text-xs text-gray-500">Нажмите на карту, чтобы уточнить местоположение</p>
     </div>

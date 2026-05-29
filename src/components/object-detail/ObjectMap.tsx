@@ -54,31 +54,36 @@ export default function ObjectMap({ city, address }: Props) {
 
     let destroyed = false
 
-    loadYandexMaps()
-      .then(() => window.ymaps3.ready)
-      .then(async () => {
-        if (destroyed || !containerRef.current) return
-        const coords = await geocode(query)
-        if (!coords) { setNotFound(true); return }
+    const init = async () => {
+      await new Promise(r => setTimeout(r, 100))
+      if (destroyed || !containerRef.current) return
 
-        const { YMap, YMapDefaultScheme, YMapDefaultMarker, YMapDefaultFeaturesLayer } = window.ymaps3
+      await loadYandexMaps()
+      await window.ymaps3.ready
+      if (destroyed || !containerRef.current) return
 
-        if (mapRef.current) {
-          mapRef.current.destroy()
-          mapRef.current = null
-        }
+      const coords = await geocode(query)
+      if (!coords) { setNotFound(true); return }
 
-        const map = new YMap(containerRef.current, {
-          location: { center: [coords[1], coords[0]], zoom: 16 },
-        })
+      const { YMap, YMapDefaultScheme, YMapDefaultMarker, YMapDefaultFeaturesLayer } = window.ymaps3
 
-        map.addChild(new YMapDefaultScheme())
-        map.addChild(new YMapDefaultFeaturesLayer())
-        map.addChild(new YMapDefaultMarker({ coordinates: [coords[1], coords[0]] }))
+      if (mapRef.current) {
+        mapRef.current.destroy()
+        mapRef.current = null
+      }
 
-        mapRef.current = map
+      const map = new YMap(containerRef.current, {
+        location: { center: [coords[1], coords[0]], zoom: 16 },
       })
-      .catch(() => setNotFound(true))
+
+      map.addChild(new YMapDefaultScheme())
+      map.addChild(new YMapDefaultFeaturesLayer())
+      map.addChild(new YMapDefaultMarker({ coordinates: [coords[1], coords[0]] }))
+
+      mapRef.current = map
+    }
+
+    init().catch(() => setNotFound(true))
 
     return () => {
       destroyed = true
