@@ -77,17 +77,7 @@ export default function AddressMapPicker({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Перемещение маркера при изменении координат снаружи
-  useEffect(() => {
-    if (!mapRef.current || !lat || !lon) return
-    const pos: [number, number] = [lat, lon]
-    if (markerRef.current) {
-      markerRef.current.setLatLng(pos)
-    } else {
-      markerRef.current = L.marker(pos).addTo(mapRef.current)
-    }
-    mapRef.current.setView(pos, 16)
-  }, [lat, lon])
+
 
   const searchAddress = useCallback(async (query: string) => {
     if (query.length < 3) { setSuggestions([]); return }
