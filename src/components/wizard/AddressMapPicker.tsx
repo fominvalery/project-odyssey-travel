@@ -92,6 +92,8 @@ export default function AddressMapPicker({
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map)
 
+    setTimeout(() => map.invalidateSize(), 100)
+
     if (lat && lon) {
       markerRef.current = L.marker([lat, lon]).addTo(map)
     }

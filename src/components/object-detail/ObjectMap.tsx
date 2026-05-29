@@ -50,6 +50,7 @@ export default function ObjectMap({ city, address }: Props) {
 
         L.marker([lat, lon]).addTo(map)
         mapRef.current = map
+        setTimeout(() => map.invalidateSize(), 100)
       })
       .catch(() => setNotFound(true))
 
