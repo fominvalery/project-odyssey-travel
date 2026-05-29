@@ -44,44 +44,59 @@ function loadYandexMaps(): Promise<void> {
   })
 }
 
-async function geocodeQuery(query: string): Promise<{ lat: number; lon: number; name: string } | null> {
-  const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
-  const res = await fetch(url)
-  const data = await res.json()
-  const member = data?.response?.GeoObjectCollection?.featureMember?.[0]
-  if (!member) return null
-  const pos = member.GeoObject?.Point?.pos
-  const name = member.GeoObject?.name || ""
-  if (!pos) return null
-  const [lon, lat] = pos.split(" ").map(Number)
-  return { lat, lon, name }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let geocoderPkg: any = null
+
+async function getGeocoder() {
+  if (geocoderPkg) return geocoderPkg
+  await loadYandexMaps()
+  await window.ymaps3.ready
+  geocoderPkg = await window.ymaps3.import("@yandex/ymaps3-geocoder@0.0.1")
+  return geocoderPkg
 }
 
-async function reverseGeocode(lat: number, lon: number): Promise<{ address: string; city: string } | null> {
-  const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${lon},${lat}&format=json&lang=ru_RU&results=1&kind=house`
-  const res = await fetch(url)
-  const data = await res.json()
-  const member = data?.response?.GeoObjectCollection?.featureMember?.[0]
-  if (!member) return null
-  const comp = member.GeoObject?.metaDataProperty?.GeocoderMetaData?.AddressDetails?.Country?.AddressLine || ""
-  const locality = member.GeoObject?.metaDataProperty?.GeocoderMetaData?.AddressDetails?.Country?.AdministrativeArea?.SubAdministrativeArea?.Locality?.LocalityName || ""
-  return { address: comp, city: locality }
+async function geocodeQuery(query: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const pkg = await getGeocoder()
+    const result = await pkg.geocode({ text: query, lang: "ru_RU", results: 1 })
+    const feat = result?.features?.[0]
+    if (!feat) return null
+    const [lon, lat] = feat.geometry.coordinates
+    return { lat, lon }
+  } catch {
+    return null
+  }
+}
+
+async function reverseGeocodeCoords(lat: number, lon: number): Promise<{ address: string; city: string } | null> {
+  try {
+    const pkg = await getGeocoder()
+    const result = await pkg.geocode({ coordinates: [lon, lat], lang: "ru_RU", results: 1, kind: "house" })
+    const feat = result?.features?.[0]
+    if (!feat) return null
+    const props = feat.properties
+    const address = props?.name || props?.description || ""
+    const city = props?.locality || ""
+    return { address, city }
+  } catch {
+    return null
+  }
 }
 
 async function suggestAddresses(query: string): Promise<Suggestion[]> {
-  const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=5`
-  const res = await fetch(url)
-  const data = await res.json()
-  const members = data?.response?.GeoObjectCollection?.featureMember || []
-  return members.map((m: { GeoObject: { name: string; description: string; Point: { pos: string } } }) => {
-    const pos = m.GeoObject?.Point?.pos || ""
-    const [lon, lat] = pos.split(" ")
-    return {
-      display_name: [m.GeoObject?.name, m.GeoObject?.description].filter(Boolean).join(", "),
-      lat,
-      lon,
-    }
-  })
+  try {
+    const pkg = await getGeocoder()
+    const result = await pkg.geocode({ text: query, lang: "ru_RU", results: 5 })
+    const features = result?.features || []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return features.map((f: any) => ({
+      display_name: [f.properties?.name, f.properties?.description].filter(Boolean).join(", "),
+      lat: String(f.geometry.coordinates[1]),
+      lon: String(f.geometry.coordinates[0]),
+    }))
+  } catch {
+    return []
+  }
 }
 
 export default function AddressMapPicker({
@@ -124,18 +139,16 @@ export default function AddressMapPicker({
 
         const listener = new YMapListener({
           layer: "any",
-          onClick: async (obj: unknown, event: { coordinates: [number, number] }) => {
+          onClick: async (_obj: unknown, event: { coordinates: [number, number] }) => {
             const [clon, clat] = event.coordinates
             onCoordsChange?.(clat, clon)
 
-            if (markerRef.current) {
-              map.removeChild(markerRef.current)
-            }
+            if (markerRef.current) map.removeChild(markerRef.current)
             const newMarker = new YMapDefaultMarker({ coordinates: [clon, clat] })
             map.addChild(newMarker)
             markerRef.current = newMarker
 
-            const result = await reverseGeocode(clat, clon)
+            const result = await reverseGeocodeCoords(clat, clon)
             if (result) {
               if (result.address) onAddressChange(result.address)
               if (result.city) onCityChange(result.city)
@@ -143,7 +156,6 @@ export default function AddressMapPicker({
           },
         })
         map.addChild(listener)
-
         mapRef.current = map
 
         if ((!lat || !lon) && (city || address)) {
@@ -184,13 +196,9 @@ export default function AddressMapPicker({
 
   const searchAddress = useCallback(async (query: string) => {
     if (query.length < 4) { setSuggestions([]); return }
-    try {
-      const results = await suggestAddresses(query)
-      setSuggestions(results)
-      setShowSuggestions(true)
-    } catch {
-      setSuggestions([])
-    }
+    const results = await suggestAddresses(query)
+    setSuggestions(results)
+    setShowSuggestions(results.length > 0)
   }, [])
 
   function handleAddressInput(val: string) {

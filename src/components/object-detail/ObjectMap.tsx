@@ -32,12 +32,14 @@ function loadYandexMaps(): Promise<void> {
 }
 
 async function geocode(query: string): Promise<[number, number] | null> {
-  const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
-  const res = await fetch(url)
-  const data = await res.json()
-  const pos = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos
-  if (!pos) return null
-  const [lon, lat] = pos.split(" ").map(Number)
+  await loadYandexMaps()
+  await window.ymaps3.ready
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pkg: any = await window.ymaps3.import("@yandex/ymaps3-geocoder@0.0.1")
+  const result = await pkg.geocode({ text: query, lang: "ru_RU", results: 1 })
+  const feat = result?.features?.[0]
+  if (!feat) return null
+  const [lon, lat] = feat.geometry.coordinates
   return [lat, lon]
 }
 
