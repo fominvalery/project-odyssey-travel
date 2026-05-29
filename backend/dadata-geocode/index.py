@@ -16,7 +16,7 @@ def handler(event: dict, context) -> dict:
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
     api_key = os.environ["DADATA_API_KEY"]
-    secret_key = os.environ["DADATA_SECRET_KEY"]
+    secret_key = os.environ.get("DADATA_SECRET_KEY", "")
     params = event.get("queryStringParameters") or {}
     query = params.get("q", "")
 
