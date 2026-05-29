@@ -88,8 +88,9 @@ export default function AddressMapPicker({
     const center: [number, number] = lat && lon ? [lat, lon] : DEFAULT_CENTER
     const map = L.map(containerRef.current, { zoomControl: true }).setView(center, lat && lon ? 16 : 11)
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
     }).addTo(map)
 
     setTimeout(() => map.invalidateSize(), 100)

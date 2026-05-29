@@ -44,8 +44,9 @@ export default function ObjectMap({ city, address }: Props) {
         const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false })
           .setView([lat, lon], 16)
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19,
         }).addTo(map)
 
         L.marker([lat, lon]).addTo(map)
