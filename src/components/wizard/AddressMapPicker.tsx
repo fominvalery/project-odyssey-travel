@@ -56,6 +56,7 @@ export default function AddressMapPicker({
       markerRef.current = L.marker([lat, lon]).addTo(map)
     }
 
+    // Клик на карту — только ставим маркер, поля не меняем
     map.on("click", (e: L.LeafletMouseEvent) => {
       const { lat: clat, lng: clon } = e.latlng
       if (markerRef.current) {
@@ -64,46 +65,9 @@ export default function AddressMapPicker({
         markerRef.current = L.marker([clat, clon]).addTo(map)
       }
       onCoordsChange?.(clat, clon)
-      fetch(
-        `https://geocode-maps.yandex.ru/1.x/?apikey=8966eab8-9617-4075-845c-184846af3286&geocode=${clon},${clat}&format=json&lang=ru_RU&results=1&kind=house`
-      )
-        .then(r => r.json())
-        .then(d => {
-          const obj = d?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject
-          if (!obj) return
-          const parts = obj.metaDataProperty?.GeocoderMetaData?.AddressDetails?.Country
-          const locality = parts?.AdministrativeArea?.SubAdministrativeArea?.Locality?.LocalityName || ""
-          if (obj.name) onAddressChange(obj.name)
-          if (locality) onCityChange(locality)
-        })
-        .catch(() => {})
     })
 
     mapRef.current = map
-
-    // Автогеокодинг при редактировании: нет координат, но есть адрес
-    if ((!lat || !lon) && (city || address)) {
-      const q = [city, address].filter(Boolean).join(", ")
-      fetch(
-        `https://geocode-maps.yandex.ru/1.x/?apikey=8966eab8-9617-4075-845c-184846af3286&geocode=${encodeURIComponent(q)}&format=json&lang=ru_RU&results=1`
-      )
-        .then(r => r.json())
-        .then(data => {
-          const pos_str = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos
-          if (pos_str && mapRef.current) {
-            const [autoLon, autoLat] = pos_str.split(" ").map(Number)
-            const pos: [number, number] = [autoLat, autoLon]
-            mapRef.current.setView(pos, 15)
-            if (markerRef.current) {
-              markerRef.current.setLatLng(pos)
-            } else {
-              markerRef.current = L.marker(pos).addTo(mapRef.current!)
-            }
-            onCoordsChange?.(autoLat, autoLon)
-          }
-        })
-        .catch(() => {})
-    }
 
     return () => {
       map.remove()
@@ -126,22 +90,16 @@ export default function AddressMapPicker({
   }, [lat, lon])
 
   const searchAddress = useCallback(async (query: string) => {
-    if (query.length < 4) { setSuggestions([]); return }
+    if (query.length < 3) { setSuggestions([]); return }
     try {
       const res = await fetch(
-        `https://geocode-maps.yandex.ru/1.x/?apikey=8966eab8-9617-4075-845c-184846af3286&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=5`
+        `https://functions.poehali.dev/aeb77da4-9bdd-4f20-b6b2-093b55af7853?q=${encodeURIComponent(query)}`
       )
       const data = await res.json()
-      const members = data?.response?.GeoObjectCollection?.featureMember || []
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const suggestions: Suggestion[] = members.map((m: any) => {
-        const pos = m.GeoObject?.Point?.pos || ""
-        const [lon, lat] = pos.split(" ")
-        return {
-          display_name: [m.GeoObject?.name, m.GeoObject?.description].filter(Boolean).join(", "),
-          lat, lon,
-        }
-      })
+      const suggestions: Suggestion[] = (data.suggestions || []).filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (s: any) => s.lat && s.lon
+      )
       setSuggestions(suggestions)
       setShowSuggestions(suggestions.length > 0)
     } catch {
@@ -222,7 +180,7 @@ export default function AddressMapPicker({
         className="rounded-xl overflow-hidden border border-[#1f1f1f]"
         style={{ height: 280 }}
       />
-      <p className="text-xs text-gray-500">Нажмите на карту, чтобы уточнить местоположение</p>
+      <p className="text-xs text-gray-500">Начните вводить адрес и выберите из подсказок — карта переместится автоматически. Или кликните на карту чтобы поставить метку вручную.</p>
     </div>
   )
 }

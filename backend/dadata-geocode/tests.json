@@ -1,0 +1,1 @@
+{"tests": [{"name": "Подсказки адресов", "method": "GET", "path": "/?q=Москва Тверская", "expectedStatus": 200, "expectedBody": {"suggestions": []}, "bodyMatcher": "partial"}]}
