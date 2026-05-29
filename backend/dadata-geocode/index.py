@@ -31,6 +31,8 @@ def handler(event: dict, context) -> dict:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": f"Token {api_key}",
+            "Origin": "https://kabinet-24.ru",
+            "Referer": "https://kabinet-24.ru/",
         },
         method="POST",
     )
