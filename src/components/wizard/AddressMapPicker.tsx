@@ -33,7 +33,9 @@ function loadYandexMaps(): Promise<void> {
   return new Promise((resolve, reject) => {
     const existing = document.getElementById("ymaps3-script")
     if (existing) {
+      if (window.ymaps3) { resolve(); return }
       existing.addEventListener("load", () => resolve())
+      existing.addEventListener("error", reject)
       return
     }
     const script = document.createElement("script")
