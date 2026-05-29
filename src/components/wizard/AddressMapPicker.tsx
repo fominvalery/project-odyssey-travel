@@ -45,9 +45,12 @@ export default function AddressMapPicker({
     const center: [number, number] = lat && lon ? [lat, lon] : DEFAULT_CENTER
     const map = L.map(containerRef.current, { zoomControl: true }).setView(center, lat && lon ? 16 : 11)
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    L.tileLayer("https://functions.poehali.dev/005b268c-77f7-4955-86e4-a56f799e8699?x={x}&y={y}&z={z}", {
+      attribution: '&copy; Яндекс.Карты',
+      maxZoom: 19,
     }).addTo(map)
+
+    setTimeout(() => map.invalidateSize(), 100)
 
     if (lat && lon) {
       markerRef.current = L.marker([lat, lon]).addTo(map)
@@ -62,15 +65,16 @@ export default function AddressMapPicker({
       }
       onCoordsChange?.(clat, clon)
       fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${clat}&lon=${clon}`,
-        { headers: { "Accept-Language": "ru" } }
+        `https://geocode-maps.yandex.ru/1.x/?apikey=8966eab8-9617-4075-845c-184846af3286&geocode=${clon},${clat}&format=json&lang=ru_RU&results=1&kind=house`
       )
         .then(r => r.json())
         .then(d => {
-          const a = d.address
-          const street = [a.road, a.house_number].filter(Boolean).join(", ")
-          if (street) onAddressChange(street)
-          if (a.city || a.town || a.village) onCityChange(a.city || a.town || a.village)
+          const obj = d?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject
+          if (!obj) return
+          const parts = obj.metaDataProperty?.GeocoderMetaData?.AddressDetails?.Country
+          const locality = parts?.AdministrativeArea?.SubAdministrativeArea?.Locality?.LocalityName || ""
+          if (obj.name) onAddressChange(obj.name)
+          if (locality) onCityChange(locality)
         })
         .catch(() => {})
     })
@@ -79,16 +83,15 @@ export default function AddressMapPicker({
 
     // Автогеокодинг при редактировании: нет координат, но есть адрес
     if ((!lat || !lon) && (city || address)) {
-      const q = [address, city].filter(Boolean).join(", ")
+      const q = [city, address].filter(Boolean).join(", ")
       fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
-        { headers: { "Accept-Language": "ru" } }
+        `https://geocode-maps.yandex.ru/1.x/?apikey=8966eab8-9617-4075-845c-184846af3286&geocode=${encodeURIComponent(q)}&format=json&lang=ru_RU&results=1`
       )
         .then(r => r.json())
-        .then((data: Suggestion[]) => {
-          if (data[0] && mapRef.current) {
-            const autoLat = parseFloat(data[0].lat)
-            const autoLon = parseFloat(data[0].lon)
+        .then(data => {
+          const pos_str = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos
+          if (pos_str && mapRef.current) {
+            const [autoLon, autoLat] = pos_str.split(" ").map(Number)
             const pos: [number, number] = [autoLat, autoLon]
             mapRef.current.setView(pos, 15)
             if (markerRef.current) {
@@ -126,12 +129,21 @@ export default function AddressMapPicker({
     if (query.length < 4) { setSuggestions([]); return }
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
-        { headers: { "Accept-Language": "ru" } }
+        `https://geocode-maps.yandex.ru/1.x/?apikey=8966eab8-9617-4075-845c-184846af3286&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=5`
       )
-      const data: Suggestion[] = await res.json()
-      setSuggestions(data)
-      setShowSuggestions(true)
+      const data = await res.json()
+      const members = data?.response?.GeoObjectCollection?.featureMember || []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const suggestions: Suggestion[] = members.map((m: any) => {
+        const pos = m.GeoObject?.Point?.pos || ""
+        const [lon, lat] = pos.split(" ")
+        return {
+          display_name: [m.GeoObject?.name, m.GeoObject?.description].filter(Boolean).join(", "),
+          lat, lon,
+        }
+      })
+      setSuggestions(suggestions)
+      setShowSuggestions(suggestions.length > 0)
     } catch {
       setSuggestions([])
     }
