@@ -166,6 +166,17 @@ def handler(event: dict, context) -> dict:
                         args.append(float(v))
                     except (ValueError, TypeError):
                         fields.append(f"{f} = NULL")
+        for f in ["lat", "lon"]:
+            if f in body:
+                v = body[f]
+                if v == "" or v is None:
+                    fields.append(f"{f} = NULL")
+                else:
+                    try:
+                        fields.append(f"{f} = %s")
+                        args.append(float(v))
+                    except (ValueError, TypeError):
+                        fields.append(f"{f} = NULL")
         for f in ["photos", "videos", "extra_fields"]:
             if f in body:
                 fields.append(f"{f} = %s")

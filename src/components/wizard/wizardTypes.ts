@@ -16,6 +16,8 @@ export interface ObjectData {
   photos?: string[]
   user_id?: string | null
   extra_fields?: Record<string, string>
+  lat?: number | null
+  lon?: number | null
   presentation_url?: string | null
   expires_at?: string | null
   requires_payment?: boolean

@@ -1,0 +1,1 @@
+ALTER TABLE t_p32045231_project_odyssey_trav.agg_offers ADD COLUMN IF NOT EXISTS lat double precision NULL, ADD COLUMN IF NOT EXISTS lon double precision NULL;
