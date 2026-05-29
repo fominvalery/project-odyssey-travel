@@ -142,6 +142,7 @@ export default function AddressMapPicker({
           lat, lon,
         }
       })
+      console.log("[SUGGEST]", suggestions)
       setSuggestions(suggestions)
       setShowSuggestions(suggestions.length > 0)
     } catch {
