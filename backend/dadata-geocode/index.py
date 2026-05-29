@@ -16,6 +16,7 @@ def handler(event: dict, context) -> dict:
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
     api_key = os.environ["DADATA_API_KEY"]
+    secret_key = os.environ["DADATA_SECRET_KEY"]
     params = event.get("queryStringParameters") or {}
     query = params.get("q", "")
 
@@ -31,8 +32,7 @@ def handler(event: dict, context) -> dict:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": f"Token {api_key}",
-            "Origin": "https://kabinet-24.ru",
-            "Referer": "https://kabinet-24.ru/",
+            "X-Secret": secret_key,
         },
         method="POST",
     )
