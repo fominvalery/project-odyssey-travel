@@ -88,7 +88,7 @@ export default function AddressMapPicker({
     const center: [number, number] = lat && lon ? [lat, lon] : DEFAULT_CENTER
     const map = L.map(containerRef.current, { zoomControl: true }).setView(center, lat && lon ? 16 : 11)
 
-    L.tileLayer("https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU", {
+    L.tileLayer("https://functions.poehali.dev/005b268c-77f7-4955-86e4-a56f799e8699?x={x}&y={y}&z={z}", {
       attribution: '&copy; <a href="https://yandex.ru/maps">Яндекс.Карты</a>',
       maxZoom: 19,
     }).addTo(map)
