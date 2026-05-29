@@ -115,10 +115,14 @@ export default function AddressMapPicker({
 
     const init = async () => {
       await new Promise(r => setTimeout(r, 100))
+      console.log("[MAP] init start, container:", !!containerRef.current)
       if (destroyed || !containerRef.current) return
 
+      console.log("[MAP] loading ymaps3...")
       await loadYandexMaps()
+      console.log("[MAP] ymaps3 loaded, waiting ready...")
       await window.ymaps3.ready
+      console.log("[MAP] ymaps3 ready!")
       if (destroyed || !containerRef.current) return
 
       const { YMap, YMapDefaultScheme, YMapDefaultFeaturesLayer, YMapMarker, YMapListener } = window.ymaps3
