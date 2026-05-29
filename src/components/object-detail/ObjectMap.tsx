@@ -1,60 +1,90 @@
 import { useEffect, useRef, useState } from "react"
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
 
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-})
+const YANDEX_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || ""
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ymaps3: any
+  }
+}
 
 interface Props {
   city: string
   address: string
 }
 
+function loadYandexMaps(): Promise<void> {
+  if (window.ymaps3) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById("ymaps3-script")
+    if (existing) {
+      existing.addEventListener("load", () => resolve())
+      return
+    }
+    const script = document.createElement("script")
+    script.id = "ymaps3-script"
+    script.src = `https://api-maps.yandex.ru/v3/?apikey=${YANDEX_API_KEY}&lang=ru_RU`
+    script.onload = () => resolve()
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+
+async function geocode(query: string): Promise<[number, number] | null> {
+  const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
+  const res = await fetch(url)
+  const data = await res.json()
+  const pos = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos
+  if (!pos) return null
+  const [lon, lat] = pos.split(" ").map(Number)
+  return [lat, lon]
+}
+
 export default function ObjectMap({ city, address }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const mapRef = useRef<L.Map | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null)
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     const query = [address, city].filter(Boolean).join(", ")
     if (!query) return
 
-    fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
-      { headers: { "Accept-Language": "ru" } }
-    )
-      .then(r => r.json())
-      .then((data: { lat: string; lon: string }[]) => {
-        if (!data.length) { setNotFound(true); return }
-        const lat = parseFloat(data[0].lat)
-        const lon = parseFloat(data[0].lon)
+    let destroyed = false
 
-        if (!containerRef.current) return
+    loadYandexMaps()
+      .then(() => window.ymaps3.ready)
+      .then(async () => {
+        if (destroyed || !containerRef.current) return
+        const coords = await geocode(query)
+        if (!coords) { setNotFound(true); return }
+
+        const { YMap, YMapDefaultScheme, YMapDefaultMarker, YMapDefaultFeaturesLayer } = window.ymaps3
 
         if (mapRef.current) {
-          mapRef.current.remove()
+          mapRef.current.destroy()
           mapRef.current = null
         }
 
-        const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false })
-          .setView([lat, lon], 16)
+        const map = new YMap(containerRef.current, {
+          location: { center: [coords[1], coords[0]], zoom: 16 },
+        })
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        }).addTo(map)
+        map.addChild(new YMapDefaultScheme())
+        map.addChild(new YMapDefaultFeaturesLayer())
+        map.addChild(new YMapDefaultMarker({ coordinates: [coords[1], coords[0]] }))
 
-        L.marker([lat, lon]).addTo(map)
         mapRef.current = map
       })
       .catch(() => setNotFound(true))
 
     return () => {
-      mapRef.current?.remove()
-      mapRef.current = null
+      destroyed = true
+      if (mapRef.current) {
+        mapRef.current.destroy()
+        mapRef.current = null
+      }
     }
   }, [city, address])
 

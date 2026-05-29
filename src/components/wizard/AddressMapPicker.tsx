@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
 
-// Фикс иконок leaflet при сборке через vite
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-})
+const YANDEX_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || ""
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ymaps3: any
+  }
+}
 
 interface Suggestion {
   display_name: string
@@ -28,109 +27,166 @@ interface Props {
 
 const DEFAULT_CENTER: [number, number] = [55.751244, 37.618423]
 
+function loadYandexMaps(): Promise<void> {
+  if (window.ymaps3) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById("ymaps3-script")
+    if (existing) {
+      existing.addEventListener("load", () => resolve())
+      return
+    }
+    const script = document.createElement("script")
+    script.id = "ymaps3-script"
+    script.src = `https://api-maps.yandex.ru/v3/?apikey=${YANDEX_API_KEY}&lang=ru_RU`
+    script.onload = () => resolve()
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+
+async function geocodeQuery(query: string): Promise<{ lat: number; lon: number; name: string } | null> {
+  const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
+  const res = await fetch(url)
+  const data = await res.json()
+  const member = data?.response?.GeoObjectCollection?.featureMember?.[0]
+  if (!member) return null
+  const pos = member.GeoObject?.Point?.pos
+  const name = member.GeoObject?.name || ""
+  if (!pos) return null
+  const [lon, lat] = pos.split(" ").map(Number)
+  return { lat, lon, name }
+}
+
+async function reverseGeocode(lat: number, lon: number): Promise<{ address: string; city: string } | null> {
+  const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${lon},${lat}&format=json&lang=ru_RU&results=1&kind=house`
+  const res = await fetch(url)
+  const data = await res.json()
+  const member = data?.response?.GeoObjectCollection?.featureMember?.[0]
+  if (!member) return null
+  const comp = member.GeoObject?.metaDataProperty?.GeocoderMetaData?.AddressDetails?.Country?.AddressLine || ""
+  const locality = member.GeoObject?.metaDataProperty?.GeocoderMetaData?.AddressDetails?.Country?.AdministrativeArea?.SubAdministrativeArea?.Locality?.LocalityName || ""
+  return { address: comp, city: locality }
+}
+
+async function suggestAddresses(query: string): Promise<Suggestion[]> {
+  const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=5`
+  const res = await fetch(url)
+  const data = await res.json()
+  const members = data?.response?.GeoObjectCollection?.featureMember || []
+  return members.map((m: { GeoObject: { name: string; description: string; Point: { pos: string } } }) => {
+    const pos = m.GeoObject?.Point?.pos || ""
+    const [lon, lat] = pos.split(" ")
+    return {
+      display_name: [m.GeoObject?.name, m.GeoObject?.description].filter(Boolean).join(", "),
+      lat,
+      lon,
+    }
+  })
+}
+
 export default function AddressMapPicker({
   city, address, onCityChange, onAddressChange, onCoordsChange, lat, lon,
 }: Props) {
-  const mapRef = useRef<L.Map | null>(null)
-  const markerRef = useRef<L.Marker | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markerRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Инициализация карты
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return
+    let destroyed = false
 
-    const center: [number, number] = lat && lon ? [lat, lon] : DEFAULT_CENTER
-    const map = L.map(containerRef.current, { zoomControl: true }).setView(center, lat && lon ? 16 : 11)
+    loadYandexMaps()
+      .then(() => window.ymaps3.ready)
+      .then(async () => {
+        if (destroyed || !containerRef.current) return
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map)
+        const { YMap, YMapDefaultScheme, YMapDefaultFeaturesLayer, YMapDefaultMarker, YMapListener } = window.ymaps3
 
-    if (lat && lon) {
-      markerRef.current = L.marker([lat, lon]).addTo(map)
-    }
+        const center = lat && lon ? [lon, lat] : [DEFAULT_CENTER[1], DEFAULT_CENTER[0]]
+        const zoom = lat && lon ? 16 : 11
 
-    map.on("click", (e: L.LeafletMouseEvent) => {
-      const { lat: clat, lng: clon } = e.latlng
-      if (markerRef.current) {
-        markerRef.current.setLatLng([clat, clon])
-      } else {
-        markerRef.current = L.marker([clat, clon]).addTo(map)
-      }
-      onCoordsChange?.(clat, clon)
-      fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${clat}&lon=${clon}`,
-        { headers: { "Accept-Language": "ru" } }
-      )
-        .then(r => r.json())
-        .then(d => {
-          const a = d.address
-          const street = [a.road, a.house_number].filter(Boolean).join(", ")
-          if (street) onAddressChange(street)
-          if (a.city || a.town || a.village) onCityChange(a.city || a.town || a.village)
+        const map = new YMap(containerRef.current, {
+          location: { center, zoom },
         })
-        .catch(() => {})
-    })
 
-    mapRef.current = map
+        map.addChild(new YMapDefaultScheme())
+        map.addChild(new YMapDefaultFeaturesLayer())
 
-    // Автогеокодинг при редактировании: нет координат, но есть адрес
-    if ((!lat || !lon) && (city || address)) {
-      const q = [address, city].filter(Boolean).join(", ")
-      fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
-        { headers: { "Accept-Language": "ru" } }
-      )
-        .then(r => r.json())
-        .then((data: Suggestion[]) => {
-          if (data[0] && mapRef.current) {
-            const autoLat = parseFloat(data[0].lat)
-            const autoLon = parseFloat(data[0].lon)
-            const pos: [number, number] = [autoLat, autoLon]
-            mapRef.current.setView(pos, 15)
+        if (lat && lon) {
+          const marker = new YMapDefaultMarker({ coordinates: [lon, lat] })
+          map.addChild(marker)
+          markerRef.current = marker
+        }
+
+        const listener = new YMapListener({
+          layer: "any",
+          onClick: async (obj: unknown, event: { coordinates: [number, number] }) => {
+            const [clon, clat] = event.coordinates
+            onCoordsChange?.(clat, clon)
+
             if (markerRef.current) {
-              markerRef.current.setLatLng(pos)
-            } else {
-              markerRef.current = L.marker(pos).addTo(mapRef.current!)
+              map.removeChild(markerRef.current)
             }
-            onCoordsChange?.(autoLat, autoLon)
-          }
+            const newMarker = new YMapDefaultMarker({ coordinates: [clon, clat] })
+            map.addChild(newMarker)
+            markerRef.current = newMarker
+
+            const result = await reverseGeocode(clat, clon)
+            if (result) {
+              if (result.address) onAddressChange(result.address)
+              if (result.city) onCityChange(result.city)
+            }
+          },
         })
-        .catch(() => {})
-    }
+        map.addChild(listener)
+
+        mapRef.current = map
+
+        if ((!lat || !lon) && (city || address)) {
+          const q = [address, city].filter(Boolean).join(", ")
+          const result = await geocodeQuery(q)
+          if (result && mapRef.current && !destroyed) {
+            map.setLocation({ center: [result.lon, result.lat], zoom: 15 })
+            if (markerRef.current) map.removeChild(markerRef.current)
+            const m = new YMapDefaultMarker({ coordinates: [result.lon, result.lat] })
+            map.addChild(m)
+            markerRef.current = m
+            onCoordsChange?.(result.lat, result.lon)
+          }
+        }
+      })
+      .catch(() => {})
 
     return () => {
-      map.remove()
-      mapRef.current = null
-      markerRef.current = null
+      destroyed = true
+      if (mapRef.current) {
+        mapRef.current.destroy()
+        mapRef.current = null
+        markerRef.current = null
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Перемещение маркера при изменении координат снаружи
   useEffect(() => {
     if (!mapRef.current || !lat || !lon) return
-    const pos: [number, number] = [lat, lon]
-    if (markerRef.current) {
-      markerRef.current.setLatLng(pos)
-    } else {
-      markerRef.current = L.marker(pos).addTo(mapRef.current)
-    }
-    mapRef.current.setView(pos, 16)
+    const { YMapDefaultMarker } = window.ymaps3
+    if (markerRef.current) mapRef.current.removeChild(markerRef.current)
+    const m = new YMapDefaultMarker({ coordinates: [lon, lat] })
+    mapRef.current.addChild(m)
+    markerRef.current = m
+    mapRef.current.setLocation({ center: [lon, lat], zoom: 16 })
   }, [lat, lon])
 
   const searchAddress = useCallback(async (query: string) => {
     if (query.length < 4) { setSuggestions([]); return }
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
-        { headers: { "Accept-Language": "ru" } }
-      )
-      const data: Suggestion[] = await res.json()
-      setSuggestions(data)
+      const results = await suggestAddresses(query)
+      setSuggestions(results)
       setShowSuggestions(true)
     } catch {
       setSuggestions([])
@@ -146,8 +202,7 @@ export default function AddressMapPicker({
   }
 
   function handleSelect(s: Suggestion) {
-    const parts = s.display_name.split(",")
-    onAddressChange(parts.slice(0, 3).join(",").trim())
+    onAddressChange(s.display_name.split(",").slice(0, 2).join(",").trim())
     const newLat = parseFloat(s.lat)
     const newLon = parseFloat(s.lon)
     onCoordsChange?.(newLat, newLon)
@@ -157,7 +212,6 @@ export default function AddressMapPicker({
 
   return (
     <div className="space-y-4">
-      {/* Город */}
       <div>
         <label className="text-xs text-gray-400 mb-1.5 block">Город</label>
         <input
@@ -168,7 +222,6 @@ export default function AddressMapPicker({
         />
       </div>
 
-      {/* Адрес с автодополнением */}
       <div className="relative">
         <label className="text-xs text-gray-400 mb-1.5 block">Адрес</label>
         <input
@@ -194,7 +247,6 @@ export default function AddressMapPicker({
         )}
       </div>
 
-      {/* Карта */}
       <div
         ref={containerRef}
         className="rounded-xl overflow-hidden border border-[#1f1f1f]"
