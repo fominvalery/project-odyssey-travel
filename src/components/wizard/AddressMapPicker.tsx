@@ -208,10 +208,7 @@ export default function AddressMapPicker({
         <label className="text-xs text-gray-400 mb-1.5 block">Город</label>
         <input
           value={city}
-          onChange={e => {
-            onCityChange(e.target.value)
-            if (address) handleAddressInput(address)
-          }}
+          onChange={e => onCityChange(e.target.value)}
           placeholder="Москва"
           className="w-full bg-[#111] border border-[#1f1f1f] text-white placeholder:text-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500/50 transition-colors"
         />
