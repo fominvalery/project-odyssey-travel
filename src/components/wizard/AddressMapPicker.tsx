@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import L from "leaflet"
+import "leaflet/dist/leaflet.css"
 
-const YANDEX_API_KEY = "c82661bb-1958-4042-bd02-e02f758f1cd8"
-const YANDEX_GEOCODER_KEY = "8966eab8-9617-4075-845c-184846af3286"
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+})
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ymaps3: any
-  }
-}
+const GEOCODER_KEY = "8966eab8-9617-4075-845c-184846af3286"
 
 interface Suggestion {
   display_name: string
@@ -28,58 +29,34 @@ interface Props {
 
 const DEFAULT_CENTER: [number, number] = [55.751244, 37.618423]
 
-function loadYandexMaps(): Promise<void> {
-  if (window.ymaps3) return Promise.resolve()
-  return new Promise((resolve, reject) => {
-    const existing = document.getElementById("ymaps3-script")
-    if (existing) {
-      if (window.ymaps3) { resolve(); return }
-      existing.addEventListener("load", () => resolve())
-      existing.addEventListener("error", reject)
-      return
-    }
-    const script = document.createElement("script")
-    script.id = "ymaps3-script"
-    script.src = `https://api-maps.yandex.ru/v3/?apikey=${YANDEX_API_KEY}&lang=ru_RU`
-    script.onload = () => resolve()
-    script.onerror = reject
-    document.head.appendChild(script)
-  })
-}
-
 async function geocodeQuery(query: string): Promise<{ lat: number; lon: number } | null> {
   try {
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_GEOCODER_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${GEOCODER_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
     const res = await fetch(url)
     const data = await res.json()
     const pos = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos
     if (!pos) return null
     const [lon, lat] = pos.split(" ").map(Number)
     return { lat, lon }
-  } catch {
-    return null
-  }
+  } catch { return null }
 }
 
-async function reverseGeocodeCoords(lat: number, lon: number): Promise<{ address: string; city: string } | null> {
+async function reverseGeocode(lat: number, lon: number): Promise<{ address: string; city: string } | null> {
   try {
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_GEOCODER_KEY}&geocode=${lon},${lat}&format=json&lang=ru_RU&results=1&kind=house`
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${GEOCODER_KEY}&geocode=${lon},${lat}&format=json&lang=ru_RU&results=1&kind=house`
     const res = await fetch(url)
     const data = await res.json()
     const obj = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject
     if (!obj) return null
     const parts = obj.metaDataProperty?.GeocoderMetaData?.AddressDetails?.Country
     const locality = parts?.AdministrativeArea?.SubAdministrativeArea?.Locality?.LocalityName || ""
-    const address = obj.name || ""
-    return { address, city: locality }
-  } catch {
-    return null
-  }
+    return { address: obj.name || "", city: locality }
+  } catch { return null }
 }
 
 async function suggestAddresses(query: string): Promise<Suggestion[]> {
   try {
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_GEOCODER_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=5`
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${GEOCODER_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=5`
     const res = await fetch(url)
     const data = await res.json()
     const members = data?.response?.GeoObjectCollection?.featureMember || []
@@ -89,118 +66,86 @@ async function suggestAddresses(query: string): Promise<Suggestion[]> {
       const [lon, lat] = pos.split(" ")
       return {
         display_name: [m.GeoObject?.name, m.GeoObject?.description].filter(Boolean).join(", "),
-        lat,
-        lon,
+        lat, lon,
       }
     })
-  } catch {
-    return []
-  }
+  } catch { return [] }
 }
 
 export default function AddressMapPicker({
   city, address, onCityChange, onAddressChange, onCoordsChange, lat, lon,
 }: Props) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapRef = useRef<any>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markerRef = useRef<any>(null)
+  const mapRef = useRef<L.Map | null>(null)
+  const markerRef = useRef<L.Marker | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    let destroyed = false
+    if (!containerRef.current || mapRef.current) return
 
-    const init = async () => {
-      await new Promise(r => setTimeout(r, 100))
-      if (destroyed || !containerRef.current) return
+    const center: [number, number] = lat && lon ? [lat, lon] : DEFAULT_CENTER
+    const map = L.map(containerRef.current, { zoomControl: true }).setView(center, lat && lon ? 16 : 11)
 
-      await loadYandexMaps()
-      await window.ymaps3.ready
-      if (destroyed || !containerRef.current) return
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map)
 
-      const { YMap, YMapDefaultScheme, YMapDefaultFeaturesLayer, YMapMarker, YMapListener } = window.ymaps3
-
-      const center = lat && lon ? [lon, lat] : [DEFAULT_CENTER[1], DEFAULT_CENTER[0]]
-      const zoom = lat && lon ? 16 : 11
-
-      const map = new YMap(containerRef.current, {
-        location: { center, zoom },
-      })
-
-      map.addChild(new YMapDefaultScheme())
-      map.addChild(new YMapDefaultFeaturesLayer())
-
-      const createMarkerEl = () => {
-        const el = document.createElement("div")
-        el.style.cssText = "width:20px;height:20px;background:#e64646;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4)"
-        return el
-      }
-
-      if (lat && lon) {
-        const marker = new YMapMarker({ coordinates: [lon, lat] }, createMarkerEl())
-        map.addChild(marker)
-        markerRef.current = marker
-      }
-
-      const listener = new YMapListener({
-        layer: "any",
-        onClick: async (_obj: unknown, event: { coordinates: [number, number] }) => {
-          const [clon, clat] = event.coordinates
-          onCoordsChange?.(clat, clon)
-
-          if (markerRef.current) map.removeChild(markerRef.current)
-          const newMarker = new YMapMarker({ coordinates: [clon, clat] }, createMarkerEl())
-          map.addChild(newMarker)
-          markerRef.current = newMarker
-
-          const result = await reverseGeocodeCoords(clat, clon)
-          if (result) {
-            if (result.address) onAddressChange(result.address)
-            if (result.city) onCityChange(result.city)
-          }
-        },
-      })
-      map.addChild(listener)
-      mapRef.current = map
-
-      if ((!lat || !lon) && (city || address)) {
-        const q = [address, city].filter(Boolean).join(", ")
-        const result = await geocodeQuery(q)
-        if (result && mapRef.current && !destroyed) {
-          map.setLocation({ center: [result.lon, result.lat], zoom: 15 })
-          if (markerRef.current) map.removeChild(markerRef.current)
-          const m = new YMapMarker({ coordinates: [result.lon, result.lat] }, createMarkerEl())
-          map.addChild(m)
-          markerRef.current = m
-          onCoordsChange?.(result.lat, result.lon)
-        }
-      }
+    if (lat && lon) {
+      markerRef.current = L.marker([lat, lon]).addTo(map)
     }
 
-    init().catch(() => {})
+    map.on("click", async (e: L.LeafletMouseEvent) => {
+      const { lat: clat, lng: clon } = e.latlng
+      if (markerRef.current) {
+        markerRef.current.setLatLng([clat, clon])
+      } else {
+        markerRef.current = L.marker([clat, clon]).addTo(map)
+      }
+      onCoordsChange?.(clat, clon)
+      const result = await reverseGeocode(clat, clon)
+      if (result) {
+        if (result.address) onAddressChange(result.address)
+        if (result.city) onCityChange(result.city)
+      }
+    })
+
+    mapRef.current = map
+
+    if ((!lat || !lon) && (city || address)) {
+      const q = [address, city].filter(Boolean).join(", ")
+      geocodeQuery(q).then(result => {
+        if (result && mapRef.current) {
+          const pos: [number, number] = [result.lat, result.lon]
+          mapRef.current.setView(pos, 15)
+          if (markerRef.current) {
+            markerRef.current.setLatLng(pos)
+          } else {
+            markerRef.current = L.marker(pos).addTo(mapRef.current!)
+          }
+          onCoordsChange?.(result.lat, result.lon)
+        }
+      })
+    }
 
     return () => {
-      destroyed = true
-      if (mapRef.current) {
-        mapRef.current.destroy()
-        mapRef.current = null
-        markerRef.current = null
-      }
+      map.remove()
+      mapRef.current = null
+      markerRef.current = null
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (!mapRef.current || !lat || !lon) return
-    const { YMapDefaultMarker } = window.ymaps3
-    if (markerRef.current) mapRef.current.removeChild(markerRef.current)
-    const m = new YMapDefaultMarker({ coordinates: [lon, lat] })
-    mapRef.current.addChild(m)
-    markerRef.current = m
-    mapRef.current.setLocation({ center: [lon, lat], zoom: 16 })
+    const pos: [number, number] = [lat, lon]
+    if (markerRef.current) {
+      markerRef.current.setLatLng(pos)
+    } else {
+      markerRef.current = L.marker(pos).addTo(mapRef.current)
+    }
+    mapRef.current.setView(pos, 16)
   }, [lat, lon])
 
   const searchAddress = useCallback(async (query: string) => {
@@ -264,11 +209,7 @@ export default function AddressMapPicker({
         )}
       </div>
 
-      <div
-        ref={containerRef}
-        className="rounded-xl overflow-hidden border border-[#1f1f1f]"
-        style={{ height: 280, width: "100%" }}
-      />
+      <div ref={containerRef} className="rounded-xl overflow-hidden border border-[#1f1f1f]" style={{ height: 280 }} />
       <p className="text-xs text-gray-500">Нажмите на карту, чтобы уточнить местоположение</p>
     </div>
   )
