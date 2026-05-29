@@ -67,7 +67,7 @@ export default function ObjectMap({ city, address }: Props) {
       const coords = await geocode(query)
       if (!coords) { setNotFound(true); return }
 
-      const { YMap, YMapDefaultScheme, YMapDefaultMarker, YMapDefaultFeaturesLayer } = window.ymaps3
+      const { YMap, YMapDefaultScheme, YMapDefaultFeaturesLayer, YMapMarker } = window.ymaps3
 
       if (mapRef.current) {
         mapRef.current.destroy()
@@ -80,7 +80,11 @@ export default function ObjectMap({ city, address }: Props) {
 
       map.addChild(new YMapDefaultScheme())
       map.addChild(new YMapDefaultFeaturesLayer())
-      map.addChild(new YMapDefaultMarker({ coordinates: [coords[1], coords[0]] }))
+
+      // Простой маркер без внешних пакетов
+      const markerEl = document.createElement("div")
+      markerEl.style.cssText = "width:20px;height:20px;background:#e64646;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4)"
+      map.addChild(new YMapMarker({ coordinates: [coords[1], coords[0]] }, markerEl))
 
       mapRef.current = map
     }

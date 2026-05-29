@@ -121,7 +121,7 @@ export default function AddressMapPicker({
       await window.ymaps3.ready
       if (destroyed || !containerRef.current) return
 
-      const { YMap, YMapDefaultScheme, YMapDefaultFeaturesLayer, YMapDefaultMarker, YMapListener } = window.ymaps3
+      const { YMap, YMapDefaultScheme, YMapDefaultFeaturesLayer, YMapMarker, YMapListener } = window.ymaps3
 
       const center = lat && lon ? [lon, lat] : [DEFAULT_CENTER[1], DEFAULT_CENTER[0]]
       const zoom = lat && lon ? 16 : 11
@@ -133,8 +133,14 @@ export default function AddressMapPicker({
       map.addChild(new YMapDefaultScheme())
       map.addChild(new YMapDefaultFeaturesLayer())
 
+      const createMarkerEl = () => {
+        const el = document.createElement("div")
+        el.style.cssText = "width:20px;height:20px;background:#e64646;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4)"
+        return el
+      }
+
       if (lat && lon) {
-        const marker = new YMapDefaultMarker({ coordinates: [lon, lat] })
+        const marker = new YMapMarker({ coordinates: [lon, lat] }, createMarkerEl())
         map.addChild(marker)
         markerRef.current = marker
       }
@@ -146,7 +152,7 @@ export default function AddressMapPicker({
           onCoordsChange?.(clat, clon)
 
           if (markerRef.current) map.removeChild(markerRef.current)
-          const newMarker = new YMapDefaultMarker({ coordinates: [clon, clat] })
+          const newMarker = new YMapMarker({ coordinates: [clon, clat] }, createMarkerEl())
           map.addChild(newMarker)
           markerRef.current = newMarker
 
@@ -166,7 +172,7 @@ export default function AddressMapPicker({
         if (result && mapRef.current && !destroyed) {
           map.setLocation({ center: [result.lon, result.lat], zoom: 15 })
           if (markerRef.current) map.removeChild(markerRef.current)
-          const m = new YMapDefaultMarker({ coordinates: [result.lon, result.lat] })
+          const m = new YMapMarker({ coordinates: [result.lon, result.lat] }, createMarkerEl())
           map.addChild(m)
           markerRef.current = m
           onCoordsChange?.(result.lat, result.lon)
