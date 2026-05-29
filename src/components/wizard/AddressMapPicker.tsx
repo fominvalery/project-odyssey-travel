@@ -159,10 +159,20 @@ export default function AddressMapPicker({
 
   function handleSelect(s: Suggestion) {
     const parts = s.display_name.split(",")
-    onAddressChange(parts.slice(0, 3).join(",").trim())
+    onAddressChange(parts[0]?.trim() || s.display_name)
     const newLat = parseFloat(s.lat)
     const newLon = parseFloat(s.lon)
     onCoordsChange?.(newLat, newLon)
+    // Двигаем карту сразу при выборе
+    if (mapRef.current && !isNaN(newLat) && !isNaN(newLon)) {
+      const pos: [number, number] = [newLat, newLon]
+      mapRef.current.setView(pos, 16)
+      if (markerRef.current) {
+        markerRef.current.setLatLng(pos)
+      } else {
+        markerRef.current = L.marker(pos).addTo(mapRef.current)
+      }
+    }
     setSuggestions([])
     setShowSuggestions(false)
   }
