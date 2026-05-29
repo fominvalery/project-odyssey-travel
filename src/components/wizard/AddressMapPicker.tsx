@@ -120,6 +120,7 @@ export default function AddressMapPicker({
     onAddressChange(parts[0]?.trim() || s.display_name)
     const newLat = parseFloat(s.lat)
     const newLon = parseFloat(s.lon)
+    console.log("[SELECT]", s.display_name, "lat=", newLat, "lon=", newLon)
     onCoordsChange?.(newLat, newLon)
     // Двигаем карту сразу при выборе
     if (mapRef.current && !isNaN(newLat) && !isNaN(newLon)) {
