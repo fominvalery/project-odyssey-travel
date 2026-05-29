@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 
 const YANDEX_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || ""
+const YANDEX_GEOCODER_KEY = import.meta.env.VITE_YANDEX_GEOCODER_KEY || ""
 
 declare global {
   interface Window {
@@ -44,24 +45,14 @@ function loadYandexMaps(): Promise<void> {
   })
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let geocoderPkg: any = null
-
-async function getGeocoder() {
-  if (geocoderPkg) return geocoderPkg
-  await loadYandexMaps()
-  await window.ymaps3.ready
-  geocoderPkg = await window.ymaps3.import("@yandex/ymaps3-geocoder@0.0.1")
-  return geocoderPkg
-}
-
 async function geocodeQuery(query: string): Promise<{ lat: number; lon: number } | null> {
   try {
-    const pkg = await getGeocoder()
-    const result = await pkg.geocode({ text: query, lang: "ru_RU", results: 1 })
-    const feat = result?.features?.[0]
-    if (!feat) return null
-    const [lon, lat] = feat.geometry.coordinates
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_GEOCODER_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=1`
+    const res = await fetch(url)
+    const data = await res.json()
+    const pos = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos
+    if (!pos) return null
+    const [lon, lat] = pos.split(" ").map(Number)
     return { lat, lon }
   } catch {
     return null
@@ -70,14 +61,15 @@ async function geocodeQuery(query: string): Promise<{ lat: number; lon: number }
 
 async function reverseGeocodeCoords(lat: number, lon: number): Promise<{ address: string; city: string } | null> {
   try {
-    const pkg = await getGeocoder()
-    const result = await pkg.geocode({ coordinates: [lon, lat], lang: "ru_RU", results: 1, kind: "house" })
-    const feat = result?.features?.[0]
-    if (!feat) return null
-    const props = feat.properties
-    const address = props?.name || props?.description || ""
-    const city = props?.locality || ""
-    return { address, city }
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_GEOCODER_KEY}&geocode=${lon},${lat}&format=json&lang=ru_RU&results=1&kind=house`
+    const res = await fetch(url)
+    const data = await res.json()
+    const obj = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject
+    if (!obj) return null
+    const parts = obj.metaDataProperty?.GeocoderMetaData?.AddressDetails?.Country
+    const locality = parts?.AdministrativeArea?.SubAdministrativeArea?.Locality?.LocalityName || ""
+    const address = obj.name || ""
+    return { address, city: locality }
   } catch {
     return null
   }
@@ -85,15 +77,20 @@ async function reverseGeocodeCoords(lat: number, lon: number): Promise<{ address
 
 async function suggestAddresses(query: string): Promise<Suggestion[]> {
   try {
-    const pkg = await getGeocoder()
-    const result = await pkg.geocode({ text: query, lang: "ru_RU", results: 5 })
-    const features = result?.features || []
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_GEOCODER_KEY}&geocode=${encodeURIComponent(query)}&format=json&lang=ru_RU&results=5`
+    const res = await fetch(url)
+    const data = await res.json()
+    const members = data?.response?.GeoObjectCollection?.featureMember || []
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return features.map((f: any) => ({
-      display_name: [f.properties?.name, f.properties?.description].filter(Boolean).join(", "),
-      lat: String(f.geometry.coordinates[1]),
-      lon: String(f.geometry.coordinates[0]),
-    }))
+    return members.map((m: any) => {
+      const pos = m.GeoObject?.Point?.pos || ""
+      const [lon, lat] = pos.split(" ")
+      return {
+        display_name: [m.GeoObject?.name, m.GeoObject?.description].filter(Boolean).join(", "),
+        lat,
+        lon,
+      }
+    })
   } catch {
     return []
   }
