@@ -44,8 +44,8 @@ export default function ObjectMap({ city, address }: Props) {
         const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false })
           .setView([lat, lon], 16)
 
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        L.tileLayer("https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU", {
+          attribution: '&copy; <a href="https://yandex.ru/maps">Яндекс.Карты</a>',
           maxZoom: 19,
         }).addTo(map)
 
