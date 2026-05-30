@@ -88,10 +88,6 @@ export function AddObjectWizardBase({ onClose, onSave, initial }: AddObjectWizar
   }
 
   async function handleSaveAndNext() {
-    // При переходе с шага описания (3) — сохраняем объект чтобы получить ID для PDF
-    if (step === 3 && !savedObjectId) {
-      await saveObject(false)
-    }
     handleNext()
   }
 
