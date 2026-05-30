@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
 import { Offer, CAT_COLOR, CAT_LABEL, DEFAULT_IMG, formatPrice } from "./projectsConstants"
 
@@ -7,77 +7,109 @@ interface Props {
   onOpen: () => void
 }
 
+const SHARES_SUBTYPES = [
+  "Доля в ООО / бизнесе",
+  "Акции / Ценные бумаги",
+  "Займ с фиксированной доходностью",
+  "Облигации",
+  "Коллективная покупка объекта",
+]
+
 export default function OfferCard({ offer, onOpen }: Props) {
   const color = CAT_COLOR[offer.category] ?? "bg-gray-600"
   const label = CAT_LABEL[offer.category] ?? offer.category
   const photo = offer.photos?.[0] || DEFAULT_IMG
   const commission = offer.extra_fields?.commission || offer.commission || ""
+  const ef = offer.extra_fields || {}
+  const isShares = SHARES_SUBTYPES.includes(offer.subtype ?? "")
+  const entryPrice = ef.entry_price || ef.min_investment || ""
 
   return (
     <div
-      className="bg-[#111] border border-[#1f1f1f] rounded-2xl overflow-hidden hover:border-[#3a3a3a] transition-all cursor-pointer group"
+      className="bg-[#111111] border border-[#1f1f1f] rounded-2xl overflow-hidden hover:border-blue-500/40 transition-colors group cursor-pointer"
       onClick={onOpen}
     >
-      <div className="relative h-48 overflow-hidden bg-[#0d0d0d]">
+      <div className="relative h-48 overflow-hidden">
         <img
           src={photo}
           alt={offer.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={e => { (e.target as HTMLImageElement).src = DEFAULT_IMG }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-        <div className="absolute top-3 left-3 flex gap-1.5">
-          <span className={`${color} text-white text-[10px] font-semibold px-2.5 py-1 rounded-full`}>
+        <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+          <span className={`${color} text-white text-xs font-semibold px-2.5 py-1 rounded-full`}>
             {label}
           </span>
-          {offer.yield_percent && (
-            <span className="bg-emerald-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
-              {offer.yield_percent}% доход
+          {isShares && (
+            <span className="bg-violet-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+              <Icon name="PieChart" className="h-3 w-3" />
+              Доли / Акции
             </span>
           )}
         </div>
 
+        {offer.yield_percent && (
+          <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-green-400 text-xs font-bold px-2.5 py-1 rounded-full border border-green-500/30">
+            {offer.yield_percent}% доход
+          </span>
+        )}
+
         {offer.presentation_url && (
           <button
-            className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white text-[10px] px-2 py-1 rounded-lg flex items-center gap-1 backdrop-blur-sm transition-colors"
+            className="absolute bottom-3 right-3 bg-black/70 hover:bg-black text-white text-[10px] px-2 py-1 rounded-lg flex items-center gap-1 backdrop-blur-sm transition-colors"
             onClick={e => { e.stopPropagation(); window.open(offer.presentation_url, "_blank") }}
           >
             <Icon name="FileDown" className="h-3 w-3" />
             PDF
           </button>
         )}
+      </div>
 
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-          <div className="text-base font-bold text-white drop-shadow-lg">
-            {offer.price_label || formatPrice(offer.price ?? null)}
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-xs text-gray-500">{label}</p>
+          {offer.subtype && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full border bg-[#1a1a1a] border-[#2a2a2a] text-gray-400">
+              {offer.subtype}
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-white font-semibold text-sm mb-2 leading-snug line-clamp-2">{offer.title}</h3>
+
+        {offer.city && (
+          <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-4">
+            <Icon name="MapPin" className="h-3.5 w-3.5 text-violet-400" />
+            {offer.city}
           </div>
-          {offer.area && offer.category !== "investment" && (
-            <div className="text-xs text-gray-300 bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
-              {offer.area} м²
+        )}
+
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-lg font-bold text-white">
+              {offer.price_label || formatPrice(offer.price ?? null)}
+            </p>
+            {isShares && entryPrice ? (
+              <p className="text-xs text-gray-500">порог входа от {Number(entryPrice).toLocaleString("ru")} ₽</p>
+            ) : offer.area && offer.category !== "investment" ? (
+              <p className="text-xs text-gray-500">{offer.area} м²</p>
+            ) : null}
+          </div>
+          {commission && (
+            <div className="text-right">
+              <p className="text-emerald-400 font-semibold text-sm">{commission}</p>
+              <p className="text-xs text-gray-500">комиссия</p>
             </div>
           )}
         </div>
-      </div>
 
-      <div className="p-4">
-        <h3 className="text-sm font-semibold text-white line-clamp-2 mb-1 leading-snug">{offer.title}</h3>
-        {offer.subtype && (
-          <p className="text-[11px] text-gray-500 mb-2">{offer.subtype}</p>
-        )}
-        <div className="flex items-center justify-between mt-2">
-          {offer.city ? (
-            <span className="flex items-center gap-1 text-xs text-gray-500">
-              <Icon name="MapPin" className="h-3 w-3" />
-              {offer.city}
-            </span>
-          ) : <span />}
-          {commission && (
-            <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 text-[10px] shrink-0">
-              {commission}
-            </Badge>
-          )}
-        </div>
+        <Button
+          className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm"
+          onClick={e => { e.stopPropagation(); onOpen() }}
+        >
+          Подробнее
+        </Button>
       </div>
     </div>
   )
