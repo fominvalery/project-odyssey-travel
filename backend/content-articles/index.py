@@ -68,7 +68,7 @@ def handler(event: dict, context) -> dict:
             cur.execute(f"""
                 SELECT id, content_type, title, preview, body, category, status, tags, photos, videos, created_at, updated_at, sort_order
                 FROM {S}.content_articles {where}
-                ORDER BY sort_order ASC, created_at ASC LIMIT 100
+                ORDER BY sort_order ASC, created_at DESC LIMIT 100
             """)
             rows = cur.fetchall()
             conn.close()
