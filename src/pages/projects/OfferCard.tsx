@@ -19,7 +19,8 @@ export default function OfferCard({ offer, onOpen }: Props) {
   const color = CAT_COLOR[offer.category] ?? "bg-gray-600"
   const label = CAT_LABEL[offer.category] ?? offer.category
   const photo = offer.photos?.[0] || DEFAULT_IMG
-  const commission = offer.extra_fields?.commission || offer.commission || ""
+  const commissionRaw = offer.extra_fields?.commission || offer.commission || ""
+  const commission = commissionRaw ? (commissionRaw.includes("%") ? commissionRaw : `${commissionRaw}%`) : ""
   const ef = offer.extra_fields || {}
   const isShares = SHARES_SUBTYPES.includes(offer.subtype ?? "")
   const entryPrice = ef.entry_price || ef.min_investment || ""
@@ -88,10 +89,10 @@ export default function OfferCard({ offer, onOpen }: Props) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-lg font-bold text-white">
-              {offer.price_label || formatPrice(offer.price ?? null)}
+              {offer.price_label || (offer.price ? `${Number(offer.price).toLocaleString("ru")} ₽` : "—")}
             </p>
             {isShares && entryPrice ? (
-              <p className="text-xs text-gray-500">порог входа от {Number(entryPrice).toLocaleString("ru")} ₽</p>
+              <p className="text-xs text-gray-500">порог входа от {entryPrice} ₽</p>
             ) : offer.area && offer.category !== "investment" ? (
               <p className="text-xs text-gray-500">{offer.area} м²</p>
             ) : null}
