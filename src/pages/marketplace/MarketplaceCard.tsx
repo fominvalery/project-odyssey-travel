@@ -109,7 +109,7 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
               )}
               <p className="text-lg font-bold text-white">{priceDisplay}</p>
               {isShares && entryPrice ? (
-                <p className="text-xs text-gray-500">порог входа от {Number(entryPrice).toLocaleString("ru")} ₽</p>
+                <p className="text-xs text-gray-500">порог входа от {Number(entryPrice.replace(/\s/g, "")).toLocaleString("ru")} ₽</p>
               ) : (
                 <p className="text-xs text-gray-500">{obj.area}</p>
               )}
