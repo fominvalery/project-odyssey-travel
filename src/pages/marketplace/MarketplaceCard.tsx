@@ -108,18 +108,19 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
                 </span>
               )}
               <p className="text-lg font-bold text-white">{priceDisplay}</p>
-              {isShares && entryPrice ? (
-                <p className="text-xs text-gray-500">порог входа от {Number(entryPrice.replace(/\s/g, "")).toLocaleString("ru")} ₽</p>
-              ) : (
-                <p className="text-xs text-gray-500">{obj.area}</p>
-              )}
+              <p className="text-xs text-gray-500">{obj.area}</p>
             </div>
-            {obj.yield !== "—" && (
+            {isShares && entryPrice ? (
+              <div className="text-right">
+                <p className="text-green-400 font-semibold text-sm">{Number(entryPrice.replace(/\s/g, "")).toLocaleString("ru")} ₽</p>
+                <p className="text-xs text-gray-500">порог входа</p>
+              </div>
+            ) : obj.yield !== "—" ? (
               <div className="text-right">
                 <p className="text-green-400 font-semibold text-sm">{obj.yield}</p>
                 <p className="text-xs text-gray-500">доходность</p>
               </div>
-            )}
+            ) : null}
           </div>
         )}
 
