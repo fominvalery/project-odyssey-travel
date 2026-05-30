@@ -21,6 +21,7 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
   const dealType = ef?.deal_type ?? ""
   const isRent = dealType === "rent"
   const priceDisplay = isRent && obj.price !== "—" ? `${formatPrice(obj.price)}/мес` : formatPrice(obj.price)
+  const entryPrice = ef?.entry_price || ef?.min_investment || ""
 
   return (
     <div
@@ -107,7 +108,11 @@ export default function MarketplaceCard({ obj, onShare }: MarketplaceCardProps) 
                 </span>
               )}
               <p className="text-lg font-bold text-white">{priceDisplay}</p>
-              <p className="text-xs text-gray-500">{obj.area}</p>
+              {isShares && entryPrice ? (
+                <p className="text-xs text-gray-500">порог входа от {Number(entryPrice).toLocaleString("ru")} ₽</p>
+              ) : (
+                <p className="text-xs text-gray-500">{obj.area}</p>
+              )}
             </div>
             {obj.yield !== "—" && (
               <div className="text-right">
