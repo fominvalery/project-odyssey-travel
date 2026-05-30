@@ -18,6 +18,11 @@ const PRICE_KEYS = new Set([
   "rent", "start_price", "deposit", "entry_price",
   "annual_revenue", "avg_check",
   "rent_price_sqm", "opex", "owner_fee",
+  // Инвестиционные поля
+  "loan_amount", "min_investment", "collateral_value", "total_payout",
+  "total_value", "revenue", "profit", "collected_now", "target_raise",
+  "nominal", "share_price", "rent_base", "rent_sub", "rent_spread",
+  "price_per_sqm", "reconstruction_cost", "land_value",
 ])
 
 interface Step3Props {
