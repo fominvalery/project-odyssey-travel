@@ -10,11 +10,11 @@ const features = [
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/eab90193-b30c-427e-abd1-34ad07328116.jpg",
   },
   {
-    icon: "Building2",
-    title: "Все типы недвижимости",
-    description: "Коммерческая, инвестиционная, с торгов и новостройки — в одном каталоге",
-    color: "text-violet-400",
-    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e6cec24f-7520-4be6-b02a-b4756d54ec30.jpg",
+    icon: "FolderOpen",
+    title: "База / Проекты",
+    description: "Это раздел с актуальными предложениями от собственников, застройщиков и компаний. Выбери объект, зафиксируй клиента и работай напрямую, как в супермаркете недвижимости.",
+    color: "text-emerald-400",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/f2403dd6-fdc0-48a0-a1ea-65d367aa23dd.jpg",
   },
   {
     icon: "Users",
@@ -52,11 +52,11 @@ const features = [
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/935b2ef7-7117-4d56-a586-bf75e8054d32.jpg",
   },
   {
-    icon: "FolderOpen",
-    title: "База / Проекты",
-    description: "Это раздел с актуальными предложениями от собственников, застройщиков и компаний. Выбери объект, зафиксируй клиента и работай напрямую, как в супермаркете недвижимости.",
-    color: "text-emerald-400",
-    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/f2403dd6-fdc0-48a0-a1ea-65d367aa23dd.jpg",
+    icon: "Building2",
+    title: "Все типы недвижимости",
+    description: "Коммерческая, инвестиционная, с торгов и новостройки — в одном каталоге",
+    color: "text-violet-400",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e6cec24f-7520-4be6-b02a-b4756d54ec30.jpg",
   },
 ]
 
