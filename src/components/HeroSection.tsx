@@ -27,7 +27,7 @@ export function HeroSection() {
         </div>
 
         <h1 className="mb-4 max-w-3xl text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white text-balance">
-          Платформа для брокеров коммерческой недвижимости
+          Платформа для Брокеров и Агентов по недвижимости
         </h1>
 
         <p className="mb-8 max-w-xl text-gray-400">
