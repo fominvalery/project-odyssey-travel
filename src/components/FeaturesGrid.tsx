@@ -21,7 +21,7 @@ const features = [
     title: "База / Проекты",
     description: "Это раздел с актуальными предложениями от собственников, застройщиков и компаний. Выбери объект, зафиксируй клиента и работай напрямую, как в супермаркете недвижимости.",
     color: "text-emerald-400",
-    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/f2403dd6-fdc0-48a0-a1ea-65d367aa23dd.jpg",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/f4e41256-0228-4406-a7e2-acf44aa69166.jpg",
   },
   {
     icon: "Gavel",
