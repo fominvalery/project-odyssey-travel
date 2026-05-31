@@ -26,7 +26,7 @@ const features = [
   {
     icon: "Share2",
     title: "Реферальная программа",
-    description: "Приглашайте коллег и зарабатывайте с каждой их сделки",
+    description: "Приглашайте новых пользователей по вашей личной реферальной ссылке и получайте бонусы.",
     color: "text-emerald-400",
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/263f905b-8678-4519-ae7a-4d69acd143b3.jpg",
   },
