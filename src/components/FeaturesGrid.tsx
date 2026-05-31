@@ -8,6 +8,7 @@ const features = [
     description: "Это каталог объектов, где размещаются ваши личные объявления, а также объекты других брокеров, собственников и инвесторов.",
     color: "text-violet-400",
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/eab90193-b30c-427e-abd1-34ad07328116.jpg",
+    imagePosition: "center",
   },
   {
     icon: "Users",
@@ -15,6 +16,7 @@ const features = [
     description: "Управляйте клиентами, сделками и задачами без сторонних сервисов",
     color: "text-blue-400",
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/aa5ed488-2cdb-4be3-8a18-1cfdd5117a62.jpg",
+    imagePosition: "center",
   },
   {
     icon: "FolderOpen",
@@ -22,6 +24,7 @@ const features = [
     description: "Это раздел с актуальными предложениями от собственников, застройщиков и компаний. Выбери объект, зафиксируй клиента и работай напрямую, как в супермаркете недвижимости.",
     color: "text-emerald-400",
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/1c1e9af6-83b7-441c-a817-fc08dde8580c.png",
+    imagePosition: "top",
   },
   {
     icon: "Gavel",
@@ -120,6 +123,7 @@ export function FeaturesGrid() {
                   src={f.image}
                   alt={f.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  style={{ objectPosition: (f as Record<string, string>).imagePosition ?? "center" }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/30 to-transparent" />
               </div>
