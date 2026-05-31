@@ -172,7 +172,7 @@ def handler(event: dict, context) -> dict:
                 args.append(json.dumps(body[f]))
 
         args.append(offer_id)
-        cur.execute(f"UPDATE agg_offers SET {', '.join(fields)} WHERE id = %s", args)
+        cur.execute(f"UPDATE agg_offers SET {', '.join(fields)} WHERE id = %s", tuple(args))
         conn.commit()
         conn.close()
         return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
