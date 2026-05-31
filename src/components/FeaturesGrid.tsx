@@ -47,16 +47,16 @@ const features = [
   {
     icon: "Store",
     title: "Маркетплейс",
-    description: "Маркетплейс — это каталог объектов, где размещаются ваши личные объявления, а также объекты других брокеров, собственников и инвесторов. В маркетплейсе вы можете скачивать презентации, делать уникальные лендинги ваших объектов",
+    description: "Это каталог объектов, где размещаются ваши личные объявления, а также объекты других брокеров, собственников и инвесторов.",
     color: "text-violet-400",
-    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/79180297-1586-4fe2-a7aa-f76026f24f8c.jpg",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/eab90193-b30c-427e-abd1-34ad07328116.jpg",
   },
   {
     icon: "FolderOpen",
     title: "База / Проекты",
     description: "Это раздел с актуальными предложениями от собственников, застройщиков и компаний. Выбери объект, зафиксируй клиента и работай напрямую, как в супермаркете недвижимости.",
     color: "text-emerald-400",
-    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/e7011f1f-ec1d-4743-985c-9166fd1f3184.jpg",
+    image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/f2403dd6-fdc0-48a0-a1ea-65d367aa23dd.jpg",
   },
 ]
 
