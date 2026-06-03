@@ -8,8 +8,6 @@ from datetime import datetime, timezone
 import psycopg2
 
 
-NOTIFICATIONS_URL = "https://functions.poehali.dev/59063dd0-5097-4670-8e02-9ef4fc534d1d"
-
 CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -27,25 +25,32 @@ def get_schema():
     return f"{schema}." if schema else ""
 
 
-def send_email(to_email: str, subject: str, html: str, text: str) -> bool:
+def send_emails_bulk(emails: list) -> int:
+    """Отправляет все письма одним SMTP-соединением. emails = [(to, subject, html, text), ...]"""
     smtp_user = os.environ.get('SMTP_USER', '')
     smtp_password = os.environ.get('SMTP_PASSWORD', '')
-    if not smtp_user or not smtp_password:
-        return False
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = smtp_user
-    msg['To'] = to_email
-    msg.attach(MIMEText(text, 'plain', 'utf-8'))
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
+    if not smtp_user or not smtp_password or not emails:
+        return 0
+    sent = 0
     try:
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=5) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
-            server.sendmail(smtp_user, to_email, msg.as_string())
-        return True
+            for to_email, subject, html, text in emails:
+                try:
+                    msg = MIMEMultipart('alternative')
+                    msg['Subject'] = subject
+                    msg['From'] = smtp_user
+                    msg['To'] = to_email
+                    msg.attach(MIMEText(text, 'plain', 'utf-8'))
+                    msg.attach(MIMEText(html, 'html', 'utf-8'))
+                    server.sendmail(smtp_user, to_email, msg.as_string())
+                    sent += 1
+                except Exception:
+                    pass
     except Exception:
-        return False
+        pass
+    return sent
 
 
 def create_notification(cur, S, user_id: str, title: str, body: str, ntype: str = 'warning'):
@@ -92,9 +97,14 @@ def handler(event: dict, context) -> dict:
         'notified_1d': 0,
         'notified_expired': 0,
         'downgraded': 0,
+        'object_expiring_soon': 0,
+        'object_auto_unpublished': 0,
     }
 
-    # Получаем всех активных подписчиков с датой окончания
+    # Очередь писем — накапливаем, отправляем в конце одним соединением
+    email_queue = []
+
+    # ───── 1. Получаем всех активных подписчиков ─────────────────────────────
     cur.execute(f"""
         SELECT id, email, name, subscription_end_at, grace_period_end_at
         FROM {S}users
@@ -108,14 +118,12 @@ def handler(event: dict, context) -> dict:
         if not sub_end:
             continue
 
-        # Приводим к UTC если нет tzinfo
         if sub_end.tzinfo is None:
             sub_end = sub_end.replace(tzinfo=timezone.utc)
         if grace_end and grace_end.tzinfo is None:
             grace_end = grace_end.replace(tzinfo=timezone.utc)
 
         days_left = (sub_end - now).days
-        display_name = name or email
         end_str = sub_end.strftime('%d.%m.%Y')
 
         # --- Grace period истёк — сброс на Basic ---
@@ -128,8 +136,6 @@ def handler(event: dict, context) -> dict:
                 WHERE id = %s
             """, (str(user_id),))
 
-            # Проверяем — не является ли пользователь активным членом организации.
-            # Если да — он продолжает работать в АН, объекты не урезаем.
             try:
                 cur.execute(f"""
                     SELECT 1 FROM {S}org_memberships
@@ -140,8 +146,6 @@ def handler(event: dict, context) -> dict:
                 conn.rollback()
                 in_org = False
 
-            # Проставляем сроки объектам по правилу: топ-3 свежих → 30 дней,
-            # остальные → 3 дня + флаг requires_payment. Только если НЕ в организации.
             if not in_org:
                 try:
                     cur.execute(f"""
@@ -167,91 +171,84 @@ def handler(event: dict, context) -> dict:
                 except Exception:
                     conn.rollback()
 
-            # Проверяем — это приветственный 72-часовой период (нет платёжной записи)?
             cur.execute(f"""
                 SELECT COUNT(*) FROM {S}orders
                 WHERE user_id = %s AND status = 'paid'
             """, (str(user_id),))
-            paid_orders_grace = cur.fetchone()[0]
-            is_welcome_grace = (paid_orders_grace == 0)
+            paid_count = cur.fetchone()[0]
+            is_welcome = (paid_count == 0)
 
-            if is_welcome_grace:
+            if is_welcome:
                 create_notification(cur, S, str(user_id),
                     'Пробный период «Клуб» завершён',
                     'Ваши бесплатные 72 часа тарифа «Клуб» завершены. Аккаунт переведён на Basic. Подключите тариф «Клуб», чтобы вернуть полный доступ к сети брокеров и CRM.',
                     'warning')
-                send_email(email,
+                email_queue.append((email,
                     'Пробный период Клуб завершён — Кабинет-24',
                     build_email_html(
                         'Пробный период завершён',
                         'Пробный период «Клуб» завершён',
                         'Ваши бесплатные 72 часа тарифа «Клуб» закончились. Аккаунт переведён на тариф Basic. Подключите тариф «Клуб», чтобы вернуть доступ к сети брокеров коммерческой недвижимости, CRM и совместным сделкам.',
-                        site_url,
-                        'Подключить тариф Клуб'
+                        site_url, 'Подключить тариф Клуб'
                     ),
                     f'Пробный период Клуб завершён. Подключите тариф: {site_url}'
-                )
+                ))
             else:
                 create_notification(cur, S, str(user_id),
                     'Подписка Клуб деактивирована',
                     'Срок действия подписки истёк. 3 свежих объекта останутся активны 30 дней, остальные — 3 дня. Продлите подписку или оплатите пакет объявлений.',
                     'warning')
-                send_email(email,
+                email_queue.append((email,
                     'Подписка Клуб деактивирована — Кабинет-24',
                     build_email_html(
                         'Подписка деактивирована',
                         'Подписка Клуб деактивирована',
                         f'Срок действия вашей подписки истёк. Аккаунт переведён на тариф Basic. Продлите подписку, чтобы восстановить доступ к Клубу.',
-                        site_url,
-                        'Продлить подписку'
+                        site_url, 'Продлить подписку'
                     ),
                     f'Подписка Клуб деактивирована. Аккаунт переведён на Basic. Продлите: {site_url}'
-                )
+                ))
             results['downgraded'] += 1
             continue
 
-        # --- В день окончания (days_left == 0) ---
+        # --- В день окончания ---
         if days_left == 0 and now <= (grace_end or now):
-            # Проверяем — это приветственный 72-часовой период (нет платёжной записи)?
             cur.execute(f"""
                 SELECT COUNT(*) FROM {S}orders
                 WHERE user_id = %s AND status = 'paid'
             """, (str(user_id),))
-            paid_orders = cur.fetchone()[0]
-            is_welcome = (paid_orders == 0)
+            is_welcome = (cur.fetchone()[0] == 0)
 
             if is_welcome:
                 create_notification(cur, S, str(user_id),
                     'Пробный период «Клуб» заканчивается сегодня',
                     'Ваши бесплатные 72 часа тарифа «Клуб» истекают сегодня. Подключите тариф, чтобы сохранить доступ к сети брокеров, CRM и совместным сделкам.',
                     'warning')
-                send_email(email,
+                email_queue.append((email,
                     'Пробный период Клуб заканчивается — Кабинет-24',
                     build_email_html(
                         'Пробный период заканчивается',
                         'Ваши 72 часа тарифа «Клуб» истекают сегодня',
-                        f'Пробный период закончится {end_str}. Вы познакомились с платформой — теперь самое время подключить полноценный тариф «Клуб» и продолжить работу с сетью брокеров коммерческой недвижимости.',
-                        site_url,
-                        'Подключить тариф Клуб'
+                        f'Пробный период закончится {end_str}. Подключите полноценный тариф «Клуб» и продолжите работу с сетью брокеров коммерческой недвижимости.',
+                        site_url, 'Подключить тариф Клуб'
                     ),
                     f'Пробный период Клуб истекает сегодня. Подключите тариф: {site_url}'
-                )
+                ))
             else:
                 create_notification(cur, S, str(user_id),
                     'Подписка Клуб истекает сегодня',
                     f'Сегодня {end_str} — последний день вашей подписки. Продлите прямо сейчас.',
                     'warning')
-                send_email(email,
+                email_queue.append((email,
                     'Подписка Клуб истекает сегодня — Кабинет-24',
                     build_email_html(
                         'Подписка истекает сегодня',
                         'Подписка истекает сегодня',
                         f'Сегодня {end_str} — последний день действия вашей подписки Клуб. После окончания аккаунт будет переведён на тариф Basic. Продлите прямо сейчас.',
-                        site_url,
-                        'Продлить сейчас'
+                        site_url, 'Продлить сейчас'
                     ),
                     f'Подписка Клуб истекает сегодня {end_str}. Продлите: {site_url}'
-                )
+                ))
             results['notified_expired'] += 1
 
         # --- Подписка уже истекла (grace period идёт) ---
@@ -261,115 +258,104 @@ def handler(event: dict, context) -> dict:
                 'Подписка Клуб истекла',
                 f'Срок подписки истёк {end_str}. У вас есть ещё {grace_days} дн. для продления — иначе аккаунт будет переведён на Basic.',
                 'warning')
-            send_email(email,
+            email_queue.append((email,
                 f'Подписка Клуб истекла — осталось {grace_days} дн.',
                 build_email_html(
                     'Подписка истекла',
                     'Срок подписки истёк',
                     f'Подписка Клуб истекла {end_str}. У вас осталось {grace_days} дн. льготного периода — после этого аккаунт будет автоматически переведён на тариф Basic.',
-                    site_url,
-                    'Продлить сейчас'
+                    site_url, 'Продлить сейчас'
                 ),
                 f'Подписка истекла {end_str}. Осталось {grace_days} дн. Продлите: {site_url}'
-            )
+            ))
             results['notified_expired'] += 1
 
-        # --- За 1 день ---
         elif days_left == 1:
             create_notification(cur, S, str(user_id),
                 'Подписка Клуб истекает завтра',
                 f'Завтра {end_str} истекает ваша подписка. Продлите сейчас, чтобы не потерять доступ.',
                 'warning')
-            send_email(email,
+            email_queue.append((email,
                 'Подписка Клуб истекает завтра — Кабинет-24',
                 build_email_html(
                     'Подписка истекает завтра',
                     'Подписка истекает завтра',
                     f'Завтра {end_str} истекает ваша подписка Клуб. Продлите её сейчас, чтобы не потерять доступ к сети брокеров, объектам и CRM.',
-                    site_url,
-                    'Продлить подписку'
+                    site_url, 'Продлить подписку'
                 ),
                 f'Подписка Клуб истекает завтра {end_str}. Продлите: {site_url}'
-            )
+            ))
             results['notified_1d'] += 1
 
-        # --- За 2 дня ---
         elif days_left == 2:
             create_notification(cur, S, str(user_id),
                 'Подписка Клуб истекает через 2 дня',
                 f'Подписка действует до {end_str}. Не забудьте продлить.',
                 'warning')
-            send_email(email,
+            email_queue.append((email,
                 'Подписка Клуб истекает через 2 дня — Кабинет-24',
                 build_email_html(
                     'Подписка истекает через 2 дня',
                     'Подписка истекает через 2 дня',
                     f'Ваша подписка Клуб истекает {end_str} — через 2 дня. Продлите её, чтобы сохранить доступ ко всем функциям платформы.',
-                    site_url,
-                    'Продлить подписку'
+                    site_url, 'Продлить подписку'
                 ),
                 f'Подписка Клуб истекает {end_str}. Продлите: {site_url}'
-            )
+            ))
             results['notified_2d'] += 1
 
-        # --- За 5 дней ---
-        elif days_left == 5:
-            create_notification(cur, S, str(user_id),
-                'Подписка Клуб истекает через 5 дней',
-                f'Подписка действует до {end_str}. Рекомендуем продлить заранее, чтобы не прерывать работу.',
-                'info')
-            send_email(email,
-                'Напоминание о продлении подписки Клуб — Кабинет-24',
-                build_email_html(
-                    'Напоминание о подписке',
-                    'Подписка истекает через 5 дней',
-                    f'Ваша подписка Клуб действует до {end_str}. Рекомендуем продлить заранее, чтобы не прерывать доступ к сети брокеров, CRM и объектам.',
-                    site_url,
-                    'Продлить подписку'
-                ),
-                f'Подписка Клуб истекает {end_str} (через 5 дней). Продлите: {site_url}'
-            )
-            results['notified_4d'] += 1  # счётчик общий
-
-        # --- За 3 дня ---
         elif days_left == 3:
             create_notification(cur, S, str(user_id),
                 'Подписка Клуб истекает через 3 дня',
                 f'Подписка действует до {end_str}. Осталось 3 дня — продлите сейчас.',
                 'warning')
-            send_email(email,
+            email_queue.append((email,
                 'Подписка Клуб истекает через 3 дня — Кабинет-24',
                 build_email_html(
                     'Подписка истекает через 3 дня',
                     'Подписка истекает через 3 дня',
                     f'Ваша подписка Клуб истекает {end_str} — через 3 дня. Продлите её, чтобы сохранить доступ ко всем функциям платформы.',
-                    site_url,
-                    'Продлить подписку'
+                    site_url, 'Продлить подписку'
                 ),
                 f'Подписка Клуб истекает {end_str} (через 3 дня). Продлите: {site_url}'
-            )
-            results['notified_2d'] += 1  # счётчик общий
+            ))
+            results['notified_2d'] += 1
 
-        # --- За 4 дня ---
         elif days_left == 4:
             create_notification(cur, S, str(user_id),
                 'Подписка Клуб истекает через 4 дня',
                 f'Подписка действует до {end_str}. Рекомендуем продлить заранее.',
                 'info')
-            send_email(email,
+            email_queue.append((email,
                 'Напоминание о продлении подписки Клуб — Кабинет-24',
                 build_email_html(
                     'Напоминание о подписке',
                     'Подписка истекает через 4 дня',
                     f'Ваша подписка Клуб действует до {end_str}. Рекомендуем продлить заранее, чтобы не прерывать работу с сетью брокеров и CRM.',
-                    site_url,
-                    'Продлить подписку'
+                    site_url, 'Продлить подписку'
                 ),
                 f'Подписка Клуб истекает {end_str}. Продлите: {site_url}'
-            )
+            ))
             results['notified_4d'] += 1
 
-    # ───── Суперадмин: уведомления + автопродление ─────────────────────────────
+        elif days_left == 5:
+            create_notification(cur, S, str(user_id),
+                'Подписка Клуб истекает через 5 дней',
+                f'Подписка действует до {end_str}. Рекомендуем продлить заранее, чтобы не прерывать работу.',
+                'info')
+            email_queue.append((email,
+                'Напоминание о продлении подписки Клуб — Кабинет-24',
+                build_email_html(
+                    'Напоминание о подписке',
+                    'Подписка истекает через 5 дней',
+                    f'Ваша подписка Клуб действует до {end_str}. Рекомендуем продлить заранее, чтобы не прерывать доступ к сети брокеров, CRM и объектам.',
+                    site_url, 'Продлить подписку'
+                ),
+                f'Подписка Клуб истекает {end_str} (через 5 дней). Продлите: {site_url}'
+            ))
+            results['notified_4d'] += 1
+
+    # ───── 2. Суперадмин: уведомления + автопродление ────────────────────────
     try:
         from datetime import timedelta
         cur.execute(f"""
@@ -387,28 +373,30 @@ def handler(event: dict, context) -> dict:
             adm_days_left = (adm_end - now).days
             adm_end_str = adm_end.strftime('%d.%m.%Y')
 
-            # Уведомления за 5, 3 дня
             if adm_days_left == 5:
                 create_notification(cur, S, str(adm_id),
                     '[Система] Подписка истекает через 5 дней',
-                    f'Тестовое: подписка до {adm_end_str}. Автопродление сработает в день окончания.', 'info')
-                send_email(adm_email, '[Кабинет-24] Подписка истекает через 5 дней',
+                    f'Подписка до {adm_end_str}. Автопродление сработает в день окончания.', 'info')
+                email_queue.append((adm_email,
+                    '[Кабинет-24] Подписка истекает через 5 дней',
                     build_email_html('Подписка через 5 дней', 'Подписка истекает через 5 дней',
                         f'Подписка Клуб действует до {adm_end_str}. В день окончания произойдёт автопродление на 1 месяц.',
                         site_url, 'Открыть дашборд'),
-                    f'Подписка до {adm_end_str}. Автопродление в день окончания.')
+                    f'Подписка до {adm_end_str}. Автопродление в день окончания.'
+                ))
 
             elif adm_days_left == 3:
                 create_notification(cur, S, str(adm_id),
                     '[Система] Подписка истекает через 3 дня',
-                    f'Тестовое: подписка до {adm_end_str}. Автопродление сработает в день окончания.', 'warning')
-                send_email(adm_email, '[Кабинет-24] Подписка истекает через 3 дня',
+                    f'Подписка до {adm_end_str}. Автопродление сработает в день окончания.', 'warning')
+                email_queue.append((adm_email,
+                    '[Кабинет-24] Подписка истекает через 3 дня',
                     build_email_html('Подписка через 3 дня', 'Подписка истекает через 3 дня',
                         f'Подписка Клуб действует до {adm_end_str}. В день окончания произойдёт автопродление на 1 месяц.',
                         site_url, 'Открыть дашборд'),
-                    f'Подписка до {adm_end_str}. Автопродление в день окончания.')
+                    f'Подписка до {adm_end_str}. Автопродление в день окончания.'
+                ))
 
-            # В день окончания — автопродление на 1 месяц
             elif adm_days_left == 0:
                 new_end   = adm_end + timedelta(days=30)
                 new_grace = new_end + timedelta(days=3)
@@ -424,23 +412,19 @@ def handler(event: dict, context) -> dict:
                 new_end_str = new_end.strftime('%d.%m.%Y')
                 create_notification(cur, S, str(adm_id),
                     '[Система] Подписка автоматически продлена',
-                    f'Тестовое: подписка продлена до {new_end_str}. Система работает корректно.', 'info')
-                send_email(adm_email, '[Кабинет-24] Подписка автоматически продлена',
+                    f'Подписка продлена до {new_end_str}. Система работает корректно.', 'info')
+                email_queue.append((adm_email,
+                    '[Кабинет-24] Подписка автоматически продлена',
                     build_email_html('Автопродление', 'Подписка автоматически продлена',
                         f'Подписка Клуб продлена до {new_end_str}. Это подтверждает корректную работу системы уведомлений.',
                         site_url, 'Открыть дашборд'),
-                    f'Подписка продлена до {new_end_str}. Система работает корректно.')
-                results['downgraded'] -= 1  # не учитываем как downgrade
-
-        conn.commit()
+                    f'Подписка продлена до {new_end_str}. Система работает корректно.'
+                ))
+                results['downgraded'] -= 1
     except Exception:
         conn.rollback()
 
-    # ───── Объявления: уведомления за 3 дня и автоснятие истёкших ─────
-    results['object_expiring_soon'] = 0
-    results['object_auto_unpublished'] = 0
-
-    # Уведомление за 3 дня (один раз)
+    # ───── 3. Объявления: уведомления за 3 дня ───────────────────────────────
     try:
         cur.execute(f"""
             SELECT o.id, o.title, o.user_id, u.email, u.name
@@ -458,17 +442,16 @@ def handler(event: dict, context) -> dict:
                 f'«{title or "Без названия"}» — продлите, чтобы оно осталось в каталоге.',
                 'warning')
             if owner_email:
-                send_email(owner_email,
+                email_queue.append((owner_email,
                     'Объявление истекает через 3 дня — Кабинет-24',
                     build_email_html(
                         'Объявление истекает через 3 дня',
                         'Скоро объявление будет снято',
                         f'Ваше объявление «{title or "Без названия"}» истекает через 3 дня. Продлите его в личном кабинете, чтобы оно осталось активным.',
-                        site_url,
-                        'Перейти в кабинет'
+                        site_url, 'Перейти в кабинет'
                     ),
                     f'Объявление "{title}" истекает через 3 дня. Продлите: {site_url}'
-                )
+                ))
             cur.execute(
                 f"UPDATE {S}objects SET expiry_notified_at = NOW() WHERE id = %s",
                 (str(obj_id),),
@@ -477,7 +460,7 @@ def handler(event: dict, context) -> dict:
     except Exception:
         conn.rollback()
 
-    # Автоснятие истёкших с публикации
+    # ───── 4. Автоснятие истёкших объявлений ─────────────────────────────────
     try:
         cur.execute(f"""
             UPDATE {S}objects
@@ -497,9 +480,13 @@ def handler(event: dict, context) -> dict:
     except Exception:
         conn.rollback()
 
+    # ───── 5. Коммитим все изменения в БД ────────────────────────────────────
     conn.commit()
     cur.close()
     conn.close()
+
+    # ───── 6. Отправляем все письма одним SMTP-соединением ───────────────────
+    send_emails_bulk(email_queue)
 
     return {
         'statusCode': 200,

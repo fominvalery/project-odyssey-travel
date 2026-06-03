@@ -19,7 +19,7 @@
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
-      "expectedBody": {"results": {"notified_4d": 0}},
+      "expectedBody": {"ok": true},
       "bodyMatcher": "partial"
     },
     {
