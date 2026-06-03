@@ -25,31 +25,36 @@ def get_schema():
     return f"{schema}." if schema else ""
 
 
-def send_emails_bulk(emails: list) -> int:
-    """Отправляет все письма одним SMTP-соединением. emails = [(to, subject, html, text), ...]"""
+def send_emails_bulk(emails: list, batch_size: int = 10) -> int:
+    """Отправляет письма батчами. emails = [(to, subject, html, text), ...]"""
+    import time
     smtp_user = os.environ.get('SMTP_USER', '')
     smtp_password = os.environ.get('SMTP_PASSWORD', '')
     if not smtp_user or not smtp_password or not emails:
         return 0
     sent = 0
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=5) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            for to_email, subject, html, text in emails:
-                try:
-                    msg = MIMEMultipart('alternative')
-                    msg['Subject'] = subject
-                    msg['From'] = smtp_user
-                    msg['To'] = to_email
-                    msg.attach(MIMEText(text, 'plain', 'utf-8'))
-                    msg.attach(MIMEText(html, 'html', 'utf-8'))
-                    server.sendmail(smtp_user, to_email, msg.as_string())
-                    sent += 1
-                except Exception:
-                    pass
-    except Exception:
-        pass
+    batches = [emails[i:i + batch_size] for i in range(0, len(emails), batch_size)]
+    for batch_num, batch in enumerate(batches):
+        try:
+            with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                for to_email, subject, html, text in batch:
+                    try:
+                        msg = MIMEMultipart('alternative')
+                        msg['Subject'] = subject
+                        msg['From'] = smtp_user
+                        msg['To'] = to_email
+                        msg.attach(MIMEText(text, 'plain', 'utf-8'))
+                        msg.attach(MIMEText(html, 'html', 'utf-8'))
+                        server.sendmail(smtp_user, to_email, msg.as_string())
+                        sent += 1
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if batch_num < len(batches) - 1:
+            time.sleep(1)
     return sent
 
 
