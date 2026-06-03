@@ -15,15 +15,7 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "results.notified_4d присутствует в ответе",
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": {"ok": true},
-      "bodyMatcher": "partial"
-    },
-    {
-      "name": "results.downgraded = 0 (никто не слетел на Basic)",
+      "name": "Ответ содержит results с downgraded",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
@@ -31,11 +23,19 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "results.object_auto_unpublished присутствует в ответе",
+      "name": "Ответ содержит results с object_auto_unpublished",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
       "expectedBody": {"results": {"object_auto_unpublished": 0}},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Ответ содержит results с object_expiring_soon",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"results": {"object_expiring_soon": 0}},
       "bodyMatcher": "partial"
     }
   ]

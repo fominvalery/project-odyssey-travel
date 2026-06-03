@@ -3,6 +3,20 @@
 GET    / — список всех предложений (для администраторов)
 POST   / — добавить предложение
 PUT    / — редактировать предложение
+DELETE / — удалить предложение (?id=<uuid>)
+
+ВАЖНО — PUT: args передаётся как tuple(args), НЕ как list.
+  psycopg2 Simple Query Protocol требует tuple, иначе IndexError.
+  При добавлении новых полей в UPDATE — добавлять в соответствующий
+  цикл (строки/числа/json), НЕ напрямую в args.append вне цикла.
+
+ПОЛЯ объекта: title, category, subtype, city, region, address,
+  price_label, description, status, presentation_url, commission,
+  commission_notes (строки) + price, area, yield_percent (числа,
+  пустая строка → NULL) + photos, videos, extra_fields (JSON).
+
+Данные менеджера (manager_name, manager_phone, manager_email),
+  регламент (ad_rules, work_rules) хранятся внутри extra_fields.
 """
 import json
 import os

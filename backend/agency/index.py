@@ -1,3 +1,16 @@
+"""
+Управление агентствами (организациями): создание, приглашения, роли.
+
+РОЛИ — иерархия (ROLE_LEVEL), НЕ МЕНЯТЬ порядок:
+  founder > director > senior_broker > broker > junior_broker > trainee
+  Только founder и director (ADMIN_ROLES) могут управлять составом.
+
+ПРИГЛАШЕНИЯ: токен живёт INVITE_TTL_HOURS=168 (7 дней).
+  Принятие инвайта — action=accept_invite с токеном из письма.
+
+SMTP: smtp.gmail.com:587, timeout=10 сек.
+  При изменении — обновить также в subscription-checker и admin.
+"""
 import json
 import os
 import secrets

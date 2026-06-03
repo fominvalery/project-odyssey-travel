@@ -22,17 +22,17 @@
       "expectedStatus": 200
     },
     {
-      "name": "Unknown action — ошибка 400",
+      "name": "Неизвестный action — ошибка 400",
       "method": "GET",
       "path": "/?action=unknown_xyz",
       "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001"},
       "expectedStatus": 400
     },
     {
-      "name": "fire_employee без user_id — ошибка 400",
+      "name": "create_org без name — ошибка 400",
       "method": "POST",
-      "path": "/?action=fire_employee",
-      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001", "X-Org-Id": "00000000-0000-0000-0000-000000000001"},
+      "path": "/?action=create_org",
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001"},
       "body": {},
       "expectedStatus": 400
     },
@@ -45,7 +45,15 @@
       "expectedStatus": 400
     },
     {
-      "name": "GET данные несуществующей организации — ошибка 403",
+      "name": "fire_employee без user_id — ошибка 400",
+      "method": "POST",
+      "path": "/?action=fire_employee",
+      "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001", "X-Org-Id": "00000000-0000-0000-0000-000000000001"},
+      "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "get_org несуществующей организации — ошибка 403",
       "method": "GET",
       "path": "/?action=get_org&org_id=00000000-0000-0000-0000-000000000099",
       "headers": {"X-User-Id": "00000000-0000-0000-0000-000000000001"},

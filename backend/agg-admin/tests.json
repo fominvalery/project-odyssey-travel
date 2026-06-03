@@ -1,16 +1,41 @@
 {
   "tests": [
     {
-      "name": "Список всех предложений",
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Список всех предложений — статус 200",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200
     },
     {
-      "name": "Проверка метода POST без тела — ожидаем 400",
+      "name": "GET с фильтром status=active — статус 200",
+      "method": "GET",
+      "path": "/?status=active",
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST без обязательных полей — ожидаем 400",
       "method": "POST",
       "path": "/",
       "body": {},
+      "expectedStatus": 400
+    },
+    {
+      "name": "PUT без id — ожидаем 400",
+      "method": "PUT",
+      "path": "/",
+      "body": {"title": "Тест"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "DELETE без id — ожидаем 400",
+      "method": "DELETE",
+      "path": "/",
       "expectedStatus": 400
     }
   ]
