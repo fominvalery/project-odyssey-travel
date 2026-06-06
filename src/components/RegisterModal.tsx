@@ -248,6 +248,14 @@ export function RegisterModal({ open, onOpenChange, planId = "basic" }: Register
                 {loading ? "Регистрация..." : "Создать аккаунт"}
               </Button>
 
+              <p className="text-center text-xs text-gray-500 leading-relaxed">
+                Нажимая «Создать аккаунт», вы принимаете{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300 transition-colors">пользовательское соглашение</a>,{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300 transition-colors">политику конфиденциальности</a>{" "}
+                и даёте{" "}
+                <a href="/consent" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300 transition-colors">согласие на обработку персональных данных</a>.
+              </p>
+
               <p className="text-center text-xs text-gray-500">
                 Уже есть аккаунт?{" "}
                 <button type="button" onClick={() => { setErrorMsg(""); setView("login") }}

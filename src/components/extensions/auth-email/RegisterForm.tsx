@@ -333,6 +333,14 @@ export function RegisterForm({
             {isLoading ? "Регистрация..." : "Зарегистрироваться"}
           </Button>
 
+          <p className="text-center text-xs text-muted-foreground leading-relaxed">
+            Нажимая «Зарегистрироваться», вы принимаете{" "}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground transition-colors">пользовательское соглашение</a>,{" "}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground transition-colors">политику конфиденциальности</a>{" "}
+            и даёте{" "}
+            <a href="/consent" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground transition-colors">согласие на обработку персональных данных</a>.
+          </p>
+
           {onLoginClick && (
             <p className="text-sm text-muted-foreground text-center">
               Уже есть аккаунт?{" "}
