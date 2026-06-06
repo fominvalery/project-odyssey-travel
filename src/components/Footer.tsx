@@ -83,6 +83,7 @@ export function Footer() {
             <li><Link to="/offer" className="hover:text-white transition-colors">Публичная оферта</Link></li>
             <li><Link to="/ai-rules" className="hover:text-white transition-colors">Правила использования ИИ</Link></li>
             <li><Link to="/consent" className="hover:text-white transition-colors">Согласие на рассылку</Link></li>
+            <li><Link to="/personal-data" className="hover:text-white transition-colors">Согласие на обработку персональных данных</Link></li>
           </ul>
         </div>
 

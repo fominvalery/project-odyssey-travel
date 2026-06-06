@@ -23,6 +23,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Offer = lazy(() => import("./pages/Offer"));
 const AiRules = lazy(() => import("./pages/AiRules"));
 const Consent = lazy(() => import("./pages/Consent"));
+const PersonalData = lazy(() => import("./pages/PersonalData"));
 const Club = lazy(() => import("./pages/Club"));
 const ProjectsPage = lazy(() => import("./pages/projects/ProjectsPage"));
 const ProjectDetailPage = lazy(() => import("./pages/projects/ProjectDetailPage"));
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/offer" element={<Offer />} />
               <Route path="/ai-rules" element={<AiRules />} />
               <Route path="/consent" element={<Consent />} />
+              <Route path="/personal-data" element={<PersonalData />} />
               <Route path="/club" element={<Club />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/fixations" element={<ProjectsFixationsPage />} />

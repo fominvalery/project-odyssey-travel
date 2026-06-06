@@ -253,7 +253,7 @@ export function RegisterModal({ open, onOpenChange, planId = "basic" }: Register
                 <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300 transition-colors">пользовательское соглашение</a>,{" "}
                 <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300 transition-colors">политику конфиденциальности</a>{" "}
                 и даёте{" "}
-                <a href="/consent" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300 transition-colors">согласие на обработку персональных данных</a>.
+                <a href="/personal-data" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300 transition-colors">согласие на обработку персональных данных</a>.
               </p>
 
               <p className="text-center text-xs text-gray-500">
