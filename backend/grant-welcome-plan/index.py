@@ -151,6 +151,8 @@ def handler(event: dict, context) -> dict:
 
     expires_at = datetime.utcnow() + timedelta(hours=72)
     expires_iso = expires_at.isoformat()
+    grace_at = expires_at + timedelta(days=3)
+    grace_iso = grace_at.isoformat()
 
     # Выбираем пользователей без тарифа Клуб/АН и не суперадминов
     cur.execute(f"""
@@ -185,6 +187,7 @@ def handler(event: dict, context) -> dict:
                 SET plan = 'club',
                     status = 'broker',
                     subscription_end_at = '{expires_iso}',
+                    grace_period_end_at = '{grace_iso}',
                     updated_at = NOW()
                 WHERE id = '{user_id}'
             """)
