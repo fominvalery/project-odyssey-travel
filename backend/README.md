@@ -36,7 +36,7 @@
 | `dadata-geocode` / `geocode-fill` | Геокодирование адресов | DADATA_* из env |
 | `agg-feed-import` | Импорт XML-фидов (YRL/Циан/Авито) | max 20 фото |
 | `content-articles` | Блог, обучение, FAQ | только суперадмин редактирует |
-| `grant-welcome-plan` | Выдача 72ч пробного периода | |
+| `grant-welcome-plan` | Выдача 72ч пробного периода | **grace_period_end_at обязателен** |
 | `sitemap` | Генерация sitemap.xml | |
 | `og-preview` | OG-изображения для шеринга | |
 | `tile-proxy` | Прокси для тайлов карты | |
@@ -60,10 +60,13 @@
 `cur.execute(sql, tuple(args))` — обязательно `tuple()`.
 psycopg2 Simple Query Protocol не принимает list, выбрасывает IndexError.
 
-### 4. Grace period (subscription-checker)
-- `subscription_end_at` — дата окончания подписки
-- `grace_period_end_at` — дата окончания льготного периода (+3 дня)
-- Сброс на Basic только после grace, НЕ после subscription_end_at
+### 4. Grace period — ОБЯЗАТЕЛЬНО заполнять оба поля
+При выдаче ЛЮБОГО тарифа всегда писать **оба поля**:
+- `subscription_end_at` — когда заканчивается тариф
+- `grace_period_end_at` — когда checker сбросит на Basic (`subscription_end_at + 3 дня`)
+
+**Если `grace_period_end_at = NULL` — checker пропускает пользователя навсегда, Клуб не сбросится.**
+Это касается: `grant-welcome-plan`, `admin` (force_upgrade), `yookassa-webhook` (после оплаты).
 
 ### 5. 72-часовой пробный период
 Определяется по: `SELECT COUNT(*) FROM orders WHERE user_id=? AND status='paid'`

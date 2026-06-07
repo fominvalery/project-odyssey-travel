@@ -3,6 +3,18 @@
 
 POST / — назначить тариф всем пользователям без Клуб/АН (только суперадмин)
 GET  /?dry_run=1 — посмотреть сколько пользователей затронет операция
+
+КРИТИЧНО — ВСЕГДА записывать оба поля при выдаче тарифа:
+  subscription_end_at  = NOW + 72 часа   ← когда заканчивается бонус
+  grace_period_end_at  = NOW + 72ч + 3д  ← когда subscription-checker сбросит на Basic
+
+Если grace_period_end_at = NULL — checker пропускает пользователя навсегда,
+тариф «Клуб» никогда не сбросится на Basic. Именно это и было причиной бага.
+
+Это правило касается ЛЮБОГО места где выдаётся тариф:
+  - grant-welcome-plan (здесь)
+  - admin (force_upgrade, force_downgrade)
+  - yookassa-webhook (после оплаты)
 """
 import os
 import json

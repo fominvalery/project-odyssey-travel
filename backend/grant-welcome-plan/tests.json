@@ -7,9 +7,17 @@
       "expectedStatus": 200
     },
     {
-      "name": "Forbidden without secret",
+      "name": "POST без токена — 403",
       "method": "POST",
       "path": "/",
+      "body": {"dry_run": true},
+      "expectedStatus": 403
+    },
+    {
+      "name": "POST с неверным токеном — 403",
+      "method": "POST",
+      "path": "/",
+      "headers": {"X-Authorization": "Bearer wrong_token_xyz"},
       "body": {"dry_run": true},
       "expectedStatus": 403
     }
