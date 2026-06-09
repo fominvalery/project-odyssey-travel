@@ -19,12 +19,23 @@ WELCOME_NOTIFICATION_BODY = (
 
 
 def _grant_welcome_plan(user_id, email: str, name: str, S: str) -> None:
-    """Назначить тариф Клуб на 72 часа, создать уведомление и отправить письмо."""
-    expires_at = (datetime.utcnow() + timedelta(hours=WELCOME_PLAN_HOURS)).isoformat()
+    """Назначить тариф Клуб на 72 часа, создать уведомление и отправить письмо.
+
+    КРИТИЧНО: всегда писать оба поля — subscription_end_at И grace_period_end_at.
+    Если grace_period_end_at = NULL — subscription-checker пропустит пользователя навсегда,
+    тариф Клуб никогда не сбросится на Basic.
+    """
+    expires_at = datetime.utcnow() + timedelta(hours=WELCOME_PLAN_HOURS)
+    grace_at = expires_at + timedelta(days=3)
+    expires_iso = expires_at.isoformat()
+    grace_iso = grace_at.isoformat()
 
     execute(f"""
         UPDATE {S}users
-        SET plan = 'club', status = 'broker', subscription_end_at = {escape(expires_at)}, updated_at = NOW()
+        SET plan = 'club', status = 'broker',
+            subscription_end_at = {escape(expires_iso)},
+            grace_period_end_at = {escape(grace_iso)},
+            updated_at = NOW()
         WHERE id = {escape(user_id)}
     """)
 

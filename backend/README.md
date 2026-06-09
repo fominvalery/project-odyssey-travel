@@ -66,7 +66,12 @@ psycopg2 Simple Query Protocol не принимает list, выбрасыва�
 - `grace_period_end_at` — когда checker сбросит на Basic (`subscription_end_at + 3 дня`)
 
 **Если `grace_period_end_at = NULL` — checker пропускает пользователя навсегда, Клуб не сбросится.**
-Это касается: `grant-welcome-plan`, `admin` (force_upgrade), `yookassa-webhook` (после оплаты).
+
+Все места где выдаётся тариф — ВЕЗДЕ обязателен grace:
+- `extensions/auth-email/auth/handlers/register.py` → `_grant_welcome_plan()` ← **ГЛАВНЫЙ источник (регистрация)**
+- `grant-welcome-plan/index.py` — массовая выдача суперадмином
+- `admin/index.py` — force_upgrade
+- `yookassa-webhook` — после оплаты
 
 ### 5. 72-часовой пробный период
 Определяется по: `SELECT COUNT(*) FROM orders WHERE user_id=? AND status='paid'`
