@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthContext } from "@/context/AuthContext"
-import { superadminApi, AdminUser, AdminWithdrawalsResponse } from "@/lib/superadminApi"
+import { superadminApi, AdminUser } from "@/lib/superadminApi"
 import { toast } from "@/hooks/use-toast"
 import { STATUS_LABELS } from "@/hooks/useAuth"
-import SuperAdminExpiry from "@/components/admin/SuperAdminExpiry"
 import { SuperAdminTopBar, SuperAdminTabs } from "@/components/admin/superadmin/SuperAdminHeader"
 import SuperAdminUsersTab from "@/components/admin/superadmin/SuperAdminUsersTab"
-import SuperAdminWithdrawalsTab from "@/components/admin/superadmin/SuperAdminWithdrawalsTab"
 import { LEVELS, MainTab, UsersFilter } from "@/components/admin/superadmin/constants"
 
 export default function SuperAdmin() {
@@ -27,23 +25,11 @@ export default function SuperAdmin() {
   const levelDropdownRef = useRef<HTMLDivElement>(null)
   const statusDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Withdrawals tab state
-  const [withdrawalsData, setWithdrawalsData] = useState<AdminWithdrawalsResponse | null>(null)
-  const [withdrawalsLoading, setWithdrawalsLoading] = useState(false)
-  const [statusFilter, setStatusFilter] = useState("")
-  const [updatingWithdrawalId, setUpdatingWithdrawalId] = useState<number | null>(null)
-
   useEffect(() => {
     if (!user) { navigate("/"); return }
     if (!user.isSuperadmin) { navigate("/dashboard"); return }
     loadUsers()
   }, [user?.id])
-
-  useEffect(() => {
-    if (mainTab === "withdrawals" && !withdrawalsData) {
-      loadWithdrawals()
-    }
-  }, [mainTab])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -68,19 +54,6 @@ export default function SuperAdmin() {
       toast({ title: "Ошибка", description: e instanceof Error ? e.message : "Не удалось загрузить", variant: "destructive" })
     } finally {
       setUsersLoading(false)
-    }
-  }
-
-  const loadWithdrawals = async (filter = statusFilter) => {
-    if (!user?.id) return
-    setWithdrawalsLoading(true)
-    try {
-      const data = await superadminApi.listWithdrawals(user.id, filter)
-      setWithdrawalsData(data)
-    } catch (e) {
-      toast({ title: "Ошибка", description: e instanceof Error ? e.message : "Не удалось загрузить", variant: "destructive" })
-    } finally {
-      setWithdrawalsLoading(false)
     }
   }
 
@@ -114,35 +87,6 @@ export default function SuperAdmin() {
       toast({ title: "Ошибка", description: e instanceof Error ? e.message : "Не удалось изменить", variant: "destructive" })
     } finally {
       setUpdatingId(null)
-    }
-  }
-
-  const changeWithdrawalStatus = async (requestId: number, status: string) => {
-    if (!user?.id) return
-    setUpdatingWithdrawalId(requestId)
-    try {
-      await superadminApi.updateWithdrawalStatus(user.id, requestId, status)
-      setWithdrawalsData((prev) => {
-        if (!prev) return prev
-        const statusLabels: Record<string, string> = {
-          pending: "На рассмотрении", approved: "Одобрена", paid: "Выплачено", rejected: "Отклонена"
-        }
-        const updated = prev.requests.map((r) =>
-          r.id === requestId ? { ...r, status, status_label: statusLabels[status] || status } : r
-        )
-        const stats = {
-          pending:    updated.filter(r => r.status === "pending").length,
-          approved:   updated.filter(r => r.status === "approved").length,
-          paid:       updated.filter(r => r.status === "paid").length,
-          total_paid: updated.filter(r => r.status === "paid").reduce((s, r) => s + (r.amount || 0), 0),
-        }
-        return { ...prev, requests: updated, stats }
-      })
-      toast({ title: "Готово", description: status === "paid" ? "Помечено как выплачено" : "Статус обновлён" })
-    } catch (e) {
-      toast({ title: "Ошибка", description: e instanceof Error ? e.message : "Ошибка", variant: "destructive" })
-    } finally {
-      setUpdatingWithdrawalId(null)
     }
   }
 
@@ -181,14 +125,7 @@ export default function SuperAdmin() {
   const unverifiedCount = users.filter((u) => !u.email_verified).length
   const filteredUsers = usersFilter === "unverified" ? users.filter((u) => !u.email_verified) : users
 
-  const handleFilterChange = (f: string) => {
-    setStatusFilter(f)
-    loadWithdrawals(f)
-  }
-
   if (!user?.isSuperadmin) return null
-
-  const pendingCount = withdrawalsData?.stats?.pending ?? 0
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -199,7 +136,6 @@ export default function SuperAdmin() {
           mainTab={mainTab}
           setMainTab={setMainTab}
           usersCount={users.length}
-          pendingCount={pendingCount}
         />
 
         {mainTab === "users" && (
@@ -228,21 +164,7 @@ export default function SuperAdmin() {
           />
         )}
 
-        {mainTab === "withdrawals" && (
-          <SuperAdminWithdrawalsTab
-            withdrawalsData={withdrawalsData}
-            withdrawalsLoading={withdrawalsLoading}
-            statusFilter={statusFilter}
-            updatingWithdrawalId={updatingWithdrawalId}
-            handleFilterChange={handleFilterChange}
-            loadWithdrawals={loadWithdrawals}
-            changeWithdrawalStatus={changeWithdrawalStatus}
-          />
-        )}
 
-        {mainTab === "expiry" && user?.id && (
-          <SuperAdminExpiry actorId={user.id} />
-        )}
       </div>
     </div>
   )

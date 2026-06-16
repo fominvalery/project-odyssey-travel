@@ -30,16 +30,13 @@ interface TabsProps {
   mainTab: MainTab
   setMainTab: (t: MainTab) => void
   usersCount: number
-  pendingCount: number
 }
 
-export function SuperAdminTabs({ mainTab, setMainTab, usersCount, pendingCount }: TabsProps) {
+export function SuperAdminTabs({ mainTab, setMainTab, usersCount }: TabsProps) {
   return (
     <div className="flex gap-2 mb-6 border-b border-[#1f1f1f]">
       {([
-        { id: "users" as const,       icon: "Users",      label: "Пользователи",   count: usersCount },
-        { id: "withdrawals" as const,  icon: "ArrowDownToLine", label: "Вывод средств", count: pendingCount, badge: pendingCount > 0 },
-        { id: "expiry" as const,      icon: "Clock",      label: "Сроки",          count: 0 },
+        { id: "users" as const, icon: "Users", label: "Пользователи", count: usersCount },
       ]).map((t) => (
         <button
           key={t.id}
@@ -51,9 +48,7 @@ export function SuperAdminTabs({ mainTab, setMainTab, usersCount, pendingCount }
           <Icon name={t.icon as "Users"} size={14} />
           {t.label}
           {t.count > 0 && (
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-              t.badge ? "bg-amber-500/20 text-amber-300" : "text-gray-500"
-            }`}>
+            <span className="text-xs px-1.5 py-0.5 rounded-full font-medium text-gray-500">
               {t.count}
             </span>
           )}
