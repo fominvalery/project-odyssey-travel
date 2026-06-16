@@ -77,7 +77,7 @@ def handler(event: dict, context) -> dict:
             u.referral_level,
             COUNT(DISTINCT r.id) AS ref_count,
             COUNT(DISTINCT CASE WHEN (jd.status = 'Успешна') THEN jd.id END) AS deal_count,
-            COUNT(DISTINCT CASE WHEN o.status = 'active' THEN o.id END) AS active_listings
+            COUNT(DISTINCT CASE WHEN o.status IN ('active', 'Активен') THEN o.id END) AS active_listings
         FROM users u
         LEFT JOIN referrals r ON r.referrer_id = u.id
         LEFT JOIN joint_deals jd ON (jd.initiator_id = u.id OR jd.partner_id = u.id)
