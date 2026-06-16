@@ -1,13 +1,10 @@
-import { useState, useEffect, lazy, Suspense } from "react"
+import { useState, useEffect } from "react"
 import Icon from "@/components/ui/icon"
 import func2url from "../../../backend/func2url.json"
 import { ReferralStats, WithdrawalRequest } from "@/components/referral/referralTypes"
 import { cacheGet, cacheSet, TTL } from "@/lib/cache"
 import DashboardReferralHeader from "@/components/referral/DashboardReferralHeader"
-import DashboardReferralStats from "@/components/referral/DashboardReferralStats"
 import DashboardReferralTabs from "@/components/referral/DashboardReferralTabs"
-
-const WithdrawalModal = lazy(() => import("@/components/referral/WithdrawalModal"))
 
 // --- CRM ---
 export { DashboardCRM } from "./DashboardCRM"
@@ -28,7 +25,6 @@ export function DashboardReferral({ userId }: ReferralProps) {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>("referrals")
-  const [withdrawalOpen, setWithdrawalOpen] = useState(false)
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([])
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(false)
 
@@ -102,14 +98,6 @@ export function DashboardReferral({ userId }: ReferralProps) {
         onCopy={copyLink}
       />
 
-      <DashboardReferralStats
-        stats={stats}
-        loading={loading}
-        onWithdrawClick={() => setWithdrawalOpen(true)}
-        userId={userId}
-        onBalanceUpdate={(newBalance) => setStats(s => s ? { ...s, balance: newBalance } : s)}
-      />
-
       <DashboardReferralTabs
         stats={stats}
         loading={loading}
@@ -117,7 +105,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
         setActiveTab={setActiveTab}
         withdrawals={withdrawals}
         withdrawalsLoading={withdrawalsLoading}
-        onNewWithdrawal={() => setWithdrawalOpen(true)}
+        onNewWithdrawal={() => {}}
       />
 
       {/* Как это работает */}
@@ -142,19 +130,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
         </div>
       </div>
 
-      <Suspense fallback={null}>
-        <WithdrawalModal
-          open={withdrawalOpen}
-          onClose={() => {
-            setWithdrawalOpen(false)
-            setWithdrawals([])
-            refreshWithdrawals()
-            setActiveTab("withdrawals")
-          }}
-          userId={userId}
-          earnedTotal={stats?.earned_total ?? 0}
-        />
-      </Suspense>
+
     </div>
   )
 }
