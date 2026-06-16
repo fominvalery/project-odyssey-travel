@@ -45,10 +45,10 @@ export function Header() {
 
         <nav className="hidden md:flex items-center gap-8">
           <button onClick={() => navigate("/")} className="text-sm text-gray-300 hover:text-white transition-colors">
-            Маркетплейс
+            Каталог
           </button>
           <button onClick={() => navigate("/ecosystem")} className="text-sm text-gray-300 hover:text-white transition-colors">
-            Экосистема
+            Платформа
           </button>
 
           {/* Информация — dropdown */}
@@ -157,7 +157,7 @@ export function Header() {
               className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl text-xs transition-colors ${location.pathname === "/ecosystem" ? "text-blue-400" : "text-gray-500"}`}
             >
               <Icon name="Layers" className="h-5 w-5" />
-              <span>Экосистема</span>
+              <span>Платформа</span>
             </button>
             <button
               onClick={() => navigate("/blog")}
