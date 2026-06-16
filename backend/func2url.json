@@ -1,4 +1,5 @@
 {
+  "agent-rating": "https://functions.poehali.dev/f290dd88-1729-4d30-93bc-a864de4efe99",
   "dadata-geocode": "https://functions.poehali.dev/aeb77da4-9bdd-4f20-b6b2-093b55af7853",
   "geocode-fill": "https://functions.poehali.dev/beb9df65-fe99-49e8-aae1-aa137fe8ca13",
   "tile-proxy": "https://functions.poehali.dev/005b268c-77f7-4955-86e4-a56f799e8699",

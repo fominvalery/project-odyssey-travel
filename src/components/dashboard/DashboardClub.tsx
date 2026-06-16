@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Icon from "@/components/ui/icon"
 import { Input } from "@/components/ui/input"
-import { STATUS_LABELS } from "@/hooks/useAuth"
 import func2url from "../../../backend/func2url.json"
 import { cacheGet, cacheSet, TTL } from "@/lib/cache"
 
+const RATING_URL = (func2url as Record<string, string>)["agent-rating"]
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
 
 const SPECIALIZATIONS = [
@@ -29,16 +29,37 @@ const EXPERIENCE_OPTIONS = [
   "более 10 лет",
 ]
 
+const AGENT_STATUS_COLORS: Record<string, string> = {
+  "Лидер":      "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  "Амбасадор":  "bg-violet-500/15 text-violet-300 border-violet-500/30",
+  "Бизнес":     "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  "Партнёр":    "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  "Друг":       "bg-gray-500/15 text-gray-300 border-gray-500/30",
+  "Базовый":    "bg-gray-500/15 text-gray-400 border-gray-500/20",
+}
+
+const ACTIVITY_DOT: Record<string, string> = {
+  "Активен":      "bg-emerald-400",
+  "Был недавно":  "bg-amber-400",
+  "Неактивен":    "bg-gray-500",
+}
+
 interface Member {
   id: string
   name: string
-  company: string
+  company?: string
   city: string
   status: string
   avatar_url: string | null
   specializations: string[]
   bio: string
-  experience: string
+  experience?: string
+  agent_status: string
+  activity: string
+  points: number
+  rank: number
+  deal_count: number
+  active_listings: number
 }
 
 interface Props {
@@ -73,38 +94,46 @@ export default function DashboardClub({ userId, onMessage, onAddToCRM }: Props) 
   async function loadMembers() {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ action: "club-members", user_id: userId })
-      if (cityFilter) params.set("city", cityFilter)
-      if (specFilter) params.set("specialization", specFilter)
-      if (expFilter) params.set("experience", expFilter)
-      const cacheKey = `club_members:${params.toString()}`
+      const cacheKey = `agent_rating_network:${userId}`
       const cached = cacheGet<Member[]>(cacheKey)
       if (cached) {
         setMembers(cached)
         setLoading(false)
         return
       }
-      const res = await fetch(`${AUTH_URL}?${params}`)
+      // Грузим из agent-rating (уже отсортировано по рейтингу)
+      const res = await fetch(`${RATING_URL}?user_id=${encodeURIComponent(userId)}&limit=200`)
       const data = await res.json()
-      const members = Array.isArray(data.members) ? data.members : []
-      cacheSet(cacheKey, members, TTL.MIN_5)
-      setMembers(members)
+      const list: Member[] = Array.isArray(data.agents) ? data.agents : []
+      cacheSet(cacheKey, list, TTL.MIN_5)
+      setMembers(list)
     } catch {
-      setMembers([])
+      // Фолбек на club-members если agent-rating недоступен
+      try {
+        const res = await fetch(`${AUTH_URL}?action=club-members&user_id=${userId}`)
+        const data = await res.json()
+        setMembers(Array.isArray(data.members) ? data.members : [])
+      } catch {
+        setMembers([])
+      }
     } finally {
       setLoading(false)
     }
   }
 
   const filtered = members.filter(m => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return (
-      m.name.toLowerCase().includes(q) ||
-      m.company.toLowerCase().includes(q) ||
-      m.city.toLowerCase().includes(q) ||
-      m.specializations.some(s => s.toLowerCase().includes(q))
-    )
+    if (expFilter && m.experience !== expFilter) return false
+    if (cityFilter && !m.city?.toLowerCase().includes(cityFilter.toLowerCase())) return false
+    if (specFilter && !m.specializations?.includes(specFilter)) return false
+    if (search) {
+      const q = search.toLowerCase()
+      return (
+        m.name.toLowerCase().includes(q) ||
+        (m.city || "").toLowerCase().includes(q) ||
+        (m.specializations || []).some(s => s.toLowerCase().includes(q))
+      )
+    }
+    return true
   })
 
   function clearFilters() {
@@ -133,7 +162,7 @@ export default function DashboardClub({ userId, onMessage, onAddToCRM }: Props) 
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Поиск по имени, компании, городу..."
+            placeholder="Поиск по имени, городу..."
             className="pl-9 bg-[#0f0f0f] border-[#262626] text-white focus-visible:ring-violet-500"
           />
         </div>
@@ -167,7 +196,7 @@ export default function DashboardClub({ userId, onMessage, onAddToCRM }: Props) 
       {/* Счётчик */}
       {!loading && (
         <p className="text-xs text-gray-600 mb-4">
-          {filtered.length === 0 ? "Никого не найдено" : `${filtered.length} участник${filtered.length === 1 ? "" : filtered.length < 5 ? "а" : "ов"}`}
+          {filtered.length === 0 ? "Никого не найдено" : `${filtered.length} участник${filtered.length === 1 ? "" : filtered.length < 5 ? "а" : "ов"} · отсортировано по рейтингу`}
         </p>
       )}
 
@@ -218,73 +247,100 @@ function MemberCard({ member: m, onMessage, onAddToCRM }: { member: Member; onMe
   const isAgency = m.status === "agency"
   const [addedToCRM, setAddedToCRM] = useState(false)
 
+  const agentStatusColor = AGENT_STATUS_COLORS[m.agent_status] || AGENT_STATUS_COLORS["Базовый"]
+  const activityDot = ACTIVITY_DOT[m.activity] || "bg-gray-500"
+
   return (
     <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] hover:border-violet-500/30 transition-colors p-5 flex flex-col gap-4">
       {/* Шапка */}
       <div className="flex items-start gap-3">
-        <Avatar className="h-12 w-12 shrink-0">
-          {m.avatar_url ? <AvatarImage src={m.avatar_url} /> : null}
-          <AvatarFallback className={`text-white text-sm font-bold ${isAgency ? "bg-gradient-to-br from-violet-600 to-pink-600" : "bg-violet-600"}`}>
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm text-white truncate">{m.name || "Участник Клуба"}</p>
-          {m.company && <p className="text-xs text-gray-500 truncate">{m.company}</p>}
-          <span className={`mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md border ${
-            isAgency
-              ? "bg-pink-500/10 text-pink-400 border-pink-500/20"
-              : "bg-violet-500/10 text-violet-400 border-violet-500/20"
-          }`}>
-            <Icon name={isAgency ? "Building2" : "Zap"} className="h-2.5 w-2.5" />
-            {STATUS_LABELS[m.status as "broker" | "agency"] ?? m.status}
-          </span>
+        <div className="relative shrink-0">
+          <Avatar className="h-12 w-12">
+            {m.avatar_url ? <AvatarImage src={m.avatar_url} /> : null}
+            <AvatarFallback className={`text-white text-sm font-bold ${isAgency ? "bg-gradient-to-br from-violet-600 to-pink-600" : "bg-gradient-to-br from-blue-600 to-cyan-600"}`}>
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          {/* Точка активности */}
+          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#111111] ${activityDot}`} />
         </div>
-      </div>
-
-      {/* Мета */}
-      <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-        {m.city && (
-          <span className="flex items-center gap-1">
-            <Icon name="MapPin" className="h-3 w-3" />{m.city}
-          </span>
-        )}
-        {m.experience && (
-          <span className="flex items-center gap-1">
-            <Icon name="Clock" className="h-3 w-3" />{m.experience}
-          </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <p className="font-semibold text-sm text-white truncate">{m.name}</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Бейдж статуса рейтинга */}
+            {m.agent_status && m.agent_status !== "Базовый" && (
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${agentStatusColor}`}>
+                {m.agent_status}
+              </span>
+            )}
+            {/* Очки */}
+            {m.points > 0 && (
+              <span className="text-[10px] text-amber-400 font-medium flex items-center gap-0.5">
+                <Icon name="Trophy" size={9} />
+                {m.points} pts
+              </span>
+            )}
+          </div>
+          {m.city && (
+            <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+              <Icon name="MapPin" size={10} />
+              {m.city}
+            </p>
+          )}
+        </div>
+        {/* Позиция */}
+        {m.rank && (
+          <span className="text-xs text-gray-600 font-mono shrink-0">#{m.rank}</span>
         )}
       </div>
 
       {/* Специализации */}
-      {m.specializations.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {m.specializations.slice(0, 3).map(s => (
-            <span key={s} className="text-[10px] bg-[#1a1a1a] text-gray-400 border border-[#2a2a2a] px-2 py-0.5 rounded-lg">
+      {m.specializations?.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {m.specializations.slice(0, 2).map(s => (
+            <span key={s} className="text-[10px] bg-[#1a1a1a] text-gray-400 px-2 py-0.5 rounded-full border border-[#2a2a2a]">
               {s}
             </span>
           ))}
-          {m.specializations.length > 3 && (
-            <span className="text-[10px] text-gray-600 px-1">+{m.specializations.length - 3}</span>
+          {m.specializations.length > 2 && (
+            <span className="text-[10px] text-gray-600">+{m.specializations.length - 2}</span>
           )}
         </div>
       )}
 
-      {/* О себе */}
+      {/* Bio */}
       {m.bio && (
-        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{m.bio}</p>
+        <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">{m.bio}</p>
       )}
 
-      {/* Кнопка Написать */}
-      {onMessage && (
+      {/* Кнопки */}
+      <div className="flex gap-2 mt-auto">
         <button
-          onClick={() => onMessage(m.id, m.name || "Участник Клуба", m.avatar_url, m.status)}
-          className="mt-auto w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 text-violet-400 hover:text-violet-300 text-sm font-medium border border-violet-500/20 transition-colors"
+          onClick={() => onMessage?.(m.id, m.name, m.avatar_url, m.status)}
+          className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-xl bg-violet-600/20 text-violet-300 hover:bg-violet-600/30 transition-colors border border-violet-500/20"
         >
-          <Icon name="MessageSquare" className="h-3.5 w-3.5" />
+          <Icon name="MessageSquare" size={13} />
           Написать
         </button>
-      )}
+        <button
+          onClick={() => {
+            if (!addedToCRM) {
+              onAddToCRM?.(m)
+              setAddedToCRM(true)
+              setTimeout(() => setAddedToCRM(false), 2000)
+            }
+          }}
+          className={`flex items-center justify-center gap-1.5 text-xs py-2 px-3 rounded-xl transition-colors border ${
+            addedToCRM
+              ? "bg-emerald-600/20 text-emerald-300 border-emerald-500/20"
+              : "bg-[#1a1a1a] text-gray-400 hover:text-white border-[#2a2a2a] hover:bg-[#222]"
+          }`}
+        >
+          <Icon name={addedToCRM ? "Check" : "UserPlus"} size={13} />
+        </button>
+      </div>
     </div>
   )
 }

@@ -11,15 +11,30 @@ export { DashboardCRM } from "./DashboardCRM"
 export { DashboardProfile } from "./DashboardProfile"
 
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
+const RATING_URL = (func2url as Record<string, string>)["agent-rating"]
 
 interface ReferralProps {
   userId: string
+}
+
+interface MyRatingData {
+  rank: number
+  total: number
+  points: number
+  deal_count: number
+  active_listings: number
+  months_on_platform: number
+  profile_score: number
+  agent_status: string
+  activity: string
 }
 
 export function DashboardReferral({ userId }: ReferralProps) {
   const [stats, setStats] = useState<ReferralStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [myRating, setMyRating] = useState<MyRatingData | null>(null)
+  const [ratingLoading, setRatingLoading] = useState(true)
 
   const authHeaders = { "X-User-Id": userId }
 
@@ -34,6 +49,20 @@ export function DashboardReferral({ userId }: ReferralProps) {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
+  }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+    setRatingLoading(true)
+    fetch(`${RATING_URL}?user_id=${encodeURIComponent(userId)}&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (data?.my_data && data?.total) {
+          setMyRating({ ...data.my_data, total: data.total })
+        }
+      })
+      .catch(() => {})
+      .finally(() => setRatingLoading(false))
   }, [userId])
 
   const siteOrigin = window.location.hostname.includes("poehali.dev") || window.location.hostname.includes("localhost")
@@ -57,6 +86,8 @@ export function DashboardReferral({ userId }: ReferralProps) {
         refLink={refLink}
         copied={copied}
         onCopy={copyLink}
+        myRating={myRating}
+        ratingLoading={ratingLoading}
       />
 
       <DashboardReferralTabs

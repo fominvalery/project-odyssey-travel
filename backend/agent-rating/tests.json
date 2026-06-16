@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "Get agent rating list",
+      "method": "GET",
+      "path": "/?limit=10&offset=0",
+      "expectedStatus": 200,
+      "expectedBody": {"my_rank": null},
+      "bodyMatcher": "keys_exist"
+    }
+  ]
+}
