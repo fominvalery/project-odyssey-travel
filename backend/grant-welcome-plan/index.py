@@ -1,27 +1,22 @@
 """
-Массовое назначение приветственного тарифа «Клуб» на 72 часа.
+Массовое назначение тарифа «Клуб» до 15 декабря 2026 года.
 
 POST / — назначить тариф всем пользователям без Клуб/АН (только суперадмин)
 GET  /?dry_run=1 — посмотреть сколько пользователей затронет операция
 
 КРИТИЧНО — ВСЕГДА записывать оба поля при выдаче тарифа:
-  subscription_end_at  = NOW + 72 часа   ← когда заканчивается бонус
-  grace_period_end_at  = NOW + 72ч + 3д  ← когда subscription-checker сбросит на Basic
+  subscription_end_at = 2026-12-15  ← когда заканчивается Клуб
+  grace_period_end_at = 2026-12-18  ← когда checker сбросит на Basic (+3 дня)
 
 Если grace_period_end_at = NULL — checker пропускает пользователя навсегда,
-тариф «Клуб» никогда не сбросится на Basic. Именно это и было причиной бага.
-
-Это правило касается ЛЮБОГО места где выдаётся тариф:
-  - grant-welcome-plan (здесь)
-  - admin (force_upgrade, force_downgrade)
-  - yookassa-webhook (после оплаты)
+тариф «Клуб» никогда не сбросится на Basic.
 """
 import os
 import json
 import psycopg2
 import smtplib
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -34,16 +29,18 @@ CORS = {
     "Access-Control-Allow-Headers": "Content-Type, X-Authorization",
 }
 
-NOTIFICATION_TITLE = "Приветственный доступ к тарифу «Клуб» — 72 часа"
+CLUB_UNTIL = '2026-12-15 00:00:00'
+GRACE_UNTIL = '2026-12-18 00:00:00'
+
+NOTIFICATION_TITLE = "Добро пожаловать в тариф «Клуб»!"
 NOTIFICATION_BODY = (
     "Здравствуйте!\n\n"
     "Рады видеть вас в Кабинете-24 — платформе, где брокеры коммерческой недвижимости "
     "находят партнёров, объекты и реальные сделки.\n\n"
-    "Чтобы вы могли познакомиться с платформой по-настоящему — мы открыли вам "
-    "приветственный доступ к тарифу «Клуб» на 72 часа."
+    "Вам открыт полный доступ к тарифу «Клуб» до 15 декабря 2026 года."
 )
 
-EMAIL_SUBJECT = "Кабинет-24: Приветственный доступ к тарифу «Клуб» на 72 часа"
+EMAIL_SUBJECT = "Кабинет-24: Доступ к тарифу «Клуб» до 15 декабря 2026"
 
 
 def get_conn():
@@ -52,13 +49,12 @@ def get_conn():
     return conn, schema
 
 
-def send_welcome_email(to_email: str, name: str, expires_at: datetime) -> bool:
+def send_welcome_email(to_email: str, name: str) -> bool:
     smtp_user = os.environ.get("SMTP_USER", "")
     smtp_password = os.environ.get("SMTP_PASSWORD", "")
     if not smtp_user or not smtp_password:
         return False
 
-    expires_str = expires_at.strftime("%d.%m.%Y в %H:%M")
     display_name = name.strip() or "Коллега"
 
     html_body = f"""<!DOCTYPE html>
@@ -77,7 +73,7 @@ def send_welcome_email(to_email: str, name: str, expires_at: datetime) -> bool:
         </tr>
         <tr>
           <td style="background:#141414;border-left:1px solid #1f1f1f;border-right:1px solid #1f1f1f;padding:40px;">
-            <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#ffffff;">Приветственный бонус — тариф «Клуб»</h1>
+            <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#ffffff;">Добро пожаловать в тариф «Клуб»!</h1>
             <p style="margin:0 0 16px;font-size:15px;color:#aaaaaa;line-height:1.6;">
               Здравствуйте, {display_name}!
             </p>
@@ -86,16 +82,14 @@ def send_welcome_email(to_email: str, name: str, expires_at: datetime) -> bool:
               коммерческой недвижимости находят партнёров, объекты и реальные сделки.
             </p>
             <p style="margin:0 0 24px;font-size:15px;color:#aaaaaa;line-height:1.6;">
-              Чтобы вы могли познакомиться с платформой по-настоящему — мы открыли вам
-              приветственный доступ к тарифу <strong style="color:#ffffff;">«Клуб»</strong> на <strong style="color:#ffffff;">72 часа</strong>.
+              Вам открыт полный доступ к тарифу <strong style="color:#ffffff;">«Клуб»</strong>.
             </p>
             <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:24px;margin:0 0 24px;text-align:center;">
               <p style="margin:0 0 8px;font-size:13px;color:#666666;">Доступ активен до</p>
-              <p style="margin:0;font-size:24px;font-weight:700;color:#3b82f6;">{expires_str}</p>
+              <p style="margin:0;font-size:24px;font-weight:700;color:#3b82f6;">15 декабря 2026</p>
             </div>
             <p style="margin:0;font-size:13px;color:#666666;line-height:1.6;">
-              Войдите на платформу и изучите все возможности тарифа «Клуб».<br>
-              После окончания пробного периода вы сможете продлить подписку.
+              Войдите на платформу и пользуйтесь всеми возможностями тарифа «Клуб».
             </p>
           </td>
         </tr>
@@ -117,9 +111,8 @@ def send_welcome_email(to_email: str, name: str, expires_at: datetime) -> bool:
         f"Здравствуйте, {display_name}!\n\n"
         "Рады видеть вас в Кабинете-24 — платформе, где брокеры коммерческой недвижимости "
         "находят партнёров, объекты и реальные сделки.\n\n"
-        "Мы открыли вам приветственный доступ к тарифу «Клуб» на 72 часа.\n"
-        f"Доступ активен до: {expires_str}\n\n"
-        "Войдите на платформу и изучите все возможности."
+        "Вам открыт полный доступ к тарифу «Клуб» до 15 декабря 2026 года.\n\n"
+        "Войдите на платформу и пользуйтесь всеми возможностями."
     )
 
     try:
@@ -161,17 +154,11 @@ def handler(event: dict, context) -> dict:
     conn, schema = get_conn()
     cur = conn.cursor()
 
-    expires_at = datetime.utcnow() + timedelta(hours=72)
-    expires_iso = expires_at.isoformat()
-    grace_at = expires_at + timedelta(days=3)
-    grace_iso = grace_at.isoformat()
-
-    # Выбираем пользователей без тарифа Клуб/АН и не суперадминов
+    # Выбираем всех пользователей не суперадминов
     cur.execute(f"""
         SELECT id, email, name
         FROM {schema}.users
         WHERE is_superadmin = FALSE
-          AND (plan IS NULL OR plan NOT IN ('club', 'an'))
           AND email_verified = TRUE
     """)
     users = cur.fetchall()
@@ -198,8 +185,8 @@ def handler(event: dict, context) -> dict:
                 UPDATE {schema}.users
                 SET plan = 'club',
                     status = 'broker',
-                    subscription_end_at = '{expires_iso}',
-                    grace_period_end_at = '{grace_iso}',
+                    subscription_end_at = '{CLUB_UNTIL}',
+                    grace_period_end_at = '{GRACE_UNTIL}',
                     updated_at = NOW()
                 WHERE id = '{user_id}'
             """)
@@ -225,7 +212,7 @@ def handler(event: dict, context) -> dict:
     # Отправляем письма (после commit, чтобы не блокировать транзакцию)
     for row in users:
         user_id, email, name = str(row[0]), row[1], row[2] or ""
-        ok = send_welcome_email(email, name, expires_at)
+        ok = send_welcome_email(email, name)
         if ok:
             emailed += 1
 
@@ -237,7 +224,7 @@ def handler(event: dict, context) -> dict:
             "updated": updated,
             "notified": notified,
             "emailed": emailed,
-            "expires_at": expires_iso,
+            "club_until": CLUB_UNTIL,
             "errors": errors,
         }),
     }

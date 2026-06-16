@@ -1,40 +1,36 @@
 """Registration handler."""
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from utils.db import query_one, execute_returning, execute, escape, get_schema
 from utils.password import hash_password, verify_password, validate_password, validate_email
 from utils.email import is_email_enabled, generate_code, send_verification_code, send_email, _base_template
 from utils.http import response, error
 
-WELCOME_PLAN_HOURS = 72
-WELCOME_NOTIFICATION_TITLE = "Приветственный доступ к тарифу «Клуб» — 72 часа"
+CLUB_UNTIL = '2026-12-15 00:00:00'
+GRACE_UNTIL = '2026-12-18 00:00:00'
+WELCOME_NOTIFICATION_TITLE = "Добро пожаловать в тариф «Клуб»!"
 WELCOME_NOTIFICATION_BODY = (
     "Здравствуйте!\n\n"
     "Рады видеть вас в Кабинете-24 — платформе, где брокеры коммерческой недвижимости "
     "находят партнёров, объекты и реальные сделки.\n\n"
-    "Чтобы вы могли познакомиться с платформой по-настоящему — мы открыли вам "
-    "приветственный доступ к тарифу «Клуб» на 72 часа."
+    "Вам открыт полный доступ к тарифу «Клуб» до 15 декабря 2026 года."
 )
 
 
 def _grant_welcome_plan(user_id, email: str, name: str, S: str) -> None:
-    """Назначить тариф Клуб на 72 часа, создать уведомление и отправить письмо.
+    """Назначить тариф Клуб до 15.12.2026, создать уведомление и отправить письмо.
 
     КРИТИЧНО: всегда писать оба поля — subscription_end_at И grace_period_end_at.
     Если grace_period_end_at = NULL — subscription-checker пропустит пользователя навсегда,
     тариф Клуб никогда не сбросится на Basic.
+    subscription_end_at = 2026-12-15, grace_period_end_at = 2026-12-18 → потом Basic.
     """
-    expires_at = datetime.utcnow() + timedelta(hours=WELCOME_PLAN_HOURS)
-    grace_at = expires_at + timedelta(days=3)
-    expires_iso = expires_at.isoformat()
-    grace_iso = grace_at.isoformat()
-
     execute(f"""
         UPDATE {S}users
         SET plan = 'club', status = 'broker',
-            subscription_end_at = {escape(expires_iso)},
-            grace_period_end_at = {escape(grace_iso)},
+            subscription_end_at = {escape(CLUB_UNTIL)},
+            grace_period_end_at = {escape(GRACE_UNTIL)},
             updated_at = NOW()
         WHERE id = {escape(user_id)}
     """)
@@ -44,12 +40,11 @@ def _grant_welcome_plan(user_id, email: str, name: str, S: str) -> None:
         VALUES ({escape(user_id)}, 'info', {escape(WELCOME_NOTIFICATION_TITLE)}, {escape(WELCOME_NOTIFICATION_BODY)})
     """)
 
-    _send_welcome_email(email, name or "", datetime.fromisoformat(expires_at))
+    _send_welcome_email(email, name or "")
 
 
-def _send_welcome_email(to_email: str, name: str, expires_at: datetime) -> None:
-    """Отправить приветственное письмо о тарифе Клуб."""
-    expires_str = expires_at.strftime("%d.%m.%Y в %H:%M")
+def _send_welcome_email(to_email: str, name: str) -> None:
+    """Отправить приветственное письмо о тарифе Клуб до 15.12.2026."""
     display_name = name.strip() or "Коллега"
 
     content = f"""
@@ -61,28 +56,26 @@ def _send_welcome_email(to_email: str, name: str, expires_at: datetime) -> None:
           коммерческой недвижимости находят партнёров, объекты и реальные сделки.
         </p>
         <p style="margin:0 0 24px;font-size:15px;color:#aaaaaa;line-height:1.6;">
-          Чтобы вы могли познакомиться с платформой по-настоящему — мы открыли вам
-          приветственный доступ к тарифу <strong style="color:#ffffff;">«Клуб»</strong> на <strong style="color:#ffffff;">72 часа</strong>.
+          Вам открыт полный доступ к тарифу <strong style="color:#ffffff;">«Клуб»</strong>.
         </p>
         <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:24px;margin:0 0 24px;text-align:center;">
           <p style="margin:0 0 8px;font-size:13px;color:#666666;">Доступ активен до</p>
-          <p style="margin:0;font-size:24px;font-weight:700;color:#3b82f6;">{expires_str}</p>
+          <p style="margin:0;font-size:24px;font-weight:700;color:#3b82f6;">15 декабря 2026</p>
         </div>
         <p style="margin:0;font-size:13px;color:#666666;line-height:1.6;">
-          Войдите на платформу и изучите все возможности тарифа «Клуб».<br>
-          После окончания пробного периода вы сможете продлить подписку.
+          Войдите на платформу и пользуйтесь всеми возможностями тарифа «Клуб».
         </p>
     """
 
-    html_body = _base_template("Приветственный бонус — тариф «Клуб»", content)
+    html_body = _base_template("Добро пожаловать в тариф «Клуб»!", content)
     text_body = (
         f"Здравствуйте, {display_name}!\n\n"
         "Рады видеть вас в Кабинете-24.\n\n"
-        "Мы открыли вам приветственный доступ к тарифу «Клуб» на 72 часа.\n"
-        f"Доступ активен до: {expires_str}"
+        "Вам открыт полный доступ к тарифу «Клуб» до 15 декабря 2026 года.\n"
+        "Войдите на платформу и пользуйтесь всеми возможностями."
     )
 
-    send_email(to_email, "Кабинет-24: Приветственный доступ к тарифу «Клуб» на 72 часа", html_body, text_body)
+    send_email(to_email, "Кабинет-24: Добро пожаловать в тариф «Клуб»!", html_body, text_body)
 
 
 VERIFICATION_CODE_HOURS = 24

@@ -4,7 +4,6 @@ import { Footer } from "@/components/Footer"
 import Icon from "@/components/ui/icon"
 import { GlowButton } from "@/components/ui/glow-button"
 import { RegisterModal } from "@/components/RegisterModal"
-import { ClubPayDialog } from "@/components/pricing/ClubPayDialog"
 import { useAuthContext } from "@/context/AuthContext"
 import { ClubHero } from "@/components/club/ClubHero"
 import { ClubFeatures } from "@/components/club/ClubFeatures"
@@ -12,15 +11,10 @@ import { ClubHowItWorks, ClubNetwork, ClubMembersMarquee } from "@/components/cl
 
 export default function Club() {
   const [registerOpen, setRegisterOpen] = useState(false)
-  const [payOpen, setPayOpen] = useState(false)
   const { user } = useAuthContext()
 
   const handleCtaClick = () => {
-    if (user) {
-      setPayOpen(true)
-    } else {
-      setRegisterOpen(true)
-    }
+    if (!user) setRegisterOpen(true)
   }
 
   return (
@@ -119,7 +113,6 @@ export default function Club() {
       <Footer />
 
       <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="basic" />
-      <ClubPayDialog open={payOpen} onClose={() => setPayOpen(false)} />
     </main>
   )
 }

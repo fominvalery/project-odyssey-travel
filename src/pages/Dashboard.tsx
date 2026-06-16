@@ -40,7 +40,7 @@ const DashboardSupport = lazyWithRetry(() => import("@/components/dashboard/Dash
 const DashboardMessages = lazyWithRetry(() => import("@/components/dashboard/DashboardMessages"))
 const DashboardJointDeals = lazyWithRetry(() => import("@/components/dashboard/DashboardJointDeals"))
 const AiChatBubble = lazyWithRetry(() => import("@/components/AiChatBubble"))
-const ClubPayDialog = lazyWithRetry(() => import("@/components/pricing/ClubPayDialog").then(m => ({ default: m.ClubPayDialog })))
+
 const DashboardCRM = lazyWithRetry(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardCRM })))
 const DashboardReferral = lazyWithRetry(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardReferral })))
 const DashboardProfile = lazyWithRetry(() => import("@/components/dashboard/DashboardSections").then(m => ({ default: m.DashboardProfile })))
@@ -108,7 +108,7 @@ export default function Dashboard() {
   const [openPartnerName, setOpenPartnerName] = useState<string | null>(null)
   const [openPartnerAvatar, setOpenPartnerAvatar] = useState<string | null>(null)
   const [openPartnerStatus, setOpenPartnerStatus] = useState<string | null>(null)
-  const [showRenewDialog, setShowRenewDialog] = useState(false)
+
 
   function handleOpenMessage(partnerId: string, partnerName: string, partnerAvatar: string | null, partnerStatus: string) {
     setOpenPartnerId(partnerId)
@@ -346,11 +346,10 @@ export default function Dashboard() {
       <main className="flex-1 overflow-auto pb-20 md:pb-0">
         {/* Топ-бар с колокольчиком */}
         <div className="sticky top-0 z-40 flex items-center justify-end gap-3 px-6 py-3 border-b border-[#1a1a1a] bg-[#0a0a0a]/80 backdrop-blur-sm">
-          <SubscriptionBadge user={user} onRenew={() => setShowRenewDialog(true)} />
+          <SubscriptionBadge user={user} />
           <NotificationBell userId={user.id} />
         </div>
         <Suspense fallback={null}>
-          <ClubPayDialog open={showRenewDialog} onClose={() => setShowRenewDialog(false)} />
           {section === "dashboard" && (
             <DashboardHome
               user={user}
