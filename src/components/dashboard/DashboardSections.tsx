@@ -92,8 +92,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
 
   return (
     <div className="p-6 md:p-8 max-w-4xl">
-      <h1 className="text-2xl font-bold mb-1">Партнёрская программа</h1>
-      <p className="text-gray-400 text-sm mb-6">Приглашайте друзей и получайте бонусы за каждую регистрацию и активацию.</p>
+      <h1 className="text-2xl font-bold mb-6">Ваш рейтинг в «Кабинет-24»</h1>
 
       <DashboardReferralHeader
         stats={stats}
