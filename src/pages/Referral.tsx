@@ -1,67 +1,73 @@
-import { useState, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Header } from "@/components/Header"
-import { Button } from "@/components/ui/button"
 import { GlowButton } from "@/components/ui/glow-button"
 import Icon from "@/components/ui/icon"
 import { RegisterModal } from "@/components/RegisterModal"
 import { Footer } from "@/components/Footer"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import func2url from "../../backend/func2url.json"
 
-const levels = [
-  {
-    name: "Друг", refs: "1–2 рефералов",
-    cashback1: "15%", cashback2: "5%",
-    icon: "UserPlus", bg: "bg-[#0f1a2e]", iconColor: "text-blue-400", iconBg: "bg-blue-500/20",
-    perks: ["Реферальная ссылка", "10 ₽ бонусом за подтверждение email реферала", "20 ₽ бонусом за первый объект реферала"],
-    badge: { label: "Копилка бонусов", color: "bg-[#1a2a3a] text-blue-300 border border-blue-500/30" },
-  },
-  {
-    name: "Партнёр", refs: "3–9 рефералов",
-    cashback1: "15%", cashback2: "5%",
-    icon: "Users", bg: "bg-[#0f1f18]", iconColor: "text-emerald-400", iconBg: "bg-emerald-500/20",
-    perks: ["Кэшбэк 15% + 5% со 2-й линии", "Приоритетная поддержка", "Доступ к закрытому Telegram-чату"],
-    badge: { label: "Копилка бонусов", color: "bg-[#1a2a3a] text-blue-300 border border-blue-500/30" },
-  },
-  {
-    name: "Бизнес-партнёр", refs: "10–29 рефералов",
-    cashback1: "15%", cashback2: "5%",
-    icon: "Target", bg: "bg-[#1a0f2e]", iconColor: "text-violet-400", iconBg: "bg-violet-500/20",
-    perks: ["Вывод средств открыт", "Персональный менеджер", "Со-брендинг материалы"],
-    badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
-  },
-  {
-    name: "Амбассадор", refs: "30–99 рефералов",
-    cashback1: "15%", cashback2: "5%",
-    icon: "Award", bg: "bg-[#1f1800]", iconColor: "text-amber-400", iconBg: "bg-amber-500/20",
-    perks: ["Кэшбэк 15% + 5% со 2-й линии", "Значок амбассадора в профиле", "Ранний доступ к новым функциям"],
-    badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
-  },
-  {
-    name: "Лидер", refs: "100+ рефералов",
-    cashback1: "15%", cashback2: "10%", cashback3: "5%",
-    icon: "Gem", bg: "bg-[#1f0a0a]", iconColor: "text-rose-400", iconBg: "bg-rose-500/20",
-    perks: ["15% с 1-й линии + 10% со 2-й + 5% с 3-й", "VIP-статус и эксклюзивные условия", "Участие в развитии продукта"],
-    badge: { label: "Вывод открыт", color: "bg-[#1a2a1a] text-emerald-300 border border-emerald-500/30" },
-  },
+const RATING_URL = (func2url as Record<string, string>)["agent-rating"]
+
+const STATUSES = [
+  { name: "Друг",      refs: "1–2 реф.",   icon: "UserPlus", color: "from-blue-600 to-cyan-600",    border: "border-blue-500/30",   desc: "Начало пути на платформе" },
+  { name: "Партнёр",  refs: "3–9 реф.",   icon: "Users",    color: "from-emerald-600 to-teal-600", border: "border-emerald-500/30", desc: "Активный участник сети" },
+  { name: "Бизнес",   refs: "10–29 реф.", icon: "Target",   color: "from-violet-600 to-purple-600",border: "border-violet-500/30",  desc: "Профессиональный брокер" },
+  { name: "Амбасадор",refs: "30–99 реф.", icon: "Award",    color: "from-amber-500 to-orange-500", border: "border-amber-500/30",   desc: "Лидер своего сегмента" },
+  { name: "Лидер",    refs: "100+ реф.",  icon: "Gem",      color: "from-rose-600 to-pink-600",    border: "border-rose-500/30",    desc: "Топ платформы" },
 ]
 
-const steps = [
-  { icon: "UserPlus", title: "Зарегистрируйтесь", desc: "Создайте бесплатный аккаунт и получите уникальную реферальную ссылку" },
-  { icon: "Gift", title: "Приглашайте", desc: "Делитесь ссылкой с коллегами и партнёрами из сферы недвижимости" },
-  { icon: "TrendingUp", title: "Получайте доход", desc: "Зарабатывайте процент с каждого платежа привлечённых пользователей" },
-  { icon: "Rocket", title: "Растите в статусе", desc: "Больше рефералов — выше уровень, процент и привилегии" },
+const FORMULA = [
+  { icon: "Handshake", label: "Закрытая сделка",    points: "+50",  color: "text-blue-400",   bg: "bg-blue-500/10" },
+  { icon: "Users",     label: "Реферал",             points: "+10",  color: "text-violet-400", bg: "bg-violet-500/10" },
+  { icon: "Building2", label: "Активное объявление", points: "+5",   color: "text-emerald-400",bg: "bg-emerald-500/10" },
+  { icon: "UserCheck", label: "Лид в CRM",           points: "+3",   color: "text-cyan-400",   bg: "bg-cyan-500/10" },
+  { icon: "Clock",     label: "Месяц на платформе",  points: "+1",   color: "text-gray-400",   bg: "bg-gray-500/10" },
+  { icon: "Star",      label: "Пункт профиля",       points: "+5",   color: "text-amber-400",  bg: "bg-amber-500/10" },
 ]
+
+const BENEFITS = [
+  { icon: "TrendingUp", title: "Позиция в Сети",      desc: "Высокий рейтинг — выше в списке брокеров. Тебя видят первым когда партнёры ищут с кем работать" },
+  { icon: "Shield",     title: "Доверие партнёров",   desc: "Лидер с высоким рейтингом вызывает доверие. Партнёры охотнее идут на совместные сделки" },
+  { icon: "Zap",        title: "Приоритет в сделках", desc: "При прочих равных партнёр с более высоким рейтингом получает предложение первым" },
+]
+
+const AGENT_STATUS_COLORS: Record<string, string> = {
+  "Лидер":     "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  "Амбасадор": "bg-violet-500/15 text-violet-300 border-violet-500/30",
+  "Бизнес":    "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  "Партнёр":   "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  "Друг":      "bg-gray-500/15 text-gray-300 border-gray-500/30",
+}
+
+interface Agent {
+  id: string
+  name: string
+  avatar_url: string | null
+  city: string
+  specializations: string[]
+  agent_status: string
+  points: number
+  rank: number
+  activity: string
+}
+
+function getInitials(name: string) {
+  return name.split(" ").filter(Boolean).map(n => n[0]).join("").slice(0, 2).toUpperCase()
+}
 
 export default function Referral() {
-  const [refs, setRefs] = useState(5)
-  const [plan, setPlan] = useState(990)
   const [registerOpen, setRegisterOpen] = useState(false)
-  const calcRef = useRef<HTMLElement>(null)
+  const [topAgents, setTopAgents] = useState<Agent[]>([])
+  const [loadingAgents, setLoadingAgents] = useState(true)
 
-  const income = Math.round(refs * plan * 0.15)
-
-  function scrollToCalc() {
-    calcRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
+  useEffect(() => {
+    fetch(`${RATING_URL}?limit=10&offset=0`)
+      .then(r => r.json())
+      .then(data => setTopAgents(Array.isArray(data.agents) ? data.agents : []))
+      .catch(() => {})
+      .finally(() => setLoadingAgents(false))
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -79,199 +85,152 @@ export default function Referral() {
         </div>
         <div className="relative flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#262626] bg-[#141414] px-4 py-1.5 text-sm text-gray-300 mb-8">
-            <Icon name="Gift" className="h-4 w-4 text-violet-400" />
-            Партнёрская программа
+            <Icon name="Trophy" className="h-4 w-4 text-amber-400" />
+            Рейтинг брокеров
           </div>
 
           <h1 className="text-3xl md:text-6xl font-bold text-white max-w-3xl leading-tight mb-6">
-            Зарабатывайте вместе с нами
+            Рейтинг брокеров<br />Кабинет-24
           </h1>
 
           <p className="text-gray-400 text-base md:text-lg max-w-xl mb-8 leading-relaxed">
-            Приглашайте профессионалов рынка недвижимости и получайте
-            растущий процент от их платежей. 5 уровней роста — от бонусов до
-            пассивного дохода со второй линии.
+            Объективная система оценки брокеров на основе реальных показателей —
+            сделок, активности, опыта и вклада в платформу.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
-            <GlowButton
-              onClick={() => setRegisterOpen(true)}
-              className="rounded-full px-6 py-2.5 text-sm md:px-8 md:py-3 md:text-base w-full sm:w-auto"
-            >
-              Стать партнёром
-              <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
-            </GlowButton>
-            <Button
-              onClick={scrollToCalc}
-              variant="outline"
-              className="rounded-full border-[#262626] bg-[#141414] text-white hover:bg-[#1f1f1f] px-6 py-2.5 text-sm md:px-8 md:py-3 md:text-base font-medium w-full sm:w-auto"
-            >
-              Рассчитать доход
-              <Icon name="Calculator" className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
+          <GlowButton
+            onClick={() => setRegisterOpen(true)}
+            className="rounded-full px-6 py-2.5 text-sm md:px-8 md:py-3 md:text-base w-full sm:w-auto"
+          >
+            Войти и улучшить рейтинг
+            <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
+          </GlowButton>
         </div>
       </section>
 
-      {/* Как это работает */}
-      <section className="px-6 py-16 max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-2">Как это работает</h2>
-        <p className="text-gray-400 text-center mb-12">Четыре простых шага к партнёрскому доходу</p>
-        <div className="grid md:grid-cols-4 gap-5">
-          {steps.map((s, i) => (
-            <div key={i} className="relative bg-[#111827] border border-[#1e2a3a] rounded-2xl p-6 flex flex-col gap-4">
-              <div className="absolute -top-3.5 left-5 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold shadow-lg">
-                {i + 1}
+      {/* Формула очков */}
+      <section className="px-6 py-16 max-w-4xl mx-auto">
+        <h2 className="text-3xl font-bold text-center mb-3">Как считается рейтинг</h2>
+        <p className="text-gray-400 text-center mb-12">Каждое действие на платформе приносит очки</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {FORMULA.map((f) => (
+            <div key={f.label} className={`rounded-2xl border border-[#1f1f1f] ${f.bg} p-5 flex items-center gap-4`}>
+              <div className="shrink-0">
+                <Icon name={f.icon as "Star"} className={`h-6 w-6 ${f.color}`} />
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600/20 mt-2">
-                <Icon name={s.icon} className="h-6 w-6 text-blue-400" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 leading-tight">{f.label}</p>
+                <p className={`text-xl font-bold ${f.color}`}>{f.points}</p>
               </div>
-              <h3 className="text-base font-semibold text-white">{s.title}</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">{s.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Преимущества */}
+      {/* 5 статусов */}
       <section className="px-6 py-16 bg-[#0d0d0d]">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Преимущества программы</h2>
-          <div className="grid md:grid-cols-3 gap-5">
-            {[
-              { icon: "Zap", title: "Пассивный доход", desc: "Зарабатывайте на каждом платеже приглашённых — без дополнительных усилий" },
-              { icon: "Shield", title: "Прозрачная аналитика", desc: "Отслеживайте рефералов, начисления и выплаты в реальном времени" },
-              { icon: "Crown", title: "Пятиуровневая система", desc: "Растите от «Друга» до «Лидера» — на высших уровнях доход со 2-й и 3-й линии" },
-              { icon: "Star", title: "Бонусы за активность", desc: "10 ₽ за подтверждение email реферала и 20 ₽ за его первый объект" },
-              { icon: "BadgeCheck", title: "Статус и признание", desc: "Значок амбассадора, VIP-поддержка и ранний доступ к новым функциям" },
-              { icon: "Wallet", title: "Удобный вывод", desc: "Выводите заработанные средства удобным способом от уровня Бизнес-партнёр" },
-            ].map((item, i) => (
-              <div key={i} className="bg-[#111827] border border-[#1e2a3a] rounded-2xl p-6 flex flex-col gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20">
-                  <Icon name={item.icon} className="h-5 w-5 text-blue-400" />
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-3">5 статусов</h2>
+          <p className="text-gray-400 text-center mb-12">Статус определяет твоё место в общем рейтинге</p>
+          <div className="grid md:grid-cols-5 gap-4">
+            {STATUSES.map((s) => (
+              <div key={s.name} className={`rounded-2xl border ${s.border} bg-[#111] p-5 flex flex-col items-center text-center gap-3`}>
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center`}>
+                  <Icon name={s.icon as "Star"} className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-base font-semibold text-white">{item.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                <div>
+                  <p className="font-bold text-white">{s.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{s.refs}</p>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
+          <p className="text-center text-xs text-gray-600 mt-6">
+            Статус определяется количеством приглашённых рефералов. Внутри статуса — сортировка по очкам.
+          </p>
         </div>
       </section>
 
-      {/* 5 уровней */}
-      <section className="px-6 py-16">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-3">5 уровней роста</h2>
-          <p className="text-gray-400 text-center mb-12">Чем больше рефералов — тем выше ваш статус, процент и привилегии</p>
-          <div className="flex flex-col gap-4">
-            {levels.map((l, i) => (
-              <div key={i} className={`${l.bg} border border-[#1e2a3a] rounded-2xl flex flex-col md:flex-row overflow-hidden`}>
-                <div className="flex flex-col items-center justify-center gap-2 px-8 py-6 min-w-[180px]">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${l.iconBg}`}>
-                    <Icon name={l.icon} className={`h-6 w-6 ${l.iconColor}`} />
-                  </div>
-                  <div className="text-lg font-bold text-white mt-1">{l.name}</div>
-                  <div className="text-xs text-gray-400">{l.refs}</div>
-                </div>
-                <div className="flex flex-1 items-center justify-between px-8 py-6 border-t md:border-t-0 md:border-l border-[#1e2a3a] gap-6">
-                  <div className="flex flex-col gap-3">
-                    <div className="text-sm font-medium text-gray-300">
-                      Кэшбэк 1-я линия: <span className="text-blue-400 font-bold">{l.cashback1}</span>
-                      {l.cashback2 && <> &nbsp; 2-я линия: <span className="text-blue-400 font-bold">{l.cashback2}</span></>}
-                      {("cashback3" in l) && (l as { cashback3?: string }).cashback3 && (
-                        <> &nbsp; 3-я линия: <span className="text-blue-400 font-bold">{(l as { cashback3?: string }).cashback3}</span></>
+      {/* Что даёт рейтинг */}
+      <section className="px-6 py-16 max-w-4xl mx-auto">
+        <h2 className="text-3xl font-bold text-center mb-3">Что даёт высокий рейтинг</h2>
+        <p className="text-gray-400 text-center mb-12">Реальные преимущества для брокера</p>
+        <div className="grid md:grid-cols-3 gap-5">
+          {BENEFITS.map((b) => (
+            <div key={b.title} className="bg-[#111827] border border-[#1e2a3a] rounded-2xl p-6 flex flex-col gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20">
+                <Icon name={b.icon as "Star"} className="h-5 w-5 text-blue-400" />
+              </div>
+              <h3 className="text-base font-semibold text-white">{b.title}</h3>
+              <p className="text-sm text-gray-400 leading-relaxed">{b.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Топ-10 агентов */}
+      <section className="px-6 py-16 bg-[#0d0d0d]">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-3">Топ брокеров</h2>
+          <p className="text-gray-400 text-center mb-12">Лучшие участники платформы прямо сейчас</p>
+
+          {loadingAgents ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-4 animate-pulse h-16" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topAgents.map((a) => {
+                const badgeColor = AGENT_STATUS_COLORS[a.agent_status] || ""
+                return (
+                  <div key={a.id} className="rounded-2xl bg-[#111] border border-[#1f1f1f] p-4 flex items-center gap-4">
+                    <span className="text-sm font-mono text-gray-600 w-6 text-right shrink-0">#{a.rank}</span>
+                    <Avatar className="h-10 w-10 shrink-0">
+                      {a.avatar_url ? <AvatarImage src={a.avatar_url} /> : null}
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white text-xs font-bold">
+                        {getInitials(a.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-white truncate">{a.name}</p>
+                        {a.agent_status && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${badgeColor}`}>
+                            {a.agent_status}
+                          </span>
+                        )}
+                      </div>
+                      {a.city && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <Icon name="MapPin" size={10} />
+                          {a.city}
+                        </p>
                       )}
                     </div>
-                    <ul className="flex flex-col gap-1.5">
-                      {l.perks.map((p, j) => (
-                        <li key={j} className="flex items-center gap-2 text-sm text-gray-300">
-                          <Icon name="Check" className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                          {p}
-                        </li>
-                      ))}
-                    </ul>
+                    <span className="text-sm text-amber-400 font-medium shrink-0">★ {a.points}</span>
                   </div>
-                  <div className={`hidden md:flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium whitespace-nowrap ${l.badge.color}`}>
-                    <Icon name="Wallet" className="h-3.5 w-3.5" />
-                    {l.badge.label}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Калькулятор */}
-      <section ref={calcRef} className="px-6 py-16 bg-[#0d0d0d]">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-[#141414] border border-[#262626] rounded-2xl p-8">
-            <h2 className="text-2xl font-bold mb-2 text-center">Рассчитайте ваш доход</h2>
-            <p className="text-gray-400 text-sm text-center mb-8">Примерный расчёт на уровне «Партнёр» (15%)</p>
-
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">Количество рефералов</span>
-                  <span className="text-white font-semibold">{refs} чел.</span>
-                </div>
-                <input
-                  type="range" min={1} max={50} value={refs}
-                  onChange={(e) => setRefs(Number(e.target.value))}
-                  className="w-full accent-violet-500"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">Средний тариф реферала</span>
-                  <span className="text-white font-semibold">{plan.toLocaleString()} ₽/мес</span>
-                </div>
-                <input
-                  type="range" min={4900} max={24900} step={5000} value={plan}
-                  onChange={(e) => setPlan(Number(e.target.value))}
-                  className="w-full accent-violet-500"
-                />
-              </div>
-
-              <div className="bg-[#0f0f0f] border border-violet-500/20 rounded-xl p-6 text-center">
-                <div className="text-sm text-gray-400 mb-1">Ваш ежемесячный доход</div>
-                <div className="text-4xl font-bold text-violet-400">{income.toLocaleString()} ₽</div>
-                <div className="text-xs text-gray-600 mt-2">в месяц при 15% комиссии</div>
-              </div>
+                )
+              })}
             </div>
+          )}
 
-            <Button
+          <div className="text-center mt-8">
+            <GlowButton
               onClick={() => setRegisterOpen(true)}
-              className="w-full mt-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+              className="rounded-full px-8 py-3 text-base"
             >
-              Стать партнёром
+              Войти и занять своё место
               <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
-            </Button>
+            </GlowButton>
           </div>
         </div>
       </section>
 
-      {/* CTA-блок внизу */}
-      <section className="px-6 py-20 flex flex-col items-center text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600/10 border border-blue-500/20 mb-6">
-          <Icon name="Rocket" className="h-8 w-8 text-blue-400" />
-        </div>
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Начните зарабатывать сегодня</h2>
-        <p className="text-gray-400 text-lg max-w-md mb-8 leading-relaxed">
-          Зарегистрируйтесь, получите реферальную ссылку и делитесь ею с коллегами.
-        </p>
-        <Button
-          onClick={() => setRegisterOpen(true)}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 text-base font-medium"
-        >
-          Стать партнёром
-          <Icon name="ArrowRight" className="h-4 w-4 ml-2" />
-        </Button>
-      </section>
-
-      <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="green" />
       <Footer />
+      <RegisterModal open={registerOpen} onClose={() => setRegisterOpen(false)} />
     </div>
   )
 }
