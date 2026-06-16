@@ -60,7 +60,7 @@ export function CtaSection() {
       <div className="relative">
       <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Готовы начать?</h2>
       <p className="text-gray-400 text-lg mb-10 max-w-md mx-auto">
-        Создайте бесплатный кабинет за 30 секунд и получите доступ ко всем AI-инструментам платформы.
+        Создай бесплатный кабинет за 30 секунд и получи доступ ко всем инструментам.
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-4">
