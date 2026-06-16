@@ -7,8 +7,11 @@ interface MyRatingData {
   points: number
   deal_count: number
   active_listings: number
+  lead_count: number
   months_on_platform: number
   profile_score: number
+  profile_filled: number
+  profile_total: number
   agent_status: string
   activity: string
 }
@@ -105,7 +108,7 @@ export default function DashboardReferralHeader({ stats, loading, refLink, copie
       {!ratingLoading && myRating ? (
         <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 mb-6">
           <p className="text-xs text-gray-500 uppercase tracking-widest mb-4">Ваши показатели</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             <div className="bg-[#0a0a0a] rounded-xl p-3 text-center">
               <Icon name="Handshake" size={16} className="text-blue-400 mx-auto mb-1" />
               <p className="text-lg font-bold text-white">{myRating.deal_count}</p>
@@ -119,16 +122,28 @@ export default function DashboardReferralHeader({ stats, loading, refLink, copie
               <p className="text-[10px] text-emerald-400">+{myRating.active_listings * 5}</p>
             </div>
             <div className="bg-[#0a0a0a] rounded-xl p-3 text-center">
+              <Icon name="Users" size={16} className="text-cyan-400 mx-auto mb-1" />
+              <p className="text-lg font-bold text-white">{myRating.lead_count}</p>
+              <p className="text-[10px] text-gray-500">Лидов</p>
+              <p className="text-[10px] text-cyan-400">+{myRating.lead_count * 3}</p>
+            </div>
+            <div className="bg-[#0a0a0a] rounded-xl p-3 text-center">
               <Icon name="Clock" size={16} className="text-violet-400 mx-auto mb-1" />
               <p className="text-lg font-bold text-white">{myRating.months_on_platform}</p>
               <p className="text-[10px] text-gray-500">Месяцев</p>
               <p className="text-[10px] text-violet-400">+{myRating.months_on_platform}</p>
             </div>
-            <div className="bg-[#0a0a0a] rounded-xl p-3 text-center">
+            <div className="bg-[#0a0a0a] rounded-xl p-3 text-center col-span-2">
               <Icon name="UserCheck" size={16} className="text-amber-400 mx-auto mb-1" />
-              <p className="text-lg font-bold text-white">{myRating.profile_score}</p>
-              <p className="text-[10px] text-gray-500">Профиль</p>
-              <p className="text-[10px] text-amber-400">+{myRating.profile_score}</p>
+              <p className="text-lg font-bold text-white">{myRating.profile_filled}<span className="text-xs text-gray-500">/{myRating.profile_total}</span></p>
+              <p className="text-[10px] text-gray-500 mb-1.5">Профиль</p>
+              <div className="w-full bg-[#1a1a1a] rounded-full h-1">
+                <div
+                  className="bg-amber-400 h-1 rounded-full transition-all"
+                  style={{ width: `${Math.round((myRating.profile_filled / myRating.profile_total) * 100)}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-amber-400 mt-1">+{myRating.profile_score}</p>
             </div>
           </div>
         </div>

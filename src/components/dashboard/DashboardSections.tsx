@@ -23,8 +23,11 @@ interface MyRatingData {
   points: number
   deal_count: number
   active_listings: number
+  lead_count: number
   months_on_platform: number
   profile_score: number
+  profile_filled: number
+  profile_total: number
   agent_status: string
   activity: string
 }
