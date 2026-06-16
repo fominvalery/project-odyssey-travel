@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import Icon from "@/components/ui/icon"
 import func2url from "../../../backend/func2url.json"
 import { ReferralStats, WithdrawalRequest } from "@/components/referral/referralTypes"
 import { cacheGet, cacheSet, TTL } from "@/lib/cache"
@@ -108,27 +107,7 @@ export function DashboardReferral({ userId }: ReferralProps) {
         onNewWithdrawal={() => {}}
       />
 
-      {/* Как это работает */}
-      <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
-        <h2 className="font-semibold mb-4 flex items-center gap-2">
-          <Icon name="Lightbulb" className="h-4 w-4 text-blue-400" /> Как это работает
-        </h2>
-        <div className="flex flex-col gap-3">
-          {[
-            "Поделитесь своей реферальной ссылкой с друзьями.",
-            "Друг регистрируется по вашей ссылке — связь записывается автоматически.",
-            "Друг подтверждает email — вам начисляется 10 ₽ бонусом. Создаёт первый объект — ещё 20 ₽.",
-            "Получайте 15% от платежей рефералов и +5% со 2-й линии на любом уровне.",
-            "На уровне «Лидер» — повышенные 15% + 10% со 2-й линии + 5% с 3-й линии.",
-            "Выводите деньги (с уровня Бизнес) или конвертируйте в AI-кредиты.",
-          ].map((step, i) => (
-            <div key={i} className="flex items-start gap-3 text-sm text-gray-300">
-              <span className="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
-              {step}
-            </div>
-          ))}
-        </div>
-      </div>
+
 
 
     </div>
