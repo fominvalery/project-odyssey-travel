@@ -83,6 +83,7 @@ def handler(event: dict, context) -> dict:
         LEFT JOIN joint_deals jd ON (jd.initiator_id = u.id OR jd.partner_id = u.id)
         LEFT JOIN objects o ON o.user_id = u.id
         WHERE u.status IN ('broker', 'agency')
+          AND u.name NOT ILIKE '[удал%'
         GROUP BY u.id
     """)
 
