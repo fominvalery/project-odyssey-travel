@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom"
 const BG_IMAGE = "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/77802ca7-d47a-43d5-a713-de3479b3fab7.jpg"
 
 const perks: { icon: string; text: string }[] = [
-  { icon: "BadgePercent", text: "До 10% с каждого реферала" },
-  { icon: "Infinity", text: "Бессрочные выплаты" },
-  { icon: "Users", text: "Многоуровневая система" },
-  { icon: "Wallet", text: "Вывод в любое время" },
+  { icon: "Star", text: "Независимые оценки брокеров" },
+  { icon: "BarChart2", text: "Статистика сделок" },
+  { icon: "Users", text: "Лучшие специалисты рынка" },
+  { icon: "ShieldCheck", text: "Проверенные профессионалы" },
 ]
 
 export function ReferralBannerSection() {
@@ -25,15 +25,15 @@ export function ReferralBannerSection() {
 
         <div className="relative z-10">
           <span className="inline-block bg-blue-600/20 text-blue-400 text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-4 border border-blue-500/30">
-            Реферальная программа
+            Рейтинг брокеров
           </span>
 
           <h2 className="text-2xl md:text-5xl font-bold text-white mb-3 leading-tight">
-            Зарабатывай,<br /> рекомендуя платформу
+            Найди лучшего<br /> брокера на рынке
           </h2>
 
           <p className="text-gray-300 text-sm md:text-lg mb-6 md:mb-10 max-w-xl mx-auto">
-            Приглашай коллег и партнёров — получай пассивный доход с каждой их оплаты навсегда.
+            Объективный рейтинг специалистов коммерческой недвижимости по сделкам, отзывам и репутации.
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 md:mb-10">
