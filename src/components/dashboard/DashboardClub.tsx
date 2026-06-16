@@ -242,10 +242,9 @@ export default function DashboardClub({ userId, onMessage, onAddToCRM }: Props) 
 
 export type { Member }
 
-function MemberCard({ member: m, onMessage, onAddToCRM }: { member: Member; onMessage?: Props["onMessage"]; onAddToCRM?: Props["onAddToCRM"] }) {
+function MemberCard({ member: m, onMessage }: { member: Member; onMessage?: Props["onMessage"]; onAddToCRM?: Props["onAddToCRM"] }) {
   const initials = getInitials(m.name)
   const isAgency = m.status === "agency"
-  const [addedToCRM, setAddedToCRM] = useState(false)
 
   const agentStatusColor = AGENT_STATUS_COLORS[m.agent_status] || AGENT_STATUS_COLORS["Базовый"]
   const activityDot = ACTIVITY_DOT[m.activity] || "bg-gray-500"
@@ -323,22 +322,7 @@ function MemberCard({ member: m, onMessage, onAddToCRM }: { member: Member; onMe
           <Icon name="MessageSquare" size={13} />
           Написать
         </button>
-        <button
-          onClick={() => {
-            if (!addedToCRM) {
-              onAddToCRM?.(m)
-              setAddedToCRM(true)
-              setTimeout(() => setAddedToCRM(false), 2000)
-            }
-          }}
-          className={`flex items-center justify-center gap-1.5 text-xs py-2 px-3 rounded-xl transition-colors border ${
-            addedToCRM
-              ? "bg-emerald-600/20 text-emerald-300 border-emerald-500/20"
-              : "bg-[#1a1a1a] text-gray-400 hover:text-white border-[#2a2a2a] hover:bg-[#222]"
-          }`}
-        >
-          <Icon name={addedToCRM ? "Check" : "UserPlus"} size={13} />
-        </button>
+
       </div>
     </div>
   )
