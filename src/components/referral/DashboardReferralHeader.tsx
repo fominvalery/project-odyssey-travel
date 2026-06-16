@@ -74,18 +74,12 @@ export default function DashboardReferralHeader({ stats, loading, refLink, copie
               ) : null}
             </div>
           )}
-          <div className="flex items-center gap-4 flex-wrap">
-            <p className="text-sm text-gray-300">
-              Комиссия: {level?.commission1 || 5}% от платежей рефералов
-              {(level?.commission2 ?? 0) > 0 && ` + ${level!.commission2}% (2-я линия)`}
-            </p>
-            {activityLabel && (
-              <div className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${activityDot}`} />
-                <span className={`text-xs ${activityColor}`}>{activityLabel}</span>
-              </div>
-            )}
-          </div>
+          {activityLabel && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`w-1.5 h-1.5 rounded-full ${activityDot}`} />
+              <span className={`text-xs ${activityColor}`}>{activityLabel}</span>
+            </div>
+          )}
           {!ratingLoading && myRating ? (
             <p className="text-xs text-amber-400 mt-0.5 font-medium">
               ★ {myRating.points}
