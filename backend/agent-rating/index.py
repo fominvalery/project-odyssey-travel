@@ -74,6 +74,7 @@ def handler(event: dict, context) -> dict:
             u.status,
             u.created_at,
             u.last_login_at,
+            u.referral_level,
             COUNT(DISTINCT r.id) AS ref_count,
             COUNT(DISTINCT CASE WHEN (jd.status = 'Успешна') THEN jd.id END) AS deal_count,
             COUNT(DISTINCT CASE WHEN o.status = 'active' THEN o.id END) AS active_listings
@@ -87,7 +88,7 @@ def handler(event: dict, context) -> dict:
 
     rows = cur.fetchall()
     cols = ["id","name","first_name","last_name","avatar_url","city","specializations",
-            "bio","phone","status","created_at","last_login_at","ref_count","deal_count","active_listings"]
+            "bio","phone","status","created_at","last_login_at","referral_level","ref_count","deal_count","active_listings"]
 
     agents = []
     now = datetime.now(timezone.utc)
@@ -117,7 +118,9 @@ def handler(event: dict, context) -> dict:
             profile_score
         )
 
-        agent_status = get_agent_status(int(a["ref_count"]))
+        # Приоритет: referral_level из суперадмина, иначе считаем по рефералам
+        admin_level = (a.get("referral_level") or "").strip()
+        agent_status = admin_level if admin_level in STATUS_ORDER else get_agent_status(int(a["ref_count"]))
         activity = get_activity_label(a["last_login_at"])
 
         agents.append({

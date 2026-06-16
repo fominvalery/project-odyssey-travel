@@ -278,8 +278,7 @@ function MemberCard({ member: m, onMessage, onAddToCRM }: { member: Member; onMe
             {/* Очки */}
             {m.points > 0 && (
               <span className="text-[10px] text-amber-400 font-medium flex items-center gap-0.5">
-                <Icon name="Star" size={9} />
-                {m.points} оч.
+                ★ {m.points}
               </span>
             )}
           </div>

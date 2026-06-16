@@ -88,7 +88,7 @@ export default function DashboardReferralHeader({ stats, loading, refLink, copie
           </div>
           {!ratingLoading && myRating ? (
             <p className="text-xs text-amber-400 mt-0.5 font-medium">
-              {myRating.points} очков
+              ★ {myRating.points}
             </p>
           ) : null}
         </div>
@@ -116,25 +116,25 @@ export default function DashboardReferralHeader({ stats, loading, refLink, copie
               <Icon name="Handshake" size={16} className="text-blue-400 mx-auto mb-1" />
               <p className="text-lg font-bold text-white">{myRating.deal_count}</p>
               <p className="text-[10px] text-gray-500">Сделок</p>
-              <p className="text-[10px] text-blue-400">+{myRating.deal_count * 50} оч.</p>
+              <p className="text-[10px] text-blue-400">+{myRating.deal_count * 50}</p>
             </div>
             <div className="bg-[#0a0a0a] rounded-xl p-3 text-center">
               <Icon name="Building2" size={16} className="text-emerald-400 mx-auto mb-1" />
               <p className="text-lg font-bold text-white">{myRating.active_listings}</p>
               <p className="text-[10px] text-gray-500">Объявлений</p>
-              <p className="text-[10px] text-emerald-400">+{myRating.active_listings * 5} оч.</p>
+              <p className="text-[10px] text-emerald-400">+{myRating.active_listings * 5}</p>
             </div>
             <div className="bg-[#0a0a0a] rounded-xl p-3 text-center">
               <Icon name="Clock" size={16} className="text-violet-400 mx-auto mb-1" />
               <p className="text-lg font-bold text-white">{myRating.months_on_platform}</p>
               <p className="text-[10px] text-gray-500">Месяцев</p>
-              <p className="text-[10px] text-violet-400">+{myRating.months_on_platform} оч.</p>
+              <p className="text-[10px] text-violet-400">+{myRating.months_on_platform}</p>
             </div>
             <div className="bg-[#0a0a0a] rounded-xl p-3 text-center">
               <Icon name="UserCheck" size={16} className="text-amber-400 mx-auto mb-1" />
               <p className="text-lg font-bold text-white">{myRating.profile_score}</p>
               <p className="text-[10px] text-gray-500">Профиль</p>
-              <p className="text-[10px] text-amber-400">+{myRating.profile_score} оч.</p>
+              <p className="text-[10px] text-amber-400">+{myRating.profile_score}</p>
             </div>
           </div>
         </div>
