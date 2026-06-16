@@ -29,7 +29,7 @@ export function ReferralBannerSection() {
           </span>
 
           <h2 className="text-2xl md:text-5xl font-bold text-white mb-3 leading-tight">
-            Найди лучшего<br /> брокера на рынке
+            Рейтинг брокеров<br /> Кабинет-24
           </h2>
 
           <p className="text-gray-300 text-sm md:text-lg mb-6 md:mb-10 max-w-xl mx-auto">
