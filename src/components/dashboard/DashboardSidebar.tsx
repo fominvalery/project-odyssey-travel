@@ -11,7 +11,7 @@ type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "clu
 // Пункты меню для basic
 const basicNavItems = [
   { id: "objects",   label: "Объекты",   icon: "Building2" },
-  { id: "referral",  label: "Рефералы",  icon: "Gift" },
+  { id: "referral",  label: "Рейтинг",  icon: "Gift" },
   { id: "profile",   label: "Профиль",   icon: "User" },
 ] as const
 
@@ -24,7 +24,7 @@ const fullNavItems = [
   { id: "club",         label: "Сеть",              icon: "Zap" },
   { id: "joint-deals",  label: "Совместные сделки", icon: "Handshake" },
   { id: "messages",     label: "Сообщения",         icon: "MessageSquare" },
-  { id: "referral",     label: "Рефералы",          icon: "Gift" },
+  { id: "referral",     label: "Рейтинг",            icon: "Gift" },
   { id: "profile",      label: "Профиль",           icon: "User" },
 ] as const
 
