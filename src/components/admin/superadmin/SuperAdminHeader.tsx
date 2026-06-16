@@ -36,7 +36,8 @@ export function SuperAdminTabs({ mainTab, setMainTab, usersCount }: TabsProps) {
   return (
     <div className="flex gap-2 mb-6 border-b border-[#1f1f1f]">
       {([
-        { id: "users" as const, icon: "Users", label: "Пользователи", count: usersCount },
+        { id: "users" as const,   icon: "Users",     label: "Пользователи", count: usersCount },
+        { id: "objects" as const, icon: "Building2", label: "Объекты",      count: 0 },
       ]).map((t) => (
         <button
           key={t.id}

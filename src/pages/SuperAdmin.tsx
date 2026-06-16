@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast"
 import { STATUS_LABELS } from "@/hooks/useAuth"
 import { SuperAdminTopBar, SuperAdminTabs } from "@/components/admin/superadmin/SuperAdminHeader"
 import SuperAdminUsersTab from "@/components/admin/superadmin/SuperAdminUsersTab"
+import SuperAdminObjectsTab from "@/components/admin/superadmin/SuperAdminObjectsTab"
 import { LEVELS, MainTab, UsersFilter } from "@/components/admin/superadmin/constants"
 
 export default function SuperAdmin() {
@@ -164,6 +165,9 @@ export default function SuperAdmin() {
           />
         )}
 
+        {mainTab === "objects" && user?.id && (
+          <SuperAdminObjectsTab actorId={user.id} />
+        )}
 
       </div>
     </div>

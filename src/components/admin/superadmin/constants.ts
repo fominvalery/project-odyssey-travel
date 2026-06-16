@@ -28,5 +28,5 @@ export const LEVELS = [
   { name: "Лидер",     color: "rose",    desc: "" },
 ]
 
-export type MainTab = "users"
+export type MainTab = "users" | "objects"
 export type UsersFilter = "all" | "unverified"

@@ -1,6 +1,7 @@
 import func2url from "../../backend/func2url.json"
 
 const AUTH_URL = (func2url as Record<string, string>)["auth-email-auth"]
+const ADMIN_URL = (func2url as Record<string, string>)["admin"]
 
 const LEVELS_MAP = [
   { name: "Друг",      level: 1, color: "blue" },
@@ -70,6 +71,47 @@ export interface AdminWithdrawalsResponse {
     paid: number
     total_paid: number
   }
+}
+
+export interface AdminObject {
+  id: string
+  title: string
+  category: string
+  type: string
+  city: string
+  address: string
+  price: string
+  area: string
+  status: string
+  published: boolean
+  photo: string | null
+  has_photos: boolean
+  has_desc: boolean
+  has_price: boolean
+  completeness: number
+  created_at: string | null
+  expires_at: string | null
+  auto_unpublished: boolean
+  user_id: string | null
+  user_name: string
+  user_email: string
+  user_status: string
+}
+
+export interface AdminObjectsStats {
+  total: number
+  active: number
+  archived: number
+  new_7d: number
+  new_30d: number
+  abandoned: number
+  incomplete: number
+}
+
+export interface AdminObjectsResponse {
+  objects: AdminObject[]
+  total: number
+  stats: AdminObjectsStats
 }
 
 export interface AdminUserPayload {
@@ -172,5 +214,51 @@ export const superadminApi = {
     const raw = await res.text()
     const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
     if (!res.ok) throw new Error(data?.error || "Не удалось подтвердить email")
+  },
+
+  async listObjects(actorId: string, params: {
+    search?: string
+    status?: string
+    type?: string
+    completeness?: string
+    limit?: number
+    offset?: number
+  } = {}): Promise<AdminObjectsResponse> {
+    const qs = new URLSearchParams({ action: "admin-objects" })
+    if (params.search) qs.set("search", params.search)
+    if (params.status) qs.set("status", params.status)
+    if (params.type) qs.set("type", params.type)
+    if (params.completeness) qs.set("completeness", params.completeness)
+    if (params.limit) qs.set("limit", String(params.limit))
+    if (params.offset) qs.set("offset", String(params.offset))
+    const res = await fetch(`${ADMIN_URL}?${qs.toString()}`, {
+      headers: { "X-User-Id": actorId },
+    })
+    const raw = await res.text()
+    const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+    if (!res.ok) throw new Error(data?.error || "Ошибка загрузки объектов")
+    return data
+  },
+
+  async updateObjectStatus(actorId: string, objectId: string, status: string): Promise<void> {
+    const res = await fetch(ADMIN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-User-Id": actorId },
+      body: JSON.stringify({ action: "update_object_status", object_id: objectId, status }),
+    })
+    const raw = await res.text()
+    const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+    if (!res.ok) throw new Error(data?.error || "Ошибка обновления статуса")
+  },
+
+  async deleteObject(actorId: string, objectId: string): Promise<void> {
+    const res = await fetch(ADMIN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-User-Id": actorId },
+      body: JSON.stringify({ action: "delete_object", object_id: objectId }),
+    })
+    const raw = await res.text()
+    const data = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw)
+    if (!res.ok) throw new Error(data?.error || "Ошибка удаления объекта")
   },
 }

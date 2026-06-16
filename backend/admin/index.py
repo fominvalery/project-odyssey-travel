@@ -450,9 +450,168 @@ def handler(event: dict, context) -> dict:
                     "offset": offset,
                 })
 
+            # ─── Смена статуса объекта ───
+            if action == "update_object_status":
+                object_id = body.get("object_id")
+                new_status = body.get("status")
+                if not object_id or not new_status:
+                    return resp(400, {"error": "object_id и status обязательны"})
+                published = new_status == "Активен"
+                cur.execute(
+                    f"UPDATE {schema}.objects SET status=%s, published=%s, updated_at=NOW() WHERE id=%s",
+                    (new_status, published, object_id)
+                )
+                conn.commit()
+                return resp(200, {"ok": True})
+
+            # ─── Удалить объект ───
+            if action == "delete_object":
+                object_id = body.get("object_id")
+                if not object_id:
+                    return resp(400, {"error": "object_id required"})
+                cur.execute(f"DELETE FROM {schema}.objects WHERE id=%s", (object_id,))
+                conn.commit()
+                return resp(200, {"ok": True})
+
             return resp(400, {"error": f"Unknown action: {action}"})
 
         # ─────────── GET ───────────
+        # GET /?action=admin-objects — список всех объектов
+        if method == "GET" and qs.get("action") == "admin-objects":
+            search = qs.get("search", "").strip()
+            status_filter = qs.get("status", "")
+            obj_type = qs.get("type", "")
+            completeness = qs.get("completeness", "")  # "abandoned" | "incomplete"
+            limit = min(int(qs.get("limit", 100)), 200)
+            offset = int(qs.get("offset", 0))
+
+            conditions = ["TRUE"]
+            params = []
+
+            if search:
+                conditions.append(
+                    "(o.title ILIKE %s OR o.city ILIKE %s OR o.address ILIKE %s OR u.name ILIKE %s OR u.email ILIKE %s)"
+                )
+                like = f"%{search}%"
+                params.extend([like, like, like, like, like])
+
+            if status_filter:
+                conditions.append("o.status = %s")
+                params.append(status_filter)
+
+            if obj_type:
+                conditions.append("o.type = %s")
+                params.append(obj_type)
+
+            # Брошенные: нет фото И нет описания И нет цены
+            if completeness == "abandoned":
+                conditions.append(
+                    "(o.photos IS NULL OR array_length(o.photos, 1) IS NULL OR array_length(o.photos, 1) = 0)"
+                    " AND (o.description IS NULL OR o.description = '')"
+                    " AND (o.price IS NULL OR o.price = '')"
+                )
+            # Незаполненные: не хватает фото ИЛИ описания ИЛИ цены
+            elif completeness == "incomplete":
+                conditions.append(
+                    "("
+                    "(o.photos IS NULL OR array_length(o.photos, 1) IS NULL OR array_length(o.photos, 1) = 0)"
+                    " OR (o.description IS NULL OR o.description = '')"
+                    " OR (o.price IS NULL OR o.price = '')"
+                    ")"
+                )
+
+            where = " AND ".join(conditions)
+
+            cur.execute(f"""
+                SELECT COUNT(*) FROM {schema}.objects o
+                LEFT JOIN {schema}.users u ON o.user_id = u.id
+                WHERE {where}
+            """, params)
+            total = cur.fetchone()[0]
+
+            cur.execute(f"""
+                SELECT
+                    o.id, o.title, o.category, o.type, o.city, o.address,
+                    o.price, o.area, o.status, o.published,
+                    o.photos, o.description, o.created_at, o.expires_at,
+                    o.auto_unpublished,
+                    u.id as user_id, u.name as user_name, u.email as user_email, u.status as user_status
+                FROM {schema}.objects o
+                LEFT JOIN {schema}.users u ON o.user_id = u.id
+                WHERE {where}
+                ORDER BY o.created_at DESC
+                LIMIT %s OFFSET %s
+            """, params + [limit, offset])
+
+            objects = []
+            for r in cur.fetchall():
+                photos = r[10] or []
+                desc = r[11] or ""
+                price = r[6] or ""
+                has_photos = len(photos) > 0
+                has_desc = len(desc.strip()) > 0
+                has_price = len(price.strip()) > 0
+                filled = sum([has_photos, has_desc, has_price])
+                completeness_pct = round((filled / 3) * 100)
+
+                objects.append({
+                    "id": str(r[0]),
+                    "title": r[1] or "Без названия",
+                    "category": r[2] or "",
+                    "type": r[3] or "",
+                    "city": r[4] or "",
+                    "address": r[5] or "",
+                    "price": price,
+                    "area": r[7] or "",
+                    "status": r[8] or "Активен",
+                    "published": bool(r[9]),
+                    "photo": photos[0] if photos else None,
+                    "has_photos": has_photos,
+                    "has_desc": has_desc,
+                    "has_price": has_price,
+                    "completeness": completeness_pct,
+                    "created_at": r[12].isoformat() if r[12] else None,
+                    "expires_at": r[13].isoformat() if r[13] else None,
+                    "auto_unpublished": bool(r[14]),
+                    "user_id": str(r[15]) if r[15] else None,
+                    "user_name": r[16] or "",
+                    "user_email": r[17] or "",
+                    "user_status": r[18] or "",
+                })
+
+            # Статистика
+            cur.execute(f"""
+                SELECT
+                    COUNT(*) AS total_all,
+                    COUNT(*) FILTER (WHERE status='Активен' AND published=TRUE) AS active,
+                    COUNT(*) FILTER (WHERE status='Архив' OR published=FALSE) AS archived,
+                    COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days') AS new_7d,
+                    COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days') AS new_30d,
+                    COUNT(*) FILTER (WHERE
+                        (photos IS NULL OR array_length(photos,1) IS NULL OR array_length(photos,1)=0)
+                        AND (description IS NULL OR description='')
+                        AND (price IS NULL OR price='')
+                    ) AS abandoned,
+                    COUNT(*) FILTER (WHERE
+                        (photos IS NULL OR array_length(photos,1) IS NULL OR array_length(photos,1)=0)
+                        OR (description IS NULL OR description='')
+                        OR (price IS NULL OR price='')
+                    ) AS incomplete
+                FROM {schema}.objects
+            """)
+            s = cur.fetchone()
+            stats = {
+                "total": int(s[0] or 0),
+                "active": int(s[1] or 0),
+                "archived": int(s[2] or 0),
+                "new_7d": int(s[3] or 0),
+                "new_30d": int(s[4] or 0),
+                "abandoned": int(s[5] or 0),
+                "incomplete": int(s[6] or 0),
+            }
+
+            return resp(200, {"objects": objects, "total": total, "stats": stats})
+
         # GET /?action=expiry_status — сводка по срокам
         if method == "GET" and qs.get("action") == "expiry_status":
             cur.execute(f"""
