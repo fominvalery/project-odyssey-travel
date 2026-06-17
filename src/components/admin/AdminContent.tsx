@@ -85,7 +85,7 @@ function getEmbedUrl(url: string): string {
   if (url.includes("youtube.com/watch")) return url.replace("watch?v=", "embed/")
   if (url.includes("youtu.be/")) return "https://www.youtube.com/embed/" + url.split("youtu.be/")[1]
   if (url.includes("rutube.ru/video/")) {
-    const id = url.split("/video/")[1]?.replace(/\//g, "")
+    const id = url.split("/video/")[1]?.split("?")[0]?.replace(/\//g, "")
     return id ? `https://rutube.ru/play/embed/${id}` : url
   }
   return url
