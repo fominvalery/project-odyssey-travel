@@ -78,14 +78,8 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
                 onClick={() => setSection(item.id as Section)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
                   isActive
-                    ? isClub || isMessages || isJointDeals
-                      ? "bg-violet-600 text-white"
-                      : "bg-blue-600 text-white"
-                    : isClub
-                      ? "text-violet-400 hover:text-white hover:bg-violet-500/20 border border-violet-500/20"
-                      : isJointDeals
-                        ? "text-violet-400 hover:text-white hover:bg-violet-500/10"
-                        : "text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
                 }`}
               >
                 <Icon name={item.icon} className="h-4 w-4 shrink-0" />
@@ -105,7 +99,7 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             href="https://syntx.ai/welcome/Z9SblDpH"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left bg-gradient-to-r from-violet-500/15 to-blue-500/15 border border-violet-500/20 text-violet-300 hover:text-white hover:from-violet-500/25 hover:to-blue-500/25"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left text-gray-400 hover:text-white hover:bg-[#1a1a1a]"
           >
             <Icon name="Sparkles" className="h-4 w-4 shrink-0" />
             Нейросети
