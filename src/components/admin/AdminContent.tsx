@@ -156,7 +156,10 @@ export default function AdminContent() {
   const save = async () => {
     if (!form.title.trim() || !user?.id) return
     setSaving(true)
-    const body = { ...form, content_type: tab }
+    const videos = videoInput.trim()
+      ? [...form.videos, videoInput.trim()]
+      : form.videos
+    const body = { ...form, videos, content_type: tab }
     const url = editing ? API_URL : API_URL
     const method = editing ? "PUT" : "POST"
     const payload = editing ? { ...body, id: editing.id } : body
