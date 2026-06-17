@@ -33,7 +33,6 @@ function lazyWithRetry<T extends ComponentType<unknown>>(
   })
 }
 
-const DashboardHome = lazyWithRetry(() => import("@/components/dashboard/DashboardHome"))
 const DashboardObjects = lazyWithRetry(() => import("@/components/dashboard/DashboardObjects"))
 const DashboardAnalytics = lazyWithRetry(() => import("@/components/dashboard/DashboardAnalytics"))
 const DashboardSupport = lazyWithRetry(() => import("@/components/dashboard/DashboardSupport"))
@@ -48,7 +47,7 @@ const DashboardClub = lazyWithRetry(() => import("@/components/dashboard/Dashboa
 
 const YOOKASSA_URL = (func2url as Record<string, string>)["yookassa-yookassa"]
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "joint-deals" | "messages" | "profile" | "support"
+type Section = "objects" | "crm" | "analytics" | "referral" | "club" | "joint-deals" | "messages" | "profile" | "support"
 
 function mapFromServer(o: Record<string, unknown>): ObjectData {
   const ef = (o.extra_fields as Record<string, string>) ?? {}
@@ -85,7 +84,7 @@ export default function Dashboard() {
   const isBasic = !user?.isSuperadmin
     ? (!user?.status || user?.status === "basic")
     : previewStatus === "basic"
-  const [section, setSection] = useState<Section>(isBasic ? "objects" : "dashboard")
+  const [section, setSection] = useState<Section>(isBasic ? "objects" : "analytics")
   const [form, setForm] = useState({
     firstName: user?.firstName ?? "",
     lastName: user?.lastName ?? "",
@@ -176,7 +175,7 @@ export default function Dashboard() {
           if (isSubscription) {
             await refreshProfile()
             toast({ title: "Тариф Клуб активирован!", description: "Добро пожаловать в клуб" })
-            setSection("dashboard")
+            setSection("analytics")
           } else {
             if (qty > 0) {
               updateProfile({ listingsExtra: (user!.listingsExtra ?? 0) + qty })
@@ -339,7 +338,7 @@ export default function Dashboard() {
         previewStatus={previewStatus}
         onPreviewStatusChange={(s) => {
           setPreviewStatus(s)
-          setSection(s === "basic" ? "objects" : "dashboard")
+          setSection(s === "basic" ? "objects" : "analytics")
         }}
       />
 
@@ -350,14 +349,6 @@ export default function Dashboard() {
           <NotificationBell userId={user.id} />
         </div>
         <Suspense fallback={null}>
-          {section === "dashboard" && (
-            <DashboardHome
-              user={user}
-              objects={objects}
-              onNavigateSection={(target) => setSection(target)}
-            />
-          )}
-
           {section === "objects" && (
             <DashboardObjects
               objects={objects}
@@ -391,7 +382,12 @@ export default function Dashboard() {
           {section === "crm" && <DashboardCRM userId={user.id} />}
 
           {section === "analytics" && (
-            <DashboardAnalytics objects={objects} userId={user.id} />
+            <DashboardAnalytics
+              objects={objects}
+              userId={user.id}
+              user={user}
+              onNavigateSection={(target) => setSection(target)}
+            />
           )}
 
           {section === "referral" && <DashboardReferral userId={user.id} />}

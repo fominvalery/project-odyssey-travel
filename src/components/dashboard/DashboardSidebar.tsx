@@ -6,7 +6,7 @@ import { useMyOrgs } from "@/hooks/useMyOrgs"
 import AddStatusModal from "@/components/agency/AddStatusModal"
 import { STATUS_LABELS } from "@/hooks/useAuth"
 
-type Section = "dashboard" | "objects" | "crm" | "analytics" | "referral" | "club" | "joint-deals" | "messages" | "profile" | "support"
+type Section = "objects" | "crm" | "analytics" | "referral" | "club" | "joint-deals" | "messages" | "profile" | "support"
 
 // Пункты меню для basic
 const basicNavItems = [
@@ -17,7 +17,6 @@ const basicNavItems = [
 
 // Полное меню для broker/agency
 const fullNavItems = [
-  { id: "dashboard",    label: "Дашборд",          icon: "LayoutDashboard" },
   { id: "objects",      label: "Объекты",           icon: "Building2" },
   { id: "crm",          label: "CRM",               icon: "Users" },
   { id: "analytics",    label: "Аналитика",         icon: "BarChart2" },

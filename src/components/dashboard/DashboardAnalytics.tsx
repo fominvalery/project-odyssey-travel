@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { STATUS_LABELS } from "@/hooks/useAuth"
 import Icon from "@/components/ui/icon"
 import {
   AreaChart, Area, BarChart, Bar,
@@ -34,11 +35,22 @@ interface Metrics {
   by_source: SourceItem[]
 }
 
+interface Lead {
+  id: string
+  name: string
+  last_name?: string
+  object_title?: string
+  stage?: string
+  created_at?: string
+}
+
 interface Props {
   objects: ObjectData[]
   userId?: string
   orgId?: string
   departmentId?: string
+  user?: { id?: string; name: string; status: string }
+  onNavigateSection?: (target: "objects" | "crm" | "analytics") => void
 }
 
 const EMPTY: Metrics = {
@@ -50,10 +62,34 @@ const SOURCE_COLORS = [
   "#ec4899", "#06b6d4", "#f43f5e", "#a3a3a3",
 ]
 
-export default function DashboardAnalytics({ objects, userId, orgId, departmentId }: Props) {
+const DEAL_STAGES = ["Закрыт", "won", "closed", "deal", "Сделка", "Завершён", "Договор"]
+
+function stageColor(stage?: string) {
+  const s = (stage || "").toLowerCase()
+  if (s.includes("закр") || s.includes("закрыт") || s === "closed") return "bg-gray-500/10 text-gray-400"
+  if (s.includes("сделк") || s.includes("won") || s.includes("договор")) return "bg-emerald-500/10 text-emerald-400"
+  if (s.includes("нов") || s === "лид") return "bg-blue-500/10 text-blue-400"
+  return "bg-violet-500/10 text-violet-400"
+}
+
+function objectStatusColor(s: string) {
+  if (s === "Активен") return "bg-emerald-500/10 text-emerald-400"
+  if (s === "На проверке") return "bg-amber-500/10 text-amber-400"
+  return "bg-gray-500/10 text-gray-400"
+}
+
+function priceLabel(p: string) {
+  if (!p) return "—"
+  const n = Number(String(p).replace(/[^\d]/g, ""))
+  if (!n) return p
+  return `${n.toLocaleString("ru-RU")} ₽`
+}
+
+export default function DashboardAnalytics({ objects, userId, orgId, departmentId, user, onNavigateSection }: Props) {
   const [period, setPeriod] = useState<Period>("30")
   const [data, setData] = useState<Metrics>(EMPTY)
   const [loading, setLoading] = useState(false)
+  const [leads, setLeads] = useState<Lead[]>([])
 
   useEffect(() => {
     if (!userId && !orgId) return
@@ -88,6 +124,21 @@ export default function DashboardAnalytics({ objects, userId, orgId, departmentI
       .finally(() => setLoading(false))
   }, [period, userId, orgId, departmentId, objects.length])
 
+  useEffect(() => {
+    const uid = userId
+    if (!uid) return
+    const url = (func2url as Record<string, string>)["leads"]
+    if (!url) return
+    fetch(`${url}?owner_id=${uid}`, { headers: { "X-User-Id": uid } })
+      .then(r => r.ok ? r.json() : { leads: [] })
+      .then(d => setLeads(Array.isArray(d?.leads) ? d.leads : []))
+      .catch(() => setLeads([]))
+  }, [userId])
+
+  const dealsCount = leads.filter(l => DEAL_STAGES.some(d => (l.stage || "").toLowerCase().includes(d.toLowerCase()))).length
+  const lastObjects = [...objects].slice(0, 3)
+  const lastLeads = [...leads].sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")).slice(0, 3)
+
   const periodDays = parseInt(period)
 
   const statCards = [
@@ -120,9 +171,92 @@ export default function DashboardAnalytics({ objects, userId, orgId, departmentI
   return (
     <div className="p-6 md:p-8 max-w-6xl">
 
+      {/* Блок приветствия */}
+      {user && (
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold mb-1">Добро пожаловать, {user.name.split(" ")[0]}!</h1>
+          <p className="text-gray-400 text-sm mb-6">
+            Тариф: <span className="text-blue-400 font-medium">{STATUS_LABELS[user.status as keyof typeof STATUS_LABELS] ?? user.status}</span>
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[
+              { label: "Объектов",  value: String(objects.length),        icon: "Building2",  color: "text-blue-400",    target: "objects" as const },
+              { label: "Лидов",     value: String(leads.length),          icon: "Users",      color: "text-emerald-400", target: "crm" as const },
+              { label: "Просмотров",value: data.views.toLocaleString("ru-RU"), icon: "Eye",   color: "text-violet-400",  target: "analytics" as const },
+              { label: "Сделок",    value: String(dealsCount),            icon: "Handshake",  color: "text-amber-400",   target: "crm" as const },
+            ].map(stat => (
+              <button
+                key={stat.label}
+                type="button"
+                onClick={() => onNavigateSection?.(stat.target)}
+                className="text-left rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5 transition group relative cursor-pointer hover:border-[#2a2a2a] hover:bg-[#141414]"
+              >
+                <Icon name={stat.icon as "Building2"} className={`h-5 w-5 mb-3 ${stat.color}`} />
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+                <Icon name="ArrowUpRight" className="absolute top-4 right-4 h-3.5 w-3.5 text-gray-600 group-hover:text-white transition" />
+              </button>
+            ))}
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4 mb-8">
+            <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Icon name="Building2" className="h-4 w-4 text-blue-400" /> Последние объекты
+              </h2>
+              {lastObjects.length === 0 ? (
+                <p className="text-sm text-gray-500">Объектов пока нет</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {lastObjects.map(obj => (
+                    <div key={obj.id} className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate max-w-[220px]">{obj.title || "Без названия"}</p>
+                        <p className="text-xs text-gray-500">{priceLabel(obj.price)}</p>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${objectStatusColor(obj.status || "Активен")}`}>
+                        {obj.status || "Активен"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rounded-2xl bg-[#111111] border border-[#1f1f1f] p-5">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Icon name="Users" className="h-4 w-4 text-emerald-400" /> Последние лиды
+              </h2>
+              {lastLeads.length === 0 ? (
+                <p className="text-sm text-gray-500">Лидов пока нет</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {lastLeads.map(lead => {
+                    const fullName = [lead.name, lead.last_name].filter(Boolean).join(" ") || "Без имени"
+                    return (
+                      <div key={lead.id} className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate max-w-[220px]">{fullName}</p>
+                          <p className="text-xs text-gray-500 truncate max-w-[220px]">{lead.object_title || "—"}</p>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${stageColor(lead.stage)}`}>
+                          {lead.stage || "Лид"}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-[#1f1f1f] mb-8" />
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Аналитика</h1>
+          <h2 className="text-xl font-bold">Детальная аналитика</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             Последние {period} дней{loading ? " · обновление…" : ""}
           </p>
