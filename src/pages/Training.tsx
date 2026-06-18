@@ -7,10 +7,9 @@ import func2url from "../../backend/func2url.json"
 const API_URL = (func2url as Record<string, string>)["content-articles"]
 
 const CATS = [
-  { id: "",        label: "Все" },
+  { id: "faq",     label: "FAQ" },
   { id: "guide",   label: "Инструкции" },
   { id: "video",   label: "Видеоуроки" },
-  { id: "faq",     label: "FAQ" },
   { id: "webinar", label: "Вебинары" },
 ]
 
