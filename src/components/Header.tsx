@@ -173,13 +173,7 @@ export function Header() {
               <Icon name="GraduationCap" className="h-5 w-5" />
               <span>Обучение</span>
             </button>
-            <button
-              onClick={() => navigate("/neural")}
-              className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl text-xs transition-colors ${location.pathname === "/neural" ? "text-violet-400" : "text-gray-500"}`}
-            >
-              <Icon name="Sparkles" className="h-5 w-5" />
-              <span>Нейросети</span>
-            </button>
+
             <button
               onClick={() => setLoginOpen(true)}
               className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl text-xs text-gray-500 transition-colors"
