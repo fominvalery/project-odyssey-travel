@@ -43,7 +43,7 @@ function getEmbedUrl(url: string): string {
 export default function Training() {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
-  const [catFilter, setCatFilter] = useState("")
+  const [catFilter, setCatFilter] = useState("faq")
   const [selected, setSelected] = useState<Article | null>(null)
   const [photoIdx, setPhotoIdx] = useState(0)
   const [openFaq, setOpenFaq] = useState<string | null>(null)
