@@ -279,6 +279,16 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
               </button>
             )
           })}
+          {/* Нейросети */}
+          <a
+            href="https://syntx.ai/welcome/Z9SblDpH"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-xs text-gray-500 hover:text-violet-400 shrink-0 transition-colors"
+          >
+            <Icon name="Sparkles" className="h-5 w-5" />
+            <span className="whitespace-nowrap">Нейросети</span>
+          </a>
           {/* Выйти */}
           <button
             onClick={onLogout}
