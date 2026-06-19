@@ -164,13 +164,6 @@ export default function DashboardSidebar({ section, setSection, user, initials, 
             </div>
           )}
 
-          <button
-            onClick={() => setStatusModalOpen(true)}
-            className="w-full flex items-center gap-2 px-3 py-2 mb-3 rounded-xl text-xs font-medium bg-gradient-to-r from-violet-500/15 to-pink-500/15 border border-violet-500/30 text-violet-200 hover:from-violet-500/25 hover:to-pink-500/25 transition-colors"
-          >
-            <Icon name="Plus" className="h-3.5 w-3.5" />
-            Добавить статус
-          </button>
 
           <div className="flex items-center gap-3 px-2 mb-3">
             <Avatar className="h-8 w-8">
