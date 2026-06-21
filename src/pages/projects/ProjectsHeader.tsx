@@ -13,7 +13,6 @@ import {
   getVisibleSubtypes,
 } from "./projectsConstants"
 
-const LOGO_URL = "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/755cddaf-8b60-449f-82bf-27fe2c9dab48.jpg"
 
 interface Props {
   total: number
@@ -83,7 +82,7 @@ export default function ProjectsHeader({
               <Icon name="ArrowLeft" className="h-5 w-5" />
             </button>
             <button onClick={() => navigate(returnTo)} className="flex items-center gap-2">
-              <img src={LOGO_URL} alt="Кабинет-24" className="h-14 w-auto object-contain" />
+              <span className="text-white font-bold text-lg">Кабинет-24</span>
             </button>
           </div>
           <ClientsDropdown onOpenFixModal={onOpenFixModal} />

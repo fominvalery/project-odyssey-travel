@@ -37,7 +37,7 @@ export default function AgencySidebar({
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-60 border-r border-[#1f1f1f] bg-[#0d0d0d] py-6 px-4 shrink-0">
         <button onClick={() => navigate("/")} className="flex items-center gap-2 mb-6 px-2">
-          <img src="https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/bucket/755cddaf-8b60-449f-82bf-27fe2c9dab48.jpg" alt="Кабинет-24" className="h-8 w-auto object-contain" />
+          <span className="text-white font-bold text-lg">Кабинет-24</span>
         </button>
 
         {org && (
