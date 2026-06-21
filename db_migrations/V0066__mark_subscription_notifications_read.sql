@@ -1,0 +1,1 @@
+UPDATE t_p32045231_project_odyssey_trav.notifications SET read = true WHERE title ILIKE '%подписка%' OR title ILIKE '%истекает%' OR body ILIKE '%подписка до%' OR body ILIKE '%Автопродление%';
