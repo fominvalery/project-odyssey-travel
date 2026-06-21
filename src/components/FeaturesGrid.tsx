@@ -4,7 +4,7 @@ import Icon from "@/components/ui/icon"
 const features = [
   {
     icon: "Store",
-    title: "Маркетплейс",
+    title: "Каталог объектов",
     description: "Это каталог объектов, где размещаются ваши личные объявления, а также объекты других брокеров, собственников и инвесторов.",
     color: "text-violet-400",
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/eab90193-b30c-427e-abd1-34ad07328116.jpg",
