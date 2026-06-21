@@ -7,35 +7,11 @@
       "expectedStatus": 200
     },
     {
-      "name": "Запуск checker — статус 200 + ok:true",
+      "name": "Checker отключён — возвращает disabled",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
-      "expectedBody": {"ok": true},
-      "bodyMatcher": "partial"
-    },
-    {
-      "name": "Ответ содержит results с downgraded",
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": {"results": {"downgraded": 0}},
-      "bodyMatcher": "partial"
-    },
-    {
-      "name": "Ответ содержит results с object_auto_unpublished",
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": {"results": {"object_auto_unpublished": 0}},
-      "bodyMatcher": "partial"
-    },
-    {
-      "name": "Ответ содержит results с object_expiring_soon",
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": {"results": {"object_expiring_soon": 0}},
+      "expectedBody": {"status": "disabled"},
       "bodyMatcher": "partial"
     }
   ]

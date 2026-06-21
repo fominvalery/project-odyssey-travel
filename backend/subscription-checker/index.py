@@ -105,9 +105,11 @@ def build_email_html(subject: str, headline: str, body_text: str, cta_url: str, 
 
 
 def handler(event: dict, context) -> dict:
-    """Проверяет подписки пользователей и отправляет уведомления/сбрасывает тариф."""
+    """Подписки отключены — Клуб бесплатный и бессрочный."""
     if event.get('httpMethod') == 'OPTIONS':
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': ''}
+
+    return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': '{"status": "disabled", "message": "Subscriptions are free, checker is disabled"}'}
 
     S = get_schema()
     conn = get_connection()
