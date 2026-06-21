@@ -4,12 +4,12 @@ from datetime import datetime, timedelta
 
 from utils.db import query_one, execute_returning, execute, escape, get_schema
 from utils.password import hash_password, verify_password, validate_password, validate_email
-from utils.email import is_email_enabled, generate_code, send_verification_code, send_email, _base_template
+from utils.email import is_email_enabled, generate_code, send_verification_code
 from utils.http import response, error
 
 CLUB_UNTIL = '2026-12-15 00:00:00'
 GRACE_UNTIL = '2026-12-18 00:00:00'
-WELCOME_NOTIFICATION_TITLE = "Добро пожаловать в тариф «Клуб»!"
+WELCOME_NOTIFICATION_TITLE = "Добро пожаловать в Кабинет-24!"
 WELCOME_NOTIFICATION_BODY = (
     "Здравствуйте!\n\n"
     "Рады видеть вас в Кабинете-24 — платформе, где брокеры коммерческой недвижимости "
@@ -18,14 +18,8 @@ WELCOME_NOTIFICATION_BODY = (
 )
 
 
-def _grant_welcome_plan(user_id, email: str, name: str, S: str) -> None:
-    """Назначить тариф Клуб до 15.12.2026, создать уведомление и отправить письмо.
-
-    КРИТИЧНО: всегда писать оба поля — subscription_end_at И grace_period_end_at.
-    Если grace_period_end_at = NULL — subscription-checker пропустит пользователя навсегда,
-    тариф Клуб никогда не сбросится на Basic.
-    subscription_end_at = 2026-12-15, grace_period_end_at = 2026-12-18 → потом Basic.
-    """
+def _grant_welcome_plan(user_id, S: str) -> None:
+    """Назначить тариф Клуб и создать уведомление."""
     execute(f"""
         UPDATE {S}users
         SET plan = 'club', status = 'broker',
@@ -39,39 +33,6 @@ def _grant_welcome_plan(user_id, email: str, name: str, S: str) -> None:
         INSERT INTO {S}notifications (user_id, type, title, body)
         VALUES ({escape(user_id)}, 'info', {escape(WELCOME_NOTIFICATION_TITLE)}, {escape(WELCOME_NOTIFICATION_BODY)})
     """)
-
-    _send_welcome_email(email, name or "")
-
-
-def _send_welcome_email(to_email: str, name: str) -> None:
-    """Отправить приветственное письмо о тарифе Клуб до 15.12.2026."""
-    display_name = name.strip() or "Коллега"
-
-    content = f"""
-        <p style="margin:0 0 16px;font-size:15px;color:#aaaaaa;line-height:1.6;">
-          Здравствуйте, {display_name}!
-        </p>
-        <p style="margin:0 0 16px;font-size:15px;color:#aaaaaa;line-height:1.6;">
-          Рады видеть вас в <strong style="color:#ffffff;">Кабинете-24</strong> — платформе, где брокеры
-          коммерческой недвижимости находят партнёров, объекты и реальные сделки.
-        </p>
-        <p style="margin:0 0 24px;font-size:15px;color:#aaaaaa;line-height:1.6;">
-          Вам открыт полный доступ к тарифу <strong style="color:#ffffff;">«Клуб»</strong>.
-        </p>
-        <p style="margin:0;font-size:13px;color:#666666;line-height:1.6;">
-          Войдите на платформу и пользуйтесь всеми возможностями тарифа «Клуб».
-        </p>
-    """
-
-    html_body = _base_template("Добро пожаловать в тариф «Клуб»!", content)
-    text_body = (
-        f"Здравствуйте, {display_name}!\n\n"
-        "Рады видеть вас в Кабинете-24.\n\n"
-        "Вам открыт полный доступ к тарифу «Клуб».\n"
-        "Войдите на платформу и пользуйтесь всеми возможностями."
-    )
-
-    send_email(to_email, "Кабинет-24: Добро пожаловать в тариф «Клуб»!", html_body, text_body)
 
 
 VERIFICATION_CODE_HOURS = 24
@@ -183,8 +144,8 @@ def handle(event: dict, origin: str = '*') -> dict:
                     VALUES ({escape(referrer_id)}, {escape(user_id)}, NOW())
                 """)
 
-    # Назначаем приветственный тариф Клуб на 72 часа
-    _grant_welcome_plan(user_id, email, name, S)
+    # Назначаем приветственный тариф Клуб
+    _grant_welcome_plan(user_id, S)
 
     result = {
         'user_id': user_id,
