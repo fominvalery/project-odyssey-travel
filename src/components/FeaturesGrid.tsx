@@ -34,10 +34,10 @@ const features = [
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/cec11c52-110e-448c-af83-5293f36a26e5.jpg",
   },
   {
-    icon: "Share2",
-    title: "Реферальная программа",
-    description: "Приглашайте новых пользователей по вашей личной реферальной ссылке и получайте бонусы.",
-    color: "text-emerald-400",
+    icon: "Trophy",
+    title: "Рейтинг агентов",
+    description: "Публичный рейтинг брокеров и агентств по активности, сделкам и отзывам — повышайте репутацию и привлекайте больше клиентов.",
+    color: "text-amber-400",
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/263f905b-8678-4519-ae7a-4d69acd143b3.jpg",
   },
   {
