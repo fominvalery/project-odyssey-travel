@@ -24,7 +24,7 @@ export function ClubHero({ onCtaClick }: ClubHeroProps) {
         </span>
 
         <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-5">
-          Кабинет-<span className="text-blue-400">24</span>
+          Кабинет-24
         </h1>
 
         <p className="text-xl md:text-2xl font-semibold text-white leading-relaxed mb-3 max-w-xl mx-auto">
