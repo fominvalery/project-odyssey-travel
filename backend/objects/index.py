@@ -339,6 +339,11 @@ def handler(event: dict, context) -> dict:
                 dept_id,
             ))
             row = cur.fetchone()
+            if user_id:
+                cur.execute(
+                    f"UPDATE {schema}.users SET last_login_at = NOW() WHERE id = %s",
+                    (user_id,),
+                )
             conn.commit()
 
             # Начисление 20 ₽ рефереру за первый объект реферала.

@@ -1,0 +1,1 @@
+UPDATE t_p32045231_project_odyssey_trav.users SET last_login_at = NOW() WHERE id = '715c3e7b-bfc9-465a-aa68-5e2c5cc1db6f';
