@@ -3,7 +3,7 @@ import json
 import os
 from datetime import datetime
 
-from utils.db import query_one, escape, get_schema
+from utils.db import query_one, execute, escape, get_schema
 from utils.jwt_utils import create_access_token, decode_refresh_token, hash_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from utils.http import response, error
 
@@ -44,6 +44,11 @@ def handle(event: dict, origin: str = '*') -> dict:
         return error(401, 'Refresh token revoked or expired', origin)
 
     _, user_email, user_name = result
+
+    execute(f"""
+        UPDATE {S}users SET last_login_at = {escape(now)} WHERE id = {escape(user_id)}
+    """)
+
     access_token = create_access_token(user_id, user_email)
 
     return response(200, {
