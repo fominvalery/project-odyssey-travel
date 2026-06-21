@@ -50,7 +50,7 @@ const features = [
   {
     icon: "Building",
     title: "Кабинет Агента",
-    description: "Объекты, CRM, аналитика, сеть контактов, совместные сделки и нейросети — всё в одном личном кабинете.",
+    description: "Объекты, CRM, аналитика, сеть контактов и совместные сделки — всё в одном личном кабинете.",
     color: "text-cyan-400",
     image: "https://cdn.poehali.dev/projects/850a4eaf-2855-417f-a5ae-4b60e5b39b32/files/935b2ef7-7117-4d56-a586-bf75e8054d32.jpg",
   },
