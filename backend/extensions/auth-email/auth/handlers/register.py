@@ -14,7 +14,7 @@ WELCOME_NOTIFICATION_BODY = (
     "Здравствуйте!\n\n"
     "Рады видеть вас в Кабинете-24 — платформе, где брокеры коммерческой недвижимости "
     "находят партнёров, объекты и реальные сделки.\n\n"
-    "Вам открыт полный доступ к тарифу «Клуб» до 15 декабря 2026 года."
+    "Вам открыт полный доступ к тарифу «Клуб»."
 )
 
 
@@ -58,10 +58,6 @@ def _send_welcome_email(to_email: str, name: str) -> None:
         <p style="margin:0 0 24px;font-size:15px;color:#aaaaaa;line-height:1.6;">
           Вам открыт полный доступ к тарифу <strong style="color:#ffffff;">«Клуб»</strong>.
         </p>
-        <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:24px;margin:0 0 24px;text-align:center;">
-          <p style="margin:0 0 8px;font-size:13px;color:#666666;">Доступ активен до</p>
-          <p style="margin:0;font-size:24px;font-weight:700;color:#3b82f6;">15 декабря 2026</p>
-        </div>
         <p style="margin:0;font-size:13px;color:#666666;line-height:1.6;">
           Войдите на платформу и пользуйтесь всеми возможностями тарифа «Клуб».
         </p>
@@ -71,7 +67,7 @@ def _send_welcome_email(to_email: str, name: str) -> None:
     text_body = (
         f"Здравствуйте, {display_name}!\n\n"
         "Рады видеть вас в Кабинете-24.\n\n"
-        "Вам открыт полный доступ к тарифу «Клуб» до 15 декабря 2026 года.\n"
+        "Вам открыт полный доступ к тарифу «Клуб».\n"
         "Войдите на платформу и пользуйтесь всеми возможностями."
     )
 
