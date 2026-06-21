@@ -1,6 +1,6 @@
 """Registration handler."""
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from utils.db import query_one, execute_returning, execute, escape, get_schema
 from utils.password import hash_password, verify_password, validate_password, validate_email
