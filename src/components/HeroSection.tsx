@@ -34,20 +34,13 @@ export function HeroSection() {
           CRM, маркетплейс объектов и закрытый клуб брокеров — офисы, склады, торговые площади по всей России в одном месте.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex items-center justify-center">
           <GlowButton
             onClick={() => setRegisterOpen(true)}
             className="rounded-full px-6 py-2 text-sm"
           >
-            Зарегистрироваться бесплатно <Icon name="ArrowUpRight" className="ml-2 h-4 w-4" />
+            Зарегистрироваться <Icon name="ArrowUpRight" className="ml-2 h-4 w-4" />
           </GlowButton>
-          <Button
-            variant="outline"
-            className="rounded-full border-gray-700 bg-transparent text-white hover:bg-gray-800"
-            onClick={() => toast({ title: "Скоро", description: "Обзор платформы уже готовится 🎬" })}
-          >
-            <Play className="mr-2 h-4 w-4 fill-blue-500 text-blue-500" /> Смотреть обзор
-          </Button>
         </div>
 
         <RegisterModal open={registerOpen} onOpenChange={setRegisterOpen} planId="green" />
