@@ -68,7 +68,7 @@ export function Footer() {
             <li><Link to="/marketplace" className="hover:text-white transition-colors">Каталог</Link></li>
             <li><Link to="/club" className="hover:text-white transition-colors">Клуб</Link></li>
             <li><Link to="/referral" className="hover:text-white transition-colors">Рейтинг брокеров</Link></li>
-            <li><Link to="/ecosystem" className="hover:text-white transition-colors">Платформа</Link></li>
+            <li><Link to="/ecosystem" className="hover:text-white transition-colors">Агентам/Брокерам</Link></li>
             <li><Link to="/blog" className="hover:text-white transition-colors">Новости / Блог</Link></li>
             <li><Link to="/training" className="hover:text-white transition-colors">Обучение по платформе</Link></li>
           </ul>

@@ -43,7 +43,7 @@ export function Header() {
             Каталог
           </button>
           <button onClick={() => navigate("/ecosystem")} className="text-sm text-gray-300 hover:text-white transition-colors">
-            Платформа
+            Агентам/Брокерам
           </button>
 
           {/* Информация — dropdown */}
@@ -152,7 +152,7 @@ export function Header() {
               className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl text-xs transition-colors ${location.pathname === "/ecosystem" ? "text-blue-400" : "text-gray-500"}`}
             >
               <Icon name="Layers" className="h-5 w-5" />
-              <span>Платформа</span>
+              <span>Агентам</span>
             </button>
             <button
               onClick={() => navigate("/blog")}
