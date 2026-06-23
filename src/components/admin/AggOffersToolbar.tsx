@@ -55,9 +55,9 @@ export default function AggOffersToolbar({
             <Icon name="Rss" className="h-4 w-4 mr-1.5" />
             XML Фид
           </Button>
-          <Button onClick={onAddDeveloper} variant="outline" className="border-violet-500/40 text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 text-sm">
+          <Button onClick={onAddDeveloper} variant="outline" className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10 hover:text-orange-300 text-sm">
             <Icon name="Plus" className="h-4 w-4 mr-1.5" />
-            Застройщик
+            Подряд
           </Button>
           <Button onClick={onAddProject} variant="outline" className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 text-sm">
             <Icon name="Plus" className="h-4 w-4 mr-1.5" />

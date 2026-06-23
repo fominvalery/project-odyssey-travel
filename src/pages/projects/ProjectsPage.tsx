@@ -5,10 +5,13 @@ import func2url from "../../../backend/func2url.json"
 import QuickFixationModal from "./QuickFixationModal"
 import ProjectsHeader from "./ProjectsHeader"
 import OfferCard from "./OfferCard"
+import ContractorsPage from "./ContractorsPage"
 import { Offer } from "./projectsConstants"
 
 export default function ProjectsPage() {
   const navigate = useNavigate()
+
+  const [mode, setMode] = useState<"objects" | "contractors">("objects")
 
   const [offers, setOffers] = useState<Offer[]>([])
   const [total, setTotal] = useState(0)
@@ -107,30 +110,38 @@ export default function ProjectsPage() {
         onApplyFilters={applyFilters}
         onResetFilters={resetFilters}
         onOpenFixModal={() => setShowFixModal(true)}
+        mode={mode}
+        onModeChange={setMode}
       />
 
-      {/* ── Каталог ───────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-[#111] border border-[#1f1f1f] rounded-2xl h-72 animate-pulse" />
-            ))}
+      {mode === "contractors" ? (
+        <ContractorsPage />
+      ) : (
+        <>
+          {/* ── Каталог объектов ─────────────────────────────────────────── */}
+          <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-[#111] border border-[#1f1f1f] rounded-2xl h-72 animate-pulse" />
+                ))}
+              </div>
+            ) : offers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <Icon name="FolderOpen" className="h-12 w-12 text-gray-700 mb-4" />
+                <p className="text-gray-500 text-lg font-medium">Предложений пока нет</p>
+                <p className="text-gray-700 text-sm mt-1">Попробуй изменить фильтры или выбрать другую категорию</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {offers.map(offer => (
+                  <OfferCard key={offer.id} offer={offer} onOpen={() => navigate(`/projects/${offer.id}`)} />
+                ))}
+              </div>
+            )}
           </div>
-        ) : offers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <Icon name="FolderOpen" className="h-12 w-12 text-gray-700 mb-4" />
-            <p className="text-gray-500 text-lg font-medium">Предложений пока нет</p>
-            <p className="text-gray-700 text-sm mt-1">Попробуй изменить фильтры или выбрать другую категорию</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {offers.map(offer => (
-              <OfferCard key={offer.id} offer={offer} onOpen={() => navigate(`/projects/${offer.id}`)} />
-            ))}
-          </div>
-        )}
-      </div>
+        </>
+      )}
 
       <QuickFixationModal
         open={showFixModal}

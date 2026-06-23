@@ -38,6 +38,8 @@ interface Props {
   onApplyFilters: () => void
   onResetFilters: () => void
   onOpenFixModal: () => void
+  mode?: "objects" | "contractors"
+  onModeChange?: (m: "objects" | "contractors") => void
 }
 
 export default function ProjectsHeader({
@@ -54,6 +56,8 @@ export default function ProjectsHeader({
   areaToDraft, onAreaToDraftChange,
   onApplyFilters, onResetFilters,
   onOpenFixModal,
+  mode = "objects",
+  onModeChange,
 }: Props) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -109,8 +113,38 @@ export default function ProjectsHeader({
         </div>
       </div>
 
-      {/* ── Поиск + фильтры + категории — sticky ── */}
-      <div className="sticky top-0 z-10 bg-[#0d0d0d]/95 backdrop-blur border-b border-[#1f1f1f] px-4 md:px-8 py-3">
+      {/* ── Переключатель Объекты / Подряды ── */}
+      {onModeChange && (
+        <div className="flex justify-center pb-4">
+          <div className="flex bg-[#111] border border-[#2a2a2a] rounded-xl p-1 gap-1">
+            <button
+              onClick={() => onModeChange("objects")}
+              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                mode === "objects"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Icon name="Building2" className="h-4 w-4" />
+              Объекты
+            </button>
+            <button
+              onClick={() => onModeChange("contractors")}
+              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                mode === "contractors"
+                  ? "bg-orange-600 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Icon name="Handshake" className="h-4 w-4" />
+              Подряды
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Поиск + фильтры + категории — sticky (только для объектов) ── */}
+      {mode !== "contractors" && <div className="sticky top-0 z-10 bg-[#0d0d0d]/95 backdrop-blur border-b border-[#1f1f1f] px-4 md:px-8 py-3">
         <div className="max-w-7xl mx-auto">
 
           {/* Строка поиска */}
@@ -262,7 +296,7 @@ export default function ProjectsHeader({
             </div>
           )}
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

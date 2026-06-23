@@ -3,7 +3,7 @@ import func2url from "../../../backend/func2url.json"
 import { Offer } from "./AggOffersTypes"
 import AggOffersToolbar from "./AggOffersToolbar"
 import AggOffersTable from "./AggOffersTable"
-import AddDeveloperDialog, { DeveloperForm } from "./AddDeveloperDialog"
+import AddContractorDialog, { ContractorForm } from "./AddContractorDialog"
 import AddProjectWizard from "./AddProjectWizard"
 import { AddObjectWizardBase } from "@/components/AddObjectWizardBase"
 import type { ObjectData } from "@/components/AddObjectWizard"
@@ -138,25 +138,19 @@ export default function AggOffersAdmin({ token }: { token: string }) {
     load()
   }
 
-  const handleDeveloperSave = async (data: DeveloperForm) => {
+  const handleContractorSave = async (data: ContractorForm) => {
     setDeveloperSaving(true)
-    await fetch(AGG_ADMIN_URL, {
+    const CONTRACTOR_URL = (func2url as Record<string, string>)["contractor-offers"]
+    await fetch(CONTRACTOR_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: data.name,
-        category: "commercial",
-        subtype: "Застройщик",
-        city: data.city,
-        description: [data.description, data.website && `Сайт: ${data.website}`, data.phone && `Тел: ${data.phone}`, data.email && `Email: ${data.email}`].filter(Boolean).join("\n"),
-        status: "active",
-        photos: [...(data.logo_url ? [data.logo_url] : []), ...data.photos],
-        videos: data.videos,
-      }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Token": token,
+      },
+      body: JSON.stringify({ ...data }),
     })
     setDeveloperSaving(false)
     setDeveloperOpen(false)
-    load()
   }
 
 
@@ -182,7 +176,7 @@ export default function AggOffersAdmin({ token }: { token: string }) {
         onRefresh={load}
         onAdd={openNew}
         onFeed={() => { setFeedOpen(true); setFeedResult(null); setFeedError("") }}
-        onAddDeveloper={() => setDeveloperOpen(true)}
+        onAddDeveloper={() => { setDeveloperOpen(true) }}
         onAddProject={() => setProjectOpen(true)}
       />
 
@@ -205,11 +199,11 @@ export default function AggOffersAdmin({ token }: { token: string }) {
         />
       )}
 
-      {/* Модалка застройщика */}
-      <AddDeveloperDialog
+      {/* Модалка подряда */}
+      <AddContractorDialog
         open={developerOpen}
         onOpenChange={setDeveloperOpen}
-        onSave={handleDeveloperSave}
+        onSave={handleContractorSave}
         saving={developerSaving}
       />
 
