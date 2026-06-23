@@ -23,10 +23,7 @@ export default function DashboardWelcome({ user, objects, leads, dealsCount, vie
 
   return (
     <div className="mb-8">
-      <h1 className="text-2xl font-bold mb-1">Добро пожаловать, {user.name.split(" ")[0]}!</h1>
-      <p className="text-gray-400 text-sm mb-6">
-        Тариф: <span className="text-blue-400 font-medium">{STATUS_LABELS[user.status as keyof typeof STATUS_LABELS] ?? user.status}</span>
-      </p>
+      <h1 className="text-2xl font-bold mb-6">Добро пожаловать, {user.name.split(" ")[0]}!</h1>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
